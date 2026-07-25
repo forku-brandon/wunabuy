@@ -1,0 +1,249 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  CUSTOMER
+  STORE_OWNER
+  TRANSPORTER
+  ADMIN
+}
+
+enum KYCStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAYMENT_HELD        // customer paid, money in escrow
+  PROCESSING          // store confirmed & preparing
+  DISPATCHED          // handed to transporter
+  IN_TRANSIT          // transporter moving
+  DELIVERED           // customer received
+  CONFIRMED           // customer confirmed receipt
+  COMPLETED           // escrow released to store
+  CANCELLED
+  DISPUTED
+}
+
+enum EscrowStatus {
+  HELD          // funds collected, waiting for confirmation
+  RELEASED      // funds sent to store owner
+  REFUNDED      // returned to customer
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  phone         String?   @unique
+  passwordHash  String
+  fullName      String
+  role          UserRole  @default(CUSTOMER)
+  avatarUrl     String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Store owner specific
+  store         Store?
+  kyc           KYC?
+
+  // Transporter specific
+  transporter   Transporter?
+
+  // Orders
+  customerOrders Order[]  @relation("CustomerOrders")
+  transportOrders Order[] @relation("TransporterOrders")
+
+  @@map("users")
+}
+
+model KYC {
+  id            String      @id @default(uuid())
+  userId        String      @unique
+  user          User        @relation(fields: [userId], references: [id])
+  storeName     String
+  storeLocation String
+  businessRegNumber String?
+  idDocUrl      String?
+  locationProofUrl String?
+  status        KYCStatus   @default(PENDING)
+  reviewedBy    String?
+  reviewedAt    DateTime?
+  rejectionReason String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@map("kyc_records")
+}
+
+model Store {
+  id            String      @id @default(uuid())
+  ownerId       String      @unique
+  owner         User        @relation(fields: [ownerId], references: [id])
+  name          String
+  slug          String      @unique
+  description   String?
+  logoUrl       String?
+  coverUrl      String?
+  location      String
+  phone         String
+  isActive      Boolean     @default(true)
+  rating        Float       @default(0.0)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  products      Product[]
+  orders        Order[]     @relation("StoreOrders")
+
+  @@map("stores")
+}
+
+model Category {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  slug        String    @unique
+  description String?
+  imageUrl    String?
+  parentId    String?
+  parent      Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryHierarchy")
+  createdAt   DateTime  @default(now())
+
+  products    Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id          String       @id @default(uuid())
+  storeId     String
+  store       Store        @relation(fields: [storeId], references: [id])
+  categoryId  String?
+  category    Category?    @relation(fields: [categoryId], references: [id])
+  name        String
+  description String?
+  price       Decimal      @db.Decimal(10, 2)
+  compareAtPrice Decimal?  @db.Decimal(10, 2)
+  quantity    Int          @default(0)
+  unit        String       @default("piece") // piece, kg, bundle, etc
+  images      String[]     // URLs
+  isActive    Boolean      @default(true)
+  tags        String[]
+  rating      Float        @default(0.0)
+  salesCount  Int          @default(0)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  orderItems  OrderItem[]
+
+  @@index([storeId])
+  @@index([categoryId])
+  @@index([name])
+  @@map("products")
+}
+
+model Order {
+  id              String        @id @default(uuid())
+  orderNumber     String        @unique @default(uuid())
+  customerId      String
+  customer        User          @relation("CustomerOrders", fields: [customerId], references: [id])
+  storeId         String
+  store           Store         @relation("StoreOrders", fields: [storeId], references: [id])
+  status          OrderStatus   @default(PENDING_PAYMENT)
+  totalAmount     Decimal       @db.Decimal(10, 2)
+  deliveryFee     Decimal       @default(0.0) @db.Decimal(10, 2)
+  serviceFee      Decimal       @default(0.0) @db.Decimal(10, 2)
+  currency        String        @default("XAF")
+  deliveryAddress String
+  deliveryLat     Decimal?      @db.Decimal(10, 7)
+  deliveryLng     Decimal?      @db.Decimal(10, 7)
+  customerNote    String?
+  transporterId   String?
+  transporter     User?         @relation("TransporterOrders", fields: [transporterId], references: [id])
+  dispatchedAt    DateTime?
+  deliveredAt     DateTime?
+  confirmedAt     DateTime?
+  cancelledAt     DateTime?
+  cancellationReason String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  items           OrderItem[]
+  escrow          EscrowTransaction?
+  tracking        TrackingUpdate[]
+
+  @@index([customerId])
+  @@index([storeId])
+  @@index([transporterId])
+  @@index([status])
+  @@map("orders")
+}
+
+model OrderItem {
+  id          String    @id @default(uuid())
+  orderId     String
+  order       Order     @relation(fields: [orderId], references: [id])
+  productId   String
+  product     Product   @relation(fields: [productId], references: [id])
+  quantity    Int
+  unitPrice   Decimal   @db.Decimal(10, 2)
+  totalPrice  Decimal   @db.Decimal(10, 2)
+
+  @@map("order_items")
+}
+
+model EscrowTransaction {
+  id              String        @id @default(uuid())
+  orderId         String        @unique
+  order           Order         @relation(fields: [orderId], references: [id])
+  amount          Decimal       @db.Decimal(10, 2)
+  currency        String        @default("XAF")
+  status          EscrowStatus  @default(HELD)
+  providerRef     String?       // CamPay transaction reference
+  heldAt          DateTime      @default(now())
+  releasedAt      DateTime?
+  refundedAt      DateTime?
+  storePayoutRef  String?       // CamPay payout reference
+
+  @@map("escrow_transactions")
+}
+
+model Transporter {
+  id              String      @id @default(uuid())
+  userId          String      @unique
+  user            User        @relation(fields: [userId], references: [id])
+  vehicleType     String      // bike, car, truck
+  vehicleReg      String?
+  phone           String
+  isAvailable     Boolean     @default(true)
+  currentLat      Decimal?    @db.Decimal(10, 7)
+  currentLng      Decimal?    @db.Decimal(10, 7)
+  rating          Float       @default(0.0)
+  totalDeliveries Int         @default(0)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@map("transporters")
+}
+
+model TrackingUpdate {
+  id          String    @id @default(uuid())
+  orderId     String
+  order       Order     @relation(fields: [orderId], references: [id])
+  lat         Decimal   @db.Decimal(10, 7)
+  lng         Decimal   @db.Decimal(10, 7)
+  speed       Float?
+  status      String?   // "picked_up", "in_transit", "nearby", "delivered"
+  timestamp   DateTime  @default(now())
+
+  @@index([orderId])
+  @@index([timestamp])
+  @@map("tracking_updates")
+}
