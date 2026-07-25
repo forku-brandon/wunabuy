@@ -1,112 +1,126 @@
-# wunabuy 🏪
+# Wunabuy 🛒
 
-African mobile marketplace — Pinduoduo-style e-commerce for the African market.
+> Multi-sided mobile e-commerce platform for the African market — connecting customers, stores, and transport providers with escrow payments and live delivery tracking.
 
-Connects customers to local goods with delivery by local transporters. Full escrow payment flow with live GPS tracking.
+[![Status](https://img.shields.io/badge/status-in%20development-orange)]()
+[![License](https://img.shields.io/badge/license-MIT-blue)]()
 
-## Architecture
+## Overview
+
+Wunabuy is a Pinduoduo-style e-commerce platform adapted for African markets. It connects three user groups — **buyers**, **sellers (store owners)**, and **transport providers** — into an integrated marketplace with escrow-based payments, real-time GPS delivery tracking, and a company Staff Portal for internal operations.
+
+### Key Features
+
+- 🏪 **Store Marketplace** — KYC-verified stores upload products, manage inventory
+- 🔍 **Smart Discovery** — Rules-based ranking engine (location, price, quality, behavior)
+- 💰 **Escrow Payments** — Mobile money (MTN MoMo, Orange Money) + card via Flutterwave/Paystack
+- 📍 **Live Delivery Tracking** — Real-time GPS via Google Maps
+- 💬 **In-App Chat** — Real-time messaging between all users
+- 🎥 **Social Video Feed** (Phase 2) — Short-form product showcase videos with shoppable tags
+- 🏢 **Staff Portal** — 6 department dashboards with RBAC and audit logging
+
+## Project Structure
 
 ```
-┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│  Customer     │     │  Store Owner  │     │  Transporter  │
-│  (Flutter)    │     │  (Flutter)    │     │  (Flutter)    │
-└──────┬───────┘     └──────┬───────┘     └──────┬───────┘
-       │                     │                     │
-       └──────────┬──────────┴──────────┬──────────┘
-                  │                     │
-         ┌────────▼────────┐   ┌───────▼────────┐
-         │  REST API       │   │  WebSocket      │
-         │  (Express)      │   │  (Socket.io)    │
-         └────────┬────────┘   └───────┬────────┘
-                  │                     │
-         ┌────────▼────────────────────▼────────┐
-         │           PostgreSQL                    │
-         │   Users · Stores · Products · Orders     │
-         │   Escrow · Tracking · KYC               │
-         └──────────────────────────────────────────┘
+wunabuy/
+├── wunabuy-backend/          # Node.js + TypeScript + Express API
+├── wunabuy-mobile/           # React Native mobile app (Buyer, Seller, Transport)
+├── wunabuy-staff-portal/     # React web app for company staff
+├── docs/                     # SRS, backend tech spec, design docs
+├── supabase/                 # Database migrations, RLS policies, edge functions
+└── .github/                  # CI/CD workflows
 ```
 
-## Three User Roles
+## Documentation
 
-- **Customer** — browse, search, order, pay via MTN/Orange Money, track live delivery, confirm receipt
-- **Store Owner** — KYC registration, manage inventory, receive orders, dispatch via transporter
-- **Transporter** — receive delivery assignments, share live GPS location
-
-## Escrow Payment Flow
-
-1. Customer pays → funds held in escrow (CamPay)
-2. Store notified → confirms & prepares goods
-3. Transporter picks up → GPS shared live with customer
-4. Customer receives → confirms on platform
-5. Funds released to store
-
-Edge cases: auto-confirm after 72h, dispute window for refunds, admin oversight.
-
-## Getting Started
-
-```bash
-# Install dependencies
-npm install
-
-# Set up database (requires PostgreSQL)
-cp .env.example .env
-# Edit .env with your database URL and CamPay credentials
-
-# Run migrations
-npx prisma migrate dev --name init
-
-# Start dev server
-npm run dev
-```
+| Document | Description |
+|---|---|
+| [SRS v1.2](docs/Wunabuy_SRS_v1.2.md) | Software Requirements Specification — full feature set |
+| [Backend Tech Spec v1.0](docs/Wunabuy_Backend_Tech_Spec_v1.0.md) | Backend architecture, database schema, API spec |
 
 ## Tech Stack
 
-- **Backend:** Node.js/TypeScript, Express
-- **Database:** PostgreSQL + Prisma ORM
-- **Payments:** CamPay (MTN Mobile Money + Orange Money)
-- **Real-time:** Socket.io for live tracking
-- **Auth:** JWT with bcrypt
+| Layer | Technology |
+|---|---|
+| Mobile App | React Native, Zustand, React Query, React Navigation |
+| Staff Portal | React 18, Vite, TypeScript, Tailwind CSS, shadcn/ui |
+| Backend | Node.js 20, TypeScript, Express.js |
+| Database | PostgreSQL 15 + PostGIS (Supabase) |
+| Realtime | Supabase Realtime (WebSocket) |
+| Serverless | Firebase Cloud Functions |
+| Payments | Flutterwave + Paystack |
+| Maps | Google Maps Platform |
+| Video (Phase 2) | Mux / Cloudflare Stream |
+| CI/CD | GitHub Actions |
 
-## API Endpoints
+## Getting Started
 
-### Auth
-- `POST /auth/register` — Create account (choose role)
-- `POST /auth/login` — Get JWT token
-- `GET /auth/me` — Current user profile
+### Prerequisites
 
-### KYC (Store Owners)
-- `POST /kyc` — Submit KYC application
-- `PATCH /kyc/:id/review` — Admin reviews KYC
+- Node.js 20 LTS
+- PostgreSQL 15 with PostGIS
+- Redis 7
+- Supabase CLI
+- Firebase CLI
 
-### Stores
-- `POST /stores` — Register store (after KYC approval)
-- `GET /stores/:storeId/products` — List store products
-- `POST /stores/:storeId/products` — Add product
+### Backend Setup
 
-### Orders
-- `POST /orders` — Create order
-- `GET /orders` — List my orders
+```bash
+cd wunabuy-backend
+npm install
+cp .env.example .env  # Fill in your values
+npm run migrate:local
+npm run seed:local
+npm run dev
+```
 
-### Escrow Flow
-- `POST /orders/:orderId/pay` — Confirm payment received
-- `POST /orders/:orderId/process` — Store starts processing
-- `POST /orders/:orderId/dispatch` — Assign transporter
-- `POST /orders/:orderId/transit` — Transporter en route
-- `POST /orders/:orderId/deliver` — Mark delivered
-- `POST /orders/:orderId/confirm` — Customer confirms receipt
-- `POST /orders/:orderId/refund-request` — Customer disputes
+### Mobile App Setup
 
-### Tracking
-- `POST /tracking/location` — Transporter reports GPS
-- `GET /orders/:orderId/tracking` — Get tracking history
-- `GET /transporters/nearby?lat=...&lng=...` — Find nearby transporters
+```bash
+cd wunabuy-mobile
+npm install
+cp .env.example .env  # Fill in your values
+npx expo start
+```
 
-## WebSocket Events
+### Staff Portal Setup
 
-- `track:subscribe {orderId}` — Customer subscribes to order tracking
-- `track:update {orderId, lat, lng, speed}` — Transporter sends location
-- Server emits: `track:location {orderId, lat, lng, speed, timestamp}`
+```bash
+cd wunabuy-staff-portal
+npm install
+cp .env.example .env
+npm run dev
+```
+
+## Development
+
+### Branch Strategy
+
+- `main` — Production-ready code
+- `develop` — Integration branch
+- `feature/*` — Feature branches
+- `fix/*` — Bug fix branches
+- `release/*` — Release preparation
+
+### Commit Convention
+
+We use [Conventional Commits](https://www.conventionalcommits.org/):
+
+```
+feat(auth): add phone OTP verification
+fix(payment): handle gateway timeout gracefully
+docs(api): update endpoint documentation
+refactor(search): extract ranking service
+```
 
 ## License
 
-Private — wunabuy
+MIT — See [LICENSE](LICENSE) file for details.
+
+## Team
+
+Built by **Agemo Technologies**
+
+---
+
+*This project is in active development. See the [SRS](docs/Wunabuy_SRS_v1.2.md) for the complete feature specification.*

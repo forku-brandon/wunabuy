@@ -1,0 +1,21 @@
+name: Staff Portal CI
+
+on:
+  pull_request:
+    paths: ['wunabuy-staff-portal/**']
+  push:
+    branches: [main, develop]
+    paths: ['wunabuy-staff-portal/**']
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: cd wunabuy-staff-portal && npm ci
+      - run: cd wunabuy-staff-portal && npm run lint
+      - run: cd wunabuy-staff-portal && npm run typecheck
+      - run: cd wunabuy-staff-portal && npm run build
