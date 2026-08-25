@@ -1,20 +1,20 @@
-name: Staff Portal CI (React Web)
+name: Mobile CI (React Native Expo)
 
 on:
   push:
     branches: [ main, develop ]
     paths:
-      - 'staff-portal/**'
+      - 'mobile/**'
       - 'packages/**'
   pull_request:
     branches: [ main, develop ]
     paths:
-      - 'staff-portal/**'
+      - 'mobile/**'
       - 'packages/**'
 
 jobs:
   validate:
-    name: Build & Test Staff Portal
+    name: Typecheck & Test Mobile App
     runs-on: ubuntu-latest
 
     steps:
@@ -34,5 +34,8 @@ jobs:
       - name: Install Monorepo Dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build Web Bundle
-        run: pnpm --filter staff-portal build
+      - name: Run Typecheck
+        run: pnpm --filter mobile type-check
+
+      - name: Run Tests
+        run: pnpm --filter mobile test

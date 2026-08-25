@@ -1,9 +1,9 @@
 # Software Requirements Specification (SRS)
 # Wunabuy — Multi-Sided Mobile E-Commerce Platform
 
-**Document Version:** 1.1  
-**Date:** July 25, 2026  
-**Status:** Draft — Under Revision  
+**Document Version:** 1.2  
+**Date:** August 25, 2026  
+**Status:** Revised Draft — Launch Readiness Update  
 
 ---
 
@@ -49,22 +49,28 @@ Requirements are identified as FR-XXX (Functional) or NFR-XXX (Non-Functional) f
 
 ### 1.4 Project Scope
 
-**In Scope:**
-- Mobile app (iOS & Android via React Native) for Customers (Buyers, Sellers, Transport Providers)
+**In Scope (Launch MVP):**
+- Mobile app (iOS & Android via React Native) for Buyers, Sellers, and Transport Providers
 - Store KYC verification (identity, location, ownership proof)
-- Product catalog with inventory management
-- Advanced search with filters (price, location, quantity, quality, rating)
+- Product catalog with basic inventory management
+- Search with filters, category browsing, and basic product detail views
 - Smart Discovery engine: rules-based ranking by location, price, quality, and user behavior (Phase 1)
-- Escrow-based payment: mobile money (MTN MoMo, Orange Money) + card (Flutterwave/Paystack)
-- Real-time GPS delivery tracking via Google Maps
-- Review, rating & dispute resolution
-- Staff Portal (separate web application) with departmental dashboards, role-based access control (RBAC), and audit logging for company staff across Accounting/Finance, IT/Engineering, Customer Service, Operations, Compliance/Legal, and Marketing
-- Multi-language support (English, French, Swahili)
+- Escrow-based payment: mobile money (MTN MoMo, Orange Money) + card via Flutterwave/Paystack
+- Real-time GPS delivery tracking via Google Maps for in-city delivery flows
+- Review, rating, and dispute resolution for completed orders
+- Staff Portal (web application) with selective departmental dashboards, RBAC, and audit logging
+- Multi-language support for launch markets (English, French, Swahili)
 
 **Out of Scope (Phase 2+):**
-- Web storefront for customers, cross-border logistics, full ML recommendation models (collaborative filtering, dynamic pricing, demand prediction), loyalty program, B2B wholesale
+- Web storefront for customers
+- Cross-border logistics
+- Full ML recommendation models (collaborative filtering, dynamic pricing, demand prediction)
+- Loyalty program, B2B wholesale, group-buying social commerce
+- Advanced custom analytics beyond initial operational dashboards
 
-> **Scope change from v1.0:** AI/ML recommendations were previously fully out of scope. Per v1.1, lightweight rules-based Smart Discovery ranking is now in Phase 1 scope. Full ML model training, collaborative filtering, and dynamic pricing remain Phase 2. The standalone Admin Dashboard has been replaced by the comprehensive Staff Portal with departmental RBAC.
+> **Scope clarification for v1.2:** The platform remains intentionally scoped to a launch-ready MVP with a constrained operational footprint. The Staff Portal is required, but the launch scope prioritizes the department dashboards that support payments, KYC, customer support, delivery, and compliance. Full-feature marketing automation, advanced analytics, and broad ML-driven personalization remain Phase 2.
+
+> **Launch priority rule:** Requirements marked High may still be deferred if they materially increase operational risk or expand the launch scope. All critical trust, payment, KYC, delivery, and audit requirements remain mandatory for launch.
 
 ### 1.5 References
 
@@ -203,6 +209,19 @@ Company personnel who manage the platform through the Staff Portal web applicati
 | D2 | Supabase/Firebase availability |
 | D3 | SMS gateway (Africa's Talking/Twilio) for OTP |
 
+### 2.7 Launch Scope & Risk Controls
+
+The platform SHALL follow a constrained launch strategy. The following policy SHALL govern scope and implementation prioritization:
+
+| ID | Policy |
+|---|---|
+| L1 | Launch MUST prioritize trust, payment, KYC, core commerce, and delivery reliability over non-critical marketing or social features |
+| L2 | Non-MVP features SHALL be explicitly deferred and tracked in the backlog with clear owners |
+| L3 | Store acknowledgement, dispute timeouts, and escrow release rules SHALL be deterministic and auditable |
+| L4 | Role-based access SHALL be enforced server-side; UI restrictions alone are not sufficient |
+| L5 | Ranking heuristics SHALL include safety rules to prevent manipulation, stale ranking, and cold-start instability |
+| L6 | Operational dashboards SHALL be phase-gated so only required department workflows ship at launch |
+
 ---
 
 ## 3. System Features
@@ -287,16 +306,18 @@ PENDING_PAYMENT → PAID_ESCROW → PREPARING → READY_FOR_PICKUP → IN_TRANSI
 | FR-043 | Paystack as fallback gateway | Medium |
 | FR-044 | Escrow: funds held until delivery confirmation | High |
 | FR-045 | Push + in-app notification to store on new order | High |
-| FR-046 | Store must acknowledge within 2 hours or auto-cancel + refund | High |
-| FR-047 | Cancellation: by customer (pre-preparing), by store, auto-timeout | High |
-| FR-048 | Auto-refund on cancellation | High |
-| FR-049 | Full audit trail of order state transitions | High |
+| FR-046 | Store must acknowledge within 2 hours of order receipt or the order SHALL auto-cancel and refund the buyer | High |
+| FR-047 | Cancellation: by customer (pre-preparing), by store, or by timeout policy | High |
+| FR-048 | Auto-refund on cancellation SHALL be processed within the configured payout window and must record the reason in the ledger | High |
+| FR-049 | Full audit trail of order state transitions SHALL capture before/after state, actor, timestamp, and related metadata | High |
 | FR-050 | Customer order history with status | High |
 | FR-051 | Store order dashboard with filters | High |
 | FR-052 | Platform commission (configurable, default 5-10%) | High |
 | FR-053 | Store wallet: escrow balance, available balance, transactions, payouts | High |
-| FR-054 | Auto-release escrow after 48 hours if no dispute | High |
+| FR-054 | Auto-release escrow after 48 hours if no dispute is raised; if a dispute is raised, escrow remains frozen until the case is resolved | High |
 | FR-055 | Staff Portal: Finance staff can view escrow balances, approve/reject payouts, reconcile transactions | High |
+| FR-056 | Order timeout events SHALL be retried and logged to avoid silent failures in payment or acknowledgement workflows | Medium |
+| FR-057 | When a gateway payout or transfer fails, the system SHALL create a failed-payout record and notify staff for manual review | High |
 
 ### 3.6 Delivery & GPS Tracking
 
@@ -347,6 +368,9 @@ The Staff Portal is a dedicated web application for company personnel to manage 
 | FR-084 | IP allowlist for Staff Portal access (configurable by IT/System Admin) | Medium |
 | FR-085 | All staff actions logged to immutable audit trail (who, what, when, before/after) | High |
 | FR-086 | Audit log searchable and exportable (Super Admin, Compliance) | High |
+| FR-087 | Access control SHALL be enforced at the backend API layer; UI role restrictions SHALL NOT be treated as the sole enforcement mechanism | High |
+| FR-088 | A staff member without explicit permission SHALL be denied access even if assigned to a department with a different role | High |
+| FR-089 | Role assignment changes SHALL emit an audit event and invalidate active sessions if they reduce privileges or change access scope | Medium |
 
 #### 3.8.2 RBAC Permission Matrix
 
@@ -466,6 +490,10 @@ The Smart Discovery engine ranks and personalizes product discovery for buyers. 
 | FR-137 | Stock availability signal: out-of-stock items deprioritized or hidden | High |
 | FR-138 | Configurable weights: IT/Engineering staff can tune signal weights via Staff Portal | High |
 | FR-139 | A/B testing support: compare ranking weight configurations | Low |
+| FR-140 | Ranking SHALL include safety rules to prevent manipulation by fake reviews, duplicate listings, or inventory gaming | High |
+| FR-141 | Cold-start products SHALL receive a stable default score rather than being hidden indefinitely when behavior data is insufficient | Medium |
+| FR-142 | Ranking configuration changes SHALL be versioned and logged for rollback and audit review | High |
+| FR-143 | Fraudulent or suspended stores SHALL be excluded from Smart Discovery rankings regardless of product quality or pricing | High |
 
 **Scoring Formula (Phase 1):**
 ```
@@ -489,12 +517,12 @@ Default weights (configurable):
 
 | ID | Requirement | Priority |
 |---|---|---|
-| FR-140 | Collaborative filtering: recommend based on similar buyer behavior patterns | Phase 2 |
-| FR-141 | Content-based filtering: recommend based on product attribute similarity | Phase 2 |
-| FR-142 | Dynamic pricing suggestions: ML-driven price recommendations for sellers | Phase 2 |
-| FR-143 | Demand prediction: forecast demand by category, region, season | Phase 2 |
-| FR-144 | Personalized home feed: per-buyer curated product stream | Phase 2 |
-| FR-145 | Search relevance learning: ML model trained on search → purchase conversions | Phase 2 |
+| FR-144 | Collaborative filtering: recommend based on similar buyer behavior patterns | Phase 2 |
+| FR-145 | Content-based filtering: recommend based on product attribute similarity | Phase 2 |
+| FR-146 | Dynamic pricing suggestions: ML-driven price recommendations for sellers | Phase 2 |
+| FR-147 | Demand prediction: forecast demand by category, region, season | Phase 2 |
+| FR-148 | Personalized home feed: per-buyer curated product stream | Phase 2 |
+| FR-149 | Search relevance learning: ML model trained on search → purchase conversions | Phase 2 |
 
 ---
 
@@ -1105,6 +1133,7 @@ disputes (id UUID PK, order_id UUID FK→orders,
 |---|---|---|---|
 | 1.0 | 2026-07-25 | Agemo Technologies | Initial SRS — Full Document |
 | 1.1 | 2026-07-25 | Agemo Technologies | Added Staff Portal (6 departments, RBAC, audit logging); replaced standalone Admin Dashboard; added Smart Discovery engine (Phase 1 rules-based ranking, Phase 2 ML roadmap); renamed customer roles to Buyer/Seller/Transport; expanded schema (staff_accounts, staff_roles, audit_log, ranking_signals, user_behavior, support_tickets, disputes); expanded sprint plan (28→32 weeks); added Staff Portal tech stack; updated risk management |
+| 1.2 | 2026-08-25 | Agemo Technologies | Tightened launch scope to prioritized MVP requirements; added explicit operational rules for order acknowledgement, escrow release, payout failure handling, and dispute controls; formalized backend enforcement for RBAC; added ranking safety controls; clarified launch-readiness and backlog deferral policy |
 
 **Approval Signatures**
 

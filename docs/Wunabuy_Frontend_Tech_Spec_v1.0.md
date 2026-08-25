@@ -30,6 +30,12 @@
 18. [Performance Budgets & Optimization](#18-performance-budgets--optimization)
 19. [Accessibility Standards](#19-accessibility-standards)
 20. [Appendices](#20-appendices)
+21. [Security & Compliance](#21-security--compliance)
+22. [Observability & Monitoring](#22-observability--monitoring)
+23. [Environment Strategy & Release Management](#23-environment-strategy--release-management)
+24. [Error Handling & Resilience](#24-error-handling--resilience)
+25. [Frontend Governance & Standards](#25-frontend-governance--standards)
+26. [Quality Gates & Test Matrix](#26-quality-gates--test-matrix)
 
 ---
 
@@ -37,7 +43,7 @@
 
 ### 1.1 Frontend Landscape
 
-Wunabuy consists of two core client applications connected to a single unified Node.js/Supabase backend:
+Wunabuy consists of two core client applications connected to a single unified Laravel 13 backend:
 
 | Application | Platform | Tech Stack | User Target | Target Devices |
 |---|---|---|---|---|
@@ -54,6 +60,8 @@ Wunabuy consists of two core client applications connected to a single unified N
 6. **Strict Performance Budgets**: Mobile app cold start $\le 3\text{s}$, initial JS bundle size $\le 2\text{MB}$ (gzipped). Staff Portal initial load $\le 300\text{KB}$ (gzipped).
 
 ### 1.3 System Data Flow Architecture
+
+Wunabuy follows a hybrid runtime model: a lightweight public ingress layer for TLS, routing, and protocol handling, backed by a modular Laravel 13 application for business logic and a shared data plane powered by PostgreSQL, Redis, Laravel Reverb, and Flysystem storage services. This keeps the system operationally simple at launch while enabling future extraction of domain services without changing client contracts.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -76,18 +84,32 @@ Wunabuy consists of two core client applications connected to a single unified N
                                      │
                                      ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                    WUNABUY BACKEND INFRASTRUCTURE                           │
+│                    WUNABUY BACKEND RUNTIME TOPOLOGY                        │
+│                                                                             │
+│   ┌───────────────────────────────┐   ┌──────────────────────────────────┐ │
+│   │ Nginx / API Gateway           │   │ Laravel 13 Backend Services      │ │
+│   │ TLS, request routing, rate    │   │ Modular monolith: auth,          │ │
+│   │ limiting, protocol handling   │   │ commerce, payment, delivery,     │ │
+│   │ /api/v1/* and /api/v1/staff/ │   │ chat, KYC, staff, search, etc.  │ │
+│   └──────────────┬────────────────┘   └────────────────┬──────────────────┘ │
+│                  │                                      │                    │
+│                  └──────────────────────┬───────────────┘                    │
+│                                         ▼                                    │
+│                         ┌──────────────────────────────────────┐            │
+│                         │ Shared Backend Data & Services      │            │
+│                         │ PostgreSQL 15 + PostGIS + RLS      │            │
+│                         │ Redis cache / queues / pub-sub      │            │
+│                         │ Laravel Flysystem + Reverb WebSockets│            │
+│                         └──────────────────────────────────────┘            │
 │                                                                             │
 │   ┌─────────────────────────────────────────────────────────────────────┐   │
-│   │              Express API Gateway (Node.js/TypeScript)               │   │
-│   │           /api/v1/* (Mobile)   |   /api/v1/staff/* (Portal)         │   │
-│   └──────────────────────────────────┬──────────────────────────────────┘   │
-│                                      │                                      │
-│   ┌──────────────────────────────────▼──────────────────────────────────┐   │
-│   │           Supabase (PostgreSQL 15 + PostGIS + Realtime)             │   │
+│   │ Async Processing & Queue Workers                                    │   │
+│   │ Laravel Horizon Redis workers / scheduled tasks / webhooks          │   │
 │   └─────────────────────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
+
+This architecture keeps the public boundary thin and stable while moving business logic into a clear, domain-based server implementation. The Nginx layer acts as the ingress and protocol terminator; the Laravel layer owns business workflows; PostgreSQL and Redis provide the operational data plane.
 
 ---
 
@@ -100,7 +122,7 @@ Wunabuy consists of two core client applications connected to a single unified N
 - **State Management**:
   - Client state: Zustand 4.x (persisted with `@react-native-async-storage/async-storage`).
   - Server state / Caching: TanStack React Query 5.x.
-- **API & Networking**: Axios 1.x with refresh interceptors; `@supabase/supabase-js` for WebSockets.
+- **API & Networking**: Axios 1.x with refresh interceptors; `laravel-echo` + `pusher-js` for Laravel Reverb WebSockets.
 - **UI & Styling**: Custom Design System built with React Native `StyleSheet` driven by `@wunabuy/design-tokens`.
 - **Maps & Geolocation**: `react-native-maps` with Google Maps SDK; `expo-location` for background GPS.
 - **Secure Token Storage**: `react-native-keychain` (Encrypted Storage on Android / Keychain on iOS).
@@ -176,64 +198,97 @@ packages:
 
 ---
 
-## 4. Design System
+## 4. Design System & Aesthetics Architecture
 
-The Wunabuy design system provides unified visual consistency while catering to mobile high-contrast outdoor visibility and staff data density.
+The Wunabuy design system provides a **premium, state-of-the-art visual experience** designed to wow users at first glance. It balances rich aesthetics (vibrant color gradients, dark mode, glassmorphism, micro-animations) with high-contrast outdoor visibility for mobile users and high-density clarity for staff portal operators.
 
-### 4.1 Color Palette
+### 4.1 Typography System
+
+- **Display & Headings**: `Plus Jakarta Sans` (Google Fonts) — modern geometric typeface for titles, headers, and callouts.
+- **Body & Controls**: `Inter` (Google Fonts) — highly readable sans-serif optimized for mobile screens and data tables.
+
+| Token | Font Family | Size (sp/px) | Line Height | Weight | Mobile Application | Staff Portal Application |
+|---|---|---|---|---|---|---|
+| `display` | Plus Jakarta Sans | 32 | 40 | 700 (Bold) | Hero onboarding, sale banners | Page headlines, key KPI metrics |
+| `h1` | Plus Jakarta Sans | 24 | 32 | 700 (Bold) | Screen headers, store titles | Section headers, modal titles |
+| `h2` | Plus Jakarta Sans | 20 | 28 | 600 (SemiBold) | Card titles, section headers | Table section headers |
+| `h3` | Plus Jakarta Sans | 18 | 24 | 600 (SemiBold) | Product names, bottom sheets | Widget titles, tab labels |
+| `bodyLarge` | Inter | 16 | 24 | 500 (Medium) | Input labels, order status | Primary table cells |
+| `bodyMedium` | Inter | 14 | 20 | 400 (Regular) | Product descriptions, chat text | Standard table text |
+| `caption` | Inter | 12 | 16 | 500 (Medium) | Timestamps, badge labels | Dense metadata, footnotes |
+
+### 4.2 Color Palette & HSL Tokens
 
 ```typescript
 // packages/design-tokens/src/colors.ts
 export const colors = {
-  // Primary Brand Colors (Teal)
+  // Primary Emerald/Teal (Vibrant & Trustworthy)
   primary: {
-    50: '#E6F4F1',
-    100: '#C2E4DD',
-    200: '#8FCABE',
-    300: '#5BAFA0',
-    400: '#35968A',
-    500: '#1A7A6E', // Main Primary Teal
-    600: '#156358',
-    700: '#114E45',
-    800: '#0D3931',
-    900: '#082821',
+    50: '#F0FDF4',
+    100: '#DCFCE7',
+    200: '#BBF7D0',
+    300: '#86EFAC',
+    400: '#4ADE80',
+    500: '#0D9488', // Main Primary Teal
+    600: '#0F766E',
+    700: '#115E59',
+    800: '#134E4A',
+    900: '#042F2C',
+    gradient: 'linear-gradient(135deg, #0F766E 0%, #10B981 100%)',
   },
 
-  // Secondary Accent Colors (Warm Orange/Amber)
+  // Secondary Accent (Radiant Amber/Orange CTAs)
   accent: {
-    50: '#FFF8ED',
-    100: '#FEECDC',
-    200: '#FCD7B5',
-    300: '#FABF88',
-    400: '#F79E55',
-    500: '#EA8C04', // Vibrant Orange CTA / Sale Badge
-    600: '#C66C02',
-    700: '#9B4F02',
-    800: '#753904',
-    900: '#542704',
+    50: '#FFFBEB',
+    100: '#FEF3C7',
+    200: '#FDE68A',
+    300: '#FCD34D',
+    400: '#FBBF24',
+    500: '#F59E0B', // Radiant CTA & Sale Badge
+    600: '#D97706',
+    700: '#B45309',
+    800: '#92400E',
+    900: '#78350F',
+    gradient: 'linear-gradient(135deg, #F59E0B 0%, #ED6C02 100%)',
+  },
+
+  // Glassmorphism Surface Tokens
+  glass: {
+    light: {
+      background: 'rgba(255, 255, 255, 0.75)',
+      border: '1px solid rgba(255, 255, 255, 0.4)',
+      blur: 'backdrop-filter: blur(16px)',
+      shadow: '0px 8px 32px rgba(15, 118, 110, 0.08)',
+    },
+    dark: {
+      background: 'rgba(15, 23, 42, 0.80)',
+      border: '1px solid rgba(255, 255, 255, 0.1)',
+      blur: 'backdrop-filter: blur(16px)',
+      shadow: '0px 8px 32px rgba(0, 0, 0, 0.37)',
+    },
   },
 
   // Role Color Coding
   role: {
-    buyer: '#1A7A6E',       // Primary Teal
-    seller: '#2563EB',      // Deep Blue
-    transporter: '#EA8C04', // Orange
-    staff: '#4F46E5',       // Indigo
+    buyer: '#0D9488',       // Emerald Teal
+    seller: '#2563EB',      // Sapphire Blue
+    transporter: '#F59E0B', // Radiant Amber
+    staff: '#6366F1',       // Indigo
   },
 
-  // Neutrals
+  // Neutrals (Dark Mode Enabled)
   neutral: {
     0: '#FFFFFF',
-    50: '#F9FAFB',
-    100: '#F3F4F6',
-    200: '#E5E7EB',
-    300: '#D1D5DB',
-    400: '#9CA3AF',
-    500: '#6B7280',
-    600: '#4B5563',
-    700: '#374151',
-    800: '#1F2937',
-    900: '#111827',
+    50: '#F8FAFC',
+    100: '#F1F5F9',
+    200: '#E2E8F0',
+    300: '#CBD5E1',
+    400: '#94A3B8',
+    500: '#64748B',
+    600: '#475569',
+    700: '#334155',
+    800: '#1E293B',
+    900: '#0F172A', // Slate Dark Background
   },
 
   // Semantic Feedback
@@ -246,17 +301,22 @@ export const colors = {
 };
 ```
 
-### 4.2 Typography Scale
+### 4.3 Micro-Animations & Dynamic Interactions
 
-| Token | Size (sp/px) | Line Height | Weight | Mobile Usage | Staff Portal Usage |
-|---|---|---|---|---|---|
-| `display` | 32 | 40 | 700 (Bold) | Hero banners, onboarding | Page headlines |
-| `h1` | 24 | 32 | 700 (Bold) | Screen headers | Section headers |
-| `h2` | 20 | 28 | 600 (SemiBold) | Card titles, group headers | Table section titles |
-| `h3` | 18 | 24 | 600 (SemiBold) | Product names, modals | Widget titles |
-| `bodyLarge` | 16 | 24 | 400 / 500 | Body text, input values | Primary table text |
-| `bodyMedium` | 14 | 20 | 400 (Regular) | Secondary details, descriptions | Standard table text |
-| `caption` | 12 | 16 | 400 / 500 | Timestamps, badge text | Dense metadata, footnotes |
+1. **Mobile Animations (React Native Reanimated 3 + Moti)**:
+   - **Button Touch Feedback**: Micro-scale compression (`transform: [{ scale: 0.97 }]`) with haptic feedback (`expo-haptics`).
+   - **Skeleton Placeholders**: Animated shimmer pulse effect during data fetching.
+   - **Live GPS Tracking Marker**: Smooth 60fps interpolation of rider map marker movements along route polylines.
+   - **Bottom Sheet Modal**: Physics-based spring gesture entry/exit transitions.
+
+2. **Staff Portal Animations (Framer Motion)**:
+   - **Route Page Transitions**: Fade-and-slide entry (`initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}`).
+   - **Interactive Table Rows**: Subtle hover elevation and background highlight.
+   - **KPI Card Numbers**: Animated count-up metrics for revenue and transaction totals.
+
+### 4.4 Outdoor Ergonomics & High-Contrast Mode
+- **Transporter High-Contrast Mode**: Offers a dedicated high-contrast outdoor mode for riders operating under direct sunlight, raising contrast ratios to $\ge 7:1$.
+- **Touch Target Enforcements**: All mobile touchable elements maintain a minimum hit boundary of $48 \times 48\text{ dp}$.
 
 ---
 
@@ -484,13 +544,14 @@ export function createApiClient(config: ApiClientConfig): AxiosInstance {
 
 ---
 
-## 9. Real-Time Services (Supabase Realtime)
+## 9. Real-Time Services (Laravel Reverb WebSockets)
 
-Real-time channels handle order tracking updates, in-app messaging, and staff alerts.
+Real-time channels handle order tracking updates, in-app messaging, and staff alerts via `laravel-echo` connected to Laravel Reverb.
 
 ```typescript
 // packages/realtime/src/tracking-channel.ts
-import { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js';
+import Echo from 'laravel-echo';
+import Pusher from 'pusher-js';
 
 export interface GPSLocationUpdate {
   order_id: string;
@@ -502,19 +563,14 @@ export interface GPSLocationUpdate {
 }
 
 export function subscribeToDeliveryTracking(
-  supabase: SupabaseClient,
+  echo: Echo,
   orderId: string,
   onLocationUpdate: (update: GPSLocationUpdate) => void
-): RealtimeChannel {
-  const channel = supabase.channel(`tracking:${orderId}`);
-
-  channel
-    .on('broadcast', { event: 'gps_update' }, (payload) => {
-      onLocationUpdate(payload.payload as GPSLocationUpdate);
-    })
-    .subscribe();
-
-  return channel;
+) {
+  return echo.private(`tracking.${orderId}`)
+    .listen('.gps_update', (payload: GPSLocationUpdate) => {
+      onLocationUpdate(payload);
+    });
 }
 ```
 
@@ -830,6 +886,329 @@ export function formatCurrency(amount: number, currency: 'XAF' | 'NGN' | 'KES' =
 |---|---|---|---|
 | Lead Frontend Architect | Brandon Forku | *Brandon Forku* | July 26, 2026 |
 | Head of Product | Agemo Technologies Team | *Approved* | July 26, 2026 |
+
+---
+
+## 21. Security & Compliance
+
+### 21.1 Security Principles
+
+Wunabuy frontend applications shall be designed using a zero-trust mindset for all user-facing and staff-facing interfaces. Sensitive data in the browser, mobile device storage, and application state must be treated as potentially exposed to client-side tampering and must never be trusted without backend validation.
+
+The frontend shall enforce the following principles:
+
+- Token-based authentication only; no long-lived access tokens stored in plain text
+- Protection of sensitive user data in encrypted keystore or secure browser storage
+- Strict validation of all user input and server responses before rendering or mutation
+- No direct access to privileged administrative operations from client-side controls without backend authorization checks
+- Defense-in-depth for role-based logic, including route guards, component-level restrictions, and server-side enforcement
+- Secure handling of image, document, and location data before upload or persistence
+
+### 21.2 Authentication and Authorization Requirements
+
+For mobile clients:
+
+- Access tokens must be stored using platform secure storage (`react-native-keychain` on mobile)
+- Refresh tokens must be rotated on every renewal cycle
+- Session expiry and refresh failures must trigger automatic sign-out and redirect to login
+- Biometric authentication may be considered only where explicitly permitted and audited
+
+For staff portal:
+
+- All privileged routes must enforce RBAC checks at both the route and component levels
+- Session timeout must be enforced after inactivity windows, with a secure logout flow
+- MFA is mandatory for privileged staff roles and administrative access
+- Sensitive actions such as payout approvals, user suspension, and config mutation must require explicit confirmation and audit logging
+
+### 21.3 Data Protection and Privacy
+
+- Personal data must be masked in UI where appropriate, especially phone numbers, IDs, addresses, and payment references
+- Payment details must never be stored in local Zustand state or persistent storage
+- Sensitive config values and connection secrets must never be exposed in client bundles or environment files distributed to end users
+- Geographic and location metadata must be handled according to consent and privacy requirements, especially for delivery and KYC flows
+
+### 21.4 Compliance Expectations
+
+The Wunabuy frontend must support compliance obligations related to:
+
+- data minimization and least privilege access
+- secure collection, transmission, and retention of user identity data
+- auditability for money movement actions and enforcement decisions
+- accessibility compliance for public-facing commerce and staff operations
+- operational security for internal staff systems
+
+The engineering team must maintain signed-off security review procedures for any frontend change impacting authentication, payout logic, payments, user PII, or privileged staff functions.
+
+---
+
+## 22. Observability & Monitoring
+
+### 22.1 Goals
+
+The frontend must provide visibility into application health, user experience quality, and failure patterns across both mobile and web channels. The objective is to detect issues before they materially impact users and to support incident response with actionable telemetry.
+
+### 22.2 Required Monitoring Signals
+
+The platform shall capture the following signal categories:
+
+- Frontend crashes and unhandled exceptions
+- Network failures and retry patterns
+- Authentication failures and token refresh issues
+- Mutation queue backups and sync failure rates
+- API latency by endpoint and region
+- Bundle load anomalies and screen render performance regressions
+- User flow drop-off for critical journeys such as checkout, login, KYC approval, and delivery assignment
+
+### 22.3 Tooling
+
+Recommended tooling for production monitoring includes:
+
+- Sentry or equivalent for mobile/web error monitoring and release tracking
+- Application Performance Monitoring (APM) for API resilience and transaction timing
+- Log aggregation such as Datadog, Elastic, or OpenTelemetry-based pipelines
+- Real-time operational dashboards for queue health, auth errors, and critical flows
+- Session replay or frontend telemetry for high-risk user journeys when approved under privacy controls
+
+### 22.4 Alerting Rules
+
+The system must define alert thresholds for:
+
+- sustained API failure rate above agreed thresholds
+- crash-free session rate falling below target
+- login failure spikes for staff or buyers
+- offline write queue backlog exceeding expected queue length
+- delivery tracking signal loss beyond 10 minutes during active orders
+- unusual payment, payout, or escrow anomalies
+
+### 22.5 Post-Incident Review
+
+All major frontend incidents must trigger a structured postmortem with:
+
+- root cause analysis
+- impact summary
+- remediation steps
+- prevention and detection additions
+- ownership and target dates for closure
+
+---
+
+## 23. Environment Strategy & Release Management
+
+### 23.1 Environment Model
+
+The frontend shall operate across at least four environments:
+
+- Development: for engineering iteration and feature validation
+- QA/UAT: for business acceptance testing and regression validation
+- Staging: near-production environment mirroring operational config
+- Production: live environment for end users and staff operations
+
+Each environment must have isolated configuration values for API endpoints, feature flags, analytics keys, and environment-specific security settings.
+
+### 23.2 Configuration Management
+
+Configuration must be externalized and environment-aware. The following data must not be hard-coded into production builds:
+
+- API base URLs
+- analytics identifiers
+- feature flags
+- payment gateway references
+- staff role mappings
+- environment-specific secrets or certificates
+
+### 23.3 Deployment Strategy
+
+The frontend release process shall include:
+
+- automated build validation in CI
+- static analysis, linting, and type-checking
+- unit, integration, and E2E verification gates
+- staged deployment approval for production changes
+- rollback preparation for each release
+- release notes documenting user-facing and engineering changes
+
+For mobile apps:
+
+- production builds must be generated through approved channels such as Expo EAS or equivalent signed build pipelines
+- app versioning must follow semantic versioning and maintain compatibility with backend contracts
+- OTA updates may be permitted only when signing and compatibility checks are validated
+
+For the staff portal:
+
+- production deployment shall use a controlled CI/CD pipeline with health verification and smoke checks before final release
+- critical production changes must be behind feature flags where possible
+
+### 23.4 Release Governance
+
+No frontend release may be promoted to production without:
+
+- successful CI pipeline completion
+- test evidence covering affected flows
+- product owner approval for user-facing changes
+- security review for high-risk changes
+- rollback plan confirmation by engineering leadership
+
+---
+
+## 24. Error Handling & Resilience
+
+### 24.1 Frontend Error Philosophy
+
+All user-facing interfaces must degrade gracefully. A failing request, stale cache, or slow network condition should never lead to a blank screen, broken workflow, or data loss.
+
+### 24.2 Standard Error States
+
+The frontend must implement explicit UX states for:
+
+- network unavailable
+- request timeout
+- server error
+- validation error
+- unauthorized access
+- stale or empty data
+- pending background sync
+- conflict resolution while offline writes are replayed
+
+### 24.3 Retry and Backoff Rules
+
+- Retry logic should be centralized in the API client layer
+- Identity and auth-related requests should honor strict refresh and retry rules
+- Non-idempotent requests must not be auto-retried without clear safety checks
+- Retry policies must include exponential backoff and jitter for queue processing or flaky networks
+
+### 24.4 Offline Sync and Conflict Management
+
+When the mobile app is offline:
+
+- user actions must be queued locally
+- UI should clearly communicate pending sync state
+- conflicts must be resolved deterministically using server-authoritative status and timestamps
+- secondary operations must not silently fail without visible user feedback
+
+### 24.5 Recovery and Restoration
+
+The frontend should provide recovery paths such as:
+
+- refresh state without full logout
+- clear stale cache and retry
+- resume queued transaction processing automatically on reconnect
+- recover previously unsaved draft forms after session interruption
+
+---
+
+## 25. Frontend Governance & Standards
+
+### 25.1 Coding Standards
+
+The frontend codebase must follow explicit standards for consistency and maintainability across mobile and web apps.
+
+Mandatory standards include:
+
+- TypeScript-first development across all frontend packages
+- no `any` without justification and approval
+- shared domain types imported from `@wunabuy/types`
+- strict linting and formatting enforcement
+- consistent folder structure within features, modules, and shared services
+- meaningful naming conventions for utilities, hooks, stores, and derived state
+
+### 25.2 Package Ownership
+
+Each shared package in the monorepo must have a clear owner and maintainability boundary.
+
+Recommended ownership model:
+
+- `design-tokens`: design system ownership
+- `types`: API contract ownership with backend alignment
+- `api-client`: frontend API contract and request handling ownership
+- `realtime`: notification and streaming integration ownership
+- `utils`: shared business utilities and locale formatting rules
+
+### 25.3 Dependency Management
+
+- dependencies must be version-pinned or lockfile-managed through `pnpm`
+- major dependency upgrades must be tracked and reviewed in engineering change management
+- security advisories must be monitored and remediated within defined SLA windows
+- no unapproved third-party library may be introduced without security review
+
+### 25.4 Documentation Standards
+
+Every major frontend feature must have supporting documentation covering:
+
+- user flow and business purpose
+- technical assumptions and dependencies
+- edge cases and failure modes
+- accessibility and testing expectations
+- ownership and maintenance guidance
+
+### 25.5 Architecture Decision Records
+
+New technical decisions that materially affect architecture, platform behavior, auth model, data flow, or infrastructure integration must be documented in ADR format or equivalent engineering record. This helps future maintainers understand the rationale for key decisions.
+
+---
+
+## 26. Quality Gates & Test Matrix
+
+### 26.1 Testing Pyramid
+
+Wunabuy frontend quality shall follow a layered test system:
+
+- Unit tests for pure logic, utils, state reducers, formatting, and local utilities
+- Integration tests for hooks, API client behavior, mutations, forms, and component interactions
+- End-to-end tests for critical user journeys such as buyer checkout, seller KYC, staff login, and admin approvals
+- Manual QA for device-specific and visual validation, especially for mobile network variability
+
+### 26.2 Minimum Quality Gates
+
+Every frontend change must pass the following before merge or deployment:
+
+- lint validation
+- TypeScript type-checking
+- unit tests for changed behavior
+- integration tests for affected modules
+- UI or E2E regression check for critical flows
+- accessibility inspection for impacted components
+- security review for sensitive features
+
+### 26.3 Test Coverage Expectations
+
+The team should establish target thresholds such as:
+
+- Unit test coverage for utilities and logic: minimum 80%
+- Feature-level coverage for critical user flows: minimum 70%
+- High-risk modules (payments, auth, KYC, payouts): 100% of critical branches tested
+
+### 26.4 Critical User Journey Matrix
+
+| Area | Platform | Primary Checks |
+|---|---|---|
+| Buyer registration/login | Mobile | OTP, token refresh, validation, logout |
+| Product discovery and search | Mobile | filters, sorting, caching, empty states |
+| Cart and checkout | Mobile | subtotal logic, payment selection, queue sync |
+| Seller inventory management | Mobile | add/edit product, image upload, pricing validation |
+| Delivery assignment workflow | Mobile | GPS updates, order states, queue sync |
+| Staff authentication | Web | MFA, token expiry, RBAC checks |
+| KYC review and approval | Web | review queue, notifications, escalation path |
+| Finance approval and payouts | Web | reconciliation, ledger checks, audit trail |
+
+### 26.5 CI/CD Validation Requirements
+
+Every pull request must validate:
+
+- code compile and package integrity
+- app build generation for targeted platform
+- test pass matrix for affected workspaces
+- static analysis and lint checks
+- no unresolved accessibility violations in impacted component tree
+
+Production deployment must be blocked if any critical quality gate fails.
+
+---
+
+## Final Document Status
+
+This version of the Wunabuy Frontend Technical Specification is intended to represent a production-ready engineering baseline for the company. It establishes the design principles, technical architecture, operational expectations, security posture, quality gates, and governance needed to move from planning into controlled implementation and release management.
+
+The document remains a living specification and must be updated as the platform evolves, new product requirements are introduced, or significant technical decisions alter implementation strategy.
 
 ---
 **End of Document**

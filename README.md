@@ -1,126 +1,99 @@
-# Wunabuy 🛒
+# Wunabuy — Multi-Sided E-Commerce & Logistics Platform
 
-> Multi-sided mobile e-commerce platform for the African market — connecting customers, stores, and transport providers with escrow payments and live delivery tracking.
-
-[![Status](https://img.shields.io/badge/status-in%20development-orange)]()
-[![License](https://img.shields.io/badge/license-MIT-blue)]()
-
-## Overview
-
-Wunabuy is a Pinduoduo-style e-commerce platform adapted for African markets. It connects three user groups — **buyers**, **sellers (store owners)**, and **transport providers** — into an integrated marketplace with escrow-based payments, real-time GPS delivery tracking, and a company Staff Portal for internal operations.
-
-### Key Features
-
-- 🏪 **Store Marketplace** — KYC-verified stores upload products, manage inventory
-- 🔍 **Smart Discovery** — Rules-based ranking engine (location, price, quality, behavior)
-- 💰 **Escrow Payments** — Mobile money (MTN MoMo, Orange Money) + card via Flutterwave/Paystack
-- 📍 **Live Delivery Tracking** — Real-time GPS via Google Maps
-- 💬 **In-App Chat** — Real-time messaging between all users
-- 🎥 **Social Video Feed** (Phase 2) — Short-form product showcase videos with shoppable tags
-- 🏢 **Staff Portal** — 6 department dashboards with RBAC and audit logging
-
-## Project Structure
-
-```
-wunabuy/
-├── wunabuy-backend/          # Node.js + TypeScript + Express API
-├── wunabuy-mobile/           # React Native mobile app (Buyer, Seller, Transport)
-├── wunabuy-staff-portal/     # React web app for company staff
-├── docs/                     # SRS, backend tech spec, design docs
-├── supabase/                 # Database migrations, RLS policies, edge functions
-└── .github/                  # CI/CD workflows
-```
-
-## Documentation
-
-| Document | Description |
-|---|---|
-| [SRS v1.2](docs/Wunabuy_SRS_v1.2.md) | Software Requirements Specification — full feature set |
-| [Backend Tech Spec v1.0](docs/Wunabuy_Backend_Tech_Spec_v1.0.md) | Backend architecture, database schema, API spec |
-
-## Tech Stack
-
-| Layer | Technology |
-|---|---|
-| Mobile App | React Native, Zustand, React Query, React Navigation |
-| Staff Portal | React 18, Vite, TypeScript, Tailwind CSS, shadcn/ui |
-| Backend | Node.js 20, TypeScript, Express.js |
-| Database | PostgreSQL 15 + PostGIS (Supabase) |
-| Realtime | Supabase Realtime (WebSocket) |
-| Serverless | Firebase Cloud Functions |
-| Payments | Flutterwave + Paystack |
-| Maps | Google Maps Platform |
-| Video (Phase 2) | Mux / Cloudflare Stream |
-| CI/CD | GitHub Actions |
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js 20 LTS
-- PostgreSQL 15 with PostGIS
-- Redis 7
-- Supabase CLI
-- Firebase CLI
-
-### Backend Setup
-
-```bash
-cd wunabuy-backend
-npm install
-cp .env.example .env  # Fill in your values
-npm run migrate:local
-npm run seed:local
-npm run dev
-```
-
-### Mobile App Setup
-
-```bash
-cd wunabuy-mobile
-npm install
-cp .env.example .env  # Fill in your values
-npx expo start
-```
-
-### Staff Portal Setup
-
-```bash
-cd wunabuy-staff-portal
-npm install
-cp .env.example .env
-npm run dev
-```
-
-## Development
-
-### Branch Strategy
-
-- `main` — Production-ready code
-- `develop` — Integration branch
-- `feature/*` — Feature branches
-- `fix/*` — Bug fix branches
-- `release/*` — Release preparation
-
-### Commit Convention
-
-We use [Conventional Commits](https://www.conventionalcommits.org/):
-
-```
-feat(auth): add phone OTP verification
-fix(payment): handle gateway timeout gracefully
-docs(api): update endpoint documentation
-refactor(search): extract ranking service
-```
-
-## License
-
-MIT — See [LICENSE](LICENSE) file for details.
-
-## Team
-
-Built by **Agemo Technologies**
+An enterprise multi-team monorepo repository for the Wunabuy ecosystem, powering mobile applications, web operations, and backend micro-services.
 
 ---
 
-*This project is in active development. See the [SRS](docs/Wunabuy_SRS_v1.2.md) for the complete feature specification.*
+## 📁 Repository Structure
+
+```
+wunabuy/
+├── backend/               # Laravel 13 Modular Monolith (PHP 8.3+, Eloquent, Sanctum, Horizon, Reverb)
+│   ├── app/               # Core Application Service Providers & Middleware
+│   ├── Modules/           # nwidart/laravel-modules (Auth, Commerce, Payment, Delivery, etc.)
+│   ├── config/            # Horizon, Reverb, Sanctum, Permissions configuration
+│   ├── database/          # PostgreSQL DDL Migrations & Seeders
+│   └── routes/            # API v1 & Reverb WebSocket channels
+│
+├── mobile/                # Expo React Native App (iOS & Android for Buyers, Sellers, Transporters)
+│   ├── src/               # Dynamic role navigation, Zustand stores, React Query
+│   └── app.json           # Expo SDK 51 configuration
+│
+├── staff-portal/          # React Web Staff Portal (Vite 5 + Tailwind CSS + Radix UI)
+│   ├── src/               # Departmental Dashboards (Finance, Ops, CS, Compliance, Marketing, IT)
+│   └── vite.config.ts
+│
+├── packages/              # Shared Monorepo Packages
+│   ├── design-tokens/     # Core color palette, typography scales, spacing tokens
+│   ├── types/             # Shared TypeScript API contracts & domain interfaces
+│   ├── api-client/        # Shared Axios instance with Sanctum refresh handling
+│   ├── realtime/          # Laravel Reverb Echo WebSocket subscriptions
+│   └── utils/             # XAF currency formatting, date, phone, geo helpers
+│
+├── docs/                  # Architecture & Product Specifications
+│   ├── Wunabuy_PRD_v1.0.md                 # Product Requirements Document v1.1
+│   ├── Wunabuy_SRS_v1.2.md                 # Software Requirements Specification v1.2
+│   ├── Wunabuy_Backend_Tech_Spec_v1.0.md   # Canonical Laravel 13 Backend Technical Spec
+│   └── Wunabuy_Frontend_Tech_Spec_v1.0.md  # Canonical Frontend Technical Spec
+│
+├── .github/
+│   └── workflows/         # Enterprise CI/CD Pipelines
+│       ├── backend-ci.yml
+│       ├── mobile-ci.yml
+│       └── staff-portal-ci.yml
+│
+├── pnpm-workspace.yaml    # Monorepo Workspace Configuration
+├── turbo.json             # Turborepo Build Cache Configuration
+├── package.json           # Monorepo Root Scripts
+└── README.md
+```
+
+---
+
+## 🚀 Quick Start Guide
+
+### Prerequisites
+- **Node.js**: v20 LTS
+- **pnpm**: v9.0+
+- **PHP**: v8.3+
+- **Composer**: v2.6+
+- **PostgreSQL**: v15+ (with PostGIS extension)
+- **Redis**: v7.0+
+
+### Installation
+
+```bash
+# 1. Install monorepo frontend dependencies
+pnpm install
+
+# 2. Setup backend Laravel application
+cd backend
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate --seed
+```
+
+### Running Development Servers
+
+```bash
+# Run Mobile Expo Client
+pnpm dev:mobile
+
+# Run Staff Portal Web Client
+pnpm dev:staff
+
+# Run Backend Laravel Application
+pnpm dev:backend
+```
+
+---
+
+## 📚 Technical Documentation
+
+- 📄 [Product Requirements Document (PRD v1.1)](file:///c:/Users/HP/Desktop/wunabuy%20mobile%20project/wunabuy/docs/Wunabuy_PRD_v1.0.md)
+- 📄 [Software Requirements Specification (SRS v1.2)](file:///c:/Users/HP/Desktop/wunabuy%20mobile%20project/wunabuy/docs/Wunabuy_SRS_v1.2.md)
+- 📄 [Laravel 13 Backend Technical Specification (v1.0)](file:///c:/Users/HP/Desktop/wunabuy%20mobile%20project/wunabuy/docs/Wunabuy_Backend_Tech_Spec_v1.0.md)
+- 📄 [Frontend Technical Specification (v1.0)](file:///c:/Users/HP/Desktop/wunabuy%20mobile%20project/wunabuy/docs/Wunabuy_Frontend_Tech_Spec_v1.0.md)
+
+---

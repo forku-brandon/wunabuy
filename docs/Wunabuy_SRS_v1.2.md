@@ -80,8 +80,8 @@ Requirements are identified as FR-XXX (Functional) or NFR-XXX (Non-Functional) f
 | Amazon Marketplace | Third-party seller model, review system |
 | Flutterwave API | Payment gateway for African markets |
 | Google Maps Platform | Geolocation, tracking APIs |
-| Supabase | PostgreSQL, Auth, Realtime, RLS |
-| Firebase | Cloud Functions, FCM, Analytics |
+| Laravel 13 | PHP 8.3+, Eloquent, Sanctum, Horizon, Reverb |
+| PostgreSQL 15 | Relational DB, PostGIS spatial extension, JSONB |
 | OWASP RBAC | Role-based access control best practices |
 
 ---
@@ -103,7 +103,7 @@ Wunabuy is a multi-sided e-commerce ecosystem operated by a company. It bridges 
 |  +----+-----+   +----+-----+   +--------+---------+   +-------+-------+  |
 |       |              |                  |                      |         |
 |  +----+--------------+------------------+----------------------+-------+  |
-|  |                  BACKEND (Supabase + Firebase)                     |  |
+|  |                  BACKEND (Laravel 13 + Horizon)                    |  |
 |  |  Auth │ Orders │ Payment │ Search │ Smart Ranking │ KYC │ Track  |  |
 |  |  RBAC │ Audit Log │ Staff Roles │ Permissions                     |  |
 |  +--------------------------------------------------------------------+  |
@@ -175,8 +175,8 @@ Company personnel who manage the platform through the Staff Portal web applicati
 | Customer/Store/Transport App | iOS 15+, Android 10+ (React Native) |
 | Staff Portal | Modern web browser (Chrome 100+, Firefox 100+, Safari 15+, Edge 100+) |
 | Network | 3G/4G/LTE/WiFi (low-bandwidth optimized for mobile apps) |
-| Backend | Supabase (PostgreSQL + PostGIS) + Firebase Cloud Functions |
-| Storage | Supabase Storage for images/docs |
+| Backend | Laravel 13 (PostgreSQL 15 + PostGIS) + Laravel Horizon + Redis 7 |
+| Storage | Laravel Flysystem (AWS S3 / Supabase Storage driver) |
 | Notifications | FCM / APNs |
 | Maps | Google Maps SDK + Platform APIs |
 | Payments | Flutterwave (primary), Paystack (fallback) |
@@ -192,7 +192,7 @@ Company personnel who manage the platform through the Staff Portal web applicati
 | C5 | Multi-currency: XAF, NGN, KES, USD |
 | C6 | Regulatory: NDPR (Nigeria), DPA (Kenya) |
 | C7 | React Native for cross-platform mobile apps |
-| C8 | Supabase + Firebase backend |
+| C8 | Laravel 13 + Horizon + Redis backend |
 | C9 | Staff Portal: React (web) — separate codebase from mobile apps |
 | C10 | All staff actions logged in immutable audit trail |
 
@@ -206,7 +206,7 @@ Company personnel who manage the platform through the Staff Portal web applicati
 | A4 | Google Maps coverage adequate in target cities |
 | A5 | Company staff have access to desktop/laptop computers with modern browsers |
 | D1 | Flutterwave/Paystack API uptime |
-| D2 | Supabase/Firebase availability |
+| D2 | Laravel backend & PostgreSQL database availability |
 | D3 | SMS gateway (Africa's Talking/Twilio) for OTP |
 
 ---
@@ -220,7 +220,7 @@ Company personnel who manage the platform through the Staff Portal web applicati
 | FR-001 | Register via phone number with SMS OTP | High |
 | FR-002 | Register via email with password | High |
 | FR-003 | Social login (Google, Facebook) | Medium |
-| FR-004 | Role assignment on registration: Buyer, Seller (Store Owner), or Transport Provider | High |
+| FR-004 | Role choice on self-registration restricted to Buyer or Seller (Store Owner); Transporter role granted exclusively via Wunabuy Admin/Operations vetting approval in Staff Portal | High |
 | FR-005 | Multi-role support (e.g., Buyer + Transport Provider with separate verification) | Low |
 | FR-006 | JWT-based session management (access + refresh tokens) | High |
 | FR-007 | Password reset via SMS or email | High |
@@ -783,11 +783,11 @@ A short-form vertical video feature (mini TikTok) that allows verified sellers t
 | Geocoding | Address ↔ coordinates |
 | Places API | Address autocomplete |
 
-#### Backend (Supabase)
+#### Backend (Laravel 13)
 - PostgreSQL + PostGIS (geo queries)
-- Supabase Auth (phone/email/social for mobile apps; email+MFA for Staff Portal)
-- Realtime subscriptions (order status, tracking, staff notifications)
-- Row-Level Security (data isolation, staff permission enforcement)
+- Laravel Sanctum Auth (phone/email for mobile apps; email+MFA for Staff Portal)
+- Laravel Reverb WebSockets (order status, live tracking, staff notifications, real-time chat)
+- Database Data Isolation & Middleware (data isolation, staff permission enforcement)
 
 #### Notifications
 - Firebase Cloud Messaging (push — mobile apps)
@@ -799,7 +799,7 @@ A short-form vertical video feature (mini TikTok) that allows verified sellers t
 | Service | Purpose |
 |---|---|
 | Mux / Cloudflare Stream | Video hosting, transcoding (adaptive bitrate 360p/480p/720p), CDN delivery, analytics |
-| AWS S3 / Supabase Storage | Raw video upload storage before processing |
+| AWS S3 / Laravel Flysystem | Raw video upload storage before processing |
 | Google Cloud Video Intelligence / AWS Rekognition | Automated content moderation (pre-publish scan) |
 
 #### Content Moderation (Phase 2)
@@ -814,7 +814,7 @@ A short-form vertical video feature (mini TikTok) that allows verified sellers t
 | Protocol | Usage |
 |---|---|
 | HTTPS/REST | All API calls (mobile apps + Staff Portal) |
-| WebSocket (Supabase Realtime) | Live order/tracking updates, staff real-time alerts, real-time chat messaging |
+| WebSocket (Laravel Reverb) | Live order/tracking updates, staff real-time alerts, real-time chat messaging |
 | SMS | OTP, critical alerts |
 | FCM/APNs | Push notifications (mobile) |
 | Web Push | Staff Portal browser notifications |
