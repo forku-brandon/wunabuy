@@ -1,27 +1,14 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { BuyerTabParamList } from './types';
-import { ScreenContainer, Text, Button } from '../components/ui';
+import { ScreenContainer, Text } from '../components/ui';
 import { useThemeStore } from '../stores/theme.store';
-import { useAuthStore } from '../stores/auth.store';
 import { colors } from '@wunabuy/design-tokens';
-import { UserRole } from '@wunabuy/types';
+import { HomeScreen } from '../screens/buyer/HomeScreen';
+import { SearchScreen } from '../screens/buyer/SearchScreen';
+import { ProfileScreen } from '../screens/profile/ProfileScreen';
 
 const Tab = createBottomTabNavigator<BuyerTabParamList>();
-
-const BuyerHomeScreen = () => (
-  <ScreenContainer>
-    <Text variant="h1" bold>Buyer Home</Text>
-    <Text variant="bodyMedium" secondary>Explore verified products and stores near you</Text>
-  </ScreenContainer>
-);
-
-const BuyerSearchScreen = () => (
-  <ScreenContainer>
-    <Text variant="h1" bold>Explore Catalog</Text>
-    <Text variant="bodyMedium" secondary>Search by category, price, or radius</Text>
-  </ScreenContainer>
-);
 
 const BuyerCartScreen = () => (
   <ScreenContainer>
@@ -36,8 +23,6 @@ const BuyerOrdersScreen = () => (
     <Text variant="bodyMedium" secondary>Track active escrow deliveries in real-time</Text>
   </ScreenContainer>
 );
-
-import { ProfileScreen } from '../screens/profile/ProfileScreen';
 
 export const BuyerTabNavigator = () => {
   const { theme } = useThemeStore();
@@ -56,12 +41,11 @@ export const BuyerTabNavigator = () => {
         },
       }}
     >
-      <Tab.Screen name="BuyerHome" component={BuyerHomeScreen} options={{ title: 'Home' }} />
-      <Tab.Screen name="BuyerSearch" component={BuyerSearchScreen} options={{ title: 'Explore' }} />
+      <Tab.Screen name="BuyerHome" component={HomeScreen} options={{ title: 'Home' }} />
+      <Tab.Screen name="BuyerSearch" component={SearchScreen} options={{ title: 'Explore' }} />
       <Tab.Screen name="BuyerCart" component={BuyerCartScreen} options={{ title: 'Cart' }} />
       <Tab.Screen name="BuyerOrders" component={BuyerOrdersScreen} options={{ title: 'Orders' }} />
       <Tab.Screen name="BuyerProfile" component={ProfileScreen} options={{ title: 'Profile' }} />
     </Tab.Navigator>
   );
 };
-
