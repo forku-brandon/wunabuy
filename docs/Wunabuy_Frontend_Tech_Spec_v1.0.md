@@ -1,6 +1,15 @@
 # Wunabuy — Frontend Technical Specification
 ### Version 1.0 | July 2026
 
+> **Resolved Decisions (August 26, 2026):**
+> - Real-time: Laravel 13 + Laravel Reverb (all Supabase references removed)
+> - Navigation: React Navigation 6.x + Expo SDK 51
+> - Staff Portal: TanStack Router + shadcn/ui + Tailwind CSS
+> - Auth: Laravel Sanctum opaque Bearer tokens (not JWT)
+> - Currency: XAF-only for Phase 1 (Cameroon market)
+> - Commission: 3.5% platform fee
+> - Dark mode: Required in Phase 1
+
 **Prepared for:** Agemo Technologies Frontend Engineering Team  
 **Companion Documents:**  
 - Wunabuy Software Requirements Specification (SRS v1.0 / v1.2)  
@@ -18,7 +27,7 @@
 6. [Staff Portal — React Web Specification](#6-staff-portal--react-web-specification)
 7. [State Management & Data Fetching](#7-state-management--data-fetching)
 8. [API Integration Layer](#8-api-integration-layer)
-9. [Real-Time Services (Supabase Realtime)](#9-real-time-services-supabase-realtime)
+9. [Real-Time Services (Laravel Reverb)](#9-real-time-services-laravel-reverb)
 10. [Authentication & Session Management](#10-authentication--session-management)
 11. [Navigation Architecture](#11-navigation-architecture)
 12. [Offline Support & Write Queue Sync](#12-offline-support--write-queue-sync)
@@ -118,7 +127,7 @@ This architecture keeps the public boundary thin and stable while moving busines
 ### 2.1 Mobile App Stack (React Native)
 
 - **Framework**: React Native 0.74+ with Expo SDK 51+ (Hermes JS Engine enabled).
-- **Navigation**: React Navigation 6 (Native Stack, Bottom Tabs, Drawer).
+- **Navigation**: React Navigation 6.x (Native Stack, Bottom Tabs, Drawer).
 - **State Management**:
   - Client state: Zustand 4.x (persisted with `@react-native-async-storage/async-storage`).
   - Server state / Caching: TanStack React Query 5.x.
@@ -133,9 +142,9 @@ This architecture keeps the public boundary thin and stable while moving busines
 ### 2.2 Staff Portal Stack (React Web)
 
 - **Framework**: React 18.x + Vite 5.x.
-- **Routing**: React Router 6.x with route-level code splitting (`React.lazy`).
+- **Routing**: TanStack Router with route-level code splitting (`React.lazy`).
 - **State Management**: Zustand 4.x (Client/Auth) + TanStack React Query 5.x (Server).
-- **Styling & UI**: Tailwind CSS 3.x configured with design tokens, built on Radix UI primitives.
+- **Styling & UI**: shadcn/ui (built on Radix UI primitives) + Tailwind CSS.
 - **Data Tables**: TanStack Table (React Table v8) with virtualized scrolling via `@tanstack/react-virtual`.
 - **Data Visualization**: Recharts 2.x for financial metrics, transaction trends, and analytics.
 - **Forms & Validation**: `react-hook-form` + `zod` schemas.
@@ -152,7 +161,7 @@ wunabuy/
 │   ├── design-tokens/     # Colors, typography, spacing, shadows, motion
 │   ├── types/             # Shared TypeScript API & domain interfaces
 │   ├── api-client/        # Pre-configured Axios instance & endpoint methods
-│   ├── realtime/          # Supabase Realtime channels & event payload helpers
+│   ├── realtime/          # Laravel Reverb channels & event payload helpers
 │   └── utils/             # Currency (XAF/NGN), date, phone, and geo helpers
 ├── mobile/                # Expo React Native App (iOS/Android)
 ├── staff-portal/          # React Web App (Vite)
@@ -503,7 +512,7 @@ export function createApiClient(config: ApiClientConfig): AxiosInstance {
     timeout: 15000,
   });
 
-  // Request Interceptor: Attach JWT
+  // Request Interceptor: Attach Laravel Sanctum opaque Bearer token
   client.interceptors.request.use(async (reqConfig: InternalAxiosRequestConfig) => {
     const token = await config.getToken();
     if (token && reqConfig.headers) {
@@ -721,7 +730,7 @@ export default i18n;
 
 ## 14. Image & Media Handling
 
-Image uploads are compressed on-device before uploading to Supabase Storage to conserve user bandwidth (NFR-058 target: upload under 3s on 3G).
+Image uploads are compressed on-device before uploading to Laravel Flysystem to conserve user bandwidth (NFR-058 target: upload under 3s on 3G).
 
 ```typescript
 // mobile/src/utils/media.ts
@@ -871,7 +880,8 @@ describe('Cart Store', () => {
 
 ```typescript
 // packages/utils/src/format.ts
-export function formatCurrency(amount: number, currency: 'XAF' | 'NGN' | 'KES' = 'XAF'): string {
+// Note: XAF-only for Phase 1 launch (Cameroon market), multi-currency deferred.
+export function formatCurrency(amount: number, currency: 'XAF' = 'XAF'): string {
   const formatted = new Intl.NumberFormat('fr-FR', {
     maximumFractionDigits: 0,
   }).format(amount);

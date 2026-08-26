@@ -5,6 +5,20 @@
 **Date:** July 25, 2026  
 **Status:** Draft — Under Revision  
 
+> **Resolved Decisions (August 26, 2026):**
+> - Backend: Laravel 13 + Laravel Reverb (all Supabase/Firebase backend references removed)
+> - Commission: 3.5% default platform fee
+> - Escrow: 48-hour auto-release (no manual buyer confirm button)
+> - In-house delivery: Requires Buyer Digital Signature for escrow release
+> - Transport payment: Bundled in escrow (no COD)
+> - Seller withdrawal: Available 2 days after delivery confirmation, no minimum
+> - Transporter payout: Credited upon buyer delivery confirmation/signature
+> - Gateway fees on cancellation: Absorbed from merchant balance
+> - Order states: Added 'en_route' and 'resolved' to state machine
+> - Chat Phase 1: Basic 1-on-1 text + image only (group chat deferred to Phase 2)
+> - Currency: XAF-only for Phase 1
+> - Transporter onboarding: Via company website only (not in mobile app)
+
 ---
 
 ## Table of Contents
@@ -176,7 +190,7 @@ Company personnel who manage the platform through the Staff Portal web applicati
 | Staff Portal | Modern web browser (Chrome 100+, Firefox 100+, Safari 15+, Edge 100+) |
 | Network | 3G/4G/LTE/WiFi (low-bandwidth optimized for mobile apps) |
 | Backend | Laravel 13 (PostgreSQL 15 + PostGIS) + Laravel Horizon + Redis 7 |
-| Storage | Laravel Flysystem (AWS S3 / Supabase Storage driver) |
+| Storage | Laravel Flysystem (S3-compatible) |
 | Notifications | FCM / APNs |
 | Maps | Google Maps SDK + Platform APIs |
 | Payments | Flutterwave (primary), Paystack (fallback) |
@@ -280,7 +294,7 @@ KYC State Machine: `Registration → Pending → Under Review → Approved (Acti
 
 **Order State Machine:**
 ```
-PENDING_PAYMENT → PAID_ESCROW → PREPARING → READY_FOR_PICKUP → IN_TRANSIT → DELIVERED → RECEIVED → COMPLETED
+PENDING_PAYMENT → PAID_ESCROW → PREPARING → READY_FOR_PICKUP → EN_ROUTE → IN_TRANSIT → DELIVERED → RECEIVED → COMPLETED
                                                                                               ↓
                                                                                            DISPUTED → RESOLVED
 ```
@@ -299,7 +313,7 @@ PENDING_PAYMENT → PAID_ESCROW → PREPARING → READY_FOR_PICKUP → IN_TRANSI
 | FR-049 | Full audit trail of order state transitions | High |
 | FR-050 | Customer order history with status | High |
 | FR-051 | Store order dashboard with filters | High |
-| FR-052 | Platform commission (configurable, default 5-10%) | High |
+| FR-052 | Platform commission (configurable, default 3.5%) | High |
 | FR-053 | Store wallet: escrow balance, available balance, transactions, payouts | High |
 | FR-054 | Auto-release escrow after 48 hours if no dispute | High |
 | FR-055 | Staff Portal: Finance staff can view escrow balances, approve/reject payouts, reconcile transactions | High |
@@ -318,7 +332,7 @@ PENDING_PAYMENT → PAID_ESCROW → PREPARING → READY_FOR_PICKUP → IN_TRANSI
 | FR-063 | Status updates: En Route → Picked Up → In Transit → Delivered | High |
 | FR-064 | Delivery confirmation photo upload | Medium |
 | FR-065 | Fee calculation: Distance Matrix + base rate + vehicle multiplier | High |
-| FR-066 | Transport payment: bundled or COD | Medium |
+| FR-066 | Transport payment: bundled with escrow payment | Medium |
 | FR-067 | Delivery history with metrics | Medium |
 | FR-068 | Staff Portal: Operations staff can monitor active deliveries, reassign transporters, override fees | Medium |
 
@@ -514,7 +528,7 @@ Real-time messaging system enabling all user types to communicate. Chat is integ
 | ID | Requirement | Priority |
 |---|---|---|
 | FR-146 | One-on-one text chat between any two users (buyer↔seller, buyer↔buyer, seller↔seller) | High |
-| FR-147 | Real-time message delivery via WebSocket (Supabase Realtime) | High |
+| FR-147 | Real-time message delivery via WebSocket (Laravel Reverb WebSockets) | High |
 | FR-148 | Message types: text, image (compressed), product card (shared listing), order card (shared order status) | High |
 | FR-149 | Typing indicators | Medium |
 | FR-150 | Read receipts (configurable per user) | Medium |
@@ -529,6 +543,8 @@ Real-time messaging system enabling all user types to communicate. Chat is integ
 | FR-159 | Edit and delete message (within 5 minutes of sending, sender only) | Low |
 
 #### 3.11.2 Group Conversations
+
+> **Note:** Group chat functionality (FR-160 to FR-163) is deferred to Phase 2. Phase 1 includes 1-on-1 text + image messaging only.
 
 | ID | Requirement | Priority |
 |---|---|---|
@@ -860,7 +876,7 @@ A short-form vertical video feature (mini TikTok) that allows verified sellers t
 | NFR-014 | Staff Portal: JWT access 15min, refresh 8hr, MFA required |
 | NFR-015 | KYC and PII encrypted at rest (AES-256) |
 | NFR-016 | No card data stored (tokenization only) |
-| NFR-017 | Row-Level Security (RLS) on Supabase — enforced for both mobile and Staff Portal |
+| NFR-017 | Row-Level Security (RLS) on PostgreSQL — enforced for both mobile and Staff Portal |
 | NFR-018 | Rate limiting: 100 req/min general, 5 req/min OTP |
 | NFR-019 | Staff Portal MFA required (TOTP) |
 | NFR-020 | Security event logging |
@@ -951,7 +967,7 @@ stores (id UUID PK, owner_id UUID FK→users, store_name VARCHAR(255),
   description TEXT, category VARCHAR(100), location GEOGRAPHY(POINT),
   address_text TEXT, rating_avg DECIMAL(2,1), total_reviews INT,
   is_verified BOOLEAN, kyc_status ENUM('pending','under_review','approved','rejected'),
-  kyc_documents JSONB, commission_rate DECIMAL(3,1) DEFAULT 10.0,
+  kyc_documents JSONB, commission_rate DECIMAL(3,1) DEFAULT 3.5,
   created_at TIMESTAMPTZ)
 
 CREATE INDEX idx_stores_location ON stores USING GIST(location);
@@ -975,8 +991,8 @@ CREATE INDEX idx_products_created ON products(created_at DESC);
 ```sql
 orders (id UUID PK, customer_id UUID FK→users, store_id UUID FK→stores,
   transporter_id UUID FK→users, status ENUM('pending_payment','paid_escrow',
-  'preparing','ready_for_pickup','in_transit','delivered','received',
-  'completed','cancelled','disputed','refunded'),
+  'preparing','ready_for_pickup','en_route','in_transit','delivered','received',
+  'completed','cancelled','disputed','resolved','refunded'),
   items JSONB, subtotal DECIMAL(12,2), delivery_fee DECIMAL(12,2),
   commission DECIMAL(12,2), total DECIMAL(12,2),
   payment_method VARCHAR(50), payment_ref VARCHAR(255),
@@ -1227,17 +1243,17 @@ video_reports (id UUID PK, video_id UUID FK→videos,
 ### 6.2 Data Flow
 
 ```
-[Mobile Apps] --REST--> [Supabase API] --> [PostgreSQL]
+[Mobile Apps] --REST--> [Laravel 13 REST API] --> [PostgreSQL]
                               |
                         [Realtime] --WS--> [Store App]
                               |         --WS--> [Transporter App]
                               |         --WS--> [Buyer App (chat)]
                                 
-[Staff Portal] --REST--> [Supabase API] --> [PostgreSQL]
+[Staff Portal] --REST--> [Laravel 13 REST API] --> [PostgreSQL]
                               |
                         [Realtime] --WS--> [Staff Portal notifications]
 
-[Chat System] --WS--> [Supabase Realtime] --> [All mobile apps]
+[Chat System] --WS--> [Laravel Reverb WebSockets] --> [All mobile apps]
      |
      v
 [conversations, messages, blocked_users, chat_reports]
@@ -1247,7 +1263,7 @@ video_reports (id UUID PK, video_id UUID FK→videos,
      v
 [Search/Browse API] --ranked results--> [Mobile Apps]
 
-[Video Upload] --[raw video]--> [S3/Supabase Storage] --[transcode]--> [Mux/Cloudflare Stream]
+[Video Upload] --[raw video]--> [Laravel Flysystem (S3-compatible)] --[transcode]--> [Mux/Cloudflare Stream]
      |                                                                    |
      v                                                                    v
 [Content Moderation API] --flag/approve--> [videos table] --HLS/DASH--> [Mobile App Video Feed]
@@ -1273,7 +1289,7 @@ video_reports (id UUID PK, video_id UUID FK→videos,
 **Phase 1: Foundation (Weeks 1-8)**
 | Sprint | Deliverables |
 |---|---|
-| 1 | React Native scaffold, Supabase setup, CI/CD, design system |
+| 1 | React Native scaffold, Laravel setup, CI/CD, design system |
 | 2 | Phone/email auth, OTP, JWT, role-based profiles (Buyer/Seller/Transport) |
 | 3 | Multi-step KYC form, document upload, staff KYC review queue (Staff Portal base) |
 | 4 | Product CRUD, image upload, inventory tracking |
@@ -1331,22 +1347,22 @@ video_reports (id UUID PK, video_id UUID FK→videos,
 
 | Layer | Technology |
 |---|---|
-| Mobile App | React Native 0.76+, Zustand, React Query, React Navigation 7 |
+| Mobile App | React Native 0.74+ / Expo SDK 51+, Zustand, React Query, React Navigation 6.x |
 | Mobile UI | Custom design system + React Native Paper |
 | Maps | react-native-maps + Google Maps |
 | Staff Portal | React 18 + Vite, TypeScript, TanStack Router, TanStack Query |
 | Staff Portal UI | Tailwind CSS + shadcn/ui (component library) |
-| Database | Supabase (PostgreSQL 15 + PostGIS) |
-| Serverless | Firebase Cloud Functions |
-| Storage | Supabase Storage |
-| Push (Mobile) | Firebase Cloud Messaging |
+| Database | PostgreSQL 15 + PostGIS |
+| Background Jobs | Laravel Horizon Queue Workers |
+| Storage | Laravel Flysystem (S3-compatible) |
+| Push (Mobile) | Firebase Cloud Messaging (@react-native-firebase/messaging) |
 | Push (Staff Portal) | Web Push API |
 | SMS | Africa's Talking / Twilio |
 | Payment | Flutterwave + Paystack |
 | CI/CD | GitHub Actions + Fastlane (mobile) + Vite build (Staff Portal) |
 | Monitoring | Firebase Crashlytics + Analytics (mobile), Sentry (Staff Portal) |
-| Smart Ranking | PostgreSQL computed columns + scheduled Cloud Functions for signal refresh |
-| Chat (Real-time) | Supabase Realtime (WebSocket), react-native-gifted-chat, message pagination |
+| Smart Ranking | PostgreSQL computed columns + scheduled Laravel Horizon Queue Workers for signal refresh |
+| Chat (Real-time) | Laravel Reverb WebSockets, react-native-gifted-chat, message pagination |
 | Video Streaming (Phase 2) | Mux / Cloudflare Stream (hosting, transcoding, CDN, HLS/DASH) |
 | Video Player (Phase 2) | react-native-video, vertical pager (FlashList/RecyclerListView) |
 | Content Moderation (Phase 2) | Google Cloud Video Intelligence / AWS Rekognition |
@@ -1367,7 +1383,7 @@ video_reports (id UUID PK, video_id UUID FK→videos,
 | Audit log performance at scale | Low | Medium | Append-only with partitioning by month, async writes, archive after 90 days |
 | Staff adoption/training | Medium | Medium | Role-based onboarding, in-app contextual help, department-specific user guides |
 | Chat spam/abuse | Medium | Medium | Rate limiting, block/report, staff moderation, link scanning for off-platform payment fraud |
-| Chat WebSocket scalability | Low | Medium | Supabase Realtime handles WebSocket management; horizontal scaling via Supabase infrastructure |
+| Chat WebSocket scalability | Low | Medium | Laravel Reverb WebSockets handles WebSocket management; horizontal scaling via Redis |
 | Video storage/streaming cost (Phase 2) | Medium | Medium | Use managed service (Mux/Cloudflare Stream) with usage-based pricing; set per-seller upload limits; compress before upload |
 | Video content moderation backlog (Phase 2) | Medium | High | Automated pre-publish scan + auto-takedown on 5+ reports + adequate Operations staffing for manual review |
 | Video adoption by sellers (Phase 2) | Medium | Medium | In-app tutorial, simple recording UX, showcase early success stories, highlight product click-through analytics |
