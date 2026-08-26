@@ -4,6 +4,7 @@
   "description": "Wunabuy mobile app — React Native",
   "main": "index.ts",
   "scripts": {
+    "start": "expo start",
     "dev": "expo start",
     "android": "expo run:android",
     "ios": "expo run:ios",
