@@ -159,3 +159,4 @@ export const MOCK_PRODUCTS: Product[] = [
     updated_at: new Date().toISOString(),
   },
 ];
+

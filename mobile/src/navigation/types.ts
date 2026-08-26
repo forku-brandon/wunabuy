@@ -40,5 +40,7 @@ export type RootStackParamList = {
   ChatConversation: { conversationId: string };
   NotificationSettings: undefined;
   AddressManager: undefined;
+  StoreKYC: undefined;
+  AddEditProduct: { product?: any } | undefined;
 };
 
