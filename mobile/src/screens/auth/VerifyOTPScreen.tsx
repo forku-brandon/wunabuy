@@ -21,7 +21,7 @@ export const VerifyOTPScreen = ({ navigation, route }: any) => {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: ReturnType<typeof setInterval>;
     if (timer > 0) {
       interval = setInterval(() => setTimer((t) => t - 1), 1000);
     }
@@ -156,3 +156,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 });
+

@@ -16,6 +16,8 @@ export const radii = {
   full: 9999,
 } as const;
 
+export const borderRadius = radii;
+
 /**
  * Border widths
  */

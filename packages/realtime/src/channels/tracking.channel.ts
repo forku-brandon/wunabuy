@@ -5,7 +5,7 @@ import type { DriverLocation } from '@wunabuy/types';
  * Subscribe to live transporter GPS breadcrumb updates during active transit.
  */
 export function subscribeToDeliveryTracking(
-  echo: Echo,
+  echo: Echo<any>,
   orderId: string,
   onLocationUpdate: (update: DriverLocation) => void
 ) {
@@ -19,4 +19,3 @@ export function subscribeToDeliveryTracking(
     echo.leave(`tracking.${orderId}`);
   };
 }
-

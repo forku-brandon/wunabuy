@@ -5,7 +5,7 @@ import type { Message, TypingEvent, ReadReceiptEvent } from '@wunabuy/types';
  * Subscribe to real-time chat messages, typing indicators, and read receipts.
  */
 export function subscribeToChatChannel(
-  echo: Echo,
+  echo: Echo<any>,
   conversationId: string,
   onMessageSent: (message: Message) => void,
   onUserTyping?: (event: TypingEvent) => void,
@@ -33,4 +33,3 @@ export function subscribeToChatChannel(
     echo.leave(`chat.${conversationId}`);
   };
 }
-

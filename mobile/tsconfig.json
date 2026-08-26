@@ -2,7 +2,8 @@
   "extends": "../tsconfig.base.json",
   "compilerOptions": {
     "jsx": "react-native",
-    "ignoreDeprecations": "6.0",
+    "ignoreDeprecations": "5.0",
+    "resolveJsonModule": true,
     "paths": {
       "@/*": ["./src/*"]
     }

@@ -18,7 +18,7 @@ export interface PaymentConfirmedPayload {
  * Subscribe to private order lifecycle status changes.
  */
 export function subscribeToOrderUpdates(
-  echo: Echo,
+  echo: Echo<any>,
   orderId: string,
   onStatusUpdated: (payload: OrderStatusUpdatedPayload) => void,
   onPaymentConfirmed?: (payload: PaymentConfirmedPayload) => void
@@ -39,4 +39,3 @@ export function subscribeToOrderUpdates(
     echo.leave(`order.${orderId}`);
   };
 }
-

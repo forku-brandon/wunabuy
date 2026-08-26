@@ -42,7 +42,7 @@ export interface EchoClientConfig {
 /**
  * Factory to instantiate a configured Laravel Echo instance connected to Laravel Reverb.
  */
-export function createEchoClient(config: EchoClientConfig): Echo {
+export function createEchoClient(config: EchoClientConfig): Echo<any> {
   return new Echo({
     broadcaster: 'reverb',
     key: config.broadcasterKey,
@@ -83,4 +83,3 @@ export function createEchoClient(config: EchoClientConfig): Echo {
     },
   });
 }
-

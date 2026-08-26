@@ -20,3 +20,4 @@ export const WelcomeScreen = ({ navigation }: any) => {
     </ScreenContainer>
   );
 };
+

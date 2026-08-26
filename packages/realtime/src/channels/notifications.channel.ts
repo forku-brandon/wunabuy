@@ -5,7 +5,7 @@ import type { Notification } from '@wunabuy/types';
  * Subscribe to user-specific real-time notifications and alerts.
  */
 export function subscribeToUserNotifications(
-  echo: Echo,
+  echo: Echo<any>,
   userId: string,
   onNotificationReceived: (notification: Notification) => void
 ) {
@@ -19,4 +19,3 @@ export function subscribeToUserNotifications(
     echo.leave(`user.${userId}`);
   };
 }
-

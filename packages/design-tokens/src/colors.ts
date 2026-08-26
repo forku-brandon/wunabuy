@@ -104,3 +104,15 @@ export const glass = {
     shadow: '0 4px 6px rgba(0, 0, 0, 0.3)',
   },
 } as const;
+
+/**
+ * Composite colors object export
+ */
+export const colors = {
+  primary,
+  accent,
+  neutral,
+  semantic,
+  role,
+  glass,
+} as const;
