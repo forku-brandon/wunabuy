@@ -348,3 +348,4 @@ export const KYCPage: React.FC = () => {
     </PageContainer>
   );
 };
+

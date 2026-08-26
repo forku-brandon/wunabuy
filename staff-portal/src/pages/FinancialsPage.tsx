@@ -156,3 +156,4 @@ export const FinancialsPage: React.FC = () => {
     </PageContainer>
   );
 };
+

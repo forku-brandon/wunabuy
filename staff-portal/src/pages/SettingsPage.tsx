@@ -55,3 +55,4 @@ export const SettingsPage: React.FC = () => {
     </PageContainer>
   );
 };
+
