@@ -5,6 +5,7 @@
   "main": "index.ts",
   "scripts": {
     "start": "expo start",
+    "offline": "expo start --offline",
     "dev": "expo start",
     "android": "expo run:android",
     "ios": "expo run:ios",
