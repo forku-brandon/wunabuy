@@ -42,5 +42,7 @@ export type RootStackParamList = {
   AddressManager: undefined;
   StoreKYC: undefined;
   AddEditProduct: { product?: any } | undefined;
+  CheckoutPayment: { subtotal: number; addressId?: string };
+  OrderSuccess: { orderCode: string; totalAmount: number; provider: string; phone: string };
 };
 

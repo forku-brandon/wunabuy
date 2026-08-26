@@ -35,6 +35,8 @@ import { NotificationSettingsScreen } from '../screens/profile/NotificationSetti
 import { AddressManagerScreen } from '../screens/profile/AddressManagerScreen';
 import { StoreKYCScreen } from '../screens/seller/StoreKYCScreen';
 import { AddEditProductScreen } from '../screens/seller/AddEditProductScreen';
+import { CheckoutPaymentScreen } from '../screens/buyer/CheckoutPaymentScreen';
+import { OrderSuccessScreen } from '../screens/buyer/OrderSuccessScreen';
 
 export const RootNavigator = () => {
   const { isAuthenticated, activeRole } = useAuthStore();
@@ -85,6 +87,8 @@ export const RootNavigator = () => {
             <Stack.Screen name="AddressManager" component={AddressManagerScreen} />
             <Stack.Screen name="StoreKYC" component={StoreKYCScreen} />
             <Stack.Screen name="AddEditProduct" component={AddEditProductScreen} />
+            <Stack.Screen name="CheckoutPayment" component={CheckoutPaymentScreen} />
+            <Stack.Screen name="OrderSuccess" component={OrderSuccessScreen} />
           </>
         )}
       </Stack.Navigator>
