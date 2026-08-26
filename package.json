@@ -3,13 +3,14 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev:mobile": "pnpm --filter mobile dev",
-    "dev:staff": "pnpm --filter staff-portal dev",
+    "dev:mobile": "pnpm --filter wunabuy-mobile dev",
+    "dev:staff": "pnpm --filter wunabuy-staff-portal dev",
     "dev:backend": "cd backend && php artisan serve",
     "build": "turbo run build",
     "test": "turbo run test",
     "lint": "turbo run lint",
-    "type-check": "turbo run type-check"
+    "type-check": "turbo run type-check",
+    "clean": "turbo run clean"
   },
   "devDependencies": {
     "turbo": "^1.13.0",

@@ -1,0 +1,57 @@
+{
+  "expo": {
+    "name": "Wunabuy",
+    "slug": "wunabuy-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0D9488"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.wunabuy.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Wunabuy requires camera access to capture storefront photos, KYC documents, and proof of delivery photos.",
+        "NSPhotoLibraryUsageDescription": "Wunabuy requires photo library access to upload product and store images.",
+        "NSLocationWhenInUseUsageDescription": "Wunabuy requires your location to display nearby stores, calculate delivery distances, and enable live tracking.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Wunabuy requires background location access for transporters during active delivery fulfillments."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0D9488"
+      },
+      "package": "com.wunabuy.app",
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow Wunabuy to access your location in the background for active delivery tracking."
+        }
+      ]
+    ],
+    "scheme": "wunabuy",
+    "extra": {
+      "eas": {
+        "projectId": "wunabuy-mobile-app-id"
+      }
+    }
+  }
+}

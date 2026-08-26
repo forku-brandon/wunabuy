@@ -5,7 +5,9 @@
   "types": "src/index.ts",
   "private": true,
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "type-check": "tsc --noEmit",
+    "clean": "rimraf dist"
   },
   "devDependencies": {
     "typescript": "^5.4.0"

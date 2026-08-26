@@ -1,19 +1,22 @@
 {
+  "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "target": "ES2022",
-    "module": "commonjs",
-    "lib": ["ES2022"],
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true,
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true
+    "baseUrl": ".",
+    "paths": {
+      "@wunabuy/types": ["packages/types/src"],
+      "@wunabuy/utils": ["packages/utils/src"],
+      "@wunabuy/design-tokens": ["packages/design-tokens/src"],
+      "@wunabuy/api-client": ["packages/api-client/src"],
+      "@wunabuy/realtime": ["packages/realtime/src"]
+    }
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "references": [
+    { "path": "packages/design-tokens" },
+    { "path": "packages/types" },
+    { "path": "packages/utils" },
+    { "path": "packages/api-client" },
+    { "path": "packages/realtime" }
+  ],
+  "include": [],
+  "exclude": ["node_modules", "dist", "mobile", "staff-portal", "backend"]
 }

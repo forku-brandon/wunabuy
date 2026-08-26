@@ -1,0 +1,61 @@
+{
+  "common": {
+    "appName": "Wunabuy",
+    "welcome": "Bienvenue sur Wunabuy",
+    "tagline": "Commerce et Logistique Sécurisés par Escrow",
+    "continue": "Continuer",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "confirm": "Confirmer",
+    "loading": "Chargement...",
+    "retry": "Réessayer",
+    "search": "Rechercher des produits ou boutiques...",
+    "filter": "Filtrer",
+    "seeAll": "Voir Tout",
+    "noData": "Aucune donnée trouvée",
+    "errorOccurred": "Une erreur est survenue"
+  },
+  "roles": {
+    "buyer": "Acheteur",
+    "seller": "Vendeur",
+    "transporter": "Transporteur",
+    "switchRole": "Changer de contexte",
+    "activeRole": "Rôle Actif"
+  },
+  "auth": {
+    "loginTitle": "Entrez votre numéro de téléphone",
+    "loginSubtitle": "Nous vous enverrons un code de vérification à 6 chiffres par SMS.",
+    "phonePlaceholder": "+237 6XX XXX XXX",
+    "sendOTP": "Envoyer le code",
+    "verifyOTPTitle": "Vérifier le numéro",
+    "verifyOTPSubtitle": "Entrez le code à 6 chiffres envoyé au {{phone}}",
+    "otpPlaceholder": "123456",
+    "verify": "Vérifier & Continuer",
+    "resendOTP": "Renvoyer le code",
+    "registerTitle": "Créer votre compte",
+    "fullName": "Nom Complet",
+    "selectRole": "Je souhaite",
+    "roleBuy": "Acheter des produits et commander des livraisons",
+    "roleSell": "Vendre des produits et gérer ma boutique"
+  },
+  "buyerTabs": {
+    "home": "Accueil",
+    "search": "Explorer",
+    "cart": "Panier",
+    "orders": "Commandes",
+    "profile": "Profil"
+  },
+  "sellerTabs": {
+    "dashboard": "Tableau de Bord",
+    "products": "Produits",
+    "orders": "Commandes",
+    "wallet": "Portefeuille",
+    "profile": "Profil"
+  },
+  "transporterTabs": {
+    "jobs": "Offres",
+    "active": "Trajet Actif",
+    "earnings": "Gains",
+    "profile": "Profil"
+  }
+}

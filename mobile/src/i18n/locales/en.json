@@ -1,0 +1,61 @@
+{
+  "common": {
+    "appName": "Wunabuy",
+    "welcome": "Welcome to Wunabuy",
+    "tagline": "Escrow-Protected Commerce & Logistics",
+    "continue": "Continue",
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "loading": "Loading...",
+    "retry": "Retry",
+    "search": "Search products or stores...",
+    "filter": "Filter",
+    "seeAll": "See All",
+    "noData": "No data found",
+    "errorOccurred": "An error occurred"
+  },
+  "roles": {
+    "buyer": "Buyer",
+    "seller": "Seller",
+    "transporter": "Transporter",
+    "switchRole": "Switch Context",
+    "activeRole": "Active Role"
+  },
+  "auth": {
+    "loginTitle": "Enter your phone number",
+    "loginSubtitle": "We will send you a 6-digit verification code via SMS.",
+    "phonePlaceholder": "+237 6XX XXX XXX",
+    "sendOTP": "Send Verification Code",
+    "verifyOTPTitle": "Verify Phone Number",
+    "verifyOTPSubtitle": "Enter the 6-digit code sent to {{phone}}",
+    "otpPlaceholder": "123456",
+    "verify": "Verify & Continue",
+    "resendOTP": "Resend Code",
+    "registerTitle": "Create your account",
+    "fullName": "Full Name",
+    "selectRole": "I want to",
+    "roleBuy": "Buy Products & Request Deliveries",
+    "roleSell": "Sell Products & Manage Store"
+  },
+  "buyerTabs": {
+    "home": "Home",
+    "search": "Explore",
+    "cart": "Cart",
+    "orders": "Orders",
+    "profile": "Profile"
+  },
+  "sellerTabs": {
+    "dashboard": "Dashboard",
+    "products": "Products",
+    "orders": "Orders",
+    "wallet": "Wallet",
+    "profile": "Profile"
+  },
+  "transporterTabs": {
+    "jobs": "Job Feed",
+    "active": "Active Trip",
+    "earnings": "Earnings",
+    "profile": "Profile"
+  }
+}

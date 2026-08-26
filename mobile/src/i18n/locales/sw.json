@@ -1,0 +1,61 @@
+{
+  "common": {
+    "appName": "Wunabuy",
+    "welcome": "Karibu Wunabuy",
+    "tagline": "Biashara na Usafirishaji Uliolindwa na Escrow",
+    "continue": "Endelea",
+    "save": "Hifadhi",
+    "cancel": "Ghairi",
+    "confirm": "Thibitisha",
+    "loading": "Inapakia...",
+    "retry": "Jaribu tena",
+    "search": "Tafuta bidhaa au maduka...",
+    "filter": "Chuja",
+    "seeAll": "Ona Zote",
+    "noData": "Hakuna data iliyopatikana",
+    "errorOccurred": "Kosa limetokea"
+  },
+  "roles": {
+    "buyer": "Mnunuzi",
+    "seller": "Muuzaji",
+    "transporter": "Msafirishaji",
+    "switchRole": "Badilisha Jukumu",
+    "activeRole": "Jukumu la Sasa"
+  },
+  "auth": {
+    "loginTitle": "Weka nambari yako ya simu",
+    "loginSubtitle": "Tutakutumia msimbo wa uhakiki wa tarakimu 6 kwa SMS.",
+    "phonePlaceholder": "+237 6XX XXX XXX",
+    "sendOTP": "Tuma Msimbo",
+    "verifyOTPTitle": "Hakiki Nambari ya Simu",
+    "verifyOTPSubtitle": "Weka msimbo wa tarakimu 6 uliotumwa kwa {{phone}}",
+    "otpPlaceholder": "123456",
+    "verify": "Hakiki & Endelea",
+    "resendOTP": "Tuma Tena Msimbo",
+    "registerTitle": "Fungua akaunti yako",
+    "fullName": "Jina Kamili",
+    "selectRole": "Ninataka",
+    "roleBuy": "Kununua Bidhaa & Kuagiza Usafirishaji",
+    "roleSell": "Kuuza Bidhaa & Kusimamia Duka"
+  },
+  "buyerTabs": {
+    "home": "Nyumbani",
+    "search": "Tafuta",
+    "cart": "Kikapu",
+    "orders": "Agizo",
+    "profile": "Akaunti"
+  },
+  "sellerTabs": {
+    "dashboard": "Dashibodi",
+    "products": "Bidhaa",
+    "orders": "Maagizo",
+    "wallet": "Mkoba",
+    "profile": "Akaunti"
+  },
+  "transporterTabs": {
+    "jobs": "Kazi",
+    "active": "Safari ya Sasa",
+    "earnings": "Mapato",
+    "profile": "Akaunti"
+  }
+}
