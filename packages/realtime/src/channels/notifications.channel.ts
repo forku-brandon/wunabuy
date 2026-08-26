@@ -19,3 +19,4 @@ export function subscribeToUserNotifications(
     echo.leave(`user.${userId}`);
   };
 }
+

@@ -36,6 +36,9 @@ const ChatConversationScreen = ({ route }: any) => (
   </ScreenContainer>
 );
 
+import { NotificationSettingsScreen } from '../screens/profile/NotificationSettingsScreen';
+import { AddressManagerScreen } from '../screens/profile/AddressManagerScreen';
+
 export const RootNavigator = () => {
   const { isAuthenticated, activeRole } = useAuthStore();
   const { theme } = useThemeStore();
@@ -81,9 +84,12 @@ export const RootNavigator = () => {
             <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
             <Stack.Screen name="OrderTracking" component={OrderTrackingScreen} />
             <Stack.Screen name="ChatConversation" component={ChatConversationScreen} />
+            <Stack.Screen name="NotificationSettings" component={NotificationSettingsScreen} />
+            <Stack.Screen name="AddressManager" component={AddressManagerScreen} />
           </>
         )}
       </Stack.Navigator>
     </NavigationContainer>
   );
 };
+

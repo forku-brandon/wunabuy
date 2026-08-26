@@ -40,3 +40,4 @@ export function createWunabuyApiSDK(config: ApiClientConfig) {
     kyc: createKYCApi(client),
   };
 }
+

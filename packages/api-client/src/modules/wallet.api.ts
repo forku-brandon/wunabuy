@@ -40,3 +40,4 @@ export function createWalletApi(client: AxiosInstance) {
     },
   };
 }
+

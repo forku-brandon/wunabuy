@@ -76,3 +76,4 @@ export function createProductsApi(client: AxiosInstance) {
     },
   };
 }
+

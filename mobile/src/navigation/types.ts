@@ -38,4 +38,7 @@ export type RootStackParamList = {
   ProductDetail: { productId: string };
   OrderTracking: { orderId: string };
   ChatConversation: { conversationId: string };
+  NotificationSettings: undefined;
+  AddressManager: undefined;
 };
+

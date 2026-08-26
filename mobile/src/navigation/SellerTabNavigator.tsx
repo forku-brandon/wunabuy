@@ -37,20 +37,7 @@ const SellerWalletScreen = () => (
   </ScreenContainer>
 );
 
-const SellerProfileScreen = () => {
-  const { setActiveRole } = useAuthStore();
-  return (
-    <ScreenContainer>
-      <Text variant="h1" bold>Store Profile</Text>
-      <Text variant="bodyMedium" secondary style={{ marginBottom: 16 }}>Store settings and role management</Text>
-      <Button
-        title="Switch to Buyer Role"
-        variant="outline"
-        onPress={() => setActiveRole(UserRole.BUYER)}
-      />
-    </ScreenContainer>
-  );
-};
+import { ProfileScreen } from '../screens/profile/ProfileScreen';
 
 export const SellerTabNavigator = () => {
   const { theme } = useThemeStore();
@@ -73,7 +60,8 @@ export const SellerTabNavigator = () => {
       <Tab.Screen name="SellerProducts" component={SellerProductsScreen} options={{ title: 'Products' }} />
       <Tab.Screen name="SellerOrders" component={SellerOrdersScreen} options={{ title: 'Orders' }} />
       <Tab.Screen name="SellerWallet" component={SellerWalletScreen} options={{ title: 'Wallet' }} />
-      <Tab.Screen name="SellerProfile" component={SellerProfileScreen} options={{ title: 'Profile' }} />
+      <Tab.Screen name="SellerProfile" component={ProfileScreen} options={{ title: 'Profile' }} />
     </Tab.Navigator>
   );
 };
+

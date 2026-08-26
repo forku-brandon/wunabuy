@@ -30,20 +30,7 @@ const TransporterEarningsScreen = () => (
   </ScreenContainer>
 );
 
-const TransporterProfileScreen = () => {
-  const { setActiveRole } = useAuthStore();
-  return (
-    <ScreenContainer>
-      <Text variant="h1" bold>Driver Profile</Text>
-      <Text variant="bodyMedium" secondary style={{ marginBottom: 16 }}>Vehicle verification & role switching</Text>
-      <Button
-        title="Switch to Buyer Role"
-        variant="outline"
-        onPress={() => setActiveRole(UserRole.BUYER)}
-      />
-    </ScreenContainer>
-  );
-};
+import { ProfileScreen } from '../screens/profile/ProfileScreen';
 
 export const TransporterTabNavigator = () => {
   const { theme } = useThemeStore();
@@ -65,7 +52,8 @@ export const TransporterTabNavigator = () => {
       <Tab.Screen name="TransporterJobs" component={TransporterJobsScreen} options={{ title: 'Jobs' }} />
       <Tab.Screen name="TransporterActiveTrip" component={TransporterActiveTripScreen} options={{ title: 'Active Trip' }} />
       <Tab.Screen name="TransporterEarnings" component={TransporterEarningsScreen} options={{ title: 'Earnings' }} />
-      <Tab.Screen name="TransporterProfile" component={TransporterProfileScreen} options={{ title: 'Profile' }} />
+      <Tab.Screen name="TransporterProfile" component={ProfileScreen} options={{ title: 'Profile' }} />
     </Tab.Navigator>
   );
 };
+

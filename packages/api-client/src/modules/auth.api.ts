@@ -80,3 +80,4 @@ export function createAuthApi(client: AxiosInstance) {
     },
   };
 }
+
