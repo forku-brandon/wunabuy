@@ -1,13 +1,13 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "baseUrl": ".",
+    "ignoreDeprecations": "6.0",
     "paths": {
-      "@wunabuy/types": ["packages/types/src"],
-      "@wunabuy/utils": ["packages/utils/src"],
-      "@wunabuy/design-tokens": ["packages/design-tokens/src"],
-      "@wunabuy/api-client": ["packages/api-client/src"],
-      "@wunabuy/realtime": ["packages/realtime/src"]
+      "@wunabuy/types": ["./packages/types/src"],
+      "@wunabuy/utils": ["./packages/utils/src"],
+      "@wunabuy/design-tokens": ["./packages/design-tokens/src"],
+      "@wunabuy/api-client": ["./packages/api-client/src"],
+      "@wunabuy/realtime": ["./packages/realtime/src"]
     }
   },
   "references": [
