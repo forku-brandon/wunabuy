@@ -17,12 +17,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 // Shared Detail Screen Placeholders
 import { ProductDetailScreen } from '../screens/buyer/ProductDetailScreen';
 
-const OrderTrackingScreen = ({ route }: any) => (
-  <ScreenContainer>
-    <Text variant="h1" bold>Live Order Tracking</Text>
-    <Text variant="bodyMedium" secondary>Order ID: {route.params?.orderId}</Text>
-  </ScreenContainer>
-);
+import { OrderTrackingScreen } from '../screens/buyer/OrderTrackingScreen';
 
 const ChatConversationScreen = ({ route }: any) => (
   <ScreenContainer>

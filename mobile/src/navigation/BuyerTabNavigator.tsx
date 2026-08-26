@@ -1,28 +1,15 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { BuyerTabParamList } from './types';
-import { ScreenContainer, Text } from '../components/ui';
 import { useThemeStore } from '../stores/theme.store';
 import { colors } from '@wunabuy/design-tokens';
 import { HomeScreen } from '../screens/buyer/HomeScreen';
 import { SearchScreen } from '../screens/buyer/SearchScreen';
+import { BuyerCartScreen } from '../screens/buyer/BuyerCartScreen';
+import { BuyerOrdersScreen } from '../screens/buyer/BuyerOrdersScreen';
 import { ProfileScreen } from '../screens/profile/ProfileScreen';
 
 const Tab = createBottomTabNavigator<BuyerTabParamList>();
-
-const BuyerCartScreen = () => (
-  <ScreenContainer>
-    <Text variant="h1" bold>Cart & Checkout</Text>
-    <Text variant="bodyMedium" secondary>Your items in escrow checkout</Text>
-  </ScreenContainer>
-);
-
-const BuyerOrdersScreen = () => (
-  <ScreenContainer>
-    <Text variant="h1" bold>Order Tracking</Text>
-    <Text variant="bodyMedium" secondary>Track active escrow deliveries in real-time</Text>
-  </ScreenContainer>
-);
 
 export const BuyerTabNavigator = () => {
   const { theme } = useThemeStore();

@@ -1,36 +1,14 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { TransporterTabParamList } from './types';
-import { ScreenContainer, Text, Button } from '../components/ui';
 import { useThemeStore } from '../stores/theme.store';
-import { useAuthStore } from '../stores/auth.store';
 import { colors } from '@wunabuy/design-tokens';
-import { UserRole } from '@wunabuy/types';
+import { TransporterJobsScreen } from '../screens/transporter/TransporterJobsScreen';
+import { TransporterActiveTripScreen } from '../screens/transporter/TransporterActiveTripScreen';
+import { TransporterEarningsScreen } from '../screens/transporter/TransporterEarningsScreen';
+import { ProfileScreen } from '../screens/profile/ProfileScreen';
 
 const Tab = createBottomTabNavigator<TransporterTabParamList>();
-
-const TransporterJobsScreen = () => (
-  <ScreenContainer>
-    <Text variant="h1" bold>Delivery Jobs</Text>
-    <Text variant="bodyMedium" secondary>Available nearby pickup and drop-off offers</Text>
-  </ScreenContainer>
-);
-
-const TransporterActiveTripScreen = () => (
-  <ScreenContainer>
-    <Text variant="h1" bold>Active Delivery</Text>
-    <Text variant="bodyMedium" secondary>Google Maps turn-by-turn navigation and breadcrumbs</Text>
-  </ScreenContainer>
-);
-
-const TransporterEarningsScreen = () => (
-  <ScreenContainer>
-    <Text variant="h1" bold>Earnings & Mileage</Text>
-    <Text variant="bodyMedium" secondary>Completed deliveries and daily revenue</Text>
-  </ScreenContainer>
-);
-
-import { ProfileScreen } from '../screens/profile/ProfileScreen';
 
 export const TransporterTabNavigator = () => {
   const { theme } = useThemeStore();
@@ -56,4 +34,3 @@ export const TransporterTabNavigator = () => {
     </Tab.Navigator>
   );
 };
-
