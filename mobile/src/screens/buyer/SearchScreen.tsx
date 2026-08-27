@@ -1,25 +1,56 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
-import { ScreenContainer, Text, Input, Button, Badge } from '../../components/ui';
+import { View, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ScreenContainer, Text, Input, Badge } from '../../components/ui';
+import { CategoryChip } from '../../components/product/CategoryChip';
 import { ProductGrid } from '../../components/product/ProductGrid';
 import { FilterBottomSheet } from '../../components/product/FilterBottomSheet';
-import { Product } from '@wunabuy/types';
+import { Product, ProductCategory } from '@wunabuy/types';
 import { MOCK_PRODUCTS } from '../../services/mockProducts';
 import { ProductFilters } from '@wunabuy/api-client';
-import { colors, spacing, borderRadius } from '@wunabuy/design-tokens';
+import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
 
 export const SearchScreen = ({ navigation, route }: any) => {
-  const { theme } = useThemeStore();
+  const { theme, isDark } = useThemeStore();
+  const insets = useSafeAreaInsets();
   const [query, setQuery] = useState(route.params?.query ?? '');
+  const [selectedCategory, setSelectedCategory] = useState<string>(route.params?.category ?? 'All');
   const [filters, setFilters] = useState<ProductFilters>({
     radius_km: 25,
     sort_by: 'relevance',
   });
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
 
-  // Filter products based on search query & bottom sheet filters
+  const displayCategories = [
+    'All',
+    'Skincare',
+    'Makeup',
+    'Fragrance',
+    'Haircare',
+    'Tools',
+    'Offers',
+    ProductCategory.ELECTRONICS,
+    ProductCategory.FASHION,
+    ProductCategory.FOOD_GROCERIES,
+    ProductCategory.HOME_GARDEN,
+    ProductCategory.HEALTH_BEAUTY,
+    ProductCategory.AUTOMOTIVE,
+  ];
+
+  // Filter products based on selected category, search query & bottom sheet filters
   const searchResults = MOCK_PRODUCTS.filter((p) => {
+    // Category Manual Scroll Bar Filter
+    if (selectedCategory !== 'All') {
+      if (selectedCategory === 'Skincare' || selectedCategory === 'Makeup' || selectedCategory === 'Fragrance') {
+        if (p.category !== ProductCategory.HEALTH_BEAUTY) return false;
+      } else if (p.category !== selectedCategory) {
+        return false;
+      }
+    }
+
+    // Text Query Filter
     if (query.trim()) {
       const q = query.toLowerCase();
       const nameMatch = p.name.toLowerCase().includes(q);
@@ -59,20 +90,28 @@ export const SearchScreen = ({ navigation, route }: any) => {
 
   return (
     <ScreenContainer scrollable={false} padded={false}>
-      {/* Search Header */}
-      <View style={[styles.header, { backgroundColor: theme.card, borderBottomColor: theme.border }]}>
+      {/* Search Header Bar */}
+      <View
+        style={[
+          styles.header,
+          {
+            backgroundColor: theme.card,
+            borderBottomColor: theme.border,
+            paddingTop: Math.max(insets.top + spacing.xs, spacing.md),
+          },
+        ]}
+      >
         <View style={styles.searchRow}>
           <Input
-            placeholder="Search items or stores..."
+            placeholder="Search categories, items or stores..."
             value={query}
             onChangeText={setQuery}
-            autoFocus
             containerStyle={styles.searchInput}
-            leftIcon={<Text>🔍</Text>}
+            leftIcon={<Ionicons name="search-outline" size={20} color={theme.placeholder} />}
             rightIcon={
               query ? (
                 <TouchableOpacity onPress={() => setQuery('')}>
-                  <Text variant="bodyLarge" secondary>✕</Text>
+                  <Ionicons name="close-circle" size={18} color={theme.placeholder} />
                 </TouchableOpacity>
               ) : undefined
             }
@@ -84,18 +123,21 @@ export const SearchScreen = ({ navigation, route }: any) => {
             style={[
               styles.filterButton,
               {
-                backgroundColor: hasActiveFilters ? colors.primary[500] : theme.input,
+                backgroundColor: hasActiveFilters ? colors.primary[500] : theme.card,
                 borderColor: hasActiveFilters ? colors.primary[500] : theme.border,
               },
+              !isDark && shadows.sm,
             ]}
           >
-            <Text variant="bodyLarge" color={hasActiveFilters ? colors.neutral[0] : theme.text}>
-              ⚙️
-            </Text>
+            <Ionicons
+              name="options-outline"
+              size={20}
+              color={hasActiveFilters ? colors.neutral[0] : theme.text}
+            />
           </TouchableOpacity>
         </View>
 
-        {/* Active Filter Chips */}
+        {/* Active Filter Badges */}
         {hasActiveFilters && (
           <View style={styles.activeFiltersRow}>
             <Text variant="caption" secondary style={{ marginRight: 4 }}>
@@ -114,10 +156,31 @@ export const SearchScreen = ({ navigation, route }: any) => {
         )}
       </View>
 
-      {/* Results Header */}
+      {/* Manual Category Avatar Scroll Bar Section (Placed Directly Below Search Section) */}
+      <View style={styles.categoryScrollSection}>
+        <FlatList
+          horizontal
+          data={displayCategories}
+          keyExtractor={(cat) => cat}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.categoryScroll}
+          renderItem={({ item: cat }) => (
+            <CategoryChip
+              category={cat as any}
+              selected={selectedCategory === cat}
+              onPress={() => setSelectedCategory(cat)}
+            />
+          )}
+        />
+      </View>
+
+      {/* Results Count Header */}
       <View style={styles.resultsHeader}>
-        <Text variant="bodyMedium" bold secondary>
-          {searchResults.length} {searchResults.length === 1 ? 'result' : 'results'} found
+        <Text variant="bodyMedium" bold style={styles.resultsTitle}>
+          {selectedCategory === 'All' ? 'All Verified Categories' : selectedCategory}
+        </Text>
+        <Text variant="caption" secondary>
+          {searchResults.length} {searchResults.length === 1 ? 'item' : 'items'} available
         </Text>
       </View>
 
@@ -125,8 +188,8 @@ export const SearchScreen = ({ navigation, route }: any) => {
       <ProductGrid
         products={searchResults}
         onSelectProduct={handleSelectProduct}
-        emptyTitle="No Matching Products"
-        emptyDescription="We couldn't find any items matching your search criteria in Douala."
+        emptyTitle="No Category Items Found"
+        emptyDescription="Try selecting another category chip or clear your search filters."
       />
 
       <FilterBottomSheet
@@ -143,14 +206,13 @@ export const SearchScreen = ({ navigation, route }: any) => {
 const styles = StyleSheet.create({
   header: {
     paddingHorizontal: spacing.base,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.xs,
+    paddingBottom: spacing.xs + 2,
     borderBottomWidth: 1,
   },
   searchRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
+    gap: spacing.xs + 2,
   },
   searchInput: {
     flex: 1,
@@ -159,7 +221,7 @@ const styles = StyleSheet.create({
   filterButton: {
     width: 48,
     height: 48,
-    borderRadius: borderRadius.md,
+    borderRadius: 24,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
@@ -169,11 +231,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.xs,
     marginTop: spacing.xs,
-    marginBottom: spacing.xs,
+  },
+  categoryScrollSection: {
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(148, 163, 184, 0.15)',
+  },
+  categoryScroll: {
+    paddingHorizontal: spacing.base,
   },
   resultsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: spacing.base,
-    paddingVertical: spacing.sm,
+    paddingTop: spacing.sm + 2,
+    paddingBottom: spacing.xs,
+  },
+  resultsTitle: {
+    fontSize: 16,
   },
 });
-
