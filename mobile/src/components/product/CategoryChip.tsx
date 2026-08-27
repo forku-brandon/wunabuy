@@ -17,7 +17,7 @@ const CATEGORY_ICONS: Record<string, string> = {
   Skincare: '🧴',
   Makeup: '💄',
   Fragrance: '🌸',
-  Haircare: '🧴',
+  Haircare: '🧼',
   Tools: '🖌️',
   Offers: '🏷️',
   [ProductCategory.ELECTRONICS]: '💻',
@@ -51,11 +51,11 @@ export const CategoryChip: React.FC<CategoryChipProps> = ({
           styles.circle,
           {
             backgroundColor: selected
-              ? '#E07A5F'
+              ? colors.primary[500]
               : isDark
               ? colors.neutral[800]
-              : '#FCEADE',
-            borderColor: selected ? '#E07A5F' : 'transparent',
+              : colors.primary[50],
+            borderColor: selected ? colors.primary[500] : 'transparent',
           },
           !selected && !isDark && shadows.sm,
         ]}
@@ -66,7 +66,7 @@ export const CategoryChip: React.FC<CategoryChipProps> = ({
       <Text
         variant="caption"
         bold={selected}
-        color={selected ? '#E07A5F' : theme.text}
+        color={selected ? colors.primary[500] : theme.text}
         align="center"
         numberOfLines={1}
         style={styles.label}

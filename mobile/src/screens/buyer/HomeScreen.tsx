@@ -57,12 +57,12 @@ export const HomeScreen = ({ navigation }: any) => {
 
   const ListHeader = (
     <>
-      {/* Top Header Row (Matching media_1787825633605.png) */}
+      {/* Top Header Row */}
       <View
         style={[
           styles.topHeader,
           {
-            backgroundColor: isDark ? theme.background : '#FAF6F0',
+            backgroundColor: theme.background,
             paddingTop: Math.max(insets.top + spacing.xs, spacing.md),
           },
         ]}
@@ -78,14 +78,14 @@ export const HomeScreen = ({ navigation }: any) => {
           </TouchableOpacity>
 
           <View style={styles.greetingStack}>
-            <Text variant="caption" color="#E07A5F" bold style={styles.greetingEyebrow}>
+            <Text variant="caption" color={colors.primary[500]} bold style={styles.greetingEyebrow}>
               Hello, {firstName}! ✨
             </Text>
             <Text variant="h1" bold style={styles.greetingTitle}>
-              Discover Beauty
+              Discover Products
             </Text>
             <Text variant="caption" secondary style={styles.greetingSubtitle}>
-              Premium beauty &amp; escrow marketplace
+              48-hour escrow protection on every purchase
             </Text>
           </View>
         </View>
@@ -122,12 +122,12 @@ export const HomeScreen = ({ navigation }: any) => {
         </View>
       </View>
 
-      {/* Active Interactive Auto-Scrolling Hero Banner Carousel (Matching media_1787825633605.png) */}
+      {/* Active Interactive Auto-Scrolling Hero Banner Carousel */}
       <View style={styles.carouselSection}>
         <HeroCarousel onPressBanner={() => navigation.navigate('BuyerSearch')} />
       </View>
 
-      {/* Search Bar & Filter Button (Matching media_1787825633605.png) */}
+      {/* Search Bar & Filter Button */}
       <View style={styles.searchRow}>
         <TouchableOpacity
           activeOpacity={0.9}
@@ -152,7 +152,7 @@ export const HomeScreen = ({ navigation }: any) => {
         </TouchableOpacity>
       </View>
 
-      {/* Shop by Category Circular Avatar Slider (Matching media_1787825633605.png) */}
+      {/* Shop by Category Circular Avatar Slider */}
       <View style={styles.categorySection}>
         <FlatList
           horizontal
@@ -170,17 +170,17 @@ export const HomeScreen = ({ navigation }: any) => {
         />
       </View>
 
-      {/* "Best Sellers" Horizontal Scroll Section (Matching media_1787825633605.png) */}
+      {/* "Best Sellers" Horizontal Scroll Section */}
       <View style={styles.bestSellersHeader}>
         <Text variant="h2" bold style={styles.sectionTitleText}>
           Best Sellers
         </Text>
         <TouchableOpacity activeOpacity={0.8} onPress={() => navigation.navigate('BuyerSearch')}>
           <View style={styles.viewAllRow}>
-            <Text variant="bodyMedium" bold color="#2C221E">
+            <Text variant="bodyMedium" bold color={colors.primary[500]}>
               View All
             </Text>
-            <Ionicons name="arrow-forward" size={14} color="#2C221E" style={{ marginLeft: 3 }} />
+            <Ionicons name="arrow-forward" size={14} color={colors.primary[500]} style={{ marginLeft: 3 }} />
           </View>
         </TouchableOpacity>
       </View>
@@ -200,11 +200,11 @@ export const HomeScreen = ({ navigation }: any) => {
         )}
       />
 
-      {/* "Special Offer" Promo Card (Matching media_1787825633605.png) */}
+      {/* "Special Offer" Promo Card */}
       <View style={styles.specialOfferSection}>
-        <View style={[styles.offerCard, { backgroundColor: isDark ? '#1E293B' : '#FDF4EC' }]}>
+        <View style={[styles.offerCard, { backgroundColor: isDark ? '#1E293B' : colors.primary[50] }]}>
           <View style={styles.offerTextCol}>
-            <Text variant="caption" bold color="#E07A5F" style={styles.offerEyebrow}>
+            <Text variant="caption" bold color={colors.primary[500]} style={styles.offerEyebrow}>
               Special Offer
             </Text>
             <Text variant="h1" bold style={styles.offerTitle}>
@@ -219,7 +219,7 @@ export const HomeScreen = ({ navigation }: any) => {
               onPress={() => navigation.navigate('BuyerSearch')}
               style={styles.grabNowBtn}
             >
-              <Text variant="caption" bold color="#2C221E" style={styles.grabNowText}>
+              <Text variant="caption" bold color={colors.neutral[900]} style={styles.grabNowText}>
                 Grab Now
               </Text>
               <View style={styles.grabArrowCircle}>
@@ -236,36 +236,58 @@ export const HomeScreen = ({ navigation }: any) => {
               resizeMode="cover"
             />
             <View style={styles.discountBadgeCircle}>
-              <Text variant="caption" bold color="#E07A5F" style={styles.discountPercentText}>
+              <Text variant="caption" bold color={colors.primary[500]} style={styles.discountPercentText}>
                 30%
               </Text>
-              <Text variant="caption" bold color="#E07A5F" style={styles.discountOffText}>
+              <Text variant="caption" bold color={colors.primary[500]} style={styles.discountOffText}>
                 OFF
               </Text>
             </View>
           </View>
         </View>
       </View>
+
+      {/* Explore All Products Catalog Grid Header (Below Special Offer Section) */}
+      <View style={styles.gridSectionHeader}>
+        <Text variant="h2" bold style={styles.sectionTitleText}>
+          Explore Verified Items
+        </Text>
+        <Text variant="caption" secondary>
+          Sorted by spatial distance &amp; store rating in Douala
+        </Text>
+      </View>
     </>
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: isDark ? theme.background : '#FAF6F0' }]}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       <FlatList
-        data={[]}
-        keyExtractor={() => 'dummy'}
-        renderItem={null}
-        ListHeaderComponent={ListHeader}
-        showsVerticalScrollIndicator={false}
+        data={filteredProducts}
+        keyExtractor={(item) => item.id}
+        numColumns={2}
+        columnWrapperStyle={styles.columnWrapper}
         contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+        ListHeaderComponent={ListHeader}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            tintColor="#E07A5F"
-            colors={['#E07A5F']}
+            tintColor={colors.primary[500]}
+            colors={[colors.primary[500]]}
           />
         }
+        ListEmptyComponent={
+          <EmptyState
+            title="No Products Found"
+            description="Try adjusting your category filter or check back later."
+          />
+        }
+        renderItem={({ item }) => (
+          <View style={styles.cardWrapper}>
+            <ProductCard product={item} onPress={handleSelectProduct} />
+          </View>
+        )}
       />
     </View>
   );
@@ -306,7 +328,6 @@ const styles = StyleSheet.create({
   greetingTitle: {
     fontSize: 22,
     lineHeight: 26,
-    color: '#2C221E',
   },
   greetingSubtitle: {
     fontSize: 10,
@@ -329,7 +350,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 2,
     right: 2,
-    backgroundColor: '#E07A5F',
+    backgroundColor: colors.primary[500],
     borderRadius: borderRadius.full,
     minWidth: 16,
     height: 16,
@@ -395,7 +416,6 @@ const styles = StyleSheet.create({
   },
   sectionTitleText: {
     fontSize: 20,
-    color: '#2C221E',
   },
   viewAllRow: {
     flexDirection: 'row',
@@ -408,7 +428,7 @@ const styles = StyleSheet.create({
   specialOfferSection: {
     paddingHorizontal: spacing.base,
     marginTop: spacing.md,
-    marginBottom: spacing.xl,
+    marginBottom: spacing.lg,
   },
   offerCard: {
     borderRadius: 24,
@@ -432,7 +452,6 @@ const styles = StyleSheet.create({
   offerTitle: {
     fontSize: 22,
     lineHeight: 26,
-    color: '#2C221E',
     marginBottom: 2,
   },
   offerSub: {
@@ -457,7 +476,7 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: '#E07A5F',
+    backgroundColor: colors.primary[500],
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -491,7 +510,19 @@ const styles = StyleSheet.create({
     fontSize: 9,
     lineHeight: 10,
   },
+  gridSectionHeader: {
+    paddingHorizontal: spacing.base,
+    marginTop: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  columnWrapper: {
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.base,
+  },
   listContent: {
     paddingBottom: spacing['3xl'],
+  },
+  cardWrapper: {
+    width: '48%',
   },
 });

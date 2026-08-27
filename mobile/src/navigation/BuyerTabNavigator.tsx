@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BuyerTabParamList } from './types';
 import { useThemeStore } from '../stores/theme.store';
-import { colors, shadows } from '@wunabuy/design-tokens';
+import { colors } from '@wunabuy/design-tokens';
 import { HomeScreen } from '../screens/buyer/HomeScreen';
 import { SearchScreen } from '../screens/buyer/SearchScreen';
 import { BuyerCartScreen } from '../screens/buyer/BuyerCartScreen';
@@ -25,7 +25,7 @@ export const BuyerTabNavigator = () => {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarActiveTintColor: '#E07A5F',
+        tabBarActiveTintColor: colors.primary[500],
         tabBarInactiveTintColor: theme.textSecondary,
         tabBarStyle: {
           backgroundColor: theme.card,
@@ -82,7 +82,7 @@ export const BuyerTabNavigator = () => {
         options={{
           title: 'Wishlist',
           tabBarBadge: itemCount > 0 ? itemCount : 2,
-          tabBarBadgeStyle: { backgroundColor: '#E07A5F' },
+          tabBarBadgeStyle: { backgroundColor: colors.primary[500] },
         }}
       />
       <Tab.Screen

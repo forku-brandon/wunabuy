@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { View, Image, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Product, QualityTier } from '@wunabuy/types';
+import { Product } from '@wunabuy/types';
 import { formatXAF } from '@wunabuy/utils';
-import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
+import { colors, spacing, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
 import { Text } from '../ui/Text';
 import { useCartStore } from '../../stores/cart.store';
@@ -56,7 +56,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       ]}
     >
       {/* Product Image Stage */}
-      <View style={[styles.imageContainer, { backgroundColor: isDark ? colors.neutral[800] : '#FAF5F0' }]}>
+      <View style={[styles.imageContainer, { backgroundColor: isDark ? colors.neutral[800] : colors.primary[50] }]}>
         <Image
           source={imageError || !mainImage ? PLACEHOLDER : { uri: mainImage }}
           style={styles.image}
@@ -76,7 +76,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           <Ionicons
             name={isFavorite ? 'heart' : 'heart-outline'}
             size={15}
-            color={isFavorite ? '#E07A5F' : theme.textSecondary}
+            color={isFavorite ? colors.semantic.error[500] : theme.textSecondary}
           />
         </TouchableOpacity>
       </View>
@@ -88,7 +88,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         </Text>
 
         <Text variant="caption" secondary numberOfLines={1} style={styles.subtitleText}>
-          {product.category || 'Brightening & Glow'}
+          {product.category || 'Verified Product'}
         </Text>
 
         {/* 5-Star Rating Row */}
@@ -101,16 +101,16 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           </Text>
         </View>
 
-        {/* Price & Terracotta Circular Quick Add Button */}
+        {/* Price & Primary Teal Circular Quick Add Button */}
         <View style={styles.priceRow}>
-          <Text variant="bodyLarge" bold color={theme.text}>
+          <Text variant="bodyLarge" bold color={colors.primary[500]}>
             {formatXAF(product.price)}
           </Text>
 
           <TouchableOpacity
             activeOpacity={0.8}
             onPress={handleQuickAdd}
-            style={styles.terracottaAddBtn}
+            style={[styles.tealAddBtn, { backgroundColor: colors.primary[500] }]}
           >
             <Ionicons name="add" size={16} color={colors.neutral[0]} />
           </TouchableOpacity>
@@ -179,11 +179,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginTop: 2,
   },
-  terracottaAddBtn: {
+  tealAddBtn: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#E07A5F',
     alignItems: 'center',
     justifyContent: 'center',
   },

@@ -29,25 +29,26 @@ export interface HeroSlide {
 const HERO_SLIDES: HeroSlide[] = [
   {
     id: 'slide_1',
-    badge: 'NEW ARRIVALS',
-    title: 'Glow Naturally, ✨\nShine Beautifully',
-    subtitle: 'Explore our premium beauty & verified product collection for radiant you.',
-    ctaText: 'Shop Now',
-    imageUrl: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=800&q=80',
-  },
-  {
-    id: 'slide_2',
-    badge: '100% ESCROW SAFETY',
-    badgeColor: '#059669',
+    badge: '100% ESCROW GUARANTEE',
+    badgeColor: colors.primary[500],
     title: 'Shop Safely, ✨\nBuy Confidently',
-    subtitle: 'Your money stays 100% safe in 48-hour escrow protection until delivery.',
+    subtitle: 'Your money stays 100% safe in 48-hour escrow protection until delivery is signed.',
     ctaText: 'Explore Escrow',
     imageUrl: 'https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?auto=format&fit=crop&w=800&q=80',
   },
   {
+    id: 'slide_2',
+    badge: 'VERIFIED LOCAL STORES',
+    badgeColor: colors.primary[600],
+    title: 'Glow Naturally, ✨\nShine Beautifully',
+    subtitle: 'Explore our premium beauty, electronics & verified collection from local store owners.',
+    ctaText: 'Shop Now',
+    imageUrl: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=800&q=80',
+  },
+  {
     id: 'slide_3',
-    badge: 'EXPRESS DELIVERY',
-    badgeColor: '#D97706',
+    badge: 'EXPRESS GPS DELIVERY',
+    badgeColor: colors.accent[500],
     title: 'Fast Doorstep ✨\nGPS Delivery',
     subtitle: 'Track your transport provider live with 10-second GPS breadcrumb updates.',
     ctaText: 'Track Live',
@@ -102,11 +103,11 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({ onPressBanner }) => 
           index,
         })}
         renderItem={({ item }) => (
-          <View style={[styles.heroCard, { backgroundColor: isDark ? '#1E293B' : '#FDF4EC' }]}>
+          <View style={[styles.heroCard, { backgroundColor: isDark ? '#1E293B' : colors.primary[50] }]}>
             {/* Left Content Column */}
             <View style={styles.textCol}>
               <View style={styles.badgePill}>
-                <Text variant="caption" bold color={item.badgeColor || '#E07A5F'} style={styles.badgeText}>
+                <Text variant="caption" bold color={item.badgeColor || colors.primary[500]} style={styles.badgeText}>
                   {item.badge}
                 </Text>
               </View>
@@ -119,13 +120,13 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({ onPressBanner }) => 
                 {item.subtitle}
               </Text>
 
-              {/* White Oval CTA Button with Terracotta Arrow (Matching media_1787825633605.png) */}
+              {/* White Oval CTA Button with Teal Arrow */}
               <TouchableOpacity
                 activeOpacity={0.85}
                 onPress={onPressBanner}
                 style={styles.ctaBtn}
               >
-                <Text variant="caption" bold color="#2C221E" style={styles.ctaText}>
+                <Text variant="caption" bold color={colors.neutral[900]} style={styles.ctaText}>
                   {item.ctaText}
                 </Text>
                 <View style={styles.arrowCircle}>
@@ -144,7 +145,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({ onPressBanner }) => 
         )}
       />
 
-      {/* Pagination Indicator Dots (Matching media_1787825633605.png) */}
+      {/* Pagination Indicator Dots */}
       <View style={styles.paginationDots}>
         {HERO_SLIDES.map((_, index) => (
           <View
@@ -152,7 +153,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({ onPressBanner }) => 
             style={[
               styles.dot,
               {
-                backgroundColor: index === activeIndex ? '#E07A5F' : theme.border,
+                backgroundColor: index === activeIndex ? colors.primary[500] : theme.border,
                 width: index === activeIndex ? 18 : 6,
               },
             ]}
@@ -165,7 +166,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({ onPressBanner }) => 
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: spacing.sm,
+    marginVertical: spacing.xs,
     position: 'relative',
   },
   heroCard: {
@@ -199,7 +200,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     lineHeight: 22,
     marginBottom: 4,
-    color: '#2C221E',
+    color: colors.neutral[900],
   },
   subtitle: {
     fontSize: 10,
@@ -224,7 +225,7 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: '#E07A5F',
+    backgroundColor: colors.primary[500],
     alignItems: 'center',
     justifyContent: 'center',
   },
