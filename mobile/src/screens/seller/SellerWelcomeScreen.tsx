@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ScreenContainer, Text, Card, Button } from '../../components/ui';
+import { ScreenContainer, Text } from '../../components/ui';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
 
@@ -31,27 +31,35 @@ export interface SellerSlide {
 const SELLER_SLIDES: SellerSlide[] = [
   {
     id: 'slide_seller_1',
-    badge: '100% VERIFIED MERCHANT STORE',
+    badge: 'VERIFIED MERCHANT BADGE',
     badgeColor: colors.role.seller,
     title: 'Grow Your Store, ✨\nReach 50,000+ Buyers',
-    subtitle: 'Get a verified merchant badge & list your products directly to active buyers across Cameroon.',
+    subtitle: 'Get a verified merchant store badge & list your products directly to active buyers across Cameroon.',
     iconName: 'storefront',
   },
   {
     id: 'slide_seller_2',
-    badge: 'GUARANTEED ESCROW PAYOUTS',
+    badge: '100% GUARANTEED ESCROW PAYOUTS',
     badgeColor: colors.accent[500],
     title: 'Get Paid Safely, ✨\nDirect to MoMo & Bank',
-    subtitle: 'Your funds are 100% protected in escrow and cashed out directly to MTN MoMo, Orange Money or Bank.',
+    subtitle: 'Receive payouts directly into MTN MoMo, Orange Money, or Bank upon customer delivery confirmation.',
     iconName: 'wallet',
   },
   {
     id: 'slide_seller_3',
-    badge: 'EXPRESS LOGISTICS FLEET',
+    badge: 'EXPRESS GPS LOGISTICS FLEET',
     badgeColor: colors.primary[500],
     title: 'Fast Doorstep ✨\nMotorcycle Pickup',
-    subtitle: 'Automated transport riders pick up orders from your shop with live 10s GPS tracking.',
+    subtitle: 'Automated transport riders pick up orders from your shop with live 10-second GPS tracking.',
     iconName: 'car',
+  },
+  {
+    id: 'slide_seller_4',
+    badge: 'MOBILE INVENTORY & REVENUE ANALYTICS',
+    badgeColor: '#6366F1',
+    title: 'Smart Mobile ✨\nStock & Sales Tracking',
+    subtitle: 'Manage products, stock alerts, order tracking & daily revenues easily right from your smartphone.',
+    iconName: 'bar-chart',
   },
 ];
 
@@ -99,7 +107,7 @@ export const SellerWelcomeScreen = ({ navigation }: any) => {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        {/* Animated Motion Hero Slideshow Carousel (Automated 3.5s Rotation) */}
+        {/* Expanded Automated Motion Slideshow Hero Banner */}
         <View style={styles.carouselContainer}>
           <FlatList
             ref={flatListRef}
@@ -116,8 +124,8 @@ export const SellerWelcomeScreen = ({ navigation }: any) => {
               index,
             })}
             renderItem={({ item }) => (
-              <View style={[styles.heroSlideCard, { backgroundColor: isDark ? '#1E293B' : colors.role.seller }]}>
-                {/* Top Logo Ring */}
+              <View style={[styles.expandedHeroSlideCard, { backgroundColor: isDark ? '#1E293B' : colors.role.seller }]}>
+                {/* Logo Ring Header */}
                 <View style={styles.heroLogoRing}>
                   <Image source={WUNABUY_LOGO} style={styles.logoImage} resizeMode="contain" />
                 </View>
@@ -129,19 +137,19 @@ export const SellerWelcomeScreen = ({ navigation }: any) => {
                   </Text>
                 </View>
 
-                {/* Slide Title */}
+                {/* Title */}
                 <Text variant="h1" bold color={colors.neutral[0]} align="center" style={styles.heroTitle}>
                   {item.title}
                 </Text>
 
-                {/* Slide Subtitle */}
-                <Text variant="bodyMedium" color="rgba(255,255,255,0.9)" align="center" style={styles.heroSubtitle}>
+                {/* Subtitle */}
+                <Text variant="bodyMedium" color="rgba(255,255,255,0.92)" align="center" style={styles.heroSubtitle}>
                   {item.subtitle}
                 </Text>
 
-                {/* Floating Graphic Badge */}
-                <View style={[styles.slideIconFloatingCircle, { backgroundColor: item.badgeColor }]}>
-                  <Ionicons name={item.iconName} size={20} color={colors.neutral[0]} />
+                {/* Corner Icon Pill */}
+                <View style={[styles.slideIconCircle, { backgroundColor: item.badgeColor }]}>
+                  <Ionicons name={item.iconName} size={22} color={colors.neutral[0]} />
                 </View>
               </View>
             )}
@@ -156,7 +164,7 @@ export const SellerWelcomeScreen = ({ navigation }: any) => {
                   styles.dot,
                   {
                     backgroundColor: index === activeIndex ? colors.role.seller : theme.border,
-                    width: index === activeIndex ? 22 : 6,
+                    width: index === activeIndex ? 26 : 6,
                   },
                 ]}
               />
@@ -164,79 +172,26 @@ export const SellerWelcomeScreen = ({ navigation }: any) => {
           </View>
         </View>
 
-        {/* Value Highlights Cards Section */}
-        <Text variant="caption" bold color={theme.textSecondary} style={styles.sectionTitle}>
-          WHY SELL ON WUNABUY?
-        </Text>
-
-        {/* Card 1: Verified Store */}
-        <Card style={styles.valueCard}>
-          <View style={[styles.iconCircle, { backgroundColor: colors.primary[50] }]}>
-            <Ionicons name="storefront" size={24} color={colors.primary[500]} />
-          </View>
-          <View style={styles.valueTextCol}>
-            <Text variant="bodyLarge" bold style={{ marginBottom: 2 }}>
-              Verified Merchant Badge
-            </Text>
-            <Text variant="caption" secondary numberOfLines={2}>
-              Get a verified store badge &amp; dedicated catalog page trusted by local buyers.
-            </Text>
-          </View>
-        </Card>
-
-        {/* Card 2: Escrow Payouts */}
-        <Card style={styles.valueCard}>
-          <View style={[styles.iconCircle, { backgroundColor: '#FEF3C7' }]}>
-            <Ionicons name="wallet" size={24} color={colors.accent[500]} />
-          </View>
-          <View style={styles.valueTextCol}>
-            <Text variant="bodyLarge" bold style={{ marginBottom: 2 }}>
-              Guaranteed Escrow Payouts
-            </Text>
-            <Text variant="caption" secondary numberOfLines={2}>
-              Receive payouts directly into MTN MoMo, Orange Money, or Bank upon delivery.
-            </Text>
-          </View>
-        </Card>
-
-        {/* Card 3: Express Delivery Fleet */}
-        <Card style={styles.valueCard}>
-          <View style={[styles.iconCircle, { backgroundColor: '#EFF6FF' }]}>
-            <Ionicons name="car" size={24} color={colors.role.seller} />
-          </View>
-          <View style={styles.valueTextCol}>
-            <Text variant="bodyLarge" bold style={{ marginBottom: 2 }}>
-              Express Delivery Fleet
-            </Text>
-            <Text variant="caption" secondary numberOfLines={2}>
-              Automated motorcycle rider pickup &amp; live GPS tracking to your customer's doorstep.
-            </Text>
-          </View>
-        </Card>
-
-        {/* Card 4: Mobile Inventory */}
-        <Card style={styles.valueCard}>
-          <View style={[styles.iconCircle, { backgroundColor: '#F1F5F9' }]}>
-            <Ionicons name="bar-chart" size={24} color={theme.text} />
-          </View>
-          <View style={styles.valueTextCol}>
-            <Text variant="bodyLarge" bold style={{ marginBottom: 2 }}>
-              Mobile Inventory &amp; Sales
-            </Text>
-            <Text variant="caption" secondary numberOfLines={2}>
-              Manage products, stock alerts &amp; daily revenues easily right from your smartphone.
-            </Text>
-          </View>
-        </Card>
-
-        {/* Action Button: Get Started */}
+        {/* Advanced Capsule Action Button: Get Started */}
         <View style={styles.actionSection}>
-          <Button
-            title="Get Started →"
-            variant="primary"
+          <TouchableOpacity
+            activeOpacity={0.88}
             onPress={() => navigation.navigate('StoreKYC')}
-            style={styles.getStartedBtn}
-          />
+            style={styles.advancedGetStartedCapsule}
+          >
+            <View style={styles.capsuleLeftGroup}>
+              <Text variant="bodyLarge" bold color={colors.neutral[0]} style={styles.capsuleBtnText}>
+                Get Started Now
+              </Text>
+              <Text variant="caption" color="rgba(255,255,255,0.8)" style={styles.capsuleSubText}>
+                4-Stage Quick Verification
+              </Text>
+            </View>
+
+            <View style={styles.arrowIconCircle}>
+              <Ionicons name="arrow-forward" size={20} color={colors.role.seller} />
+            </View>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </ScreenContainer>
@@ -267,63 +222,63 @@ const styles = StyleSheet.create({
     paddingBottom: spacing['3xl'],
   },
   carouselContainer: {
-    marginBottom: spacing.lg,
+    marginBottom: spacing.xl,
     marginTop: spacing.xs,
   },
-  heroSlideCard: {
+  expandedHeroSlideCard: {
     width: BANNER_WIDTH,
-    borderRadius: 24,
+    borderRadius: 28,
     padding: spacing.xl,
     alignItems: 'center',
-    minHeight: 220,
+    minHeight: 320,
     position: 'relative',
-    overflow: 'hidden',
-    ...shadows.md,
+    justifyContent: 'center',
+    ...shadows.lg,
   },
   heroLogoRing: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     backgroundColor: '#FFFFFF',
-    padding: 4,
+    padding: 6,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.xs + 2,
+    marginBottom: spacing.md,
     ...shadows.sm,
   },
   logoImage: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
   },
   badgePill: {
     backgroundColor: '#FFFFFF',
     paddingHorizontal: spacing.md,
-    paddingVertical: 3,
+    paddingVertical: 4,
     borderRadius: borderRadius.full,
-    marginBottom: spacing.xs,
+    marginBottom: spacing.sm,
   },
   badgeText: {
-    fontSize: 9,
-    letterSpacing: 0.5,
+    fontSize: 10,
+    letterSpacing: 0.6,
   },
   heroTitle: {
-    fontSize: 22,
-    lineHeight: 26,
-    marginBottom: 4,
+    fontSize: 24,
+    lineHeight: 30,
+    marginBottom: spacing.xs,
   },
   heroSubtitle: {
-    fontSize: 11,
-    lineHeight: 16,
-    paddingHorizontal: spacing.sm,
+    fontSize: 13,
+    lineHeight: 19,
+    paddingHorizontal: spacing.xs,
   },
-  slideIconFloatingCircle: {
+  slideIconCircle: {
     position: 'absolute',
-    bottom: spacing.md,
+    top: spacing.md,
     right: spacing.md,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
     ...shadows.sm,
@@ -332,42 +287,45 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: spacing.sm,
-    gap: 4,
+    marginTop: spacing.md,
+    gap: 6,
   },
   dot: {
     height: 6,
     borderRadius: 3,
   },
-  sectionTitle: {
-    fontSize: 10,
-    letterSpacing: 0.5,
-    marginBottom: spacing.xs + 2,
-  },
-  valueCard: {
-    borderRadius: borderRadius.xl,
-    padding: spacing.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  iconCircle: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: spacing.md,
-  },
-  valueTextCol: {
-    flex: 1,
-  },
   actionSection: {
-    marginTop: spacing.md,
+    marginTop: spacing.sm,
     marginBottom: spacing.xl,
   },
-  getStartedBtn: {
-    height: 52,
+  advancedGetStartedCapsule: {
+    width: '100%',
+    height: 62,
     backgroundColor: colors.role.seller,
+    borderRadius: borderRadius.full,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.xl,
+    ...shadows.md,
+  },
+  capsuleLeftGroup: {
+    justifyContent: 'center',
+  },
+  capsuleBtnText: {
+    fontSize: 17,
+  },
+  capsuleSubText: {
+    fontSize: 11,
+    marginTop: 1,
+  },
+  arrowIconCircle: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...shadows.sm,
   },
 });
