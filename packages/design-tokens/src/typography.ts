@@ -1,22 +1,16 @@
 /**
- * Typography tokens
+ * Typography tokens for cross-platform React Native & Web
  */
 
-/**
- * Font families
- */
 export const fontFamilies = {
-  heading: 'PlusJakartaSans-Bold',
-  headingSemiBold: 'PlusJakartaSans-SemiBold',
-  body: 'Inter-Regular',
-  bodyMedium: 'Inter-Medium',
+  heading: 'System',
+  headingSemiBold: 'System',
+  body: 'System',
+  bodyMedium: 'System',
   headingWeb: "'Plus Jakarta Sans', sans-serif",
   bodyWeb: "'Inter', sans-serif",
 } as const;
 
-/**
- * Font size scale
- */
 export const fontSizes = {
   display: 32,
   h1: 24,
@@ -28,9 +22,6 @@ export const fontSizes = {
   overline: 10,
 } as const;
 
-/**
- * Line height scale
- */
 export const lineHeights = {
   display: 40,
   h1: 32,
@@ -42,19 +33,13 @@ export const lineHeights = {
   overline: 14,
 } as const;
 
-/**
- * Font weight scale
- */
 export const fontWeights = {
-  bold: '700',
-  semiBold: '600',
-  medium: '500',
-  regular: '400',
-} as const;
+  bold: '700' as const,
+  semiBold: '600' as const,
+  medium: '500' as const,
+  regular: '400' as const,
+};
 
-/**
- * Pre-configured text styles
- */
 export const textStyles = {
   display: {
     fontFamily: fontFamilies.heading,

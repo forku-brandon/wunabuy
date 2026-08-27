@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { ScreenContainer, Text, Input, Button, Toast } from '../../components/ui';
 import { formatPhone, validatePhoneNumber, normalizePhone } from '@wunabuy/utils';
-import { spacing } from '@wunabuy/design-tokens';
+import { spacing, colors } from '@wunabuy/design-tokens';
 import { useTranslation } from 'react-i18next';
 
 export const LoginScreen = ({ navigation }: any) => {
@@ -14,7 +14,6 @@ export const LoginScreen = ({ navigation }: any) => {
 
   const handlePhoneChange = (text: string) => {
     setError('');
-    // Auto-format for display
     setPhone(text);
   };
 
@@ -27,12 +26,11 @@ export const LoginScreen = ({ navigation }: any) => {
 
     setLoading(true);
     try {
-      // In production API integration: await authApi.login({ phone: normalized });
       setToastMessage('OTP code sent successfully!');
       setTimeout(() => {
         setLoading(false);
         navigation.navigate('VerifyOTP', { phone: normalized });
-      }, 800);
+      }, 600);
     } catch (err: any) {
       setLoading(false);
       setError(err?.message || 'Failed to send OTP code. Please try again.');
@@ -40,33 +38,36 @@ export const LoginScreen = ({ navigation }: any) => {
   };
 
   return (
-    <ScreenContainer>
-      <View style={styles.header}>
-        <Text variant="h1" bold style={styles.title}>
-          {t('auth.loginTitle')}
-        </Text>
-        <Text variant="bodyMedium" secondary style={styles.subtitle}>
-          {t('auth.loginSubtitle')}
-        </Text>
+    <ScreenContainer contentContainerStyle={styles.container}>
+      <View style={styles.contentBox}>
+        <View style={styles.header}>
+          <Text variant="h1" bold align="center" style={styles.title}>
+            {t('auth.loginTitle')}
+          </Text>
+          <Text variant="bodyMedium" secondary align="center" style={styles.subtitle}>
+            {t('auth.loginSubtitle')}
+          </Text>
+        </View>
+
+        <Input
+          label="Phone Number"
+          placeholder="+237 6XX XXX XXX"
+          keyboardType="phone-pad"
+          value={phone}
+          onChangeText={handlePhoneChange}
+          error={error}
+          autoFocus
+          containerStyle={styles.inputContainer}
+        />
+
+        <Button
+          title={t('auth.sendOTP')}
+          variant="primary"
+          loading={loading}
+          onPress={handleSubmit}
+          style={styles.button}
+        />
       </View>
-
-      <Input
-        label="Phone Number"
-        placeholder="+237 6XX XXX XXX"
-        keyboardType="phone-pad"
-        value={phone}
-        onChangeText={handlePhoneChange}
-        error={error}
-        autoFocus
-      />
-
-      <Button
-        title={t('auth.sendOTP')}
-        variant="primary"
-        loading={loading}
-        onPress={handleSubmit}
-        style={styles.button}
-      />
 
       {toastMessage && <Toast message={toastMessage} type="success" />}
     </ScreenContainer>
@@ -74,18 +75,29 @@ export const LoginScreen = ({ navigation }: any) => {
 };
 
 const styles = StyleSheet.create({
+  container: {
+    justifyContent: 'center',
+    paddingVertical: spacing['2xl'],
+  },
+  contentBox: {
+    width: '100%',
+    paddingHorizontal: spacing.sm,
+  },
   header: {
-    marginTop: spacing.xl,
-    marginBottom: spacing.lg,
+    marginBottom: spacing.xl,
+    alignItems: 'center',
   },
   title: {
     marginBottom: spacing.xs,
   },
   subtitle: {
-    lineHeight: 20,
+    lineHeight: 22,
+    paddingHorizontal: spacing.md,
+  },
+  inputContainer: {
+    marginBottom: spacing.lg,
   },
   button: {
-    marginTop: spacing.md,
+    marginTop: spacing.sm,
   },
 });
-

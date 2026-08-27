@@ -115,7 +115,6 @@ const styles = StyleSheet.create({
     flex: 1,
     height: '100%',
     fontSize: 14,
-    fontFamily: 'Inter',
   },
   leftIcon: {
     marginRight: spacing.xs,

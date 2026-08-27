@@ -111,7 +111,6 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     textAlign: 'center',
     fontSize: 22,
-    fontFamily: 'PlusJakartaSans-Bold',
     fontWeight: '700',
   },
 });

@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { ScreenContainer, Text, Input, Button, Card, Toast } from '../../components/ui';
+import { SecureTokenService } from '../../services/SecureTokenService';
 import { useAuthStore } from '../../stores/auth.store';
-import { UserRole } from '@wunabuy/types';
-import { colors, spacing, borderRadius } from '@wunabuy/design-tokens';
+import { UserRole, UserStatus } from '@wunabuy/types';
+import { colors, spacing } from '@wunabuy/design-tokens';
 import { useTranslation } from 'react-i18next';
 
-export const RegisterScreen = ({ navigation, route }: any) => {
+export const RegisterScreen = ({ route }: any) => {
   const { t } = useTranslation();
   const phone = route.params?.phone ?? '+237670000000';
-  const { user, updateUser } = useAuthStore();
+  const { setAuth } = useAuthStore();
 
-  const [fullName, setFullName] = useState(user?.full_name ?? '');
+  const [fullName, setFullName] = useState('');
   const [selectedRole, setSelectedRole] = useState<UserRole>(UserRole.BUYER);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -26,15 +27,27 @@ export const RegisterScreen = ({ navigation, route }: any) => {
     setError('');
 
     try {
-      // In production: await authApi.register({ phone, full_name: fullName, role: selectedRole });
-      updateUser({
+      const newUser = {
+        id: 'user_uuid_' + Date.now(),
+        phone,
+        email: null,
         full_name: fullName.trim(),
         role: selectedRole,
+        status: UserStatus.ACTIVE,
+        avatar_url: null,
+        is_phone_verified: true,
+        default_address: null,
         available_roles: [selectedRole, UserRole.BUYER],
-      });
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
 
+      const accessToken = '1|sanctum_token_access_mock_' + Date.now();
+      const refreshToken = 'sanctum_token_refresh_mock_' + Date.now();
+
+      await SecureTokenService.setTokens(accessToken, refreshToken);
+      setAuth(newUser, accessToken, refreshToken);
       setLoading(false);
-      // Navigation will be automatically updated by RootNavigator as user is authenticated
     } catch (err: any) {
       setLoading(false);
       setError(err?.message || 'Failed to complete registration.');
@@ -42,112 +55,127 @@ export const RegisterScreen = ({ navigation, route }: any) => {
   };
 
   return (
-    <ScreenContainer>
-      <View style={styles.header}>
-        <Text variant="h1" bold style={styles.title}>
-          {t('auth.registerTitle')}
+    <ScreenContainer contentContainerStyle={styles.container}>
+      <View style={styles.contentBox}>
+        <View style={styles.header}>
+          <Text variant="h1" bold align="center" style={styles.title}>
+            {t('auth.registerTitle')}
+          </Text>
+          <Text variant="bodyMedium" secondary align="center" style={styles.subtitle}>
+            Enter your details to finalize your account registration.
+          </Text>
+        </View>
+
+        <Input
+          label="Full Name"
+          placeholder="e.g. Jean Dupont"
+          value={fullName}
+          onChangeText={(text) => {
+            setError('');
+            setFullName(text);
+          }}
+          error={error}
+          containerStyle={styles.inputContainer}
+        />
+
+        <Text variant="caption" bold color={colors.neutral[600]} style={styles.roleLabel}>
+          {t('auth.selectRole')}
         </Text>
-        <Text variant="bodyMedium" secondary style={styles.subtitle}>
-          Tell us your name and how you plan to use Wunabuy.
-        </Text>
+
+        {/* Buyer Role Card */}
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={() => setSelectedRole(UserRole.BUYER)}
+        >
+          <Card
+            style={[
+              styles.roleCard,
+              selectedRole === UserRole.BUYER && styles.roleCardSelected,
+            ]}
+          >
+            <View style={styles.roleHeader}>
+              <Text variant="h3" bold color={colors.primary[500]}>
+                🛒 {t('roles.buyer')}
+              </Text>
+              <View
+                style={[
+                  styles.radio,
+                  selectedRole === UserRole.BUYER && styles.radioSelected,
+                ]}
+              />
+            </View>
+            <Text variant="bodyMedium" secondary style={styles.roleDescription}>
+              {t('auth.roleBuy')}
+            </Text>
+          </Card>
+        </TouchableOpacity>
+
+        {/* Seller Role Card */}
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={() => setSelectedRole(UserRole.SELLER)}
+        >
+          <Card
+            style={[
+              styles.roleCard,
+              selectedRole === UserRole.SELLER && styles.roleCardSelectedSeller,
+            ]}
+          >
+            <View style={styles.roleHeader}>
+              <Text variant="h3" bold color={colors.role.seller}>
+                🏪 {t('roles.seller')}
+              </Text>
+              <View
+                style={[
+                  styles.radio,
+                  selectedRole === UserRole.SELLER && styles.radioSelectedSeller,
+                ]}
+              />
+            </View>
+            <Text variant="bodyMedium" secondary style={styles.roleDescription}>
+              {t('auth.roleSell')}
+            </Text>
+          </Card>
+        </TouchableOpacity>
+
+        <Button
+          title="Complete Registration"
+          variant="primary"
+          loading={loading}
+          onPress={handleSubmit}
+          style={styles.button}
+        />
       </View>
-
-      <Input
-        label="Full Name"
-        placeholder="e.g. Jean Dupont"
-        value={fullName}
-        onChangeText={(text) => {
-          setError('');
-          setFullName(text);
-        }}
-        error={error}
-      />
-
-      <Text variant="caption" bold color={colors.neutral[600]} style={styles.roleLabel}>
-        {t('auth.selectRole')}
-      </Text>
-
-      {/* Buyer Role Card */}
-      <TouchableOpacity
-        activeOpacity={0.8}
-        onPress={() => setSelectedRole(UserRole.BUYER)}
-      >
-        <Card
-          style={[
-            styles.roleCard,
-            selectedRole === UserRole.BUYER && styles.roleCardSelected,
-          ]}
-        >
-          <View style={styles.roleHeader}>
-            <Text variant="h3" bold color={colors.primary[500]}>
-              🛒 {t('roles.buyer')}
-            </Text>
-            <View
-              style={[
-                styles.radio,
-                selectedRole === UserRole.BUYER && styles.radioSelected,
-              ]}
-            />
-          </View>
-          <Text variant="bodyMedium" secondary style={styles.roleDescription}>
-            {t('auth.roleBuy')}
-          </Text>
-        </Card>
-      </TouchableOpacity>
-
-      {/* Seller Role Card */}
-      <TouchableOpacity
-        activeOpacity={0.8}
-        onPress={() => setSelectedRole(UserRole.SELLER)}
-      >
-        <Card
-          style={[
-            styles.roleCard,
-            selectedRole === UserRole.SELLER && styles.roleCardSelectedSeller,
-          ]}
-        >
-          <View style={styles.roleHeader}>
-            <Text variant="h3" bold color={colors.role.seller}>
-              🏪 {t('roles.seller')}
-            </Text>
-            <View
-              style={[
-                styles.radio,
-                selectedRole === UserRole.SELLER && styles.radioSelectedSeller,
-              ]}
-            />
-          </View>
-          <Text variant="bodyMedium" secondary style={styles.roleDescription}>
-            {t('auth.roleSell')}
-          </Text>
-        </Card>
-      </TouchableOpacity>
-
-      <Button
-        title="Complete Registration"
-        variant="primary"
-        loading={loading}
-        onPress={handleSubmit}
-        style={styles.button}
-      />
     </ScreenContainer>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    justifyContent: 'center',
+    paddingVertical: spacing.xl,
+  },
+  contentBox: {
+    width: '100%',
+    paddingHorizontal: spacing.sm,
+  },
   header: {
-    marginTop: spacing.xl,
     marginBottom: spacing.lg,
+    alignItems: 'center',
   },
   title: {
     marginBottom: spacing.xs,
   },
   subtitle: {
-    lineHeight: 20,
+    lineHeight: 22,
+    paddingHorizontal: spacing.md,
+  },
+  inputContainer: {
+    marginBottom: spacing.md,
   },
   roleLabel: {
     marginBottom: spacing.sm,
-    marginTop: spacing.sm,
+    marginTop: spacing.xs,
   },
   roleCard: {
     marginBottom: spacing.md,
@@ -186,7 +214,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.role.seller,
   },
   button: {
-    marginTop: spacing.lg,
+    marginTop: spacing.md,
   },
 });
-
