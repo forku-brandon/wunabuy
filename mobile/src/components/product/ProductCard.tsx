@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Image, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
 import { Product, QualityTier } from '@wunabuy/types';
 import { formatXAF, formatDistance } from '@wunabuy/utils';
@@ -6,6 +6,9 @@ import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
 import { Text } from '../ui/Text';
 import { Badge } from '../ui/Badge';
+
+const PLACEHOLDER = require('../../../assets/placeholder_product.png');
+
 
 export interface ProductCardProps {
   product: Product;
@@ -19,6 +22,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   style,
 }) => {
   const { theme, isDark } = useThemeStore();
+  const [imageError, setImageError] = useState(false);
 
   const getQualityBadgeVariant = (tier: QualityTier) => {
     switch (tier) {
@@ -34,7 +38,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     }
   };
 
-  const mainImage = product.images?.[0] || 'https://via.placeholder.com/300';
+  const mainImage = product.images?.[0];
 
   return (
     <TouchableOpacity
@@ -53,9 +57,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       {/* Product Image */}
       <View style={styles.imageContainer}>
         <Image
-          source={{ uri: mainImage }}
+          source={imageError || !mainImage ? PLACEHOLDER : { uri: mainImage }}
           style={styles.image}
-          resizeMode="cover"
+          resizeMode={imageError || !mainImage ? 'contain' : 'cover'}
+          onError={() => setImageError(true)}
         />
         <View style={styles.badgeTopLeft}>
           <Badge

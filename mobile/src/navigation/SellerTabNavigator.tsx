@@ -1,5 +1,6 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { Ionicons } from '@expo/vector-icons';
 import { SellerTabParamList } from './types';
 import { ScreenContainer, Text } from '../components/ui';
 import { useThemeStore } from '../stores/theme.store';
@@ -29,7 +30,7 @@ export const SellerTabNavigator = () => {
 
   return (
     <Tab.Navigator
-      screenOptions={{
+      screenOptions={({ route }) => ({
         headerShown: false,
         tabBarActiveTintColor: colors.role.seller,
         tabBarInactiveTintColor: theme.textSecondary,
@@ -38,8 +39,38 @@ export const SellerTabNavigator = () => {
           borderTopColor: theme.border,
           height: 64,
           paddingBottom: 8,
+          paddingTop: 4,
         },
-      }}
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '500',
+        },
+        tabBarIcon: ({ focused, color }) => {
+          let iconName: React.ComponentProps<typeof Ionicons>['name'];
+
+          switch (route.name) {
+            case 'SellerDashboard':
+              iconName = focused ? 'bar-chart' : 'bar-chart-outline';
+              break;
+            case 'SellerProducts':
+              iconName = focused ? 'pricetag' : 'pricetag-outline';
+              break;
+            case 'SellerOrders':
+              iconName = focused ? 'clipboard' : 'clipboard-outline';
+              break;
+            case 'SellerWallet':
+              iconName = focused ? 'wallet' : 'wallet-outline';
+              break;
+            case 'SellerProfile':
+              iconName = focused ? 'person' : 'person-outline';
+              break;
+            default:
+              iconName = 'ellipse-outline';
+          }
+
+          return <Ionicons name={iconName} size={22} color={color} />;
+        },
+      })}
     >
       <Tab.Screen name="SellerDashboard" component={SellerDashboardScreen} options={{ title: 'Dashboard' }} />
       <Tab.Screen name="SellerProducts" component={SellerProductsScreen} options={{ title: 'Products' }} />

@@ -1,5 +1,6 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { Ionicons } from '@expo/vector-icons';
 import { TransporterTabParamList } from './types';
 import { useThemeStore } from '../stores/theme.store';
 import { colors } from '@wunabuy/design-tokens';
@@ -15,7 +16,7 @@ export const TransporterTabNavigator = () => {
 
   return (
     <Tab.Navigator
-      screenOptions={{
+      screenOptions={({ route }) => ({
         headerShown: false,
         tabBarActiveTintColor: colors.role.transporter,
         tabBarInactiveTintColor: theme.textSecondary,
@@ -24,10 +25,37 @@ export const TransporterTabNavigator = () => {
           borderTopColor: theme.border,
           height: 64,
           paddingBottom: 8,
+          paddingTop: 4,
         },
-      }}
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '500',
+        },
+        tabBarIcon: ({ focused, color }) => {
+          let iconName: React.ComponentProps<typeof Ionicons>['name'];
+
+          switch (route.name) {
+            case 'TransporterJobs':
+              iconName = focused ? 'briefcase' : 'briefcase-outline';
+              break;
+            case 'TransporterActiveTrip':
+              iconName = focused ? 'car' : 'car-outline';
+              break;
+            case 'TransporterEarnings':
+              iconName = focused ? 'cash' : 'cash-outline';
+              break;
+            case 'TransporterProfile':
+              iconName = focused ? 'person' : 'person-outline';
+              break;
+            default:
+              iconName = 'ellipse-outline';
+          }
+
+          return <Ionicons name={iconName} size={22} color={color} />;
+        },
+      })}
     >
-      <Tab.Screen name="TransporterJobs" component={TransporterJobsScreen} options={{ title: 'Jobs' }} />
+      <Tab.Screen name="TransporterJobs" component={TransporterJobsScreen} options={{ title: 'Job Feed' }} />
       <Tab.Screen name="TransporterActiveTrip" component={TransporterActiveTripScreen} options={{ title: 'Active Trip' }} />
       <Tab.Screen name="TransporterEarnings" component={TransporterEarningsScreen} options={{ title: 'Earnings' }} />
       <Tab.Screen name="TransporterProfile" component={ProfileScreen} options={{ title: 'Profile' }} />

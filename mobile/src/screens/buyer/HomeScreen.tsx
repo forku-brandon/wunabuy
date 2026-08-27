@@ -1,8 +1,16 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { Text, Input, Badge, ScreenContainer, Card } from '../../components/ui';
+import React, { useState, useCallback } from 'react';
+import {
+  View,
+  FlatList,
+  StyleSheet,
+  TouchableOpacity,
+  RefreshControl,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { Text, Input, Badge, Card } from '../../components/ui';
 import { CategoryChip } from '../../components/product/CategoryChip';
-import { ProductGrid } from '../../components/product/ProductGrid';
+import { ProductCard } from '../../components/product/ProductCard';
+import { EmptyState } from '../../components/ui/EmptyState';
 import { ProductCategory, Product } from '@wunabuy/types';
 import { MOCK_PRODUCTS } from '../../services/mockProducts';
 import { useCartStore } from '../../stores/cart.store';
@@ -17,22 +25,31 @@ export const HomeScreen = ({ navigation }: any) => {
 
   const categories: (ProductCategory | 'All')[] = ['All', ...Object.values(ProductCategory)];
 
-  const filteredProducts = selectedCategory === 'All'
-    ? MOCK_PRODUCTS
-    : MOCK_PRODUCTS.filter((p) => p.category === selectedCategory);
+  const filteredProducts =
+    selectedCategory === 'All'
+      ? MOCK_PRODUCTS
+      : MOCK_PRODUCTS.filter((p) => p.category === selectedCategory);
 
-  const handleRefresh = () => {
+  const handleRefresh = useCallback(() => {
     setRefreshing(true);
     setTimeout(() => setRefreshing(false), 1000);
-  };
+  }, []);
 
-  const handleSelectProduct = (product: Product) => {
-    navigation.navigate('ProductDetail', { productId: product.id });
-  };
+  const handleSelectProduct = useCallback(
+    (product: Product) => {
+      navigation.navigate('ProductDetail', { productId: product.id });
+    },
+    [navigation]
+  );
 
-  return (
-    <ScreenContainer scrollable={false} padded={false}>
-      {/* Top Header */}
+  /**
+   * ListHeaderComponent for the FlatList — contains the sticky header,
+   * promo banner, and category chips. This avoids the forbidden pattern of
+   * nesting a FlatList inside a ScrollView.
+   */
+  const ListHeader = (
+    <>
+      {/* Sticky App Header */}
       <View style={[styles.header, { backgroundColor: theme.card, borderBottomColor: theme.border }]}>
         <View style={styles.locationRow}>
           <View>
@@ -44,13 +61,13 @@ export const HomeScreen = ({ navigation }: any) => {
             </Text>
           </View>
 
-          {/* Cart Icon Badge */}
+          {/* Cart Icon with Badge */}
           <TouchableOpacity
             activeOpacity={0.8}
             onPress={() => navigation.navigate('BuyerCart')}
             style={[styles.cartButton, { backgroundColor: theme.input }]}
           >
-            <Text variant="h3">🛒</Text>
+            <Ionicons name="cart-outline" size={22} color={theme.text} />
             {itemCount > 0 && (
               <View style={styles.cartBadge}>
                 <Text variant="caption" bold color={colors.neutral[0]} style={styles.cartBadgeText}>
@@ -71,65 +88,95 @@ export const HomeScreen = ({ navigation }: any) => {
             editable={false}
             pointerEvents="none"
             containerStyle={styles.searchShortcut}
-            leftIcon={<Text>🔍</Text>}
+            leftIcon={<Ionicons name="search-outline" size={18} color={theme.placeholder} />}
           />
         </TouchableOpacity>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Promo Banner Carousel */}
-        <View style={styles.bannerContainer}>
-          <Card style={styles.promoCard}>
-            <Badge label="100% ESCROW PROTECTED" variant="success" size="small" />
-            <Text variant="h2" bold color={colors.neutral[0]} style={styles.promoTitle}>
-              Buy Safely with 48h Escrow Guarantee
-            </Text>
-            <Text variant="bodyMedium" color="rgba(255,255,255,0.9)" style={styles.promoSubtitle}>
-              Funds are held securely until you receive and sign your delivery.
-            </Text>
-          </Card>
-        </View>
-
-        {/* Category Horizontal Slider */}
-        <View style={styles.categorySection}>
-          <Text variant="caption" bold color={theme.textSecondary} style={styles.sectionLabel}>
-            EXPLORE CATEGORIES
+      {/* Promo Banner */}
+      <View style={styles.bannerContainer}>
+        <Card style={styles.promoCard}>
+          <Badge label="100% ESCROW PROTECTED" variant="success" size="small" />
+          <Text variant="h2" bold color={colors.neutral[0]} style={styles.promoTitle}>
+            Buy Safely with 48h Escrow Guarantee
           </Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryScroll}>
-            {categories.map((cat) => (
-              <CategoryChip
-                key={cat}
-                category={cat}
-                selected={selectedCategory === cat}
-                onPress={() => setSelectedCategory(cat)}
-              />
-            ))}
-          </ScrollView>
-        </View>
-
-        {/* Near You Section Header */}
-        <View style={styles.feedHeader}>
-          <Text variant="h2" bold>
-            Near You in Douala
+          <Text variant="bodyMedium" color="rgba(255,255,255,0.9)" style={styles.promoSubtitle}>
+            Funds are held securely until you receive and sign your delivery.
           </Text>
-          <Text variant="caption" secondary>
-            Sorted by spatial PostGIS distance & store rating
-          </Text>
-        </View>
+        </Card>
+      </View>
 
-        {/* Product Grid */}
-        <ProductGrid
-          products={filteredProducts}
-          refreshing={refreshing}
-          onRefresh={handleRefresh}
-          onSelectProduct={handleSelectProduct}
+      {/* Category Horizontal Slider */}
+      <View style={styles.categorySection}>
+        <Text variant="caption" bold color={theme.textSecondary} style={styles.sectionLabel}>
+          EXPLORE CATEGORIES
+        </Text>
+        <FlatList
+          horizontal
+          data={categories}
+          keyExtractor={(cat) => cat}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.categoryScroll}
+          renderItem={({ item: cat }) => (
+            <CategoryChip
+              category={cat}
+              selected={selectedCategory === cat}
+              onPress={() => setSelectedCategory(cat)}
+            />
+          )}
         />
-      </ScrollView>
-    </ScreenContainer>
+      </View>
+
+      {/* Feed Section Header */}
+      <View style={styles.feedHeader}>
+        <Text variant="h2" bold>
+          Near You in Douala
+        </Text>
+        <Text variant="caption" secondary>
+          Sorted by spatial PostGIS distance &amp; store rating
+        </Text>
+      </View>
+    </>
+  );
+
+  return (
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <FlatList
+        data={filteredProducts}
+        keyExtractor={(item) => item.id}
+        numColumns={2}
+        columnWrapperStyle={styles.columnWrapper}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+        ListHeaderComponent={ListHeader}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={colors.primary[500]}
+            colors={[colors.primary[500]]}
+          />
+        }
+        ListEmptyComponent={
+          <EmptyState
+            title="No Products Found"
+            description="Try adjusting your category filter or check back later."
+          />
+        }
+        renderItem={({ item }) => (
+          <View style={styles.cardWrapper}>
+            <ProductCard product={item} onPress={handleSelectProduct} />
+          </View>
+        )}
+      />
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   header: {
     paddingHorizontal: spacing.base,
     paddingTop: spacing.md,
@@ -200,5 +247,14 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
     marginBottom: spacing.sm,
   },
+  columnWrapper: {
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.base,
+  },
+  listContent: {
+    paddingBottom: spacing['2xl'],
+  },
+  cardWrapper: {
+    width: '48%',
+  },
 });
-
