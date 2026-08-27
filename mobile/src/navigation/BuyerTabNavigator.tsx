@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BuyerTabParamList } from './types';
 import { useThemeStore } from '../stores/theme.store';
-import { colors } from '@wunabuy/design-tokens';
+import { colors, shadows } from '@wunabuy/design-tokens';
 import { HomeScreen } from '../screens/buyer/HomeScreen';
 import { SearchScreen } from '../screens/buyer/SearchScreen';
 import { BuyerCartScreen } from '../screens/buyer/BuyerCartScreen';
@@ -15,30 +15,29 @@ import { useCartStore } from '../stores/cart.store';
 const Tab = createBottomTabNavigator<BuyerTabParamList>();
 
 export const BuyerTabNavigator = () => {
-  const { theme } = useThemeStore();
+  const { theme, isDark } = useThemeStore();
   const itemCount = useCartStore((state) => state.getItemCount());
   const insets = useSafeAreaInsets();
 
-  // Dynamic bottom padding to ensure soft navigation keys (back/home/recents)
-  // on Android do not overlap over bottom tab icons & text labels.
-  const bottomInset = insets.bottom > 0 ? insets.bottom : 8;
+  const bottomInset = insets.bottom > 0 ? insets.bottom : 10;
 
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarActiveTintColor: colors.primary[500],
+        tabBarActiveTintColor: '#E07A5F',
         tabBarInactiveTintColor: theme.textSecondary,
         tabBarStyle: {
           backgroundColor: theme.card,
-          borderTopColor: theme.border,
-          height: 54 + bottomInset,
+          borderTopColor: isDark ? theme.border : 'transparent',
+          height: 56 + bottomInset,
           paddingBottom: bottomInset,
           paddingTop: 6,
+          elevation: 10,
         },
         tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '500',
+          fontSize: 10,
+          fontWeight: '600',
         },
         tabBarIcon: ({ focused, color }) => {
           let iconName: React.ComponentProps<typeof Ionicons>['name'];
@@ -48,13 +47,13 @@ export const BuyerTabNavigator = () => {
               iconName = focused ? 'home' : 'home-outline';
               break;
             case 'BuyerSearch':
-              iconName = focused ? 'compass' : 'compass-outline';
+              iconName = focused ? 'grid' : 'grid-outline';
               break;
             case 'BuyerCart':
-              iconName = focused ? 'cart' : 'cart-outline';
+              iconName = focused ? 'heart' : 'heart-outline';
               break;
             case 'BuyerOrders':
-              iconName = focused ? 'receipt' : 'receipt-outline';
+              iconName = focused ? 'bag-handle' : 'bag-handle-outline';
               break;
             case 'BuyerProfile':
               iconName = focused ? 'person' : 'person-outline';
@@ -75,15 +74,15 @@ export const BuyerTabNavigator = () => {
       <Tab.Screen
         name="BuyerSearch"
         component={SearchScreen}
-        options={{ title: 'Explore' }}
+        options={{ title: 'Categories' }}
       />
       <Tab.Screen
         name="BuyerCart"
         component={BuyerCartScreen}
         options={{
-          title: 'Cart',
-          tabBarBadge: itemCount > 0 ? itemCount : undefined,
-          tabBarBadgeStyle: { backgroundColor: colors.semantic.error[500] },
+          title: 'Wishlist',
+          tabBarBadge: itemCount > 0 ? itemCount : 2,
+          tabBarBadgeStyle: { backgroundColor: '#E07A5F' },
         }}
       />
       <Tab.Screen

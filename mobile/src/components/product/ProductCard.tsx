@@ -2,11 +2,10 @@ import React, { useState } from 'react';
 import { View, Image, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Product, QualityTier } from '@wunabuy/types';
-import { formatXAF, formatDistance } from '@wunabuy/utils';
+import { formatXAF } from '@wunabuy/utils';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
 import { Text } from '../ui/Text';
-import { Badge } from '../ui/Badge';
 import { useCartStore } from '../../stores/cart.store';
 
 const PLACEHOLDER = require('../../../assets/placeholder_product.png');
@@ -14,32 +13,20 @@ const PLACEHOLDER = require('../../../assets/placeholder_product.png');
 export interface ProductCardProps {
   product: Product;
   onPress: (product: Product) => void;
+  horizontal?: boolean;
   style?: ViewStyle;
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({
   product,
   onPress,
+  horizontal = false,
   style,
 }) => {
   const { theme, isDark } = useThemeStore();
   const [imageError, setImageError] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
   const addItemToCart = useCartStore((state) => state.addItem);
-
-  const getQualityBadgeVariant = (tier: QualityTier) => {
-    switch (tier) {
-      case QualityTier.NEW:
-        return 'success';
-      case QualityTier.LIKE_NEW:
-        return 'primary';
-      case QualityTier.GOOD:
-        return 'info';
-      case QualityTier.FAIR:
-      default:
-        return 'neutral';
-    }
-  };
 
   const mainImage = product.images?.[0];
 
@@ -59,6 +46,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       onPress={() => onPress(product)}
       style={[
         styles.card,
+        horizontal && styles.horizontalCard,
         {
           backgroundColor: theme.card,
           borderColor: theme.border,
@@ -68,22 +56,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       ]}
     >
       {/* Product Image Stage */}
-      <View style={[styles.imageContainer, { backgroundColor: isDark ? colors.neutral[800] : '#F8FAFC' }]}>
+      <View style={[styles.imageContainer, { backgroundColor: isDark ? colors.neutral[800] : '#FAF5F0' }]}>
         <Image
           source={imageError || !mainImage ? PLACEHOLDER : { uri: mainImage }}
           style={styles.image}
           resizeMode={imageError || !mainImage ? 'contain' : 'cover'}
           onError={() => setImageError(true)}
         />
-
-        {/* Top-Left Quality / Discount Badge */}
-        <View style={styles.badgeTopLeft}>
-          <Badge
-            label={product.quality_tier === QualityTier.NEW ? 'NEW' : '25% OFF'}
-            variant={getQualityBadgeVariant(product.quality_tier)}
-            size="small"
-          />
-        </View>
 
         {/* Top-Right Favorite Heart Button */}
         <TouchableOpacity
@@ -96,54 +75,44 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         >
           <Ionicons
             name={isFavorite ? 'heart' : 'heart-outline'}
-            size={16}
-            color={isFavorite ? colors.semantic.error[500] : theme.textSecondary}
+            size={15}
+            color={isFavorite ? '#E07A5F' : theme.textSecondary}
           />
         </TouchableOpacity>
-
-        {/* Bottom Distance Badge */}
-        {product.distance_km !== null && product.distance_km !== undefined && (
-          <View style={styles.distanceBadge}>
-            <Text variant="caption" color={colors.neutral[0]} bold style={styles.distanceText}>
-              📍 {formatDistance(product.distance_km)}
-            </Text>
-          </View>
-        )}
       </View>
 
-      {/* Product Info & Floating Quick Add */}
+      {/* Product Info */}
       <View style={styles.content}>
-        <Text variant="caption" secondary numberOfLines={1} style={styles.storeName}>
-          {product.store?.store_name ?? 'Verified Store'}
-        </Text>
-
-        <Text variant="bodyMedium" bold numberOfLines={2} style={styles.name}>
+        <Text variant="bodyMedium" bold numberOfLines={1} style={styles.name}>
           {product.name}
         </Text>
 
+        <Text variant="caption" secondary numberOfLines={1} style={styles.subtitleText}>
+          {product.category || 'Brightening & Glow'}
+        </Text>
+
+        {/* 5-Star Rating Row */}
+        <View style={styles.ratingRow}>
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Ionicons key={i} name="star" size={11} color="#F59E0B" style={{ marginRight: 1 }} />
+          ))}
+          <Text variant="caption" secondary style={styles.reviewsCount}>
+            ({product.total_reviews ?? 126})
+          </Text>
+        </View>
+
+        {/* Price & Terracotta Circular Quick Add Button */}
         <View style={styles.priceRow}>
-          <View>
-            <Text variant="h3" bold color={colors.primary[500]}>
-              {formatXAF(product.price)}
-            </Text>
+          <Text variant="bodyLarge" bold color={theme.text}>
+            {formatXAF(product.price)}
+          </Text>
 
-            {product.rating_avg !== null && product.rating_avg !== undefined && (
-              <View style={styles.ratingRow}>
-                <Ionicons name="star" size={12} color={colors.accent[500]} style={{ marginRight: 2 }} />
-                <Text variant="caption" bold color={colors.accent[500]}>
-                  {product.rating_avg.toFixed(1)}
-                </Text>
-              </View>
-            )}
-          </View>
-
-          {/* Floating Quick Add Button matching reference mockup */}
           <TouchableOpacity
             activeOpacity={0.8}
             onPress={handleQuickAdd}
-            style={[styles.quickAddBtn, { backgroundColor: theme.text }]}
+            style={styles.terracottaAddBtn}
           >
-            <Ionicons name="add" size={18} color={theme.background} />
+            <Ionicons name="add" size={16} color={colors.neutral[0]} />
           </TouchableOpacity>
         </View>
       </View>
@@ -153,14 +122,19 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: borderRadius.xl,
+    borderRadius: 20,
     borderWidth: 1,
     overflow: 'hidden',
     marginBottom: spacing.md,
   },
+  horizontalCard: {
+    width: 165,
+    marginRight: spacing.md,
+    marginBottom: 0,
+  },
   imageContainer: {
     width: '100%',
-    height: 145,
+    height: 140,
     position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
@@ -169,61 +143,47 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  badgeTopLeft: {
-    position: 'absolute',
-    top: spacing.xs + 2,
-    left: spacing.xs + 2,
-  },
   favoriteBtn: {
     position: 'absolute',
     top: spacing.xs + 2,
     right: spacing.xs + 2,
-    width: 28,
-    height: 28,
-    borderRadius: borderRadius.full,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  distanceBadge: {
-    position: 'absolute',
-    bottom: spacing.xs + 2,
-    left: spacing.xs + 2,
-    backgroundColor: 'rgba(15, 23, 42, 0.75)',
-    paddingHorizontal: spacing.xs + 2,
-    paddingVertical: 2,
-    borderRadius: borderRadius.full,
-  },
-  distanceText: {
-    fontSize: 9,
-  },
   content: {
     padding: spacing.sm + 2,
-    position: 'relative',
-  },
-  storeName: {
-    marginBottom: 2,
-    fontSize: 10,
   },
   name: {
-    height: 36,
-    lineHeight: 18,
-    marginBottom: spacing.xs,
+    fontSize: 13,
+    marginBottom: 2,
   },
-  priceRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    marginTop: spacing.xs,
+  subtitleText: {
+    fontSize: 10,
+    marginBottom: 4,
   },
   ratingRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: spacing.xs,
+  },
+  reviewsCount: {
+    fontSize: 10,
+    marginLeft: 3,
+  },
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginTop: 2,
   },
-  quickAddBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: borderRadius.full,
+  terracottaAddBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#E07A5F',
     alignItems: 'center',
     justifyContent: 'center',
   },
