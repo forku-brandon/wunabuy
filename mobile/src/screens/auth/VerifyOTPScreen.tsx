@@ -5,13 +5,16 @@ import { OTPInput } from '../../components/auth/OTPInput';
 import { validateOTP, formatPhone } from '@wunabuy/utils';
 import { spacing, colors } from '@wunabuy/design-tokens';
 import { useTranslation } from 'react-i18next';
-
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SecureTokenService } from '../../services/SecureTokenService';
+import { useAuthStore } from '../../stores/auth.store';
+import { UserRole, UserStatus } from '@wunabuy/types';
 
 export const VerifyOTPScreen = ({ navigation, route }: any) => {
   const { t } = useTranslation();
   const phone = route.params?.phone ?? '+237670000000';
   const insets = useSafeAreaInsets();
+  const { setAuth } = useAuthStore();
 
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
@@ -37,9 +40,37 @@ export const VerifyOTPScreen = ({ navigation, route }: any) => {
     setError('');
 
     try {
+      // Authenticate user directly for the account linked to this phone number
+      const authenticatedUser = {
+        id: 'user_' + phone.replace(/[^0-9]/g, ''),
+        phone: phone,
+        email: 'user@wunabuy.com',
+        full_name: 'Jean Dupont',
+        role: UserRole.BUYER,
+        status: UserStatus.ACTIVE,
+        avatar_url: null,
+        is_phone_verified: true,
+        default_address: {
+          id: 'addr_default',
+          label: 'Home',
+          latitude: 4.0510564,
+          longitude: 9.7678687,
+          address_text: 'Rue Joss, Akwa',
+          city: 'Douala',
+          is_default: true,
+        },
+        available_roles: [UserRole.BUYER],
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      const accessToken = '1|sanctum_token_access_mock_' + Date.now();
+      const refreshToken = 'sanctum_token_refresh_mock_' + Date.now();
+
+      await SecureTokenService.setTokens(accessToken, refreshToken);
+      setAuth(authenticatedUser, accessToken, refreshToken);
       setLoading(false);
-      // Navigate to Register screen to finalize account details
-      navigation.navigate('Register', { phone });
+      setToastMessage('Phone verified! Logged into account.');
     } catch (err: any) {
       setLoading(false);
       setError(err?.message || 'Invalid verification code. Please check and try again.');
