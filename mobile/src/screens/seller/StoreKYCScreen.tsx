@@ -67,7 +67,7 @@ export const StoreKYCScreen = ({ navigation }: any) => {
       setCurrentStage(2);
     } else if (currentStage === 2) {
       if (!addressText.trim()) {
-        setError('Please enter your store physical street address.');
+        setError('Please enter your store physical street address in Douala/Yaoundé.');
         return;
       }
       setCurrentStage(3);
@@ -187,7 +187,7 @@ export const StoreKYCScreen = ({ navigation }: any) => {
                       Store Basic Details
                     </Text>
                     <Text variant="caption" secondary>
-                      Enter your official store name and category
+                      Enter your official store name, description and category
                     </Text>
                   </View>
                 </View>
@@ -201,17 +201,18 @@ export const StoreKYCScreen = ({ navigation }: any) => {
                     setStoreName(text);
                   }}
                   autoFocus
-                  containerStyle={styles.inputSpacing}
+                  containerStyle={styles.inputSpacingLarge}
                 />
 
                 <Input
-                  label="Short Business Description"
-                  placeholder="e.g. Quality electronics, laptops, and original phone accessories."
+                  label="Short Business Description *"
+                  placeholder="e.g. Quality electronics, original phone accessories, repair services, and laptops available in Akwa Douala."
                   value={description}
                   onChangeText={setDescription}
                   multiline
-                  numberOfLines={3}
-                  containerStyle={styles.inputSpacing}
+                  numberOfLines={5}
+                  style={styles.tallDescriptionInput}
+                  containerStyle={styles.inputSpacingLarge}
                 />
 
                 <Text variant="caption" bold color={theme.textSecondary} style={styles.label}>
@@ -270,25 +271,25 @@ export const StoreKYCScreen = ({ navigation }: any) => {
                     setAddressText(text);
                   }}
                   autoFocus
-                  containerStyle={styles.inputSpacing}
+                  containerStyle={styles.inputSpacingLarge}
                 />
 
                 <Input
-                  label="City"
+                  label="City *"
                   placeholder="Douala / Yaoundé"
                   value={city}
                   onChangeText={setCity}
-                  containerStyle={styles.inputSpacing}
+                  containerStyle={styles.inputSpacingLarge}
                 />
 
                 <View style={[styles.gpsCardNotice, { backgroundColor: isDark ? colors.neutral[800] : colors.primary[50] }]}>
-                  <Ionicons name="location" size={20} color={colors.primary[500]} style={{ marginRight: spacing.sm }} />
+                  <Ionicons name="location" size={24} color={colors.primary[500]} style={{ marginRight: spacing.md }} />
                   <View style={{ flex: 1 }}>
-                    <Text variant="bodyMedium" bold color={colors.primary[600]}>
-                      GPS Location Auto-Pin
+                    <Text variant="bodyLarge" bold color={colors.primary[600]}>
+                      GPS Location Auto-Pin Active
                     </Text>
-                    <Text variant="caption" secondary style={{ fontSize: 10 }}>
-                      Lat: 4.0510564, Lng: 9.7678687 (Douala Hub)
+                    <Text variant="caption" secondary style={{ marginTop: 2 }}>
+                      Lat: 4.0510564, Lng: 9.7678687 (Akwa Merchant Hub)
                     </Text>
                   </View>
                 </View>
@@ -323,7 +324,7 @@ export const StoreKYCScreen = ({ navigation }: any) => {
                     setCniNumber(text);
                   }}
                   autoFocus
-                  containerStyle={styles.inputSpacing}
+                  containerStyle={styles.inputSpacingLarge}
                 />
 
                 <Text variant="caption" bold color={theme.textSecondary} style={styles.label}>
@@ -435,11 +436,19 @@ export const StoreKYCScreen = ({ navigation }: any) => {
               </View>
             )}
 
-            {/* Error Notice */}
+            {/* High-End Error Callout Alert Banner */}
             {error ? (
-              <Text variant="caption" color={colors.semantic.error[500]} align="center" style={styles.errorText}>
-                {error}
-              </Text>
+              <View style={styles.errorCalloutCard}>
+                <Ionicons name="alert-circle-sharp" size={22} color={colors.semantic.error[500]} style={{ marginRight: 8 }} />
+                <View style={{ flex: 1 }}>
+                  <Text variant="bodyMedium" bold color={colors.semantic.error[700]}>
+                    Validation Notice
+                  </Text>
+                  <Text variant="caption" color={colors.semantic.error[700]} style={{ marginTop: 1 }}>
+                    {error}
+                  </Text>
+                </View>
+              </View>
             ) : null}
           </ScrollView>
         </View>
@@ -449,21 +458,33 @@ export const StoreKYCScreen = ({ navigation }: any) => {
           {currentStage < 5 ? (
             <View style={styles.actionRow}>
               {currentStage > 1 && (
-                <Button
-                  title="← Back"
-                  variant="outline"
+                <TouchableOpacity
+                  activeOpacity={0.82}
                   onPress={handlePrevStage}
-                  style={styles.prevBtn}
-                />
+                  style={[styles.advancedBackBtn, { borderColor: theme.border }]}
+                >
+                  <Ionicons name="arrow-back-outline" size={18} color={theme.text} style={{ marginRight: 4 }} />
+                  <Text variant="bodyLarge" bold color={theme.text}>
+                    Back
+                  </Text>
+                </TouchableOpacity>
               )}
 
-              <Button
-                title={currentStage === 4 ? 'Submit KYC Documents ➔' : 'Continue to Next Stage →'}
-                variant="primary"
-                loading={loading}
+              <TouchableOpacity
+                activeOpacity={0.85}
                 onPress={handleNextStage}
-                style={[styles.nextBtn, currentStage === 1 && { width: '100%' }]}
-              />
+                style={[
+                  styles.advancedContinueBtn,
+                  currentStage === 1 && { flex: 1 },
+                ]}
+              >
+                <Text variant="bodyLarge" bold color={colors.neutral[0]} style={{ marginRight: 6 }}>
+                  {currentStage === 4 ? 'Submit Documents' : 'Continue to Next Stage'}
+                </Text>
+                <View style={styles.continueArrowCircle}>
+                  <Ionicons name="arrow-forward-outline" size={18} color={colors.role.seller} />
+                </View>
+              </TouchableOpacity>
             </View>
           ) : (
             <Button
@@ -534,46 +555,53 @@ const styles = StyleSheet.create({
   },
   stageCard: {
     borderRadius: borderRadius.xl,
-    padding: spacing.lg,
+    padding: spacing.xl,
     marginBottom: spacing.md,
+    minHeight: 380,
+    justifyContent: 'space-between',
   },
   stageCardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: spacing.md,
+    marginBottom: spacing.lg,
     gap: spacing.md,
   },
   stageBadgeCircle: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     alignItems: 'center',
     justifyContent: 'center',
+    ...shadows.sm,
   },
-  inputSpacing: {
-    marginBottom: spacing.md,
+  inputSpacingLarge: {
+    marginBottom: spacing.lg,
+  },
+  tallDescriptionInput: {
+    minHeight: 110,
+    textAlignVertical: 'top',
   },
   label: {
-    marginBottom: spacing.xs,
+    marginBottom: spacing.xs + 2,
     marginTop: spacing.xs,
   },
   categoryScroll: {
-    gap: spacing.xs,
+    gap: spacing.xs + 2,
     paddingVertical: spacing.xs,
     marginBottom: spacing.sm,
   },
   categoryChip: {
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.lg,
     borderWidth: 1,
   },
   gpsCardNotice: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: spacing.md,
-    borderRadius: borderRadius.lg,
-    marginTop: spacing.xs,
+    padding: spacing.lg,
+    borderRadius: borderRadius.xl,
+    marginTop: spacing.sm,
   },
   celebrationContainer: {
     marginTop: spacing.xs,
@@ -629,7 +657,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: spacing.md,
   },
-  errorText: {
+  errorCalloutCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.semantic.error[50],
+    borderWidth: 1,
+    borderColor: colors.semantic.error[500],
+    borderRadius: borderRadius.xl,
+    padding: spacing.md,
+    marginTop: spacing.xs,
     marginBottom: spacing.md,
   },
   actionSection20: {
@@ -642,18 +678,37 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.md,
   },
-  prevBtn: {
+  advancedBackBtn: {
     flex: 1,
-    height: 52,
+    height: 54,
+    borderRadius: borderRadius.full,
+    borderWidth: 1.5,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  nextBtn: {
-    flex: 1.5,
-    height: 52,
+  advancedContinueBtn: {
+    flex: 2,
+    height: 54,
+    borderRadius: borderRadius.full,
     backgroundColor: colors.role.seller,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.md,
+    ...shadows.md,
+  },
+  continueArrowCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   homeBtn: {
     width: '100%',
-    height: 52,
+    height: 54,
     backgroundColor: colors.primary[500],
   },
 });
