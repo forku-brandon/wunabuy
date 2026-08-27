@@ -5,22 +5,25 @@ import {
   StyleSheet,
   TouchableOpacity,
   RefreshControl,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Text, Input, Badge, Card } from '../../components/ui';
+import { Text, Input, Badge, Avatar } from '../../components/ui';
 import { CategoryChip } from '../../components/product/CategoryChip';
 import { ProductCard } from '../../components/product/ProductCard';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { ProductCategory, Product } from '@wunabuy/types';
 import { MOCK_PRODUCTS } from '../../services/mockProducts';
 import { useCartStore } from '../../stores/cart.store';
-import { colors, spacing, borderRadius } from '@wunabuy/design-tokens';
+import { useAuthStore } from '../../stores/auth.store';
+import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
 
 export const HomeScreen = ({ navigation }: any) => {
-  const { theme } = useThemeStore();
+  const { theme, isDark } = useThemeStore();
   const insets = useSafeAreaInsets();
+  const { user } = useAuthStore();
   const itemCount = useCartStore((state) => state.getItemCount());
   const [selectedCategory, setSelectedCategory] = useState<ProductCategory | 'All'>('All');
   const [refreshing, setRefreshing] = useState(false);
@@ -44,75 +47,121 @@ export const HomeScreen = ({ navigation }: any) => {
     [navigation]
   );
 
-  /**
-   * ListHeaderComponent for the FlatList — contains the sticky header,
-   * promo banner, and category chips. This avoids the forbidden pattern of
-   * nesting a FlatList inside a ScrollView.
-   */
+  const firstName = user?.full_name?.split(' ')[0] || 'Jean';
+
   const ListHeader = (
     <>
-      {/* Sticky App Header */}
-      <View style={[styles.header, { backgroundColor: theme.card, borderBottomColor: theme.border, paddingTop: Math.max(insets.top + spacing.xs, spacing.md) }]}>
-        <View style={styles.locationRow}>
+      {/* Top Greeting & User Avatar Header (Matching Mockup Screen 1) */}
+      <View style={[styles.header, { backgroundColor: theme.background, paddingTop: Math.max(insets.top + spacing.xs, spacing.md) }]}>
+        <View style={styles.greetingRow}>
           <View>
-            <Text variant="caption" secondary>
-              DELIVERING TO
+            <Text variant="h1" bold style={styles.greetingTitle}>
+              Hi, {firstName}!
             </Text>
-            <Text variant="bodyLarge" bold color={colors.primary[500]}>
-              📍 Akwa, Douala ▾
+            <Text variant="bodyMedium" secondary>
+              Discover products you'll love in Douala
             </Text>
           </View>
 
-          {/* Cart Icon with Badge */}
+          {/* Profile Avatar + Cart Shortcut */}
+          <View style={styles.topActionsRow}>
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => navigation.navigate('BuyerCart')}
+              style={[styles.cartButton, { backgroundColor: isDark ? colors.neutral[800] : '#F1F5F9' }]}
+            >
+              <Ionicons name="bag-handle-outline" size={20} color={theme.text} />
+              {itemCount > 0 && (
+                <View style={styles.cartBadge}>
+                  <Text variant="caption" bold color={colors.neutral[0]} style={styles.cartBadgeText}>
+                    {itemCount}
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity activeOpacity={0.8} onPress={() => navigation.navigate('BuyerProfile')}>
+              <Avatar url={user?.avatar_url} name={user?.full_name || 'User'} size={42} />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Search Bar Input with Filter Button (Matching Mockup Screen 1) */}
+        <View style={styles.searchRow}>
+          <TouchableOpacity
+            activeOpacity={0.9}
+            style={styles.searchFlex}
+            onPress={() => navigation.navigate('BuyerSearch')}
+          >
+            <Input
+              placeholder="Search anything..."
+              editable={false}
+              pointerEvents="none"
+              containerStyle={styles.searchShortcut}
+              leftIcon={<Ionicons name="search-outline" size={20} color={theme.placeholder} />}
+            />
+          </TouchableOpacity>
+
           <TouchableOpacity
             activeOpacity={0.8}
-            onPress={() => navigation.navigate('BuyerCart')}
-            style={[styles.cartButton, { backgroundColor: theme.input }]}
+            onPress={() => navigation.navigate('BuyerSearch')}
+            style={[styles.filterButton, { backgroundColor: theme.card, borderColor: theme.border }]}
           >
-            <Ionicons name="cart-outline" size={22} color={theme.text} />
-            {itemCount > 0 && (
-              <View style={styles.cartBadge}>
-                <Text variant="caption" bold color={colors.neutral[0]} style={styles.cartBadgeText}>
-                  {itemCount}
-                </Text>
-              </View>
-            )}
+            <Ionicons name="options-outline" size={20} color={theme.text} />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Hero Collection Banner Card (Matching Mockup Screen 1) */}
+      <View style={styles.bannerContainer}>
+        <View style={[styles.heroCard, { backgroundColor: isDark ? '#1E293B' : '#E2E8F0' }]}>
+          <View style={styles.heroTextCol}>
+            <Text variant="caption" bold color={colors.primary[600]} style={styles.eyebrow}>
+              100% ESCROW GUARANTEE
+            </Text>
+            <Text variant="h1" bold style={styles.heroTitle}>
+              New Arrivals Are Here
+            </Text>
+            <TouchableOpacity
+              activeOpacity={0.85}
+              style={[styles.heroCtaBtn, { backgroundColor: theme.text }]}
+              onPress={() => navigation.navigate('BuyerSearch')}
+            >
+              <Text variant="bodyMedium" bold color={theme.background}>
+                Shop Now →
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Hero Feature Graphic */}
+          <Image
+            source={{ uri: MOCK_PRODUCTS[0]?.images[0] || 'https://via.placeholder.com/200' }}
+            style={styles.heroImage}
+            resizeMode="contain"
+          />
+
+          {/* Pagination Indicator Dots */}
+          <View style={styles.bannerPagination}>
+            <View style={[styles.bannerDot, styles.activeDot, { backgroundColor: colors.primary[500] }]} />
+            <View style={[styles.bannerDot, { backgroundColor: theme.border }]} />
+            <View style={[styles.bannerDot, { backgroundColor: theme.border }]} />
+          </View>
+        </View>
+      </View>
+
+      {/* Shop by Category Section (Matching Mockup Screen 1) */}
+      <View style={styles.categorySection}>
+        <View style={styles.sectionHeaderRow}>
+          <Text variant="h2" bold>
+            Shop by Category
+          </Text>
+          <TouchableOpacity onPress={() => navigation.navigate('BuyerSearch')}>
+            <Text variant="bodyMedium" bold color={colors.primary[500]}>
+              View All
+            </Text>
           </TouchableOpacity>
         </View>
 
-        {/* Search Bar Shortcut */}
-        <TouchableOpacity
-          activeOpacity={0.9}
-          onPress={() => navigation.navigate('BuyerSearch')}
-        >
-          <Input
-            placeholder="Search verified products or stores..."
-            editable={false}
-            pointerEvents="none"
-            containerStyle={styles.searchShortcut}
-            leftIcon={<Ionicons name="search-outline" size={18} color={theme.placeholder} />}
-          />
-        </TouchableOpacity>
-      </View>
-
-      {/* Promo Banner */}
-      <View style={styles.bannerContainer}>
-        <Card style={styles.promoCard}>
-          <Badge label="100% ESCROW PROTECTED" variant="success" size="small" />
-          <Text variant="h2" bold color={colors.neutral[0]} style={styles.promoTitle}>
-            Buy Safely with 48h Escrow Guarantee
-          </Text>
-          <Text variant="bodyMedium" color="rgba(255,255,255,0.9)" style={styles.promoSubtitle}>
-            Funds are held securely until you receive and sign your delivery.
-          </Text>
-        </Card>
-      </View>
-
-      {/* Category Horizontal Slider */}
-      <View style={styles.categorySection}>
-        <Text variant="caption" bold color={theme.textSecondary} style={styles.sectionLabel}>
-          EXPLORE CATEGORIES
-        </Text>
         <FlatList
           horizontal
           data={categories}
@@ -129,14 +178,17 @@ export const HomeScreen = ({ navigation }: any) => {
         />
       </View>
 
-      {/* Feed Section Header */}
-      <View style={styles.feedHeader}>
+      {/* Deals of the Day Section (Matching Mockup Screen 1) */}
+      <View style={styles.dealsSectionHeader}>
         <Text variant="h2" bold>
-          Near You in Douala
+          Deals of the Day
         </Text>
-        <Text variant="caption" secondary>
-          Sorted by spatial PostGIS distance &amp; store rating
-        </Text>
+        <View style={[styles.timerPill, { backgroundColor: isDark ? colors.neutral[800] : '#F1F5F9' }]}>
+          <Ionicons name="time-outline" size={14} color={colors.semantic.error[500]} style={{ marginRight: 4 }} />
+          <Text variant="caption" bold color={colors.semantic.error[500]}>
+            08 : 45 : 32
+          </Text>
+        </View>
       </View>
     </>
   );
@@ -181,73 +233,149 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: spacing.base,
-    paddingTop: spacing.md,
     paddingBottom: spacing.xs,
-    borderBottomWidth: 1,
   },
-  locationRow: {
+  greetingRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: spacing.xs,
+    marginBottom: spacing.md,
+  },
+  greetingTitle: {
+    fontSize: 24,
+    lineHeight: 28,
+  },
+  topActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
   },
   cartButton: {
-    width: 44,
-    height: 44,
-    borderRadius: borderRadius.md,
+    width: 42,
+    height: 42,
+    borderRadius: borderRadius.full,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
   },
   cartBadge: {
     position: 'absolute',
-    top: -4,
-    right: -4,
+    top: -2,
+    right: -2,
     backgroundColor: colors.semantic.error[500],
     borderRadius: borderRadius.full,
-    minWidth: 18,
-    height: 18,
+    minWidth: 16,
+    height: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 4,
+    paddingHorizontal: 3,
   },
   cartBadgeText: {
-    fontSize: 10,
+    fontSize: 9,
+  },
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginBottom: spacing.xs,
+  },
+  searchFlex: {
+    flex: 1,
   },
   searchShortcut: {
-    marginBottom: spacing.xs,
+    marginBottom: 0,
+  },
+  filterButton: {
+    width: 48,
+    height: 48,
+    borderRadius: borderRadius.xl,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   bannerContainer: {
     paddingHorizontal: spacing.base,
-    marginTop: spacing.md,
+    marginTop: spacing.sm,
   },
-  promoCard: {
-    backgroundColor: colors.primary[600],
-    borderRadius: borderRadius.xl,
+  heroCard: {
+    borderRadius: borderRadius['2xl'],
     padding: spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    minHeight: 150,
+    position: 'relative',
+    overflow: 'hidden',
   },
-  promoTitle: {
-    marginTop: spacing.xs,
-    marginBottom: spacing.xs,
+  heroTextCol: {
+    flex: 1,
+    paddingRight: spacing.sm,
+    zIndex: 2,
   },
-  promoSubtitle: {
-    lineHeight: 18,
+  eyebrow: {
+    fontSize: 10,
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
+  heroTitle: {
+    fontSize: 20,
+    lineHeight: 24,
+    marginBottom: spacing.md,
+  },
+  heroCtaBtn: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs + 2,
+    borderRadius: borderRadius.full,
+    alignSelf: 'flex-start',
+  },
+  heroImage: {
+    width: 110,
+    height: 110,
+    borderRadius: borderRadius.lg,
+  },
+  bannerPagination: {
+    position: 'absolute',
+    bottom: 10,
+    left: '50%',
+    transform: [{ translateX: -20 }],
+    flexDirection: 'row',
+    gap: 4,
+  },
+  bannerDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  activeDot: {
+    width: 16,
   },
   categorySection: {
-    marginTop: spacing.md,
-    marginBottom: spacing.sm,
+    marginTop: spacing.lg,
+    marginBottom: spacing.md,
   },
-  sectionLabel: {
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: spacing.base,
-    marginBottom: spacing.xs,
+    marginBottom: spacing.md,
   },
   categoryScroll: {
     paddingHorizontal: spacing.base,
   },
-  feedHeader: {
+  dealsSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: spacing.base,
-    marginTop: spacing.sm,
     marginBottom: spacing.sm,
+  },
+  timerPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: borderRadius.full,
   },
   columnWrapper: {
     justifyContent: 'space-between',

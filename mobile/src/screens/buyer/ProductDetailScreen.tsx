@@ -1,5 +1,13 @@
 import React, { useState } from 'react';
-import { View, Image, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Image,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScreenContainer, Text, Badge, Button, Card, Toast } from '../../components/ui';
 import { MOCK_PRODUCTS } from '../../services/mockProducts';
 import { useCartStore } from '../../stores/cart.store';
@@ -8,154 +16,229 @@ import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
 import { QualityTier } from '@wunabuy/types';
 
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
 export const ProductDetailScreen = ({ route, navigation }: any) => {
   const { productId } = route.params || {};
-  const { theme } = useThemeStore();
+  const { theme, isDark } = useThemeStore();
   const insets = useSafeAreaInsets();
   const addItemToCart = useCartStore((state) => state.addItem);
 
   const product = MOCK_PRODUCTS.find((p) => p.id === productId) || MOCK_PRODUCTS[0];
 
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [selectedColor, setSelectedColor] = useState(0);
+  const [quantity, setQuantity] = useState(1);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [isDescExpanded, setIsDescExpanded] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  const availableColors = [
+    { name: 'Light Gray', hex: '#CBD5E1' },
+    { name: 'Teal Green', hex: '#0D9488' },
+    { name: 'Midnight Navy', hex: '#1E293B' },
+    { name: 'Amber Gold', hex: '#F59E0B' },
+  ];
+
   const handleAddToCart = () => {
-    const success = addItemToCart(product, 1);
+    const success = addItemToCart(product, quantity);
     if (!success) {
       setToastMessage('Cart can only contain items from one store. Clear cart to add items from another store.');
     } else {
-      setToastMessage(`Added "${product.name}" to cart!`);
+      setToastMessage(`Added ${quantity} x "${product.name}" to cart!`);
     }
   };
 
   const handleBuyNow = () => {
-    addItemToCart(product, 1);
+    addItemToCart(product, quantity);
     navigation.navigate('BuyerCart');
   };
 
   return (
     <ScreenContainer scrollable={false} padded={false}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        {/* Top Header Navigation */}
-        <View style={styles.topBar}>
-          <TouchableOpacity style={[styles.circleBtn, { backgroundColor: theme.card }]} onPress={() => navigation.goBack()}>
-            <Text variant="h2">←</Text>
+        {/* Top Header Navigation (Matching Mockup Screen 2) */}
+        <View style={[styles.topBar, { paddingTop: Math.max(insets.top + spacing.xs, spacing.md) }]}>
+          <TouchableOpacity
+            activeOpacity={0.8}
+            style={[styles.circleBtn, { backgroundColor: theme.card }]}
+            onPress={() => navigation.goBack()}
+          >
+            <Ionicons name="arrow-back" size={20} color={theme.text} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            activeOpacity={0.8}
+            style={[styles.circleBtn, { backgroundColor: theme.card }]}
+            onPress={() => setIsFavorite(!isFavorite)}
+          >
+            <Ionicons
+              name={isFavorite ? 'heart' : 'heart-outline'}
+              size={20}
+              color={isFavorite ? colors.semantic.error[500] : theme.text}
+            />
           </TouchableOpacity>
         </View>
 
-        {/* Multi-Image Gallery */}
-        <View style={styles.galleryContainer}>
+        {/* Hero Image Showcase Stage (Matching Mockup Screen 2) */}
+        <View style={[styles.galleryStage, { backgroundColor: isDark ? colors.neutral[800] : '#F8FAFC' }]}>
           <Image
             source={{ uri: product.images[activeImageIndex] || product.images[0] }}
             style={styles.heroImage}
-            resizeMode="cover"
+            resizeMode="contain"
           />
 
-          {product.images.length > 1 && (
-            <View style={styles.thumbnailRow}>
-              {product.images.map((img, index) => (
-                <TouchableOpacity
-                  key={index}
-                  onPress={() => setActiveImageIndex(index)}
-                  style={[
-                    styles.thumbnail,
-                    activeImageIndex === index && { borderColor: colors.primary[500], borderWidth: 2 },
-                  ]}
-                >
-                  <Image source={{ uri: img }} style={styles.thumbnailImg} />
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
+          {/* Pagination Indicators */}
+          <View style={styles.paginationDots}>
+            {product.images.map((_, idx) => (
+              <View
+                key={idx}
+                style={[
+                  styles.dot,
+                  idx === activeImageIndex
+                    ? [styles.activeDot, { backgroundColor: colors.primary[500] }]
+                    : { backgroundColor: theme.border },
+                ]}
+              />
+            ))}
+          </View>
         </View>
 
-        {/* Product Meta Section */}
+        {/* Product Info Section (Matching Mockup Screen 2) */}
         <View style={styles.contentSection}>
-          <View style={styles.tagRow}>
-            <Badge
-              label={product.quality_tier.replace('_', ' ').toUpperCase()}
-              variant={product.quality_tier === QualityTier.NEW ? 'success' : 'primary'}
-            />
+          {/* Title & Discount Badge */}
+          <View style={styles.titleRow}>
+            <Text variant="h1" bold style={styles.title}>
+              {product.name}
+            </Text>
+            <Badge label="25% OFF" variant="success" size="small" />
+          </View>
+
+          {/* Price & Original Struck-Through Price */}
+          <View style={styles.priceRow}>
+            <Text variant="display" bold color={colors.primary[500]} style={styles.priceText}>
+              {formatXAF(product.price)}
+            </Text>
+            <Text variant="bodyLarge" secondary style={styles.struckPrice}>
+              {formatXAF(product.price * 1.25)}
+            </Text>
+          </View>
+
+          {/* Rating & Distance */}
+          <View style={styles.metaRow}>
+            <View style={styles.ratingBox}>
+              <Ionicons name="star" size={14} color={colors.accent[500]} style={{ marginRight: 4 }} />
+              <Text variant="bodyMedium" bold color={colors.accent[500]}>
+                {product.rating_avg?.toFixed(1) ?? '4.9'} ({product.total_reviews ?? 34} reviews)
+              </Text>
+            </View>
+
             {product.distance_km !== null && (
-              <Badge label={`📍 ${formatDistance(product.distance_km)} away`} variant="neutral" />
+              <Text variant="caption" secondary>
+                📍 {formatDistance(product.distance_km)} away in Akwa
+              </Text>
             )}
           </View>
 
-          <Text variant="h1" bold style={styles.title}>
-            {product.name}
-          </Text>
-
-          <Text variant="display" bold color={colors.primary[500]} style={styles.price}>
-            {formatXAF(product.price)}
-          </Text>
-
-          {/* 48-Hour Escrow Protection Banner */}
-          <Card style={styles.escrowCard}>
-            <View style={styles.escrowHeader}>
-              <Text variant="h2">🔒</Text>
-              <View style={styles.escrowTextContainer}>
-                <Text variant="bodyMedium" bold color={colors.semantic.success[700]}>
-                  Protected by 48-Hour Wunabuy Escrow
-                </Text>
-                <Text variant="caption" color={colors.semantic.success[700]} style={styles.escrowSub}>
-                  Your payment is held safely in escrow until you inspect and sign off on your delivery.
-                </Text>
-              </View>
-            </View>
-          </Card>
-
-          {/* Store Profile Card */}
+          {/* Color Selector (Matching Mockup Screen 2) */}
           <Text variant="caption" bold color={theme.textSecondary} style={styles.sectionLabel}>
-            STORE INFORMATION
+            Color: <Text variant="caption" bold color={theme.text}>{availableColors[selectedColor].name}</Text>
           </Text>
-          <Card style={styles.storeCard}>
-            <View style={styles.storeRow}>
-              <View style={styles.storeAvatar}>
-                <Text variant="h2">🏪</Text>
-              </View>
+          <View style={styles.colorRow}>
+            {availableColors.map((colorObj, idx) => {
+              const isSelected = selectedColor === idx;
+              return (
+                <TouchableOpacity
+                  key={idx}
+                  activeOpacity={0.8}
+                  onPress={() => setSelectedColor(idx)}
+                  style={[
+                    styles.colorCircleOuter,
+                    { borderColor: isSelected ? colors.primary[500] : 'transparent' },
+                  ]}
+                >
+                  <View style={[styles.colorCircleInner, { backgroundColor: colorObj.hex }]} />
+                </TouchableOpacity>
+              );
+            })}
+          </View>
 
-              <View style={styles.storeInfo}>
-                <View style={styles.storeNameRow}>
-                  <Text variant="h3" bold numberOfLines={1}>
-                    {product.store?.store_name ?? 'Douala Tech Hub'}
-                  </Text>
-                  {product.store?.is_verified && <Badge label="VERIFIED" variant="primary" size="small" />}
-                </View>
-
-                <Text variant="caption" secondary>
-                  ★ {product.store?.rating_avg ?? '4.9'} Rating ({product.total_reviews} reviews)
-                </Text>
-              </View>
-            </View>
-          </Card>
-
-          {/* Description Section */}
+          {/* Description Section (Matching Mockup Screen 2) */}
           <Text variant="caption" bold color={theme.textSecondary} style={styles.sectionLabel}>
-            PRODUCT DESCRIPTION
+            Description
           </Text>
-          <Text variant="bodyMedium" secondary style={styles.description}>
+          <Text
+            variant="bodyMedium"
+            secondary
+            numberOfLines={isDescExpanded ? undefined : 3}
+            style={styles.description}
+          >
             {product.description}
           </Text>
+          <TouchableOpacity onPress={() => setIsDescExpanded(!isDescExpanded)} style={styles.readMoreBtn}>
+            <Text variant="bodyMedium" bold color={colors.primary[500]}>
+              {isDescExpanded ? 'Show less' : 'Read more'}
+            </Text>
+          </TouchableOpacity>
+
+          {/* Features Bullets (Matching Mockup Screen 2) */}
+          <Text variant="caption" bold color={theme.textSecondary} style={styles.sectionLabel}>
+            Features
+          </Text>
+          <View style={styles.featuresList}>
+            <View style={styles.featureItem}>
+              <Ionicons name="checkmark" size={16} color={colors.semantic.success[700]} style={styles.checkIcon} />
+              <Text variant="bodyMedium">1-Year Official Manufacturer Warranty</Text>
+            </View>
+            <View style={styles.featureItem}>
+              <Ionicons name="checkmark" size={16} color={colors.semantic.success[700]} style={styles.checkIcon} />
+              <Text variant="bodyMedium">50MP OIS Triple Camera System &amp; 5000mAh Battery</Text>
+            </View>
+            <View style={styles.featureItem}>
+              <Ionicons name="checkmark" size={16} color={colors.semantic.success[700]} style={styles.checkIcon} />
+              <Text variant="bodyMedium">48-Hour Wunabuy Escrow Money-Back Guarantee</Text>
+            </View>
+          </View>
         </View>
       </ScrollView>
 
-      {/* Fixed Bottom Action Bar */}
-      <View style={[styles.bottomBar, { backgroundColor: theme.card, borderTopColor: theme.border, paddingBottom: Math.max(insets.bottom, spacing.base) }]}>
+      {/* Bottom Sticky Action Bar with Stepper + Add to Cart (Matching Mockup Screen 2) */}
+      <View
+        style={[
+          styles.bottomBar,
+          {
+            backgroundColor: theme.card,
+            borderTopColor: theme.border,
+            paddingBottom: Math.max(insets.bottom, spacing.base),
+          },
+        ]}
+      >
+        {/* Quantity Stepper Pill */}
+        <View style={[styles.stepperPill, { backgroundColor: isDark ? colors.neutral[800] : '#F1F5F9' }]}>
+          <TouchableOpacity
+            onPress={() => setQuantity(Math.max(1, quantity - 1))}
+            style={styles.stepBtn}
+          >
+            <Text variant="h2" bold>-</Text>
+          </TouchableOpacity>
+
+          <Text variant="bodyLarge" bold style={styles.stepQty}>
+            {quantity}
+          </Text>
+
+          <TouchableOpacity
+            onPress={() => setQuantity(quantity + 1)}
+            style={styles.stepBtn}
+          >
+            <Text variant="h2" bold>+</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Primary CTA Button */}
         <Button
           title="Add to Cart"
-          variant="outline"
-          fullWidth={false}
-          onPress={handleAddToCart}
-          style={styles.cartBtn}
-        />
-        <Button
-          title="Buy Now (Escrow)"
           variant="primary"
           fullWidth={false}
-          onPress={handleBuyNow}
-          style={styles.buyBtn}
+          onPress={handleAddToCart}
+          style={styles.addToCartBtn}
         />
       </View>
 
@@ -166,111 +249,128 @@ export const ProductDetailScreen = ({ route, navigation }: any) => {
 
 const styles = StyleSheet.create({
   scrollContent: {
-    paddingBottom: 90, // Leave space for fixed bottom bar
+    paddingBottom: 110,
   },
   topBar: {
     position: 'absolute',
-    top: spacing.md,
-    left: spacing.md,
+    left: spacing.base,
+    right: spacing.base,
     zIndex: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   circleBtn: {
-    width: 40,
-    height: 40,
+    width: 42,
+    height: 42,
     borderRadius: borderRadius.full,
     alignItems: 'center',
     justifyContent: 'center',
     ...shadows.sm,
   },
-  galleryContainer: {
+  galleryStage: {
     width: '100%',
-    height: 300,
-    backgroundColor: colors.neutral[100],
+    height: 320,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    paddingTop: 40,
   },
   heroImage: {
-    width: '100%',
-    height: '100%',
+    width: '80%',
+    height: '75%',
   },
-  thumbnailRow: {
-    flexDirection: 'row',
+  paginationDots: {
     position: 'absolute',
     bottom: spacing.md,
-    left: spacing.md,
-    gap: spacing.xs,
+    flexDirection: 'row',
+    gap: 6,
   },
-  thumbnail: {
-    width: 48,
-    height: 48,
-    borderRadius: borderRadius.sm,
-    overflow: 'hidden',
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
-  thumbnailImg: {
-    width: '100%',
-    height: '100%',
+  activeDot: {
+    width: 16,
   },
   contentSection: {
     padding: spacing.base,
   },
-  tagRow: {
+  titleRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
     marginBottom: spacing.xs,
   },
   title: {
-    marginBottom: spacing.xs,
+    flex: 1,
+    fontSize: 22,
     lineHeight: 28,
   },
-  price: {
-    marginBottom: spacing.md,
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: spacing.sm,
+    marginBottom: spacing.xs,
   },
-  escrowCard: {
-    backgroundColor: colors.semantic.success[50],
-    borderColor: colors.semantic.success[500],
+  priceText: {
+    fontSize: 26,
+  },
+  struckPrice: {
+    textDecorationLine: 'line-through',
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
     marginBottom: spacing.lg,
   },
-  escrowHeader: {
+  ratingBox: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  escrowTextContainer: {
-    marginLeft: spacing.sm,
-    flex: 1,
-  },
-  escrowSub: {
-    marginTop: 2,
-    lineHeight: 16,
+    alignItems: 'center',
   },
   sectionLabel: {
     marginBottom: spacing.xs,
+    marginTop: spacing.md,
   },
-  storeCard: {
-    marginBottom: spacing.lg,
-  },
-  storeRow: {
+  colorRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.md,
   },
-  storeAvatar: {
-    width: 44,
-    height: 44,
-    borderRadius: borderRadius.md,
-    backgroundColor: colors.primary[50],
+  colorCircleOuter: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: spacing.md,
   },
-  storeInfo: {
-    flex: 1,
-  },
-  storeNameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 2,
+  colorCircleInner: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
   },
   description: {
     lineHeight: 22,
+  },
+  readMoreBtn: {
+    marginTop: 4,
+    marginBottom: spacing.sm,
+  },
+  featuresList: {
+    gap: spacing.xs + 2,
+    marginTop: 4,
+  },
+  featureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  checkIcon: {
+    marginRight: spacing.xs,
   },
   bottomBar: {
     position: 'absolute',
@@ -279,15 +379,29 @@ const styles = StyleSheet.create({
     right: 0,
     flexDirection: 'row',
     alignItems: 'center',
-    padding: spacing.base,
+    paddingHorizontal: spacing.base,
+    paddingTop: spacing.md,
     borderTopWidth: 1,
     gap: spacing.md,
   },
-  cartBtn: {
-    flex: 1,
+  stepperPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: borderRadius.full,
+    height: 48,
+    paddingHorizontal: spacing.sm,
   },
-  buyBtn: {
-    flex: 1.5,
+  stepBtn: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepQty: {
+    paddingHorizontal: spacing.md,
+  },
+  addToCartBtn: {
+    flex: 1,
+    height: 48,
   },
 });
-

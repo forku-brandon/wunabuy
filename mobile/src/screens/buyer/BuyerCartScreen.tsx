@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { View, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, FlatList, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScreenContainer, Text, Card, Button, Badge, EmptyState } from '../../components/ui';
 import { CartItemCard } from '../../components/cart/CartItemCard';
-import { OrderSummaryCard } from '../../components/cart/OrderSummaryCard';
 import { useCartStore } from '../../stores/cart.store';
 import { useThemeStore } from '../../stores/theme.store';
-import { spacing, colors } from '@wunabuy/design-tokens';
+import { spacing, colors, borderRadius } from '@wunabuy/design-tokens';
 import { Address } from '@wunabuy/types';
+import { formatXAF } from '@wunabuy/utils';
 
 const MOCK_DEFAULT_ADDRESS: Address = {
   id: 'addr_1',
@@ -19,13 +21,18 @@ const MOCK_DEFAULT_ADDRESS: Address = {
 };
 
 export const BuyerCartScreen = ({ navigation }: any) => {
-  const { theme } = useThemeStore();
-  const { items, updateQuantity, removeItem, getSubtotal, getItemCount } = useCartStore();
+  const { theme, isDark } = useThemeStore();
+  const insets = useSafeAreaInsets();
+  const { items, updateQuantity, removeItem, clearCart, getSubtotal, getItemCount } = useCartStore();
 
   const [deliveryAddress] = useState<Address>(MOCK_DEFAULT_ADDRESS);
+  const [promoCode, setPromoCode] = useState('');
+  const [appliedDiscount, setAppliedDiscount] = useState(2000); // 2000 FCFA promo discount
 
   const subtotal = getSubtotal();
   const itemCount = getItemCount();
+  const shippingFee = 0; // Free delivery unlocked
+  const total = Math.max(0, subtotal - appliedDiscount + shippingFee);
 
   const handleProceedToPayment = () => {
     navigation.navigate('CheckoutPayment', {
@@ -34,11 +41,17 @@ export const BuyerCartScreen = ({ navigation }: any) => {
     });
   };
 
+  const handleApplyPromo = () => {
+    if (promoCode.trim()) {
+      setAppliedDiscount(3000);
+    }
+  };
+
   if (items.length === 0) {
     return (
       <ScreenContainer scrollable={false}>
         <EmptyState
-          title="Your Escrow Cart is Empty"
+          title="Your Cart is Empty"
           description="Browse items from verified local stores in Douala and add them to your cart."
           actionLabel="Explore Products"
           onAction={() => navigation.navigate('BuyerSearch')}
@@ -49,14 +62,33 @@ export const BuyerCartScreen = ({ navigation }: any) => {
 
   return (
     <ScreenContainer scrollable={false} padded={false}>
-      {/* Top Header */}
-      <View style={[styles.header, { backgroundColor: theme.card, borderBottomColor: theme.border }]}>
-        <Text variant="h1" bold>
-          Escrow Cart ({itemCount} {itemCount === 1 ? 'item' : 'items'})
-        </Text>
-        <Text variant="caption" secondary>
-          Items from Douala Tech Hub (Akwa)
-        </Text>
+      {/* Header (Matching Mockup Screen 3) */}
+      <View style={[styles.header, { backgroundColor: theme.background, paddingTop: Math.max(insets.top + spacing.xs, spacing.md) }]}>
+        <View style={styles.headerRow}>
+          <Text variant="h1" bold style={styles.headerTitle}>
+            My Cart
+          </Text>
+
+          <TouchableOpacity onPress={clearCart}>
+            <Text variant="bodyMedium" bold color={colors.semantic.error[500]}>
+              Clear All
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Free Shipping & Escrow Unlock Progress Banner (Matching Mockup Screen 3) */}
+        <View style={[styles.shippingBanner, { backgroundColor: isDark ? '#064E3B' : '#ECFDF5', borderColor: colors.semantic.success[500] }]}>
+          <View style={styles.shippingBannerRow}>
+            <Ionicons name="car-outline" size={20} color={colors.semantic.success[700]} />
+            <Text variant="bodyMedium" bold color={colors.semantic.success[700]} style={styles.shippingBannerText}>
+              You've unlocked free express delivery &amp; 48h Escrow!
+            </Text>
+          </View>
+          {/* Progress Bar */}
+          <View style={styles.progressBarTrack}>
+            <View style={[styles.progressBarFill, { width: '100%' }]} />
+          </View>
+        </View>
       </View>
 
       <FlatList
@@ -64,39 +96,6 @@ export const BuyerCartScreen = ({ navigation }: any) => {
         keyExtractor={(item) => item.product_id}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
-        ListHeaderComponent={
-          <>
-            {/* Selected Delivery Address Card */}
-            <Text variant="caption" bold color={theme.textSecondary} style={styles.sectionLabel}>
-              DELIVERY DESTINATION
-            </Text>
-            <Card style={styles.addressCard}>
-              <View style={styles.addressRow}>
-                <View style={styles.addressInfo}>
-                  <View style={styles.labelRow}>
-                    <Text variant="bodyLarge" bold>
-                      📍 {deliveryAddress.label}
-                    </Text>
-                    <Badge label="DEFAULT" variant="primary" size="small" />
-                  </View>
-                  <Text variant="bodyMedium" secondary>
-                    {deliveryAddress.address_text}, {deliveryAddress.city}
-                  </Text>
-                </View>
-
-                <TouchableOpacity onPress={() => navigation.navigate('AddressManager')}>
-                  <Text variant="bodyMedium" bold color={colors.primary[500]}>
-                    Change
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </Card>
-
-            <Text variant="caption" bold color={theme.textSecondary} style={styles.sectionLabel}>
-              ORDER ITEMS
-            </Text>
-          </>
-        }
         renderItem={({ item }) => (
           <CartItemCard
             item={item}
@@ -106,10 +105,79 @@ export const BuyerCartScreen = ({ navigation }: any) => {
         )}
         ListFooterComponent={
           <>
-            <OrderSummaryCard subtotal={subtotal} />
+            {/* Promo Code Input Box (Matching Mockup Screen 3) */}
+            <View style={[styles.promoRow, { backgroundColor: theme.card, borderColor: theme.border }]}>
+              <TextInput
+                placeholder="Enter promo code"
+                value={promoCode}
+                onChangeText={setPromoCode}
+                placeholderTextColor={theme.placeholder}
+                style={[styles.promoInput, { color: theme.text }]}
+              />
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={handleApplyPromo}
+                style={[styles.applyBtn, { backgroundColor: theme.text }]}
+              >
+                <Text variant="bodyMedium" bold color={theme.background}>
+                  APPLY
+                </Text>
+              </TouchableOpacity>
+            </View>
 
+            {/* Order Summary Calculation (Matching Mockup Screen 3) */}
+            <View style={styles.summaryContainer}>
+              <View style={styles.summaryRow}>
+                <Text variant="bodyMedium" secondary>
+                  Subtotal
+                </Text>
+                <Text variant="bodyLarge" bold>
+                  {formatXAF(subtotal)}
+                </Text>
+              </View>
+
+              <View style={styles.summaryRow}>
+                <Text variant="bodyMedium" secondary>
+                  Discount
+                </Text>
+                <Text variant="bodyLarge" bold color={colors.semantic.success[700]}>
+                  -{formatXAF(appliedDiscount)}
+                </Text>
+              </View>
+
+              <View style={styles.summaryRow}>
+                <Text variant="bodyMedium" secondary>
+                  Delivery Fee
+                </Text>
+                <Text variant="bodyLarge" bold color={colors.semantic.success[700]}>
+                  Free
+                </Text>
+              </View>
+
+              <View style={styles.summaryRow}>
+                <Text variant="bodyMedium" secondary>
+                  Escrow Protection
+                </Text>
+                <Text variant="bodyLarge" bold color={colors.semantic.success[700]}>
+                  Included
+                </Text>
+              </View>
+
+              <View style={styles.divider} />
+
+              <View style={styles.summaryRow}>
+                <Text variant="h2" bold>
+                  Total
+                </Text>
+                <Text variant="display" bold color={colors.primary[500]}>
+                  {formatXAF(total)}
+                </Text>
+              </View>
+            </View>
+
+            {/* Bottom Checkout Button (Matching Mockup Screen 3) */}
             <Button
-              title="Proceed to Escrow Payment →"
+              title="Proceed to Escrow Checkout →"
               variant="primary"
               onPress={handleProceedToPayment}
               style={styles.checkoutBtn}
@@ -124,38 +192,85 @@ export const BuyerCartScreen = ({ navigation }: any) => {
 const styles = StyleSheet.create({
   header: {
     paddingHorizontal: spacing.base,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.xs,
-    borderBottomWidth: 1,
+    paddingBottom: spacing.sm,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.sm,
+  },
+  headerTitle: {
+    fontSize: 24,
+  },
+  shippingBanner: {
+    padding: spacing.md,
+    borderRadius: borderRadius.xl,
+    borderWidth: 1,
+    marginBottom: spacing.xs,
+  },
+  shippingBannerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
+  },
+  shippingBannerText: {
+    marginLeft: spacing.xs,
+    fontSize: 13,
+  },
+  progressBarTrack: {
+    height: 6,
+    backgroundColor: 'rgba(16, 185, 129, 0.2)',
+    borderRadius: borderRadius.full,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: colors.semantic.success[500],
+    borderRadius: borderRadius.full,
   },
   listContent: {
     padding: spacing.base,
     paddingBottom: spacing.xl,
   },
-  sectionLabel: {
-    marginBottom: spacing.xs,
-    marginTop: spacing.xs,
+  promoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.xs,
+    borderRadius: borderRadius.full,
+    borderWidth: 1,
+    marginTop: spacing.sm,
+    marginBottom: spacing.lg,
   },
-  addressCard: {
-    marginBottom: spacing.md,
+  promoInput: {
+    flex: 1,
+    paddingHorizontal: spacing.md,
+    height: 44,
+    fontSize: 14,
   },
-  addressRow: {
+  applyBtn: {
+    paddingHorizontal: spacing.lg,
+    height: 40,
+    borderRadius: borderRadius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  summaryContainer: {
+    marginBottom: spacing.xl,
+    gap: spacing.xs + 2,
+  },
+  summaryRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  addressInfo: {
-    flex: 1,
-    paddingRight: spacing.md,
-  },
-  labelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    marginBottom: 2,
+  divider: {
+    height: 1,
+    backgroundColor: 'rgba(148, 163, 184, 0.2)',
+    marginVertical: spacing.xs,
   },
   checkoutBtn: {
+    height: 52,
     marginBottom: spacing.xl,
   },
 });
-
