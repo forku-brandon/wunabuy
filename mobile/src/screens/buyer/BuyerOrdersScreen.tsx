@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, FlatList, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ScreenContainer, Text, Card, Badge, Button, Toast } from '../../components/ui';
+import { ScreenContainer, Text, Card, Badge, Toast } from '../../components/ui';
 import { DigitalSignatureModal } from '../../components/order/DigitalSignatureModal';
 import { DisputeModal } from '../../components/order/DisputeModal';
 import { OrderStatus, DisputeReason } from '@wunabuy/types';
@@ -54,7 +54,7 @@ const MOCK_ORDERS_DATA: OrderItemData[] = [
   },
 ];
 
-export const BuyerOrdersScreen = ({ navigation, route }: any) => {
+export const BuyerOrdersScreen = ({ navigation }: any) => {
   const insets = useSafeAreaInsets();
   const { theme, isDark } = useThemeStore();
   const [orders, setOrders] = useState<OrderItemData[]>(MOCK_ORDERS_DATA);
@@ -208,31 +208,32 @@ export const BuyerOrdersScreen = ({ navigation, route }: any) => {
               </View>
             </View>
 
-            {/* Action Buttons Row */}
-            <View style={styles.cardActionRow}>
-              {/* Track Order CTA */}
+            {/* Action Buttons Section — Clean Stacked Layout */}
+            <View style={styles.cardActionSection}>
+              {/* Row 1: Full-Width Primary Track Live Order Button */}
               <TouchableOpacity
                 activeOpacity={0.85}
                 onPress={() => navigation.navigate('OrderTracking', { orderId: item.order_code })}
-                style={[styles.actionBtn, styles.primaryActionBtn]}
+                style={styles.fullWidthTrackBtn}
               >
-                <Ionicons name="map-outline" size={15} color={colors.neutral[0]} style={{ marginRight: 4 }} />
-                <Text variant="caption" bold color={colors.neutral[0]}>
-                  Track Order
+                <Ionicons name="map-outline" size={16} color={colors.neutral[0]} style={{ marginRight: 6 }} />
+                <Text variant="bodyMedium" bold color={colors.neutral[0]}>
+                  Track Live GPS Order ➔
                 </Text>
               </TouchableOpacity>
 
+              {/* Row 2: Equal 2-Column Split for Confirm Receipt & Dispute */}
               {item.status !== OrderStatus.COMPLETED && item.status !== OrderStatus.DISPUTED && (
-                <>
+                <View style={styles.secondaryActionsRow}>
                   <TouchableOpacity
                     activeOpacity={0.85}
                     onPress={() => {
                       setActiveOrderForModal(item);
                       setIsSignModalOpen(true);
                     }}
-                    style={[styles.actionBtn, styles.successActionBtn]}
+                    style={styles.confirmReceiptBtn}
                   >
-                    <Ionicons name="checkmark-circle-outline" size={15} color={colors.semantic.success[700]} style={{ marginRight: 4 }} />
+                    <Ionicons name="checkmark-circle" size={16} color={colors.semantic.success[700]} style={{ marginRight: 4 }} />
                     <Text variant="caption" bold color={colors.semantic.success[700]}>
                       Confirm Receipt
                     </Text>
@@ -244,14 +245,14 @@ export const BuyerOrdersScreen = ({ navigation, route }: any) => {
                       setActiveOrderForModal(item);
                       setIsDisputeModalOpen(true);
                     }}
-                    style={[styles.actionBtn, styles.dangerActionBtn]}
+                    style={styles.openDisputeBtn}
                   >
-                    <Ionicons name="alert-circle-outline" size={15} color={colors.semantic.error[500]} style={{ marginRight: 4 }} />
+                    <Ionicons name="alert-circle" size={16} color={colors.semantic.error[500]} style={{ marginRight: 4 }} />
                     <Text variant="caption" bold color={colors.semantic.error[500]}>
-                      Dispute
+                      Open Dispute
                     </Text>
                   </TouchableOpacity>
-                </>
+                </View>
               )}
             </View>
           </Card>
@@ -361,28 +362,42 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 17,
   },
-  cardActionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  cardActionSection: {
     gap: spacing.xs + 2,
-    paddingTop: spacing.xs,
+    paddingTop: spacing.sm,
     borderTopWidth: 1,
     borderTopColor: 'rgba(148, 163, 184, 0.2)',
   },
-  actionBtn: {
+  fullWidthTrackBtn: {
+    width: '100%',
+    height: 42,
+    backgroundColor: colors.primary[500],
+    borderRadius: borderRadius.full,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: 6,
-    borderRadius: borderRadius.full,
+    justifyContent: 'center',
   },
-  primaryActionBtn: {
-    backgroundColor: colors.primary[500],
+  secondaryActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs + 2,
   },
-  successActionBtn: {
+  confirmReceiptBtn: {
+    flex: 1,
+    height: 38,
     backgroundColor: colors.semantic.success[50],
+    borderRadius: borderRadius.full,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  dangerActionBtn: {
+  openDisputeBtn: {
+    flex: 1,
+    height: 38,
     backgroundColor: colors.semantic.error[50],
+    borderRadius: borderRadius.full,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
