@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   Image,
   FlatList,
@@ -15,8 +14,9 @@ import { ScreenContainer, Text } from '../../components/ui';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const BANNER_WIDTH = SCREEN_WIDTH - spacing.base * 2;
+const SLIDESHOW_HEIGHT = Math.max(SCREEN_HEIGHT * 0.62, 420); // Takes 70% of main screen body
 const WUNABUY_LOGO = require('../../../assets/icon.png');
 
 export interface SellerSlide {
@@ -34,7 +34,7 @@ const SELLER_SLIDES: SellerSlide[] = [
     badge: 'VERIFIED MERCHANT BADGE',
     badgeColor: colors.role.seller,
     title: 'Grow Your Store, ✨\nReach 50,000+ Buyers',
-    subtitle: 'Get a verified merchant store badge & list your products directly to active buyers across Cameroon.',
+    subtitle: 'Get a verified merchant store badge & list your products directly to active buyers across Cameroon with guaranteed trust.',
     iconName: 'storefront',
   },
   {
@@ -42,7 +42,7 @@ const SELLER_SLIDES: SellerSlide[] = [
     badge: '100% GUARANTEED ESCROW PAYOUTS',
     badgeColor: colors.accent[500],
     title: 'Get Paid Safely, ✨\nDirect to MoMo & Bank',
-    subtitle: 'Receive payouts directly into MTN MoMo, Orange Money, or Bank upon customer delivery confirmation.',
+    subtitle: 'Receive instant payouts directly into MTN MoMo, Orange Money, or Bank upon customer delivery confirmation.',
     iconName: 'wallet',
   },
   {
@@ -50,7 +50,7 @@ const SELLER_SLIDES: SellerSlide[] = [
     badge: 'EXPRESS GPS LOGISTICS FLEET',
     badgeColor: colors.primary[500],
     title: 'Fast Doorstep ✨\nMotorcycle Pickup',
-    subtitle: 'Automated transport riders pick up orders from your shop with live 10-second GPS tracking.',
+    subtitle: 'Automated transport riders pick up orders from your shop with live 10-second GPS tracking to your customer.',
     iconName: 'car',
   },
   {
@@ -92,7 +92,7 @@ export const SellerWelcomeScreen = ({ navigation }: any) => {
 
   return (
     <ScreenContainer scrollable={false} padded={false}>
-      {/* Top Header Bar */}
+      {/* Top Header Bar (~10% Height) */}
       <View style={[styles.headerBar, { paddingTop: Math.max(insets.top + spacing.xs, spacing.md) }]}>
         <TouchableOpacity
           activeOpacity={0.8}
@@ -106,9 +106,9 @@ export const SellerWelcomeScreen = ({ navigation }: any) => {
         </Text>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        {/* Expanded Automated Motion Slideshow Hero Banner */}
-        <View style={styles.carouselContainer}>
+      <View style={styles.bodyContainer}>
+        {/* Expanded Automated Motion Slideshow Hero Banner (70% Height Section) */}
+        <View style={styles.slideshowSection70}>
           <FlatList
             ref={flatListRef}
             data={SELLER_SLIDES}
@@ -124,7 +124,12 @@ export const SellerWelcomeScreen = ({ navigation }: any) => {
               index,
             })}
             renderItem={({ item }) => (
-              <View style={[styles.expandedHeroSlideCard, { backgroundColor: isDark ? '#1E293B' : colors.role.seller }]}>
+              <View
+                style={[
+                  styles.expanded70HeroSlideCard,
+                  { backgroundColor: isDark ? '#1E293B' : colors.role.seller, height: SLIDESHOW_HEIGHT },
+                ]}
+              >
                 {/* Logo Ring Header */}
                 <View style={styles.heroLogoRing}>
                   <Image source={WUNABUY_LOGO} style={styles.logoImage} resizeMode="contain" />
@@ -137,19 +142,19 @@ export const SellerWelcomeScreen = ({ navigation }: any) => {
                   </Text>
                 </View>
 
-                {/* Title */}
+                {/* Slide Title */}
                 <Text variant="h1" bold color={colors.neutral[0]} align="center" style={styles.heroTitle}>
                   {item.title}
                 </Text>
 
-                {/* Subtitle */}
+                {/* Slide Subtitle */}
                 <Text variant="bodyMedium" color="rgba(255,255,255,0.92)" align="center" style={styles.heroSubtitle}>
                   {item.subtitle}
                 </Text>
 
-                {/* Corner Icon Pill */}
+                {/* Top Corner Icon Badge */}
                 <View style={[styles.slideIconCircle, { backgroundColor: item.badgeColor }]}>
-                  <Ionicons name={item.iconName} size={22} color={colors.neutral[0]} />
+                  <Ionicons name={item.iconName} size={24} color={colors.neutral[0]} />
                 </View>
               </View>
             )}
@@ -164,7 +169,7 @@ export const SellerWelcomeScreen = ({ navigation }: any) => {
                   styles.dot,
                   {
                     backgroundColor: index === activeIndex ? colors.role.seller : theme.border,
-                    width: index === activeIndex ? 26 : 6,
+                    width: index === activeIndex ? 28 : 6,
                   },
                 ]}
               />
@@ -172,8 +177,8 @@ export const SellerWelcomeScreen = ({ navigation }: any) => {
           </View>
         </View>
 
-        {/* Advanced Capsule Action Button: Get Started */}
-        <View style={styles.actionSection}>
+        {/* Advanced Capsule Action Button (20% Height Section) */}
+        <View style={styles.actionSection20}>
           <TouchableOpacity
             activeOpacity={0.88}
             onPress={() => navigation.navigate('StoreKYC')}
@@ -183,17 +188,17 @@ export const SellerWelcomeScreen = ({ navigation }: any) => {
               <Text variant="bodyLarge" bold color={colors.neutral[0]} style={styles.capsuleBtnText}>
                 Get Started Now
               </Text>
-              <Text variant="caption" color="rgba(255,255,255,0.8)" style={styles.capsuleSubText}>
+              <Text variant="caption" color="rgba(255,255,255,0.85)" style={styles.capsuleSubText}>
                 4-Stage Quick Verification
               </Text>
             </View>
 
             <View style={styles.arrowIconCircle}>
-              <Ionicons name="arrow-forward" size={20} color={colors.role.seller} />
+              <Ionicons name="arrow-forward" size={22} color={colors.role.seller} />
             </View>
           </TouchableOpacity>
         </View>
-      </ScrollView>
+      </View>
     </ScreenContainer>
   );
 };
@@ -203,7 +208,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: spacing.base,
-    paddingBottom: spacing.sm,
+    paddingBottom: spacing.xs,
     gap: spacing.sm,
   },
   backBtn: {
@@ -217,71 +222,73 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 22,
   },
-  scrollContent: {
+  bodyContainer: {
+    flex: 1,
     paddingHorizontal: spacing.base,
-    paddingBottom: spacing['3xl'],
+    justifyContent: 'space-between',
+    paddingBottom: spacing.lg,
   },
-  carouselContainer: {
-    marginBottom: spacing.xl,
-    marginTop: spacing.xs,
+  slideshowSection70: {
+    flex: 0.72,
+    justifyContent: 'center',
   },
-  expandedHeroSlideCard: {
+  expanded70HeroSlideCard: {
     width: BANNER_WIDTH,
-    borderRadius: 28,
+    borderRadius: 32,
     padding: spacing.xl,
     alignItems: 'center',
-    minHeight: 320,
-    position: 'relative',
     justifyContent: 'center',
-    ...shadows.lg,
+    position: 'relative',
+    ...shadows.xl,
   },
   heroLogoRing: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     backgroundColor: '#FFFFFF',
     padding: 6,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.md,
-    ...shadows.sm,
+    ...shadows.md,
   },
   logoImage: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
   },
   badgePill: {
     backgroundColor: '#FFFFFF',
     paddingHorizontal: spacing.md,
-    paddingVertical: 4,
+    paddingVertical: 5,
     borderRadius: borderRadius.full,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.md,
+    ...shadows.sm,
   },
   badgeText: {
     fontSize: 10,
-    letterSpacing: 0.6,
+    letterSpacing: 0.8,
   },
   heroTitle: {
-    fontSize: 24,
-    lineHeight: 30,
-    marginBottom: spacing.xs,
+    fontSize: 26,
+    lineHeight: 32,
+    marginBottom: spacing.sm,
   },
   heroSubtitle: {
     fontSize: 13,
-    lineHeight: 19,
-    paddingHorizontal: spacing.xs,
+    lineHeight: 20,
+    paddingHorizontal: spacing.md,
   },
   slideIconCircle: {
     position: 'absolute',
-    top: spacing.md,
-    right: spacing.md,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    top: spacing.lg,
+    right: spacing.lg,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    ...shadows.sm,
+    ...shadows.md,
   },
   paginationDots: {
     flexDirection: 'row',
@@ -294,35 +301,36 @@ const styles = StyleSheet.create({
     height: 6,
     borderRadius: 3,
   },
-  actionSection: {
-    marginTop: spacing.sm,
-    marginBottom: spacing.xl,
+  actionSection20: {
+    flex: 0.22,
+    justifyContent: 'center',
+    paddingTop: spacing.xs,
   },
   advancedGetStartedCapsule: {
     width: '100%',
-    height: 62,
+    height: 66,
     backgroundColor: colors.role.seller,
     borderRadius: borderRadius.full,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.xl,
-    ...shadows.md,
+    ...shadows.lg,
   },
   capsuleLeftGroup: {
     justifyContent: 'center',
   },
   capsuleBtnText: {
-    fontSize: 17,
+    fontSize: 18,
   },
   capsuleSubText: {
     fontSize: 11,
-    marginTop: 1,
+    marginTop: 2,
   },
   arrowIconCircle: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
