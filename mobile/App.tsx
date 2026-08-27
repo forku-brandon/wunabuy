@@ -1,19 +1,44 @@
-import React, { useCallback } from 'react';
+import React, { useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, Platform } from 'react-native';
+import { NavigationBar } from 'expo-navigation-bar';
 import { RootNavigator } from './src/navigation/RootNavigator';
+import { useThemeStore } from './src/stores/theme.store';
 import './src/i18n'; // Initialize i18next
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
+      staleTime: 1000 * 60 * 5,
       retry: 2,
     },
   },
 });
+
+/**
+ * Inner component that has access to the theme store and can sync
+ * the Android system navigation bar buttons style (light vs dark icons)
+ * with the current app theme.
+ */
+const AppContent: React.FC = () => {
+  const { isDark } = useThemeStore();
+
+  useEffect(() => {
+    if (Platform.OS === 'android') {
+      try {
+        // 'dark' = dark navigation bar (white soft buttons) for dark mode
+        // 'light' = light navigation bar (dark soft buttons) for light mode
+        NavigationBar.setStyle(isDark ? 'dark' : 'light');
+      } catch (e) {
+        // Silently ignore if on unsupported environment
+      }
+    }
+  }, [isDark]);
+
+  return <RootNavigator />;
+};
 
 export default function App() {
   const [fontsLoaded, fontsError] = useFonts({
@@ -38,7 +63,7 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>
-        <RootNavigator />
+        <AppContent />
       </QueryClientProvider>
     </SafeAreaProvider>
   );

@@ -1,6 +1,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BuyerTabParamList } from './types';
 import { useThemeStore } from '../stores/theme.store';
 import { colors } from '@wunabuy/design-tokens';
@@ -16,6 +17,11 @@ const Tab = createBottomTabNavigator<BuyerTabParamList>();
 export const BuyerTabNavigator = () => {
   const { theme } = useThemeStore();
   const itemCount = useCartStore((state) => state.getItemCount());
+  const insets = useSafeAreaInsets();
+
+  // Dynamic bottom padding to ensure soft navigation keys (back/home/recents)
+  // on Android do not overlap over bottom tab icons & text labels.
+  const bottomInset = insets.bottom > 0 ? insets.bottom : 8;
 
   return (
     <Tab.Navigator
@@ -26,15 +32,15 @@ export const BuyerTabNavigator = () => {
         tabBarStyle: {
           backgroundColor: theme.card,
           borderTopColor: theme.border,
-          height: 64,
-          paddingBottom: 8,
-          paddingTop: 4,
+          height: 54 + bottomInset,
+          paddingBottom: bottomInset,
+          paddingTop: 6,
         },
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '500',
         },
-        tabBarIcon: ({ focused, color, size }) => {
+        tabBarIcon: ({ focused, color }) => {
           let iconName: React.ComponentProps<typeof Ionicons>['name'];
 
           switch (route.name) {

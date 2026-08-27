@@ -2,11 +2,11 @@ import React from 'react';
 import {
   View,
   ScrollView,
-  SafeAreaView,
   StatusBar,
   StyleSheet,
   ViewStyle,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { spacing } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
 
@@ -26,9 +26,11 @@ export const ScreenContainer: React.FC<ScreenContainerProps> = ({
   children,
 }) => {
   const { theme, isDark } = useThemeStore();
+  const insets = useSafeAreaInsets();
 
   const containerStyle: ViewStyle = {
     backgroundColor: theme.background,
+    paddingTop: insets.top,
   };
 
   const paddingStyle: ViewStyle = padded
@@ -36,10 +38,11 @@ export const ScreenContainer: React.FC<ScreenContainerProps> = ({
     : {};
 
   return (
-    <SafeAreaView style={[styles.safeArea, containerStyle, style]}>
+    <View style={[styles.safeArea, containerStyle, style]}>
       <StatusBar
         barStyle={isDark ? 'light-content' : 'dark-content'}
-        backgroundColor={theme.background}
+        backgroundColor="transparent"
+        translucent
       />
       {scrollable ? (
         <ScrollView
@@ -59,7 +62,7 @@ export const ScreenContainer: React.FC<ScreenContainerProps> = ({
           {children}
         </View>
       )}
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -75,4 +78,3 @@ const styles = StyleSheet.create({
     paddingBottom: spacing['2xl'],
   },
 });
-

@@ -1,6 +1,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SellerTabParamList } from './types';
 import { ScreenContainer, Text } from '../components/ui';
 import { useThemeStore } from '../stores/theme.store';
@@ -27,6 +28,8 @@ const SellerWalletScreen = () => (
 
 export const SellerTabNavigator = () => {
   const { theme } = useThemeStore();
+  const insets = useSafeAreaInsets();
+  const bottomInset = insets.bottom > 0 ? insets.bottom : 8;
 
   return (
     <Tab.Navigator
@@ -37,9 +40,9 @@ export const SellerTabNavigator = () => {
         tabBarStyle: {
           backgroundColor: theme.card,
           borderTopColor: theme.border,
-          height: 64,
-          paddingBottom: 8,
-          paddingTop: 4,
+          height: 54 + bottomInset,
+          paddingBottom: bottomInset,
+          paddingTop: 6,
         },
         tabBarLabelStyle: {
           fontSize: 11,

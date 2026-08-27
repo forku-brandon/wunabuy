@@ -1,6 +1,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TransporterTabParamList } from './types';
 import { useThemeStore } from '../stores/theme.store';
 import { colors } from '@wunabuy/design-tokens';
@@ -13,6 +14,8 @@ const Tab = createBottomTabNavigator<TransporterTabParamList>();
 
 export const TransporterTabNavigator = () => {
   const { theme } = useThemeStore();
+  const insets = useSafeAreaInsets();
+  const bottomInset = insets.bottom > 0 ? insets.bottom : 8;
 
   return (
     <Tab.Navigator
@@ -23,9 +26,9 @@ export const TransporterTabNavigator = () => {
         tabBarStyle: {
           backgroundColor: theme.card,
           borderTopColor: theme.border,
-          height: 64,
-          paddingBottom: 8,
-          paddingTop: 4,
+          height: 54 + bottomInset,
+          paddingBottom: bottomInset,
+          paddingTop: 6,
         },
         tabBarLabelStyle: {
           fontSize: 11,

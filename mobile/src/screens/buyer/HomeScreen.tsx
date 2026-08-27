@@ -7,6 +7,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, Input, Badge, Card } from '../../components/ui';
 import { CategoryChip } from '../../components/product/CategoryChip';
 import { ProductCard } from '../../components/product/ProductCard';
@@ -19,6 +20,7 @@ import { useThemeStore } from '../../stores/theme.store';
 
 export const HomeScreen = ({ navigation }: any) => {
   const { theme } = useThemeStore();
+  const insets = useSafeAreaInsets();
   const itemCount = useCartStore((state) => state.getItemCount());
   const [selectedCategory, setSelectedCategory] = useState<ProductCategory | 'All'>('All');
   const [refreshing, setRefreshing] = useState(false);
@@ -50,7 +52,7 @@ export const HomeScreen = ({ navigation }: any) => {
   const ListHeader = (
     <>
       {/* Sticky App Header */}
-      <View style={[styles.header, { backgroundColor: theme.card, borderBottomColor: theme.border }]}>
+      <View style={[styles.header, { backgroundColor: theme.card, borderBottomColor: theme.border, paddingTop: Math.max(insets.top + spacing.xs, spacing.md) }]}>
         <View style={styles.locationRow}>
           <View>
             <Text variant="caption" secondary>

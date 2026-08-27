@@ -8,9 +8,12 @@ import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
 import { QualityTier } from '@wunabuy/types';
 
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 export const ProductDetailScreen = ({ route, navigation }: any) => {
   const { productId } = route.params || {};
   const { theme } = useThemeStore();
+  const insets = useSafeAreaInsets();
   const addItemToCart = useCartStore((state) => state.addItem);
 
   const product = MOCK_PRODUCTS.find((p) => p.id === productId) || MOCK_PRODUCTS[0];
@@ -139,7 +142,7 @@ export const ProductDetailScreen = ({ route, navigation }: any) => {
       </ScrollView>
 
       {/* Fixed Bottom Action Bar */}
-      <View style={[styles.bottomBar, { backgroundColor: theme.card, borderTopColor: theme.border }]}>
+      <View style={[styles.bottomBar, { backgroundColor: theme.card, borderTopColor: theme.border, paddingBottom: Math.max(insets.bottom, spacing.base) }]}>
         <Button
           title="Add to Cart"
           variant="outline"
