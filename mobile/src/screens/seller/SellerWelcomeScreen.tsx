@@ -1,16 +1,86 @@
-import React from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+  FlatList,
+  Dimensions,
+  ViewToken,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScreenContainer, Text, Card, Button } from '../../components/ui';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
 
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const BANNER_WIDTH = SCREEN_WIDTH - spacing.base * 2;
 const WUNABUY_LOGO = require('../../../assets/icon.png');
+
+export interface SellerSlide {
+  id: string;
+  badge: string;
+  badgeColor: string;
+  title: string;
+  subtitle: string;
+  iconName: React.ComponentProps<typeof Ionicons>['name'];
+}
+
+const SELLER_SLIDES: SellerSlide[] = [
+  {
+    id: 'slide_seller_1',
+    badge: '100% VERIFIED MERCHANT STORE',
+    badgeColor: colors.role.seller,
+    title: 'Grow Your Store, ✨\nReach 50,000+ Buyers',
+    subtitle: 'Get a verified merchant badge & list your products directly to active buyers across Cameroon.',
+    iconName: 'storefront',
+  },
+  {
+    id: 'slide_seller_2',
+    badge: 'GUARANTEED ESCROW PAYOUTS',
+    badgeColor: colors.accent[500],
+    title: 'Get Paid Safely, ✨\nDirect to MoMo & Bank',
+    subtitle: 'Your funds are 100% protected in escrow and cashed out directly to MTN MoMo, Orange Money or Bank.',
+    iconName: 'wallet',
+  },
+  {
+    id: 'slide_seller_3',
+    badge: 'EXPRESS LOGISTICS FLEET',
+    badgeColor: colors.primary[500],
+    title: 'Fast Doorstep ✨\nMotorcycle Pickup',
+    subtitle: 'Automated transport riders pick up orders from your shop with live 10s GPS tracking.',
+    iconName: 'car',
+  },
+];
 
 export const SellerWelcomeScreen = ({ navigation }: any) => {
   const insets = useSafeAreaInsets();
   const { theme, isDark } = useThemeStore();
+  const [activeIndex, setActiveIndex] = useState(0);
+  const flatListRef = useRef<FlatList>(null);
+
+  // Automated Slideshow Motion Effect (Rotates every 3.5 seconds)
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveIndex((prevIndex) => {
+        const nextIndex = (prevIndex + 1) % SELLER_SLIDES.length;
+        flatListRef.current?.scrollToIndex({ index: nextIndex, animated: true });
+        return nextIndex;
+      });
+    }, 3500);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const onViewableItemsChanged = useRef(
+    ({ viewableItems }: { viewableItems: ViewToken[] }) => {
+      if (viewableItems.length > 0 && viewableItems[0].index !== null) {
+        setActiveIndex(viewableItems[0].index);
+      }
+    }
+  ).current;
 
   return (
     <ScreenContainer scrollable={false} padded={false}>
@@ -29,22 +99,72 @@ export const SellerWelcomeScreen = ({ navigation }: any) => {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        {/* Animated Welcome Hero Card */}
-        <View style={[styles.heroCard, { backgroundColor: isDark ? '#1E293B' : colors.role.seller }]}>
-          <View style={styles.heroLogoRing}>
-            <Image source={WUNABUY_LOGO} style={styles.logoImage} resizeMode="contain" />
+        {/* Animated Motion Hero Slideshow Carousel (Automated 3.5s Rotation) */}
+        <View style={styles.carouselContainer}>
+          <FlatList
+            ref={flatListRef}
+            data={SELLER_SLIDES}
+            keyExtractor={(item) => item.id}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            onViewableItemsChanged={onViewableItemsChanged}
+            viewabilityConfig={{ itemVisiblePercentThreshold: 60 }}
+            getItemLayout={(_, index) => ({
+              length: BANNER_WIDTH,
+              offset: BANNER_WIDTH * index,
+              index,
+            })}
+            renderItem={({ item }) => (
+              <View style={[styles.heroSlideCard, { backgroundColor: isDark ? '#1E293B' : colors.role.seller }]}>
+                {/* Top Logo Ring */}
+                <View style={styles.heroLogoRing}>
+                  <Image source={WUNABUY_LOGO} style={styles.logoImage} resizeMode="contain" />
+                </View>
+
+                {/* Badge Pill */}
+                <View style={styles.badgePill}>
+                  <Text variant="caption" bold color={item.badgeColor} style={styles.badgeText}>
+                    {item.badge}
+                  </Text>
+                </View>
+
+                {/* Slide Title */}
+                <Text variant="h1" bold color={colors.neutral[0]} align="center" style={styles.heroTitle}>
+                  {item.title}
+                </Text>
+
+                {/* Slide Subtitle */}
+                <Text variant="bodyMedium" color="rgba(255,255,255,0.9)" align="center" style={styles.heroSubtitle}>
+                  {item.subtitle}
+                </Text>
+
+                {/* Floating Graphic Badge */}
+                <View style={[styles.slideIconFloatingCircle, { backgroundColor: item.badgeColor }]}>
+                  <Ionicons name={item.iconName} size={20} color={colors.neutral[0]} />
+                </View>
+              </View>
+            )}
+          />
+
+          {/* Animated Slide Pagination Indicators */}
+          <View style={styles.paginationDots}>
+            {SELLER_SLIDES.map((_, index) => (
+              <View
+                key={index}
+                style={[
+                  styles.dot,
+                  {
+                    backgroundColor: index === activeIndex ? colors.role.seller : theme.border,
+                    width: index === activeIndex ? 22 : 6,
+                  },
+                ]}
+              />
+            ))}
           </View>
-
-          <Text variant="h1" bold color={colors.neutral[0]} align="center" style={styles.heroTitle}>
-            Welcome to Wunabuy Seller Hub! 🏪
-          </Text>
-
-          <Text variant="bodyMedium" color="rgba(255,255,255,0.9)" align="center" style={styles.heroSubtitle}>
-            Sell your products to over 50,000+ active buyers across Cameroon with 100% guaranteed escrow payouts.
-          </Text>
         </View>
 
-        {/* Value Highlights Cards Grid */}
+        {/* Value Highlights Cards Section */}
         <Text variant="caption" bold color={theme.textSecondary} style={styles.sectionTitle}>
           WHY SELL ON WUNABUY?
         </Text>
@@ -79,7 +199,7 @@ export const SellerWelcomeScreen = ({ navigation }: any) => {
           </View>
         </Card>
 
-        {/* Card 3: Express GPS Delivery */}
+        {/* Card 3: Express Delivery Fleet */}
         <Card style={styles.valueCard}>
           <View style={[styles.iconCircle, { backgroundColor: '#EFF6FF' }]}>
             <Ionicons name="car" size={24} color={colors.role.seller} />
@@ -109,7 +229,7 @@ export const SellerWelcomeScreen = ({ navigation }: any) => {
           </View>
         </Card>
 
-        {/* Primary Get Started Button */}
+        {/* Action Button: Get Started */}
         <View style={styles.actionSection}>
           <Button
             title="Get Started →"
@@ -146,38 +266,78 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.base,
     paddingBottom: spacing['3xl'],
   },
-  heroCard: {
+  carouselContainer: {
+    marginBottom: spacing.lg,
+    marginTop: spacing.xs,
+  },
+  heroSlideCard: {
+    width: BANNER_WIDTH,
     borderRadius: 24,
     padding: spacing.xl,
     alignItems: 'center',
-    marginBottom: spacing.lg,
-    marginTop: spacing.xs,
+    minHeight: 220,
+    position: 'relative',
+    overflow: 'hidden',
     ...shadows.md,
   },
   heroLogoRing: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     backgroundColor: '#FFFFFF',
-    padding: 6,
+    padding: 4,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.md,
+    marginBottom: spacing.xs + 2,
     ...shadows.sm,
   },
   logoImage: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
   },
-  heroTitle: {
-    fontSize: 24,
-    lineHeight: 28,
+  badgePill: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: spacing.md,
+    paddingVertical: 3,
+    borderRadius: borderRadius.full,
     marginBottom: spacing.xs,
   },
+  badgeText: {
+    fontSize: 9,
+    letterSpacing: 0.5,
+  },
+  heroTitle: {
+    fontSize: 22,
+    lineHeight: 26,
+    marginBottom: 4,
+  },
   heroSubtitle: {
-    fontSize: 12,
-    lineHeight: 18,
+    fontSize: 11,
+    lineHeight: 16,
+    paddingHorizontal: spacing.sm,
+  },
+  slideIconFloatingCircle: {
+    position: 'absolute',
+    bottom: spacing.md,
+    right: spacing.md,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...shadows.sm,
+  },
+  paginationDots: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: spacing.sm,
+    gap: 4,
+  },
+  dot: {
+    height: 6,
+    borderRadius: 3,
   },
   sectionTitle: {
     fontSize: 10,
