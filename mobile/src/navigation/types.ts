@@ -41,6 +41,7 @@ export type RootStackParamList = {
   NotificationSettings: undefined;
   AddressManager: undefined;
   Settings: undefined;
+  SellerWelcome: undefined;
   StoreKYC: { role?: string } | undefined;
   AddEditProduct: { product?: any } | undefined;
   CheckoutPayment: { subtotal: number; addressId?: string };

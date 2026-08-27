@@ -137,7 +137,7 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({
             {/* Become a Seller */}
             <TouchableOpacity
               activeOpacity={0.82}
-              onPress={() => handleNavigate('StoreKYC')}
+              onPress={() => handleNavigate('SellerWelcome')}
               style={[
                 styles.partnerMenuCard,
                 { backgroundColor: isDark ? colors.neutral[800] : '#F8FAFC' },

@@ -29,6 +29,7 @@ const ChatConversationScreen = ({ route }: any) => (
 import { NotificationSettingsScreen } from '../screens/profile/NotificationSettingsScreen';
 import { AddressManagerScreen } from '../screens/profile/AddressManagerScreen';
 import { SettingsScreen } from '../screens/profile/SettingsScreen';
+import { SellerWelcomeScreen } from '../screens/seller/SellerWelcomeScreen';
 import { StoreKYCScreen } from '../screens/seller/StoreKYCScreen';
 import { AddEditProductScreen } from '../screens/seller/AddEditProductScreen';
 import { CheckoutPaymentScreen } from '../screens/buyer/CheckoutPaymentScreen';
@@ -82,6 +83,7 @@ export const RootNavigator = () => {
             <Stack.Screen name="NotificationSettings" component={NotificationSettingsScreen} />
             <Stack.Screen name="AddressManager" component={AddressManagerScreen} />
             <Stack.Screen name="Settings" component={SettingsScreen} />
+            <Stack.Screen name="SellerWelcome" component={SellerWelcomeScreen} />
             <Stack.Screen name="StoreKYC" component={StoreKYCScreen} />
             <Stack.Screen name="AddEditProduct" component={AddEditProductScreen} />
             <Stack.Screen name="CheckoutPayment" component={CheckoutPaymentScreen} />
