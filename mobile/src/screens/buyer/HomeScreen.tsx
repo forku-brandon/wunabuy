@@ -21,6 +21,8 @@ import { useAuthStore } from '../../stores/auth.store';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
 
+import { SidebarDrawer } from '../../components/navigation/SidebarDrawer';
+
 export const HomeScreen = ({ navigation }: any) => {
   const { theme, isDark } = useThemeStore();
   const insets = useSafeAreaInsets();
@@ -28,6 +30,7 @@ export const HomeScreen = ({ navigation }: any) => {
   const itemCount = useCartStore((state) => state.getItemCount());
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [refreshing, setRefreshing] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const displayCategories = ['All', 'Skincare', 'Makeup', 'Fragrance', 'Haircare', 'Tools', 'Offers'];
 
@@ -72,7 +75,7 @@ export const HomeScreen = ({ navigation }: any) => {
           <TouchableOpacity
             activeOpacity={0.8}
             style={[styles.squareMenuBtn, { backgroundColor: theme.card }]}
-            onPress={() => navigation.navigate('BuyerProfile')}
+            onPress={() => setIsDrawerOpen(true)}
           >
             <Ionicons name="menu-outline" size={22} color={theme.text} />
           </TouchableOpacity>
@@ -288,6 +291,13 @@ export const HomeScreen = ({ navigation }: any) => {
             <ProductCard product={item} onPress={handleSelectProduct} />
           </View>
         )}
+      />
+
+      {/* Slide-out Sidebar Drawer Overlay */}
+      <SidebarDrawer
+        isOpen={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        navigation={navigation}
       />
     </View>
   );

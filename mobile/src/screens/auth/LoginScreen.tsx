@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { ScreenContainer, Text, Input, Button, Toast } from '../../components/ui';
-import { formatPhone, validatePhoneNumber, normalizePhone } from '@wunabuy/utils';
-import { spacing, colors } from '@wunabuy/design-tokens';
-import { useTranslation } from 'react-i18next';
+import { normalizePhone, validatePhoneNumber } from '@wunabuy/utils';
+import { spacing, colors, borderRadius } from '@wunabuy/design-tokens';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export const LoginScreen = ({ navigation }: any) => {
-  const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const [phone, setPhone] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -17,20 +17,33 @@ export const LoginScreen = ({ navigation }: any) => {
     setPhone(text);
   };
 
+  const handleQuickDemo = () => {
+    setError('');
+    setPhone('670123456');
+  };
+
   const handleSubmit = async () => {
+    if (!phone.trim()) {
+      setError('Please enter your phone number.');
+      return;
+    }
+
     const normalized = normalizePhone(phone);
-    if (!validatePhoneNumber(normalized)) {
-      setError('Please enter a valid Cameroon phone number (+237 6XX XXX XXX)');
+    // Flexible validation for local 9-digit or full E.164 phone numbers
+    if (normalized.length < 10) {
+      setError('Please enter a valid 9-digit Cameroon phone number (e.g. 670 123 456)');
       return;
     }
 
     setLoading(true);
+    setError('');
+
     try {
-      setToastMessage('OTP code sent successfully!');
+      setToastMessage('OTP verification code sent!');
       setTimeout(() => {
         setLoading(false);
         navigation.navigate('VerifyOTP', { phone: normalized });
-      }, 600);
+      }, 500);
     } catch (err: any) {
       setLoading(false);
       setError(err?.message || 'Failed to send OTP code. Please try again.');
@@ -38,20 +51,20 @@ export const LoginScreen = ({ navigation }: any) => {
   };
 
   return (
-    <ScreenContainer contentContainerStyle={styles.container}>
+    <ScreenContainer contentContainerStyle={{ ...styles.container, paddingBottom: Math.max(insets.bottom + spacing.xl, spacing['3xl']) }}>
       <View style={styles.contentBox}>
         <View style={styles.header}>
           <Text variant="h1" bold align="center" style={styles.title}>
-            {t('auth.loginTitle')}
+            Enter Phone Number
           </Text>
           <Text variant="bodyMedium" secondary align="center" style={styles.subtitle}>
-            {t('auth.loginSubtitle')}
+            Enter your mobile number to log in or create your Wunabuy escrow account.
           </Text>
         </View>
 
         <Input
-          label="Phone Number"
-          placeholder="+237 6XX XXX XXX"
+          label="Cameroon Mobile Number"
+          placeholder="670 123 456 or +237 6XX XXX XXX"
           keyboardType="phone-pad"
           value={phone}
           onChangeText={handlePhoneChange}
@@ -60,8 +73,15 @@ export const LoginScreen = ({ navigation }: any) => {
           containerStyle={styles.inputContainer}
         />
 
+        {/* Quick Demo Fill Button */}
+        <TouchableOpacity activeOpacity={0.8} onPress={handleQuickDemo} style={styles.demoFillBtn}>
+          <Text variant="caption" bold color={colors.primary[500]}>
+            💡 Auto-fill Demo Number (+237 670 123 456)
+          </Text>
+        </TouchableOpacity>
+
         <Button
-          title={t('auth.sendOTP')}
+          title="Send Verification Code →"
           variant="primary"
           loading={loading}
           onPress={handleSubmit}
@@ -89,15 +109,22 @@ const styles = StyleSheet.create({
   },
   title: {
     marginBottom: spacing.xs,
+    fontSize: 26,
   },
   subtitle: {
     lineHeight: 22,
     paddingHorizontal: spacing.md,
   },
   inputContainer: {
+    marginBottom: spacing.sm,
+  },
+  demoFillBtn: {
+    alignSelf: 'flex-end',
     marginBottom: spacing.lg,
+    paddingVertical: spacing.xs,
   },
   button: {
-    marginTop: spacing.sm,
+    marginTop: spacing.xs,
+    height: 52,
   },
 });

@@ -6,9 +6,12 @@ import { validateOTP, formatPhone } from '@wunabuy/utils';
 import { spacing, colors } from '@wunabuy/design-tokens';
 import { useTranslation } from 'react-i18next';
 
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 export const VerifyOTPScreen = ({ navigation, route }: any) => {
   const { t } = useTranslation();
   const phone = route.params?.phone ?? '+237670000000';
+  const insets = useSafeAreaInsets();
 
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
@@ -58,7 +61,7 @@ export const VerifyOTPScreen = ({ navigation, route }: any) => {
   };
 
   return (
-    <ScreenContainer contentContainerStyle={styles.container}>
+    <ScreenContainer contentContainerStyle={{ ...styles.container, paddingBottom: Math.max(insets.bottom + spacing.xl, spacing['3xl']) }}>
       <View style={styles.contentBox}>
         <View style={styles.header}>
           <Text variant="h1" bold align="center" style={styles.title}>

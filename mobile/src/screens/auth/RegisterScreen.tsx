@@ -1,19 +1,19 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
-import { ScreenContainer, Text, Input, Button, Card, Toast } from '../../components/ui';
+import { View, StyleSheet } from 'react-native';
+import { ScreenContainer, Text, Input, Button } from '../../components/ui';
 import { SecureTokenService } from '../../services/SecureTokenService';
 import { useAuthStore } from '../../stores/auth.store';
-import { UserRole, UserStatus } from '@wunabuy/types';
-import { colors, spacing } from '@wunabuy/design-tokens';
-import { useTranslation } from 'react-i18next';
+import { UserRole, UserStatus, Address } from '@wunabuy/types';
+import { spacing, colors } from '@wunabuy/design-tokens';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export const RegisterScreen = ({ route }: any) => {
-  const { t } = useTranslation();
   const phone = route.params?.phone ?? '+237670000000';
   const { setAuth } = useAuthStore();
+  const insets = useSafeAreaInsets();
 
   const [fullName, setFullName] = useState('');
-  const [selectedRole, setSelectedRole] = useState<UserRole>(UserRole.BUYER);
+  const [addressText, setAddressText] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -27,18 +27,30 @@ export const RegisterScreen = ({ route }: any) => {
     setError('');
 
     try {
+      let defaultAddress: Address | null = null;
+      if (addressText.trim()) {
+        defaultAddress = {
+          id: 'addr_' + Date.now(),
+          label: 'Home',
+          latitude: 4.0510564,
+          longitude: 9.7678687,
+          address_text: addressText.trim(),
+          city: 'Douala',
+          is_default: true,
+        };
+      }
+
       const newUser = {
         id: 'user_uuid_' + Date.now(),
         phone,
         email: null,
         full_name: fullName.trim(),
-        role: selectedRole,
+        role: UserRole.BUYER,
         status: UserStatus.ACTIVE,
         avatar_url: null,
         is_phone_verified: true,
-        default_address: null,
-        // Use Set to guarantee unique roles (prevents duplicate 'buyer' key warning)
-        available_roles: [...new Set([selectedRole, UserRole.BUYER])] as UserRole[],
+        default_address: defaultAddress,
+        available_roles: [UserRole.BUYER],
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
@@ -56,19 +68,19 @@ export const RegisterScreen = ({ route }: any) => {
   };
 
   return (
-    <ScreenContainer contentContainerStyle={styles.container}>
+    <ScreenContainer contentContainerStyle={{ ...styles.container, paddingBottom: Math.max(insets.bottom + spacing.xl, spacing['3xl']) }}>
       <View style={styles.contentBox}>
         <View style={styles.header}>
           <Text variant="h1" bold align="center" style={styles.title}>
-            {t('auth.registerTitle')}
+            Enter Your Details
           </Text>
           <Text variant="bodyMedium" secondary align="center" style={styles.subtitle}>
-            Enter your details to finalize your account registration.
+            Welcome to Wunabuy! Enter your name to start buying safely with 48h escrow protection.
           </Text>
         </View>
 
         <Input
-          label="Full Name"
+          label="Full Name *"
           placeholder="e.g. Jean Dupont"
           value={fullName}
           onChangeText={(text) => {
@@ -77,70 +89,19 @@ export const RegisterScreen = ({ route }: any) => {
           }}
           error={error}
           containerStyle={styles.inputContainer}
+          autoFocus
         />
 
-        <Text variant="caption" bold color={colors.neutral[600]} style={styles.roleLabel}>
-          {t('auth.selectRole')}
-        </Text>
-
-        {/* Buyer Role Card */}
-        <TouchableOpacity
-          activeOpacity={0.8}
-          onPress={() => setSelectedRole(UserRole.BUYER)}
-        >
-          <Card
-            style={[
-              styles.roleCard,
-              selectedRole === UserRole.BUYER && styles.roleCardSelected,
-            ]}
-          >
-            <View style={styles.roleHeader}>
-              <Text variant="h3" bold color={colors.primary[500]}>
-                🛒 {t('roles.buyer')}
-              </Text>
-              <View
-                style={[
-                  styles.radio,
-                  selectedRole === UserRole.BUYER && styles.radioSelected,
-                ]}
-              />
-            </View>
-            <Text variant="bodyMedium" secondary style={styles.roleDescription}>
-              {t('auth.roleBuy')}
-            </Text>
-          </Card>
-        </TouchableOpacity>
-
-        {/* Seller Role Card */}
-        <TouchableOpacity
-          activeOpacity={0.8}
-          onPress={() => setSelectedRole(UserRole.SELLER)}
-        >
-          <Card
-            style={[
-              styles.roleCard,
-              selectedRole === UserRole.SELLER && styles.roleCardSelectedSeller,
-            ]}
-          >
-            <View style={styles.roleHeader}>
-              <Text variant="h3" bold color={colors.role.seller}>
-                🏪 {t('roles.seller')}
-              </Text>
-              <View
-                style={[
-                  styles.radio,
-                  selectedRole === UserRole.SELLER && styles.radioSelectedSeller,
-                ]}
-              />
-            </View>
-            <Text variant="bodyMedium" secondary style={styles.roleDescription}>
-              {t('auth.roleSell')}
-            </Text>
-          </Card>
-        </TouchableOpacity>
+        <Input
+          label="Delivery Address (Optional)"
+          placeholder="e.g. Rue Joss, Akwa, Douala"
+          value={addressText}
+          onChangeText={setAddressText}
+          containerStyle={styles.inputContainer}
+        />
 
         <Button
-          title="Complete Registration"
+          title="Complete & Go to Home →"
           variant="primary"
           loading={loading}
           onPress={handleSubmit}
@@ -161,60 +122,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
   },
   header: {
-    marginBottom: spacing.lg,
+    marginBottom: spacing.xl,
     alignItems: 'center',
   },
   title: {
     marginBottom: spacing.xs,
+    fontSize: 26,
   },
   subtitle: {
     lineHeight: 22,
     paddingHorizontal: spacing.md,
   },
   inputContainer: {
-    marginBottom: spacing.md,
-  },
-  roleLabel: {
-    marginBottom: spacing.sm,
-    marginTop: spacing.xs,
-  },
-  roleCard: {
-    marginBottom: spacing.md,
-    borderWidth: 1.5,
-  },
-  roleCardSelected: {
-    borderColor: colors.primary[500],
-    backgroundColor: colors.primary[50],
-  },
-  roleCardSelectedSeller: {
-    borderColor: colors.role.seller,
-    backgroundColor: '#EFF6FF',
-  },
-  roleHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: spacing.xs,
-  },
-  roleDescription: {
-    lineHeight: 18,
-  },
-  radio: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: colors.neutral[300],
-  },
-  radioSelected: {
-    borderColor: colors.primary[500],
-    backgroundColor: colors.primary[500],
-  },
-  radioSelectedSeller: {
-    borderColor: colors.role.seller,
-    backgroundColor: colors.role.seller,
+    marginBottom: spacing.lg,
   },
   button: {
     marginTop: spacing.md,
+    height: 52,
   },
 });
