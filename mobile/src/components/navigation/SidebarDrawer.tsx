@@ -58,7 +58,7 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({
           <View style={styles.backdrop} />
         </TouchableWithoutFeedback>
 
-        {/* Drawer Panel */}
+        {/* Slide-out Drawer Panel */}
         <View
           style={[
             styles.drawerPanel,
@@ -69,54 +69,79 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({
             },
           ]}
         >
-          {/* Top Brand & Close Button */}
+          {/* Top Brand & Close Button Header */}
           <View style={styles.drawerHeader}>
             <View style={styles.logoRow}>
-              <Image source={WUNABUY_LOGO} style={styles.logoImage} resizeMode="contain" />
-              <View>
-                <Text variant="h2" bold color={colors.primary[500]}>
+              <View style={styles.logoBorderRing}>
+                <Image source={WUNABUY_LOGO} style={styles.logoImage} resizeMode="contain" />
+              </View>
+              <View style={styles.logoTextStack}>
+                <Text variant="h2" bold color={colors.primary[500]} style={styles.brandTitle}>
                   Wunabuy
                 </Text>
-                <Text variant="caption" secondary style={styles.tagline}>
-                  ESCROW MARKETPLACE
-                </Text>
+                <View style={styles.escrowPillBadge}>
+                  <Ionicons name="shield-checkmark" size={10} color={colors.primary[600]} style={{ marginRight: 3 }} />
+                  <Text variant="caption" bold color={colors.primary[600]} style={styles.escrowBadgeText}>
+                    48H ESCROW
+                  </Text>
+                </View>
               </View>
             </View>
 
-            <TouchableOpacity activeOpacity={0.8} onPress={onClose} style={styles.closeBtn}>
-              <Ionicons name="close" size={22} color={theme.text} />
+            {/* Circular Close Action Button */}
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={onClose}
+              style={[styles.closeBtnCircle, { backgroundColor: isDark ? colors.neutral[800] : colors.neutral[100] }]}
+            >
+              <Ionicons name="close" size={20} color={theme.text} />
             </TouchableOpacity>
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
             {/* User Profile Summary Card */}
-            <View style={[styles.userProfileCard, { backgroundColor: isDark ? colors.neutral[800] : colors.primary[50] }]}>
-              <Avatar url={user?.avatar_url} name={user?.full_name || 'User'} size={48} />
+            <TouchableOpacity
+              activeOpacity={0.88}
+              onPress={() => handleNavigate('BuyerProfile')}
+              style={[
+                styles.userProfileCard,
+                { backgroundColor: isDark ? '#1E293B' : colors.primary[50] },
+                !isDark && shadows.sm,
+              ]}
+            >
+              <View style={styles.avatarWrapper}>
+                <Avatar url={user?.avatar_url} name={user?.full_name || 'Jean Dupont'} size={50} />
+                <View style={styles.onlinePulseDot} />
+              </View>
+
               <View style={styles.userInfo}>
                 <Text variant="bodyLarge" bold numberOfLines={1}>
                   {user?.full_name || 'Jean Dupont'}
                 </Text>
-                <Text variant="caption" secondary numberOfLines={1}>
+                <Text variant="caption" secondary numberOfLines={1} style={{ marginTop: 1 }}>
                   {user?.phone || '+237 670 123 456'}
                 </Text>
                 <View style={styles.roleBadgeWrapper}>
                   <Badge label="BUYER ACCOUNT" variant="primary" size="small" />
                 </View>
               </View>
-            </View>
 
-            <View style={styles.divider} />
+              <Ionicons name="chevron-forward" size={18} color={colors.primary[500]} />
+            </TouchableOpacity>
 
-            {/* Menu Items */}
+            {/* Section 1: Partner Opportunities */}
             <Text variant="caption" bold color={theme.textSecondary} style={styles.sectionTitle}>
               PARTNER OPPORTUNITIES
             </Text>
 
             {/* Become a Seller */}
             <TouchableOpacity
-              activeOpacity={0.8}
+              activeOpacity={0.82}
               onPress={() => handleNavigate('StoreKYC')}
-              style={[styles.menuItem, { backgroundColor: isDark ? colors.neutral[800] : '#F8FAFC' }]}
+              style={[
+                styles.partnerMenuCard,
+                { backgroundColor: isDark ? colors.neutral[800] : '#F8FAFC' },
+              ]}
             >
               <View style={[styles.menuIconCircle, { backgroundColor: colors.role.seller }]}>
                 <Ionicons name="storefront" size={20} color={colors.neutral[0]} />
@@ -134,9 +159,12 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({
 
             {/* Become a Transporter */}
             <TouchableOpacity
-              activeOpacity={0.8}
+              activeOpacity={0.82}
               onPress={() => handleNavigate('StoreKYC', { role: 'transporter' })}
-              style={[styles.menuItem, { backgroundColor: isDark ? colors.neutral[800] : '#F8FAFC' }]}
+              style={[
+                styles.partnerMenuCard,
+                { backgroundColor: isDark ? colors.neutral[800] : '#F8FAFC' },
+              ]}
             >
               <View style={[styles.menuIconCircle, { backgroundColor: colors.accent[500] }]}>
                 <Ionicons name="car" size={20} color={colors.neutral[0]} />
@@ -152,11 +180,27 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({
               <Ionicons name="chevron-forward" size={18} color={theme.placeholder} />
             </TouchableOpacity>
 
-            <View style={styles.divider} />
+            <View style={[styles.dividerLine, { backgroundColor: theme.border }]} />
 
+            {/* Section 2: Account & Quick Navigation */}
             <Text variant="caption" bold color={theme.textSecondary} style={styles.sectionTitle}>
-              PREFERENCES &amp; ACCOUNT
+              NAVIGATION &amp; ORDERS
             </Text>
+
+            {/* My Orders & Escrow */}
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => handleNavigate('BuyerOrders')}
+              style={styles.simpleMenuItem}
+            >
+              <View style={[styles.simpleIconBox, { backgroundColor: isDark ? colors.neutral[800] : colors.primary[50] }]}>
+                <Ionicons name="bag-handle-outline" size={18} color={colors.primary[500]} />
+              </View>
+              <Text variant="bodyLarge" style={styles.simpleMenuText}>
+                My Orders &amp; Escrow
+              </Text>
+              <Ionicons name="chevron-forward" size={16} color={theme.placeholder} />
+            </TouchableOpacity>
 
             {/* Delivery Addresses */}
             <TouchableOpacity
@@ -164,10 +208,13 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({
               onPress={() => handleNavigate('AddressManager')}
               style={styles.simpleMenuItem}
             >
-              <Ionicons name="location-outline" size={20} color={colors.primary[500]} style={styles.simpleMenuIcon} />
+              <View style={[styles.simpleIconBox, { backgroundColor: isDark ? colors.neutral[800] : colors.primary[50] }]}>
+                <Ionicons name="location-outline" size={18} color={colors.primary[500]} />
+              </View>
               <Text variant="bodyLarge" style={styles.simpleMenuText}>
                 Delivery Addresses
               </Text>
+              <Ionicons name="chevron-forward" size={16} color={theme.placeholder} />
             </TouchableOpacity>
 
             {/* Notification Settings */}
@@ -176,16 +223,43 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({
               onPress={() => handleNavigate('NotificationSettings')}
               style={styles.simpleMenuItem}
             >
-              <Ionicons name="notifications-outline" size={20} color={colors.primary[500]} style={styles.simpleMenuIcon} />
+              <View style={[styles.simpleIconBox, { backgroundColor: isDark ? colors.neutral[800] : colors.primary[50] }]}>
+                <Ionicons name="notifications-outline" size={18} color={colors.primary[500]} />
+              </View>
               <Text variant="bodyLarge" style={styles.simpleMenuText}>
                 Notifications &amp; Alerts
               </Text>
+              <Ionicons name="chevron-forward" size={16} color={theme.placeholder} />
             </TouchableOpacity>
+
+            {/* Settings & Preferences */}
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => handleNavigate('Settings')}
+              style={styles.simpleMenuItem}
+            >
+              <View style={[styles.simpleIconBox, { backgroundColor: isDark ? colors.neutral[800] : colors.primary[50] }]}>
+                <Ionicons name="settings-outline" size={18} color={colors.primary[500]} />
+              </View>
+              <Text variant="bodyLarge" style={styles.simpleMenuText}>
+                Settings &amp; Preferences
+              </Text>
+              <Ionicons name="chevron-forward" size={16} color={theme.placeholder} />
+            </TouchableOpacity>
+
+            <View style={[styles.dividerLine, { backgroundColor: theme.border }]} />
+
+            {/* Section 3: App Controls */}
+            <Text variant="caption" bold color={theme.textSecondary} style={styles.sectionTitle}>
+              APP CONTROLS
+            </Text>
 
             {/* Dark Mode Switch */}
             <View style={styles.switchMenuItem}>
               <View style={styles.switchLeftRow}>
-                <Ionicons name={isDark ? 'moon' : 'sunny-outline'} size={20} color={colors.primary[500]} style={styles.simpleMenuIcon} />
+                <View style={[styles.simpleIconBox, { backgroundColor: isDark ? colors.neutral[800] : colors.primary[50] }]}>
+                  <Ionicons name={isDark ? 'moon-outline' : 'sunny-outline'} size={18} color={colors.primary[500]} />
+                </View>
                 <Text variant="bodyLarge">Dark Appearance</Text>
               </View>
               <Switch
@@ -197,14 +271,18 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({
             </View>
           </ScrollView>
 
-          {/* Log Out Button */}
+          {/* Bottom Log Out Action */}
           <View style={styles.footer}>
-            <Button
-              title="Log Out"
-              variant="outline"
+            <TouchableOpacity
+              activeOpacity={0.8}
               onPress={handleLogout}
               style={styles.logoutBtn}
-            />
+            >
+              <Ionicons name="log-out-outline" size={18} color={colors.semantic.error[500]} style={{ marginRight: 6 }} />
+              <Text variant="bodyLarge" bold color={colors.semantic.error[500]}>
+                Log Out Account
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
       </View>
@@ -223,7 +301,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(15, 23, 42, 0.6)',
+    backgroundColor: 'rgba(15, 23, 42, 0.65)',
   },
   drawerPanel: {
     width: '84%',
@@ -241,20 +319,45 @@ const styles = StyleSheet.create({
   logoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs + 2,
+    gap: spacing.xs + 4,
+  },
+  logoBorderRing: {
+    padding: 2,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1.5,
+    borderColor: colors.primary[500],
   },
   logoImage: {
-    width: 36,
-    height: 36,
+    width: 34,
+    height: 34,
     borderRadius: borderRadius.md,
   },
-  tagline: {
-    fontSize: 9,
-    letterSpacing: 0.8,
-    marginTop: -2,
+  logoTextStack: {
+    justifyContent: 'center',
   },
-  closeBtn: {
-    padding: spacing.xs,
+  brandTitle: {
+    fontSize: 20,
+    lineHeight: 22,
+  },
+  escrowPillBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.primary[50],
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: borderRadius.full,
+    marginTop: 1,
+  },
+  escrowBadgeText: {
+    fontSize: 8,
+    letterSpacing: 0.5,
+  },
+  closeBtnCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   scrollContent: {
     paddingBottom: spacing.lg,
@@ -266,6 +369,20 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.xl,
     marginBottom: spacing.md,
   },
+  avatarWrapper: {
+    position: 'relative',
+  },
+  onlinePulseDot: {
+    position: 'absolute',
+    bottom: 2,
+    right: 2,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: colors.semantic.success[500],
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+  },
   userInfo: {
     flex: 1,
     marginLeft: spacing.md,
@@ -274,9 +391,8 @@ const styles = StyleSheet.create({
     marginTop: 4,
     alignSelf: 'flex-start',
   },
-  divider: {
+  dividerLine: {
     height: 1,
-    backgroundColor: 'rgba(148, 163, 184, 0.2)',
     marginVertical: spacing.md,
   },
   sectionTitle: {
@@ -284,12 +400,12 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     marginBottom: spacing.xs + 2,
   },
-  menuItem: {
+  partnerMenuCard: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: spacing.md,
     borderRadius: borderRadius.xl,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs + 2,
   },
   menuIconCircle: {
     width: 38,
@@ -305,9 +421,15 @@ const styles = StyleSheet.create({
   simpleMenuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: spacing.sm + 2,
+    paddingVertical: spacing.xs + 2,
+    marginBottom: 2,
   },
-  simpleMenuIcon: {
+  simpleIconBox: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginRight: spacing.md,
   },
   simpleMenuText: {
@@ -328,7 +450,14 @@ const styles = StyleSheet.create({
     paddingTop: spacing.md,
   },
   logoutBtn: {
+    width: '100%',
+    height: 46,
+    borderRadius: borderRadius.full,
+    borderWidth: 1.5,
     borderColor: colors.semantic.error[500],
+    backgroundColor: colors.semantic.error[50],
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
-
