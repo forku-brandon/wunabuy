@@ -9,10 +9,12 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Text, Input } from '../../components/ui';
+import { Text } from '../../components/ui';
 import { CategoryChip } from '../../components/product/CategoryChip';
 import { ProductCard } from '../../components/product/ProductCard';
 import { HeroCarousel } from '../../components/home/HeroCarousel';
+import { PartnersCarousel } from '../../components/home/PartnersCarousel';
+import { SidebarDrawer } from '../../components/navigation/SidebarDrawer';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { ProductCategory, Product } from '@wunabuy/types';
 import { MOCK_PRODUCTS } from '../../services/mockProducts';
@@ -20,8 +22,6 @@ import { useCartStore } from '../../stores/cart.store';
 import { useAuthStore } from '../../stores/auth.store';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
-
-import { SidebarDrawer } from '../../components/navigation/SidebarDrawer';
 
 export const HomeScreen = ({ navigation }: any) => {
   const { theme, isDark } = useThemeStore();
@@ -60,7 +60,7 @@ export const HomeScreen = ({ navigation }: any) => {
 
   const ListHeader = (
     <>
-      {/* Top Header Row */}
+      {/* Top Header AppBar (Three Strokes on Left, Search + Notification + Cart on Right) */}
       <View
         style={[
           styles.topHeader,
@@ -70,31 +70,27 @@ export const HomeScreen = ({ navigation }: any) => {
           },
         ]}
       >
-        <View style={styles.headerLeftStack}>
-          {/* Square Soft-Shadow Menu Button */}
+        {/* Left: Square Soft-Shadow 3-Strokes Hamburger Menu Button */}
+        <TouchableOpacity
+          activeOpacity={0.8}
+          style={[styles.squareMenuBtn, { backgroundColor: theme.card }]}
+          onPress={() => setIsDrawerOpen(true)}
+        >
+          <Ionicons name="menu-outline" size={22} color={theme.text} />
+        </TouchableOpacity>
+
+        {/* Right Action Icons: Search Icon + Notification Bell with Badge + Shopping Bag */}
+        <View style={styles.headerRightActions}>
+          {/* Search Icon Action */}
           <TouchableOpacity
             activeOpacity={0.8}
-            style={[styles.squareMenuBtn, { backgroundColor: theme.card }]}
-            onPress={() => setIsDrawerOpen(true)}
+            style={[styles.iconActionBtn, { backgroundColor: theme.card }]}
+            onPress={() => navigation.navigate('BuyerSearch')}
           >
-            <Ionicons name="menu-outline" size={22} color={theme.text} />
+            <Ionicons name="search-outline" size={20} color={theme.text} />
           </TouchableOpacity>
 
-          <View style={styles.greetingStack}>
-            <Text variant="caption" color={colors.primary[500]} bold style={styles.greetingEyebrow}>
-              Hello, {firstName}! ✨
-            </Text>
-            <Text variant="h1" bold style={styles.greetingTitle}>
-              Discover Products
-            </Text>
-            <Text variant="caption" secondary style={styles.greetingSubtitle}>
-              48-hour escrow protection on every purchase
-            </Text>
-          </View>
-        </View>
-
-        {/* Right Icon Buttons: Notification Bell with Badge + Shopping Bag */}
-        <View style={styles.headerRightActions}>
+          {/* Notification Bell Action */}
           <TouchableOpacity
             activeOpacity={0.8}
             style={[styles.iconActionBtn, { backgroundColor: theme.card }]}
@@ -108,6 +104,7 @@ export const HomeScreen = ({ navigation }: any) => {
             </View>
           </TouchableOpacity>
 
+          {/* Shopping Bag Action */}
           <TouchableOpacity
             activeOpacity={0.8}
             onPress={() => navigation.navigate('BuyerCart')}
@@ -125,38 +122,38 @@ export const HomeScreen = ({ navigation }: any) => {
         </View>
       </View>
 
-      {/* Active Interactive Auto-Scrolling Hero Banner Carousel */}
+      {/* Subtitle Stack (Moved Down Underneath App Bar) */}
+      <View style={styles.greetingSection}>
+        <Text variant="caption" color={colors.primary[500]} bold style={styles.greetingEyebrow}>
+          Hello, {firstName}! ✨
+        </Text>
+        <Text variant="h1" bold style={styles.greetingTitle}>
+          Discover Products
+        </Text>
+        <Text variant="caption" secondary style={styles.greetingSubtitle}>
+          48-hour escrow protection on every purchase in Douala
+        </Text>
+      </View>
+
+      {/* Hero Banner Slide Carousel */}
       <View style={styles.carouselSection}>
         <HeroCarousel onPressBanner={() => navigation.navigate('BuyerSearch')} />
       </View>
 
-      {/* Search Bar & Filter Button */}
-      <View style={styles.searchRow}>
-        <TouchableOpacity
-          activeOpacity={0.9}
-          style={styles.searchFlex}
-          onPress={() => navigation.navigate('BuyerSearch')}
-        >
-          <Input
-            placeholder="Search for products..."
-            editable={false}
-            pointerEvents="none"
-            containerStyle={styles.searchShortcut}
-            leftIcon={<Ionicons name="search-outline" size={20} color={theme.placeholder} />}
-          />
-        </TouchableOpacity>
+      {/* Official Partners Manual Slide Carousel (Replaces Search Input Bar) */}
+      <PartnersCarousel />
 
-        <TouchableOpacity
-          activeOpacity={0.8}
-          onPress={() => navigation.navigate('BuyerSearch')}
-          style={[styles.filterButton, { backgroundColor: theme.card }]}
-        >
-          <Ionicons name="options-outline" size={20} color={theme.text} />
-        </TouchableOpacity>
-      </View>
-
-      {/* Shop by Category Circular Avatar Slider */}
+      {/* Shop by Category Circular Avatar Slider (Between Partners & Best Sellers) */}
       <View style={styles.categorySection}>
+        <View style={styles.categoryHeader}>
+          <Text variant="h2" bold style={styles.sectionTitleText}>
+            Categories
+          </Text>
+          <Text variant="caption" secondary>
+            Browse verified local items by department
+          </Text>
+        </View>
+
         <FlatList
           horizontal
           data={displayCategories}
@@ -250,7 +247,7 @@ export const HomeScreen = ({ navigation }: any) => {
         </View>
       </View>
 
-      {/* Explore All Products Catalog Grid Header (Below Special Offer Section) */}
+      {/* Explore All Products Catalog Grid Header */}
       <View style={styles.gridSectionHeader}>
         <Text variant="h2" bold style={styles.sectionTitleText}>
           Explore Verified Items
@@ -314,12 +311,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  headerLeftStack: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm + 2,
-    flex: 1,
-  },
   squareMenuBtn: {
     width: 44,
     height: 44,
@@ -327,20 +318,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     ...shadows.sm,
-  },
-  greetingStack: {
-    justifyContent: 'center',
-  },
-  greetingEyebrow: {
-    fontSize: 11,
-    marginBottom: 1,
-  },
-  greetingTitle: {
-    fontSize: 22,
-    lineHeight: 26,
-  },
-  greetingSubtitle: {
-    fontSize: 10,
   },
   headerRightActions: {
     flexDirection: 'row',
@@ -386,33 +363,31 @@ const styles = StyleSheet.create({
   cartBadgeText: {
     fontSize: 9,
   },
+  greetingSection: {
+    paddingHorizontal: spacing.base,
+    marginTop: spacing.xs,
+    marginBottom: spacing.xs,
+  },
+  greetingEyebrow: {
+    fontSize: 11,
+    marginBottom: 1,
+  },
+  greetingTitle: {
+    fontSize: 22,
+    lineHeight: 26,
+  },
+  greetingSubtitle: {
+    fontSize: 10,
+  },
   carouselSection: {
     paddingHorizontal: spacing.base,
   },
-  searchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.base,
-    marginTop: spacing.xs,
-    marginBottom: spacing.md,
-  },
-  searchFlex: {
-    flex: 1,
-  },
-  searchShortcut: {
-    marginBottom: 0,
-  },
-  filterButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...shadows.sm,
-  },
   categorySection: {
     marginBottom: spacing.lg,
+  },
+  categoryHeader: {
+    paddingHorizontal: spacing.base,
+    marginBottom: spacing.sm,
   },
   categoryScroll: {
     paddingHorizontal: spacing.base,
