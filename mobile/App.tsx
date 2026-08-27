@@ -1,14 +1,10 @@
-import React, { useEffect } from 'react';
+import React, { useCallback } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
-import * as SplashScreen from 'expo-splash-screen';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import './src/i18n'; // Initialize i18next
-
-// Keep splash screen visible while fonts load
-SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -29,13 +25,8 @@ export default function App() {
     'PlusJakartaSans-Bold': require('./assets/fonts/PlusJakartaSans-Bold.ttf'),
   });
 
-  useEffect(() => {
-    if (fontsLoaded || fontsError) {
-      // Hide splash screen once fonts are ready (or failed gracefully)
-      SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded, fontsError]);
-
+  // Show minimal loading indicator while fonts load.
+  // On error, gracefully continue with system fonts.
   if (!fontsLoaded && !fontsError) {
     return (
       <View style={styles.loadingContainer}>

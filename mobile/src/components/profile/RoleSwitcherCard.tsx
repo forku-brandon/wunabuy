@@ -10,7 +10,8 @@ export const RoleSwitcherCard: React.FC = () => {
   const { user, activeRole, setActiveRole } = useAuthStore();
   const { theme } = useThemeStore();
 
-  const availableRoles = user?.available_roles ?? [UserRole.BUYER];
+  // Deduplicate to prevent React duplicate-key warnings from any persisted stale state
+  const availableRoles = [...new Set(user?.available_roles ?? [UserRole.BUYER])] as UserRole[];
 
   const getRoleConfig = (role: UserRole) => {
     switch (role) {

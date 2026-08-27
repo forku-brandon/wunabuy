@@ -37,7 +37,8 @@ export const RegisterScreen = ({ route }: any) => {
         avatar_url: null,
         is_phone_verified: true,
         default_address: null,
-        available_roles: [selectedRole, UserRole.BUYER],
+        // Use Set to guarantee unique roles (prevents duplicate 'buyer' key warning)
+        available_roles: [...new Set([selectedRole, UserRole.BUYER])] as UserRole[],
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
