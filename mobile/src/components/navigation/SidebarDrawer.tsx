@@ -331,3 +331,4 @@ const styles = StyleSheet.create({
     borderColor: colors.semantic.error[500],
   },
 });
+

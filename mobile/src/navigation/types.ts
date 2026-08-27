@@ -40,7 +40,8 @@ export type RootStackParamList = {
   ChatConversation: { conversationId: string };
   NotificationSettings: undefined;
   AddressManager: undefined;
-  StoreKYC: undefined;
+  Settings: undefined;
+  StoreKYC: { role?: string } | undefined;
   AddEditProduct: { product?: any } | undefined;
   CheckoutPayment: { subtotal: number; addressId?: string };
   OrderSuccess: { orderCode: string; totalAmount: number; provider: string; phone: string };
