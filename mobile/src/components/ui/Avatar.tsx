@@ -1,13 +1,10 @@
 import React, { useState } from 'react';
-import { View, Image, StyleSheet } from 'react-native';
+import { View, Image, StyleSheet, ImageSourcePropType } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, borderRadius, shadows } from '@wunabuy/design-tokens';
-import { getInitials } from '@wunabuy/utils';
+import { colors, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
-import { Text } from './Text';
 
-export const DEFAULT_AVATAR_URI =
-  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80';
+export const DEFAULT_3D_AVATAR: ImageSourcePropType = require('../../../assets/avatar.png');
 
 export interface AvatarProps {
   url?: string | null;
@@ -18,13 +15,11 @@ export interface AvatarProps {
 
 export const Avatar: React.FC<AvatarProps> = ({
   url,
-  name = 'User',
   size = 40,
   showBorder = false,
 }) => {
-  const { theme, isDark } = useThemeStore();
+  const { isDark } = useThemeStore();
   const [imageError, setImageError] = useState(false);
-  const initials = getInitials(name);
 
   const containerStyle = {
     width: size,
@@ -32,7 +27,8 @@ export const Avatar: React.FC<AvatarProps> = ({
     borderRadius: size / 2,
   };
 
-  const imageSourceUri = url && url.trim().length > 0 ? url : DEFAULT_AVATAR_URI;
+  const imageSource: ImageSourcePropType =
+    url && url.trim().length > 0 ? { uri: url } : DEFAULT_3D_AVATAR;
 
   if (!imageError) {
     return (
@@ -47,7 +43,7 @@ export const Avatar: React.FC<AvatarProps> = ({
         ]}
       >
         <Image
-          source={{ uri: imageSourceUri }}
+          source={imageSource}
           style={[containerStyle, styles.image]}
           resizeMode="cover"
           onError={() => setImageError(true)}
@@ -56,7 +52,7 @@ export const Avatar: React.FC<AvatarProps> = ({
     );
   }
 
-  // Fallback vector person icon with initials
+  // Fallback vector person icon if custom remote URL fails
   return (
     <View
       style={[
@@ -81,7 +77,7 @@ export const Avatar: React.FC<AvatarProps> = ({
 const styles = StyleSheet.create({
   imageContainer: {
     overflow: 'hidden',
-    backgroundColor: colors.neutral[200],
+    backgroundColor: '#E2E8F0',
     ...shadows.sm,
   },
   image: {
