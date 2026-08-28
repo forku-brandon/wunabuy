@@ -6,12 +6,11 @@
  * - Clean header without logo, featuring safe back navigation & live status badge
  * - 70% automated hero benefit carousel (rotating every 3.5s across 4 benefit cards)
  * - Perfectly centered screen-width snapping (zero packed/overlapping sliders)
- * - Flexible auto-adjusting badges and stat chips (zero text overflow)
- * - 3-pillar quick perks bar (⚡ 10s Dispatch • 💰 Daily MoMo • 🛡️ Trip Insured)
+ * - 4-item clean transport modality grid (Bike 🏍️ • Taxi 🚕 • Van 🚐 • Plane ✈️)
  * - 20% high-end capsule CTA action container
  *
  * @author   Wunabuy Engineering Team
- * @version  2.1.0
+ * @version  2.2.0
  */
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -32,7 +31,7 @@ import { useAuthStore } from '../../stores/auth.store';
 import { UserRole } from '@wunabuy/types';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-const SLIDESHOW_HEIGHT = Math.max(SCREEN_HEIGHT * 0.54, 380);
+const SLIDESHOW_HEIGHT = Math.max(SCREEN_HEIGHT * 0.52, 360);
 
 export interface TransporterSlide {
   id: string;
@@ -80,6 +79,55 @@ const TRANSPORTER_SLIDES: TransporterSlide[] = [
     subtitle: 'Join Cameroon’s premier verified logistics network and receive priority high-value merchant dispatch requests.',
     statHighlight: 'Priority Dispatch',
     iconName: 'shield-checkmark',
+  },
+];
+
+interface TransportMode {
+  id: string;
+  label: string;
+  subLabel: string;
+  iconName: React.ComponentProps<typeof Ionicons>['name'];
+  iconColor: string;
+  bgColorLight: string;
+  bgColorDark: string;
+}
+
+const TRANSPORT_MODES: TransportMode[] = [
+  {
+    id: 'bike',
+    label: 'Bike',
+    subLabel: 'Moto-Taxi',
+    iconName: 'bicycle',
+    iconColor: colors.role.transporter,
+    bgColorLight: '#FEF3C7',
+    bgColorDark: 'rgba(245, 158, 11, 0.18)',
+  },
+  {
+    id: 'taxi',
+    label: 'Taxi',
+    subLabel: 'Cab / Sedan',
+    iconName: 'car-sport',
+    iconColor: colors.role.seller,
+    bgColorLight: '#EFF6FF',
+    bgColorDark: 'rgba(37, 99, 235, 0.18)',
+  },
+  {
+    id: 'van',
+    label: 'Van',
+    subLabel: 'Cargo / Bus',
+    iconName: 'bus',
+    iconColor: colors.primary[500],
+    bgColorLight: '#CCFBF1',
+    bgColorDark: 'rgba(13, 148, 136, 0.18)',
+  },
+  {
+    id: 'plane',
+    label: 'Plane',
+    subLabel: 'Air Cargo',
+    iconName: 'airplane',
+    iconColor: '#8B5CF6',
+    bgColorLight: '#F5F3FF',
+    bgColorDark: 'rgba(139, 92, 246, 0.18)',
   },
 ];
 
@@ -154,7 +202,7 @@ export const TransporterWelcomeScreen = ({ navigation }: any) => {
         </View>
       </View>
 
-      {/* Main Body Container: 70% Slideshow / 20% Action Split */}
+      {/* Main Body Container */}
       <View style={styles.mainBodyContainer}>
         {/* 70% Automated Hero Benefit Carousel */}
         <View style={styles.slideshowContainer}>
@@ -205,7 +253,7 @@ export const TransporterWelcomeScreen = ({ navigation }: any) => {
                     ]}
                   />
 
-                  {/* Top Badge & Stat Pill Row (Fully Flexible & Contained) */}
+                  {/* Top Badge & Stat Pill Row */}
                   <View style={styles.slideHeaderRow}>
                     <View
                       style={[
@@ -262,7 +310,7 @@ export const TransporterWelcomeScreen = ({ navigation }: any) => {
                       },
                     ]}
                   >
-                    <Ionicons name={item.iconName} size={38} color={item.badgeColor} />
+                    <Ionicons name={item.iconName} size={36} color={item.badgeColor} />
                   </View>
 
                   {/* Title & Subtitle */}
@@ -299,27 +347,38 @@ export const TransporterWelcomeScreen = ({ navigation }: any) => {
           </View>
         </View>
 
-        {/* 3-Pillar Quick Perks Bar */}
-        <View style={styles.perksRow}>
-          <View style={[styles.perkItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
-            <Ionicons name="flash-outline" size={14} color={colors.accent[500]} />
-            <Text variant="caption" bold style={styles.perkText} numberOfLines={1}>
-              10s Dispatch
-            </Text>
-          </View>
-
-          <View style={[styles.perkItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
-            <Ionicons name="cash-outline" size={14} color={colors.semantic.success[500]} />
-            <Text variant="caption" bold style={styles.perkText} numberOfLines={1}>
-              Daily MoMo
-            </Text>
-          </View>
-
-          <View style={[styles.perkItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
-            <Ionicons name="shield-checkmark-outline" size={14} color={colors.primary[500]} />
-            <Text variant="caption" bold style={styles.perkText} numberOfLines={1}>
-              Trip Insured
-            </Text>
+        {/* ── Four Transport Modalities Bar (Bike, Taxi, Van, Plane) ──────── */}
+        <View style={styles.transportModesContainer}>
+          <View style={styles.modesRow}>
+            {TRANSPORT_MODES.map((mode) => (
+              <View
+                key={mode.id}
+                style={[
+                  styles.modeCard,
+                  {
+                    backgroundColor: theme.card,
+                    borderColor: isDark ? 'rgba(255,255,255,0.06)' : '#E2E8F0',
+                  },
+                ]}
+              >
+                <View
+                  style={[
+                    styles.modeIconCircle,
+                    {
+                      backgroundColor: isDark ? mode.bgColorDark : mode.bgColorLight,
+                    },
+                  ]}
+                >
+                  <Ionicons name={mode.iconName} size={22} color={mode.iconColor} />
+                </View>
+                <Text variant="caption" bold color={theme.text} numberOfLines={1} style={styles.modeTitle}>
+                  {mode.label}
+                </Text>
+                <Text variant="caption" secondary numberOfLines={1} style={styles.modeSubTitle}>
+                  {mode.subLabel}
+                </Text>
+              </View>
+            ))}
           </View>
         </View>
 
@@ -346,14 +405,6 @@ export const TransporterWelcomeScreen = ({ navigation }: any) => {
               <Ionicons name="arrow-forward" size={18} color={colors.role.transporter} />
             </View>
           </TouchableOpacity>
-
-          {/* Guarantee / Vehicle Scope Footnote */}
-          <View style={styles.guaranteeRow}>
-            <Ionicons name="checkmark-circle" size={14} color={colors.semantic.success[500]} />
-            <Text variant="caption" secondary style={styles.guaranteeText} numberOfLines={1}>
-              Motorcycle, Car, Van &amp; Bicycle riders welcome in Douala &amp; Yaoundé
-            </Text>
-          </View>
         </View>
       </View>
     </ScreenContainer>
@@ -405,7 +456,7 @@ const styles = StyleSheet.create({
   },
   slideOuterContainer: {
     width: SCREEN_WIDTH,
-    height: SLIDESHOW_HEIGHT - 28,
+    height: SLIDESHOW_HEIGHT - 26,
     paddingHorizontal: spacing.base,
     justifyContent: 'center',
     alignItems: 'center',
@@ -475,9 +526,9 @@ const styles = StyleSheet.create({
     fontSize: 10,
   },
   iconCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: 68,
+    height: 68,
+    borderRadius: 34,
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
@@ -489,9 +540,9 @@ const styles = StyleSheet.create({
   },
   slideTitle: {
     textAlign: 'center',
-    lineHeight: 25,
+    lineHeight: 24,
     marginBottom: 4,
-    fontSize: 19,
+    fontSize: 18,
   },
   slideSubtitle: {
     textAlign: 'center',
@@ -516,27 +567,41 @@ const styles = StyleSheet.create({
     height: 7,
     borderRadius: 3.5,
   },
-  perksRow: {
+  transportModesContainer: {
+    paddingHorizontal: spacing.base,
+    marginVertical: spacing.xs,
+  },
+  modesRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: spacing.base,
     gap: spacing.xs,
   },
-  perkItem: {
+  modeCard: {
     flex: 1,
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 7,
+    paddingVertical: spacing.sm,
     paddingHorizontal: 4,
-    borderRadius: borderRadius.lg,
+    borderRadius: borderRadius.xl,
     borderWidth: 1,
-    gap: 4,
     ...shadows.sm,
   },
-  perkText: {
-    fontSize: 11,
+  modeIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  modeTitle: {
+    fontSize: 12,
+    lineHeight: 15,
+  },
+  modeSubTitle: {
+    fontSize: 9,
+    marginTop: 1,
   },
   actionContainer: {
     paddingHorizontal: spacing.base,
@@ -563,15 +628,5 @@ const styles = StyleSheet.create({
     backgroundColor: colors.neutral[0],
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  guaranteeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.xs,
-    marginTop: spacing.xs,
-  },
-  guaranteeText: {
-    fontSize: 11,
   },
 });
