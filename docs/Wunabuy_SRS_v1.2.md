@@ -1,10 +1,10 @@
 # Software Requirements Specification (SRS)
 # Wunabuy — Multi-Sided Mobile E-Commerce Platform
 
-**Document Version:** 1.4 (Production Synchronized Baseline)  
+**Document Version:** 1.5 (Production Synchronized Baseline)  
 **Date:** August 28, 2026  
 **Status:** Approved / In Production Use  
-**Companion Documents:** Wunabuy PRD v1.4, Wunabuy Backend Tech Spec v1.3  
+**Companion Documents:** Wunabuy PRD v1.5, Wunabuy Frontend Tech Spec v1.5, Wunabuy Backend Tech Spec v1.3  
 
 > **Resolved Architecture & UI Specifications (August 28, 2026):**
 > - **Backend:** Laravel 13 + Laravel Reverb WebSockets + PostgreSQL 15 (PostGIS).
@@ -14,9 +14,11 @@
 > - **Categories Circular Slider (`CategoryChip`):** Placed directly above Best Sellers.
 > - **Buyer Wallet Architecture (`WalletScreen`):** In-app mobile wallet supporting MTN MoMo (`*126#`) & Orange Money (`#150*50#`) funding/withdrawals with 50-70% responsive bottom sheets, USSD instructions, live validation, and transaction ledger.
 > - **Seller Welcome Onboarding (`SellerWelcomeScreen`):** 70% automated hero carousel (3.5s interval, 4 benefit cards) and 20% capsule CTA button (`Get Started Now ➔`).
-> - **4-Stage Store KYC Form (`StoreKYCScreen`):** 80% scrollable form grid / 20% action button split, animated progress bar (`25%` -> `100%`), 5-line description textarea, Error Callout Alert Banner, and Stage 5 celebration modal.
-> - **Slide-Out Navigation Drawer (`SidebarDrawer`):** 84% width overlay panel with My Wallet entrypoint (`MoMo` badge), Partner cards, Delivery Addresses, Dark Appearance toggle, and Logout.
+> - **4-Stage Store KYC Form (`StoreKYCScreen`):** 80% scrollable form grid / 20% action button split, animated progress bar (`25%` -> `100%`), flexible multiline description textarea (`minHeight: 110px`, live `0/300` char counter), horizontal category multi-select chips (`✓ CategoryName`), Error Callout Alert Banner, and Stage 5 celebration modal.
+> - **Slide-Out Navigation Drawer (`SidebarDrawer`):** 84% width overlay panel with interactive Wallet Balance Display (`walletBalanceBadge`, `47,500 XAF`) with privacy eye toggle button (`👁`), Partner cards, Delivery Addresses, Dark Appearance toggle, and Logout.
 > - **Profile Screen (`ProfileScreen`):** Teal gradient Wallet Quick-Access banner card (`47,500 XAF`, `48H ESCROW`) and `My Wallet` tool shortcut.
+> - **Product Detail Screen v2.0 (`ProductDetailScreen`):** Expansive 92% screen width hero image gallery stage (4% margins, 380px height), thumbnail strip selector, Top Floating Header Bar with 3-action buttons on same line (`❤️` Love, Share, Shopping Cart), verified merchant store card, 48H Escrow guarantee banner, 2-column Recommendation / Related Products grid ("You May Also Like ✨"), and optimized dual CTA bottom bar (`Add to Cart` + `Buy Now ➔`).
+> - **App-Wide Native Pull-to-Refresh (`RefreshControl`):** Implemented across `<ScreenContainer>` and all list/grid screens with Emerald Teal tint (`#0D9488`).
 
 ---
 
@@ -79,11 +81,22 @@ Wunabuy consists of a **React Native monorepo** (`wunabuy-mobile`, `@wunabuy/des
 ### 3.5 Seller Welcome & Multi-Step Store KYC Onboarding
 - **FR-017:** Tapping "Become a Seller" SHALL launch `SellerWelcomeScreen` with 70% automated hero carousel (3.5s interval, 4 benefit cards) and 20% capsule CTA button.
 - **FR-018:** Merchant KYC SHALL be structured into 4 stages with animated progress tracking (`25%`, `50%`, `75%`, `100%`).
-- **FR-019:** Stage 1 SHALL collect Store Name, 5-line Description textarea (`minHeight: 110px`), and Category chips.
+- **FR-019:** Stage 1 SHALL collect Store Name, multiline Description textarea (`minHeight: 110px`, live `0/300` char limit counter), and horizontal category slider with multi-select checkmark chips (`✓ CategoryName`).
 - **FR-020:** Stage 2 SHALL collect physical Street Address, City, and display GPS Location Auto-Pin Active notice.
 - **FR-021:** Stage 3 & 4 SHALL collect National ID CNI number, Front/Back CNI photo uploads, storefront photo, and business registration doc.
 - **FR-022:** Validation errors SHALL be displayed in high-contrast Error Callout Alert Banners (`alert-circle-sharp`, red tint `#FEF2F2`, red border `#EF4444`).
 - **FR-023:** Stage 5 SHALL display completion celebration notice and trigger 24-hour compliance review queue.
+
+### 3.6 Product Detail Screen & Dynamic Recommendations
+- **FR-024:** Product Detail Screen (`ProductDetailScreen`) SHALL display an expansive hero gallery stage covering 92% screen width (4% side margins, 380px height) with rounded corners (`borderRadius: 20px`), quality tier pill badge, and thumbnail selector strip.
+- **FR-025:** Top Floating Header Bar SHALL align the Back button on the left, and Favorite Love Icon (`❤️` / `🤍`), Native Share Button, and Shopping Cart Button (with live item count badge) on the same horizontal row on the right.
+- **FR-026:** System SHALL query and render related products from the same category or verified stores in a 2-column Recommendation Grid ("You May Also Like ✨").
+- **FR-027:** Tapping any recommended product card SHALL navigate smoothly into its product detail view (`navigation.push('ProductDetail', { productId: item.id })`).
+- **FR-028:** Sticky Bottom Action Bar SHALL feature a compact `[ − 1 + ]` quantity stepper, 48px soft-teal `Add to Cart` button (`flex: 1.1`), and solid Emerald Teal `Buy Now ➔` button (`flex: 1.2`).
+
+### 3.7 App-Wide Native Pull-to-Refresh
+- **FR-029:** `<ScreenContainer>` SHALL provide default native `RefreshControl` support for all scrollable views with Emerald Teal branding tint (`#0D9488`).
+- **FR-030:** FlatLists and ScrollViews on `SearchScreen`, `BuyerCartScreen`, `BuyerOrdersScreen`, `ProfileScreen`, `WalletScreen`, `SellerProductsScreen`, `TransporterJobsScreen`, `TransporterEarningsScreen`, and `SettingsScreen` SHALL implement active pull-to-refresh data re-fetching.
 
 ---
 
@@ -93,6 +106,7 @@ Wunabuy consists of a **React Native monorepo** (`wunabuy-mobile`, `@wunabuy/des
 - **NFR-002:** All action buttons MUST enforce safe bottom inset padding (`paddingBottom: Math.max(insets.bottom + spacing.xl, spacing['3xl'])`) to guarantee zero collision with Android soft keys.
 - **NFR-003:** Monorepo type-checking MUST achieve 100% pass (`7 successful, 7 total`).
 - **NFR-004:** KYC form cards MUST enforce 80% form card height / 20% action button proportion to guarantee optimal ergonomics on mobile screens.
+- **NFR-005:** Product hero images MUST render with `resizeMode="cover"` without layout clipping or text bleeding.
 
 ---
 
@@ -103,4 +117,4 @@ Wunabuy consists of a **React Native monorepo** (`wunabuy-mobile`, `@wunabuy/des
 **QA Lead:** _Wunabuy QA Team_  
 
 ---
-**[End of Software Requirements Specification v1.4]**
+**[End of Software Requirements Specification v1.5]**

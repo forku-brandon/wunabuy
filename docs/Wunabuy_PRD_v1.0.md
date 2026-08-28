@@ -1,7 +1,7 @@
 # Product Requirements Document (PRD)
 # Wunabuy — Multi-Sided Mobile E-Commerce & Logistics Platform
 
-**Document Version:** 1.4  
+**Document Version:** 1.5  
 **Status:** Revised / Launch-Ready Production Baseline  
 **Date:** August 28, 2026  
 **Author:** Product Management & Engineering Architecture Team  
@@ -28,6 +28,7 @@ This PRD defines the product vision, market outcome, launch scope, UI/UX archite
 | 1.2 | August 27, 2026 | Architecture & Engineering Team | Updated PRD with comprehensive UI/UX layout specifications (Home, Product Detail, Cart, Profile/Me Tab), simplified direct OTP auth flow, Slide-Out Navigation Drawer, dedicated Settings Architecture, and Android system navigation inset standards. |
 | 1.3 | August 27, 2026 | Architecture & Engineering Team | Added Partner Carousel, Search screen circular category slider, Buyer Orders stacked action buttons, and complete Backend API Contracts v1.2. |
 | 1.4 | August 28, 2026 | Architecture & Engineering Team | Added Buyer Wallet architecture (Fund, Withdraw, MTN MoMo `*126#`, Orange Money `#150*50#`, USSD prompt simulation, transaction history), Seller Welcome onboarding (70% hero carousel, 20% capsule CTA), 4-Stage Store KYC Form (80% form / 20% action button split, Error Callout Card, Stage 5 Celebration), and Profile & Drawer wallet entry points. |
+| 1.5 | August 28, 2026 | Architecture & Engineering Team | Added App-Wide Native Pull-to-Refresh (`RefreshControl`) standards across all screens (`ScreenContainer`, `Search`, `Cart`, `Orders`, `Profile`, `Wallet`, `SellerInventory`, `TransporterJobs`, `TransporterEarnings`, `Settings`), Product Detail v2.0 Redesign (expansive 92% width hero image gallery with 4% margins, Top Floating Header Bar with 3-action buttons on same line [Love, Share, Cart], 2-column Recommendation / Related Products grid replacing static features, and optimized Dual CTA bottom bar), and Store KYC Stage 1 textarea dynamic container expansion (`minHeight: 110px`) with zero text overflow and horizontal category multi-select slider chips. |
 
 ---
 
@@ -213,29 +214,38 @@ Wunabuy addresses these challenges through a **mobile-first, offline-resilient a
 - **FR-006 (High):** Seller onboarding starts with animated benefit welcome carousel before document collection.
 - **FR-007 (High):** Merchant KYC split into 4 structured stages (Basic Details, Address & GPS, National ID CNI Front/Back, Storefront & Business Registry).
 - **FR-008 (High):** Stage form UI strictly enforces 80% form card height / 20% action button proportion with animated progress tracking.
-- **FR-009 (High):** Document validation with immediate Error Callout Alert Banner and encrypted photo storage.
-- **FR-010 (High):** Stage 5 displays confirmation celebration and triggers 24-hour compliance review queue.
+- **FR-009 (High):** Stage 1 Short Business Description textarea dynamically expands across full horizontal card width with `minHeight: 110px`, zero text overflow, and live character counter (300 limit).
+- **FR-010 (High):** Stage 1 Primary Store Categories provides a horizontal slider (`ScrollView horizontal`) with multi-select checkmark chip pills (`✓ CategoryName`).
+- **FR-011 (High):** Document validation with immediate Error Callout Alert Banner and encrypted photo storage.
+- **FR-012 (High):** Stage 5 displays confirmation celebration and triggers 24-hour compliance review queue.
 
 ### EPIC 3: Product Catalog, Inventory & Search
-- **FR-011 (High):** Seller can create product listings with up to 5 images, price, description, stock quantity, and quality tier.
-- **FR-012 (High):** Inventory decrements automatically after order confirmation and triggers low-stock alerts at $\le 5$ units.
-- **FR-013 (High):** Search supports full-text search, category chips, rating filter, price range, and geographic radius filters.
-- **FR-014 (High):** Categories screen provides horizontal circular category avatar slider for real-time grid filtering.
-- **FR-015 (High):** Product detail page includes stock, reviews, seller rating, delivery estimate, and order availability.
+- **FR-013 (High):** Seller can create product listings with up to 5 images, price, description, stock quantity, and quality tier.
+- **FR-014 (High):** Inventory decrements automatically after order confirmation and triggers low-stock alerts at $\le 5$ units.
+- **FR-015 (High):** Search supports full-text search, category chips, rating filter, price range, and geographic radius filters.
+- **FR-016 (High):** Categories screen provides horizontal circular category avatar slider for real-time grid filtering.
+- **FR-017 (High):** Product Detail Screen (v2.0) features an expansive hero gallery stage covering 92% screen width (4% side margins), thumbnail strip selector, verified quality pill badge, and verified merchant store card.
+- **FR-018 (High):** Top Floating Header Bar aligns Back button on the left, and Favorite Love Icon (`❤️`), Native Share, and Shopping Cart (with live badge) in a clean horizontal row on the right on the same line.
+- **FR-019 (High):** Product Detail replaces static features list with an automated 2-column Recommendation / Related Products grid ("You May Also Like ✨").
+- **FR-020 (High):** Sticky Bottom Action Bar provides an optimized layout with compact `[ − 1 + ]` stepper pill, 48px soft-teal `Add to Cart` button, and solid Emerald Teal `Buy Now ➔` button.
 
 ### EPIC 4: Commerce, Wallet & Escrow Payments
-- **FR-016 (High):** In-app Buyer Wallet allows funding via MTN Mobile Money and Orange Money.
-- **FR-017 (High):** System displays dynamic USSD dialing codes (`*126#` for MTN, `#150*50#` for Orange) during mobile money top-up and withdrawal.
-- **FR-018 (High):** Buyers can pay for orders directly from wallet balance or through direct gateway checkout (Flutterwave / Paystack fallback).
-- **FR-019 (High):** Funds are held in 48-hour secure escrow until delivery confirmation signature or dispute resolution.
-- **FR-020 (High):** Wallet ledger logs all credit, debit, payout, and escrow transitions with timestamps and reference codes.
+- **FR-021 (High):** In-app Buyer Wallet allows funding via MTN Mobile Money and Orange Money.
+- **FR-022 (High):** System displays dynamic USSD dialing codes (`*126#` for MTN, `#150*50#` for Orange) during mobile money top-up and withdrawal.
+- **FR-023 (High):** Buyers can pay for orders directly from wallet balance or through direct gateway checkout (Flutterwave / Paystack fallback).
+- **FR-024 (High):** Funds are held in 48-hour secure escrow until delivery confirmation signature or dispute resolution.
+- **FR-025 (High):** Wallet ledger logs all credit, debit, payout, and escrow transitions with timestamps and reference codes.
 
 ### EPIC 5: Logistics & Delivery
-- **FR-021 (High):** Stores can assign delivery to a transporter or use in-house delivery.
-- **FR-022 (High):** Nearby transport providers receive job notifications and can accept or reject jobs.
-- **FR-023 (High):** GPS route and live tracking updates are visible to buyer and store (with driver speed and heading).
-- **FR-024 (High):** Proof-of-delivery photo/signature is required before the order is marked delivered.
-- **FR-025 (High):** Delivery fee is calculated using distance, base rate, and vehicle class.
+- **FR-026 (High):** Stores can assign delivery to a transporter or use in-house delivery.
+- **FR-027 (High):** Nearby transport providers receive job notifications and can accept or reject jobs.
+- **FR-028 (High):** GPS route and live tracking updates are visible to buyer and store (with driver speed and heading).
+- **FR-029 (High):** Proof-of-delivery photo/signature is required before the order is marked delivered.
+- **FR-030 (High):** Delivery fee is calculated using distance, base rate, and vehicle class.
+
+### EPIC 6: App-Wide Pull-to-Refresh & Ergonomics
+- **FR-031 (High):** Every scrollable screen across Buyer, Seller, and Transporter apps SHALL support native Pull-to-Refresh (`RefreshControl`) styled with Emerald Teal (`#0D9488`).
+- **FR-032 (High):** Pulling down on `HomeScreen`, `SearchScreen`, `BuyerCartScreen`, `BuyerOrdersScreen`, `ProfileScreen`, `WalletScreen`, `SellerProductsScreen`, `TransporterJobsScreen`, `TransporterEarningsScreen`, and `SettingsScreen` triggers live data synchronization.
 
 ---
 

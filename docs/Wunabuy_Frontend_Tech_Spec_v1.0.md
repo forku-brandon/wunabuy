@@ -336,27 +336,39 @@ The mobile app incorporates three distinct role views in a single codebase with 
 ### 5.1 Screen Inventory
 
 #### 1. Buyer Flow
-- **Home (`HomeScreen`)**: Search bar, category grid, featured products carousel, nearby stores (PostGIS distance), active order tracker widget.
-- **Search & Discovery (`SearchScreen`)**: Full-text search, filter bottom sheet (price range, distance radius, rating, quality tier), sort options (smart rank, distance, price).
-- **Product Detail (`ProductDetailScreen`)**: Multi-image gallery with zoom, seller store card, stock badge, quality indicator (New/Like New/Good/Fair), customer reviews list, "Add to Cart" and "Chat Seller" CTAs.
-- **Cart & Checkout (`CartScreen`, `CheckoutScreen`)**: Cart item list with quantity controls, delivery address selector, delivery fee estimator, payment method selector (MTN MoMo, Orange Money, Credit Card via Flutterwave/Paystack), escrow terms acknowledgment.
-- **Order Tracking (`OrderTrackingScreen`)**: Live Google Map with real-time transporter marker, route polyline, ETA countdown, order status step timeline, direct call/chat transporter.
+- **Home (`HomeScreen`)**: Top AppBar (`☰` hamburger drawer trigger on left; Search, Notifications with badge, and Shopping Cart with badge on right), auto-scrolling `HeroCarousel` (4.5s interval), official `PartnersCarousel` (MTN MoMo, Orange Money, Flutterwave, DHL, Ecobank), circular `CategoryChip` avatars, and native `RefreshControl`.
+- **Search & Discovery (`SearchScreen`)**: Full-text search with active query filtering, manual category avatar scrollbar, filter bottom sheet (price range, distance radius, rating, quality tier), and `ProductGrid` with native `RefreshControl`.
+- **Product Detail (`ProductDetailScreen` v2.0)**:
+  - Expansive hero gallery stage covering 92% screen width (4% side margins, 380px height) with rounded corners (`borderRadius: 20px`), quality tier pill badge (`NEW • 100% VERIFIED`), multi-image thumbnail selector strip, and pagination dots.
+  - Top Floating Header Bar aligning Back button on the left, and Favorite Love Icon (`❤️` / `🤍`), Native Share Button, and Shopping Cart Button (with live item count badge) in a clean horizontal row on the right on the same line.
+  - Verified Merchant Store Card displaying store title, verification badge, and 99.4% fulfillment score.
+  - 48-Hour Escrow Protection & Express GPS Delivery trust banner.
+  - Color variant selector and expandable description with Read More / Show Less toggle.
+  - 2-Column Recommendation / Related Products Grid ("You May Also Like ✨") querying related products from the same category with direct navigation (`navigation.push('ProductDetail')`).
+  - Sticky Bottom Action Bar with compact `[ − 1 + ]` quantity stepper, 48px soft-teal `Add to Cart` button (`flex: 1.1`), and solid Emerald Teal `Buy Now ➔` button (`flex: 1.2`).
+- **Cart & Checkout (`BuyerCartScreen`, `CheckoutPaymentScreen`)**: Cart item list with quantity steppers, promo code discount box, Free Express Shipping & Escrow banner, and `FlatList` with native `RefreshControl`.
+- **Order Tracking & Dispute (`BuyerOrdersScreen`, `OrderTrackingScreen`)**:
+  - `BuyerOrdersScreen`: 48H Escrow metrics, tab filters (`All`, `Paid Escrow`, `En Route`, `Completed`, `Disputed`), digital signature confirmation modal, dispute filing modal, and `FlatList` with native `RefreshControl`.
+  - `OrderTrackingScreen`: Live Google Map with real-time transporter marker, route polyline, ETA countdown, order status step timeline, and direct call/chat triggers.
+- **My Wallet (`WalletScreen`)**: In-app mobile wallet with Available Balance card, privacy eye toggle (`👁`), quick fund/withdraw modal (MTN MoMo `*126#` & Orange Money `#150*50#`, USSD dial simulation, result card), and `ScrollView` with native `RefreshControl`.
+- **User Profile (`ProfileScreen`)**: Top header with settings shortcut, Wallet Quick-Access card (`47,500 XAF`, `48H ESCROW`), My Orders status shortcuts, My Tools shortcuts, recommended product feed, and `FlatList` with native `RefreshControl`.
 
 #### 2. Seller (Store Owner) Flow
-- **Seller Dashboard (`SellerDashboardScreen`)**: Today's revenue, order count, pending escrow balance, store rating summary, quick-action buttons.
-- **Product Management (`ProductListScreen`, `AddProductScreen`)**: Product grid with stock toggle, image picker (up to 5 photos), category picker, quality tier selector, price & inventory input.
-- **Store Order Fulfillment (`SellerOrdersScreen`)**: Tabbed order list (`Pending`, `Preparing`, `Ready`, `Completed`), "Accept Order", "Mark Ready for Pickup", print shipping slip.
-- **Wallet & Payouts (`SellerWalletScreen`)**: Total escrow balance, available balance for payout, payout history, bank/MoMo withdrawal request modal.
-- **KYC Submission (`KYCOnboardingScreen`)**: Multi-step submission (Government ID front/back, storefront photo with GPS timestamp, business registration document).
+- **Seller Welcome (`SellerWelcomeScreen`)**: 70% automated hero carousel (3.5s interval across 4 benefit cards) and 20% capsule CTA button (`Get Started Now ➔`).
+- **Store KYC Form (`StoreKYCScreen`)**:
+  - 4-stage wizard with 80% form card height / 20% action button split and animated progress bar (`25%` -> `100%`).
+  - Stage 1: Store name, flexible multiline business description textarea (`minHeight: 110px`, live `0/300` char limit counter, zero text overflow), and horizontal category slider with multi-select checkmark chips (`✓ CategoryName`).
+  - Stage 2: Street address, city, and GPS Auto-Pin notice.
+  - Stage 3 & 4: National ID CNI number, front/back CNI photo uploads, storefront photo, and business registration certificate.
+  - High-contrast Error Callout Alert Banner and Stage 5 celebration modal.
+- **Seller Dashboard (`SellerDashboardScreen`)**: Total store balances, revenue metrics, KYC verification status banner, and `ScreenContainer` with native `RefreshControl`.
+- **Store Inventory (`SellerProductsScreen`)**: Product inventory list, active stock switches, search filter, and `FlatList` with native `RefreshControl`.
+- **Add/Edit Product (`AddEditProductScreen`)**: Multi-image photo picker, category selector, quality tier, price in XAF, and stock quantity.
 
 #### 3. Transport Provider Flow
-- **Jobs Dashboard (`DeliveryJobsScreen`)**: Nearby available delivery requests, distance to pickup, delivery fee, item size indicator, "Accept Job" CTA.
-- **Active Delivery Workflow (`ActiveDeliveryScreen`)**:
-  - Step 1: Navigate to store (Google Maps Directions).
-  - Step 2: Confirm pickup & upload store pickup receipt photo.
-  - Step 3: Navigate to buyer location (Background GPS broadcasting at 10s intervals).
-  - Step 4: Confirm delivery, capture recipient delivery photo, release escrow trigger.
-- **Earnings (`TransporterEarningsScreen`)**: Daily/weekly earnings charts, completed trip count, payout logs.
+- **Available Delivery Jobs (`TransporterJobsScreen`)**: Nearby transport offers sorted by distance, pickup/drop-off cards, and `FlatList` with native `RefreshControl`.
+- **Driver Earnings (`TransporterEarningsScreen`)**: Available driver balance card, payout to MoMo trigger, completed trip history, and `FlatList` with native `RefreshControl`.
+- **Active Delivery Workflow (`TransporterActiveTripScreen`)**: GPS navigation to pickup store, store pickup confirmation, live GPS route broadcasting to buyer, and delivery completion signature capture.
 
 ---
 
