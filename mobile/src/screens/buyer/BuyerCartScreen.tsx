@@ -27,8 +27,25 @@ export const BuyerCartScreen = ({ navigation }: any) => {
 
   const [deliveryAddress] = useState<Address>(MOCK_DEFAULT_ADDRESS);
   const [promoCode, setPromoCode] = useState('');
-  const [appliedDiscount, setAppliedDiscount] = useState(2000); // 2000 FCFA promo discount
+  const [appliedDiscount, setAppliedDiscount] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Dynamic Backend Promotion / Free Delivery notification (Hidden by default)
+  const [backendPromo, setBackendPromo] = useState<{
+    id: string;
+    message: string;
+    expiresInSeconds?: number;
+  } | null>(null);
+
+  // Auto-dismiss timer when a backend promo is received
+  React.useEffect(() => {
+    if (!backendPromo) return;
+    const timeout = (backendPromo.expiresInSeconds ?? 6) * 1000;
+    const timer = setTimeout(() => {
+      setBackendPromo(null);
+    }, timeout);
+    return () => clearTimeout(timer);
+  }, [backendPromo]);
 
   const handleRefresh = useCallback(() => {
     setRefreshing(true);
@@ -37,7 +54,7 @@ export const BuyerCartScreen = ({ navigation }: any) => {
 
   const subtotal = getSubtotal();
   const itemCount = getItemCount();
-  const shippingFee = 0; // Free delivery unlocked
+  const shippingFee = 1500; // Standard delivery fee
   const total = Math.max(0, subtotal - appliedDiscount + shippingFee);
 
   const handleProceedToPayment = () => {
@@ -49,7 +66,13 @@ export const BuyerCartScreen = ({ navigation }: any) => {
 
   const handleApplyPromo = () => {
     if (promoCode.trim()) {
-      setAppliedDiscount(3000);
+      setAppliedDiscount(2000);
+      setBackendPromo({
+        id: 'promo_applied',
+        message: `Promo code "${promoCode.trim()}" applied: -2,000 FCFA discount!`,
+        expiresInSeconds: 6,
+      });
+      setPromoCode('');
     }
   };
 
@@ -68,7 +91,7 @@ export const BuyerCartScreen = ({ navigation }: any) => {
 
   return (
     <ScreenContainer scrollable={false} padded={false}>
-      {/* Header (Matching Mockup Screen 3) */}
+      {/* Header */}
       <View style={[styles.header, { backgroundColor: theme.background, paddingTop: Math.max(insets.top + spacing.xs, spacing.md) }]}>
         <View style={styles.headerRow}>
           <Text variant="h1" bold style={styles.headerTitle}>
@@ -82,19 +105,39 @@ export const BuyerCartScreen = ({ navigation }: any) => {
           </TouchableOpacity>
         </View>
 
-        {/* Free Shipping & Escrow Unlock Progress Banner (Matching Mockup Screen 3) */}
-        <View style={[styles.shippingBanner, { backgroundColor: isDark ? '#064E3B' : '#ECFDF5', borderColor: colors.semantic.success[500] }]}>
-          <View style={styles.shippingBannerRow}>
-            <Ionicons name="car-outline" size={20} color={colors.semantic.success[700]} />
-            <Text variant="bodyMedium" bold color={colors.semantic.success[700]} style={styles.shippingBannerText}>
-              You've unlocked free express delivery &amp; 48h Escrow!
-            </Text>
+        {/* Dynamic Backend Promo / Delivery Banner (Hidden by default, shown only on backend response with auto-timeout) */}
+        {backendPromo && (
+          <View
+            style={[
+              styles.shippingBanner,
+              {
+                backgroundColor: isDark ? '#064E3B' : '#ECFDF5',
+                borderColor: colors.semantic.success[500],
+              },
+            ]}
+          >
+            <View style={styles.shippingBannerRow}>
+              <Ionicons name="gift-outline" size={18} color={colors.semantic.success[700]} />
+              <Text
+                variant="bodyMedium"
+                bold
+                color={colors.semantic.success[700]}
+                style={styles.shippingBannerText}
+                numberOfLines={2}
+              >
+                {backendPromo.message}
+              </Text>
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => setBackendPromo(null)}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                style={{ marginLeft: 'auto' }}
+              >
+                <Ionicons name="close" size={16} color={colors.semantic.success[700]} />
+              </TouchableOpacity>
+            </View>
           </View>
-          {/* Progress Bar */}
-          <View style={styles.progressBarTrack}>
-            <View style={[styles.progressBarFill, { width: '100%' }]} />
-          </View>
-        </View>
+        )}
       </View>
 
       <FlatList
