@@ -346,12 +346,12 @@ The mobile app incorporates three distinct role views in a single codebase with 
   - Color variant selector and expandable description with Read More / Show Less toggle.
   - 2-Column Recommendation / Related Products Grid ("You May Also Like ✨") querying related products from the same category with direct navigation (`navigation.push('ProductDetail')`).
   - Sticky Bottom Action Bar with compact `[ − 1 + ]` quantity stepper, 48px soft-teal `Add to Cart` button (`flex: 1.1`), and solid Emerald Teal `Buy Now ➔` button (`flex: 1.2`).
-- **Cart & Checkout (`BuyerCartScreen`, `CheckoutPaymentScreen`)**: Cart item list with quantity steppers, promo code discount box, Free Express Shipping & Escrow banner, and `FlatList` with native `RefreshControl`.
+- **Cart & Checkout (`BuyerCartScreen`, `CheckoutPaymentScreen`)**: Cart item list with quantity steppers, promo code discount box, dynamic backend-driven promotion & free shipping banner (hidden by default, auto-dismisses after 6s timeout with manual `X` close trigger), and `FlatList` with native `RefreshControl`.
 - **Order Tracking & Dispute (`BuyerOrdersScreen`, `OrderTrackingScreen`)**:
   - `BuyerOrdersScreen`: 48H Escrow metrics, tab filters (`All`, `Paid Escrow`, `En Route`, `Completed`, `Disputed`), digital signature confirmation modal, dispute filing modal, and `FlatList` with native `RefreshControl`.
   - `OrderTrackingScreen`: Live Google Map with real-time transporter marker, route polyline, ETA countdown, order status step timeline, and direct call/chat triggers.
 - **My Wallet (`WalletScreen`)**: In-app mobile wallet with Available Balance card, privacy eye toggle (`👁`), quick fund/withdraw modal (MTN MoMo `*126#` & Orange Money `#150*50#`, USSD dial simulation, result card), and `ScrollView` with native `RefreshControl`.
-- **User Profile (`ProfileScreen`)**: Top header with settings shortcut, Wallet Quick-Access card (`47,500 XAF`, `48H ESCROW`), My Orders status shortcuts, My Tools shortcuts, recommended product feed, and `FlatList` with native `RefreshControl`.
+- **User Profile (`ProfileScreen`)**: Top header with settings shortcut, 52px circular avatar featuring bundled 3D clay-style Black character avatar (`assets/avatar.png`) with Camera Edit badge, Wallet Quick-Access card (`47,500 XAF`, `48H ESCROW`), My Orders status shortcuts, My Tools shortcuts, recommended product feed, and `FlatList` with native `RefreshControl`.
 
 #### 2. Seller (Store Owner) Flow
 - **Seller Welcome (`SellerWelcomeScreen`)**: 70% automated hero carousel (3.5s interval across 4 benefit cards) and 20% capsule CTA button (`Get Started Now ➔`).
@@ -360,12 +360,20 @@ The mobile app incorporates three distinct role views in a single codebase with 
   - Stage 1: Store name, flexible multiline business description textarea (`minHeight: 110px`, live `0/300` char limit counter, zero text overflow), and horizontal category slider with multi-select checkmark chips (`✓ CategoryName`).
   - Stage 2: Street address, city, and GPS Auto-Pin notice.
   - Stage 3 & 4: National ID CNI number, front/back CNI photo uploads, storefront photo, and business registration certificate.
-  - High-contrast Error Callout Alert Banner and Stage 5 celebration modal.
+  - High-contrast Error Callout Alert Banner and Stage 5 celebration modal (redirects user back to initial Buyer Home Dashboard upon completion).
 - **Seller Dashboard (`SellerDashboardScreen`)**: Total store balances, revenue metrics, KYC verification status banner, and `ScreenContainer` with native `RefreshControl`.
 - **Store Inventory (`SellerProductsScreen`)**: Product inventory list, active stock switches, search filter, and `FlatList` with native `RefreshControl`.
 - **Add/Edit Product (`AddEditProductScreen`)**: Multi-image photo picker, category selector, quality tier, price in XAF, and stock quantity.
 
 #### 3. Transport Provider Flow
+- **Transporter Welcome (`TransporterWelcomeScreen`)**: Logo-free modern header, live status badge (`TRANSPORTER FLEET`), 70% automated hero benefit carousel with exact screen-width snapping, 4 Transport Modality Cards (`Bike 🏍️`, `Taxi 🚕`, `Van 🚐`, `Plane ✈️`), and 20% capsule CTA button (`Start Driver Verification ➔`).
+- **Driver KYC Form (`TransporterKYCScreen`)**:
+  - 4-stage driver verification form with 80% form / 20% action button split and animated progress bar (`25%` -> `100%`).
+  - Stage 1: Driver legal name, active phone, emergency phone, and multiline experience/city knowledge bio textarea (`minHeight: 110px`, `0/300` char limit counter).
+  - Stage 2: Vehicle class selector chips (`Motorcycle`, `Car`, `Van`, `Bicycle`, `Truck`), make/model, license plate, operating city & base quarter.
+  - Stage 3: National ID CNI number, driver's license number, front/back CNI photos, and driver's license photo upload.
+  - Stage 4: Vehicle Carte Grise registration photo, insurance certificate photo, and exterior vehicle photo with license plate visible.
+  - Stage 5: 24-hour compliance queue celebration modal (redirects smoothly back to Buyer Home Dashboard on completion).
 - **Available Delivery Jobs (`TransporterJobsScreen`)**: Nearby transport offers sorted by distance, pickup/drop-off cards, and `FlatList` with native `RefreshControl`.
 - **Driver Earnings (`TransporterEarningsScreen`)**: Available driver balance card, payout to MoMo trigger, completed trip history, and `FlatList` with native `RefreshControl`.
 - **Active Delivery Workflow (`TransporterActiveTripScreen`)**: GPS navigation to pickup store, store pickup confirmation, live GPS route broadcasting to buyer, and delivery completion signature capture.

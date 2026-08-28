@@ -29,6 +29,7 @@ This PRD defines the product vision, market outcome, launch scope, UI/UX archite
 | 1.3 | August 27, 2026 | Architecture & Engineering Team | Added Partner Carousel, Search screen circular category slider, Buyer Orders stacked action buttons, and complete Backend API Contracts v1.2. |
 | 1.4 | August 28, 2026 | Architecture & Engineering Team | Added Buyer Wallet architecture (Fund, Withdraw, MTN MoMo `*126#`, Orange Money `#150*50#`, USSD prompt simulation, transaction history), Seller Welcome onboarding (70% hero carousel, 20% capsule CTA), 4-Stage Store KYC Form (80% form / 20% action button split, Error Callout Card, Stage 5 Celebration), and Profile & Drawer wallet entry points. |
 | 1.5 | August 28, 2026 | Architecture & Engineering Team | Added App-Wide Native Pull-to-Refresh (`RefreshControl`) standards across all screens (`ScreenContainer`, `Search`, `Cart`, `Orders`, `Profile`, `Wallet`, `SellerInventory`, `TransporterJobs`, `TransporterEarnings`, `Settings`), Product Detail v2.0 Redesign (expansive 92% width hero image gallery with 4% margins, Top Floating Header Bar with 3-action buttons on same line [Love, Share, Cart], 2-column Recommendation / Related Products grid replacing static features, and optimized Dual CTA bottom bar), and Store KYC Stage 1 textarea dynamic container expansion (`minHeight: 110px`) with zero text overflow and horizontal category multi-select slider chips. |
+| 1.6 | August 28, 2026 | Architecture & Engineering Team | Added "Become a Transporter" Onboarding Flow (`TransporterWelcomeScreen` with logo-free modern header, live status badge, 70% automated hero carousel with exact screen-width snapping, 4 Transport Modality Cards [Bike 🏍️, Taxi 🚕, Van 🚐, Plane ✈️], and 20% capsule CTA; `TransporterKYCScreen` with 4-stage Driver KYC and Stage 5 celebration modal), KYC Completion Redirection Rule (redirecting users back to initial Buyer Home Dashboard upon document submission while in 24-hour review queue), 3D Clay-Style Black Character Avatar System bundled in `mobile/assets/avatar.png` with 52px Profile header avatar and Camera Edit badge, and Dynamic Cart Promo Banner Architecture (hidden by default, backend-driven with 6-second auto-dismiss timeout). |
 
 ---
 
@@ -246,6 +247,19 @@ Wunabuy addresses these challenges through a **mobile-first, offline-resilient a
 ### EPIC 6: App-Wide Pull-to-Refresh & Ergonomics
 - **FR-031 (High):** Every scrollable screen across Buyer, Seller, and Transporter apps SHALL support native Pull-to-Refresh (`RefreshControl`) styled with Emerald Teal (`#0D9488`).
 - **FR-032 (High):** Pulling down on `HomeScreen`, `SearchScreen`, `BuyerCartScreen`, `BuyerOrdersScreen`, `ProfileScreen`, `WalletScreen`, `SellerProductsScreen`, `TransporterJobsScreen`, `TransporterEarningsScreen`, and `SettingsScreen` triggers live data synchronization.
+
+### EPIC 7: Transporter Onboarding & KYC Lifecycle
+- **FR-033 (High):** Transporter onboarding welcome screen (`TransporterWelcomeScreen`) features a logo-free modern header, live network status badge, 70% automated hero carousel with 4 rotating benefit slides with exact screen-width snapping, 4 Transport Modality Cards (`Bike 🏍️`, `Taxi 🚕`, `Van 🚐`, `Plane ✈️`), and 20% capsule CTA (`Start Driver Verification ➔`).
+- **FR-034 (High):** Driver verification form (`TransporterKYCScreen`) features 4-stage KYC: Stage 1 (Driver Info & Bio textarea with 300 char limit), Stage 2 (Vehicle Class Selector & Base Quarter), Stage 3 (National ID CNI Front/Back & Driver's License photo), Stage 4 (Vehicle Carte Grise, Assurance, & Exterior Vehicle photo with plate visible).
+- **FR-035 (High):** KYC Submission Redirection Rule: Upon completing document submission in Stage 5, the user is redirected cleanly back to their initial **Buyer Home Dashboard** (`BuyerApp` root reset) while their application remains in the 24-hour compliance review queue (`under_review`).
+
+### EPIC 8: User Profile Picture & 3D Character Avatar System
+- **FR-036 (High):** Profile Picture displays a locally bundled **3D Clay-Style Black Character Avatar** (`mobile/assets/avatar.png`) with 0ms offline latency whenever a custom photo URL is not provided.
+- **FR-037 (High):** `ProfileScreen` header provides an expanded 52px circular avatar with an Emerald border ring and a Camera Edit badge icon (`camera` in `#0D9488`).
+
+### EPIC 9: Dynamic Cart Promotion & Auto-Dismiss Architecture
+- **FR-038 (High):** Cart screen (`BuyerCartScreen`) hides promotional and free delivery banners by default to maintain a clean, uncluttered layout.
+- **FR-039 (High):** Promotional notices are dynamically triggered by backend coupon/discount payload events (`backendPromo`) with a mandatory auto-dismiss timeout (6 seconds) and manual close button `(X)`.
 
 ---
 

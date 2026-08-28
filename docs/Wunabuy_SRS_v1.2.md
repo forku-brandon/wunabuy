@@ -1,10 +1,10 @@
 # Software Requirements Specification (SRS)
 # Wunabuy — Multi-Sided Mobile E-Commerce Platform
 
-**Document Version:** 1.5 (Production Synchronized Baseline)  
+**Document Version:** 1.6 (Production Synchronized Baseline)  
 **Date:** August 28, 2026  
 **Status:** Approved / In Production Use  
-**Companion Documents:** Wunabuy PRD v1.5, Wunabuy Frontend Tech Spec v1.5, Wunabuy Backend Tech Spec v1.3  
+**Companion Documents:** Wunabuy PRD v1.6, Wunabuy Frontend Tech Spec v1.6, Wunabuy Backend Tech Spec v1.3  
 
 > **Resolved Architecture & UI Specifications (August 28, 2026):**
 > - **Backend:** Laravel 13 + Laravel Reverb WebSockets + PostgreSQL 15 (PostGIS).
@@ -15,6 +15,11 @@
 > - **Buyer Wallet Architecture (`WalletScreen`):** In-app mobile wallet supporting MTN MoMo (`*126#`) & Orange Money (`#150*50#`) funding/withdrawals with 50-70% responsive bottom sheets, USSD instructions, live validation, and transaction ledger.
 > - **Seller Welcome Onboarding (`SellerWelcomeScreen`):** 70% automated hero carousel (3.5s interval, 4 benefit cards) and 20% capsule CTA button (`Get Started Now ➔`).
 > - **4-Stage Store KYC Form (`StoreKYCScreen`):** 80% scrollable form grid / 20% action button split, animated progress bar (`25%` -> `100%`), flexible multiline description textarea (`minHeight: 110px`, live `0/300` char counter), horizontal category multi-select chips (`✓ CategoryName`), Error Callout Alert Banner, and Stage 5 celebration modal.
+> - **Transporter Welcome Onboarding (`TransporterWelcomeScreen`):** Logo-free modern header, live status badge (`TRANSPORTER FLEET`), 70% automated hero carousel with exact screen-width snapping, 4 Transport Modality Cards (`Bike 🏍️`, `Taxi 🚕`, `Van 🚐`, `Plane ✈️`), and 20% capsule CTA button (`Start Driver Verification ➔`).
+> - **4-Stage Driver KYC Form (`TransporterKYCScreen`):** 4-stage driver verification form (Stage 1: Driver Details & Experience Bio textarea, Stage 2: Vehicle Class Selector & Plate/Base Station, Stage 3: National ID CNI Front/Back & Driver's License photo, Stage 4: Vehicle Carte Grise, Assurance & Vehicle Photo, Stage 5: 24-Hour Review Notice).
+> - **KYC Completion Redirection Rule:** Completing document submission in Driver KYC or Store KYC smoothly routes the user back to their initial Buyer Home Dashboard (`BuyerApp` root reset) while documents are verified.
+> - **3D Clay-Style Character Avatar System:** Bundled local asset `mobile/assets/avatar.png` (3D stylized Black character portrait with sunglasses and teal hoodie) for instant 0ms offline loading, integrated into `Avatar.tsx` and `ProfileScreen.tsx` (52px with camera edit badge).
+> - **Dynamic Cart Promo Banner:** Removed hardcoded static unlock banner in `BuyerCartScreen.tsx`; replaced with dynamic backend-driven notification state (`backendPromo`) with 6-second auto-dismiss timeout and manual close button.
 > - **Slide-Out Navigation Drawer (`SidebarDrawer`):** 84% width overlay panel with interactive Wallet Balance Display (`walletBalanceBadge`, `47,500 XAF`) with privacy eye toggle button (`👁`), Partner cards, Delivery Addresses, Dark Appearance toggle, and Logout.
 > - **Profile Screen (`ProfileScreen`):** Teal gradient Wallet Quick-Access banner card (`47,500 XAF`, `48H ESCROW`) and `My Wallet` tool shortcut.
 > - **Product Detail Screen v2.0 (`ProductDetailScreen`):** Expansive 92% screen width hero image gallery stage (4% margins, 380px height), thumbnail strip selector, Top Floating Header Bar with 3-action buttons on same line (`❤️` Love, Share, Shopping Cart), verified merchant store card, 48H Escrow guarantee banner, 2-column Recommendation / Related Products grid ("You May Also Like ✨"), and optimized dual CTA bottom bar (`Add to Cart` + `Buy Now ➔`).
@@ -98,6 +103,19 @@ Wunabuy consists of a **React Native monorepo** (`wunabuy-mobile`, `@wunabuy/des
 - **FR-029:** `<ScreenContainer>` SHALL provide default native `RefreshControl` support for all scrollable views with Emerald Teal branding tint (`#0D9488`).
 - **FR-030:** FlatLists and ScrollViews on `SearchScreen`, `BuyerCartScreen`, `BuyerOrdersScreen`, `ProfileScreen`, `WalletScreen`, `SellerProductsScreen`, `TransporterJobsScreen`, `TransporterEarningsScreen`, and `SettingsScreen` SHALL implement active pull-to-refresh data re-fetching.
 
+### 3.8 Transporter Onboarding & Driver KYC Lifecycle
+- **FR-031:** Tapping "Become a Transporter" SHALL launch `TransporterWelcomeScreen` featuring a logo-free modern header, live status badge (`TRANSPORTER FLEET`), 70% automated hero carousel with 4 benefit cards, 4 Transport Modality Cards (`Bike 🏍️`, `Taxi 🚕`, `Van 🚐`, `Plane ✈️`), and 20% capsule CTA button.
+- **FR-032:** Driver KYC (`TransporterKYCScreen`) SHALL collect Driver Info & Bio textarea (`minHeight: 110px`, `0/300` char limit) (Stage 1), Vehicle Class Selector & Operating Base Quarter (Stage 2), National ID CNI Front/Back & Driver's License photo (Stage 3), and Vehicle Carte Grise, Assurance, & Exterior Vehicle photo with plate visible (Stage 4).
+- **FR-033:** Completing Stage 5 of Driver KYC or Store KYC SHALL automatically redirect the user to their initial Buyer Home Dashboard (`BuyerApp` root reset) while their application remains in the 24-hour compliance queue.
+
+### 3.9 User Profile Picture & 3D Character Avatar System
+- **FR-034:** System SHALL bundle a local 3D clay-style Black character avatar (`mobile/assets/avatar.png`) to serve as the default profile picture with 0ms offline latency.
+- **FR-035:** `ProfileScreen` SHALL render a 52px circular avatar with Emerald border ring and a Camera Edit badge icon (`camera` in `#0D9488`).
+
+### 3.10 Dynamic Cart Promotion & Auto-Dismiss Architecture
+- **FR-036:** `BuyerCartScreen` SHALL hide promotional banners by default.
+- **FR-037:** Promotional messages SHALL only be displayed upon receiving dynamic backend payload events (`backendPromo`) with a mandatory 6-second auto-dismiss timeout and manual close button.
+
 ---
 
 ## 4. Non-Functional Requirements
@@ -117,4 +135,4 @@ Wunabuy consists of a **React Native monorepo** (`wunabuy-mobile`, `@wunabuy/des
 **QA Lead:** _Wunabuy QA Team_  
 
 ---
-**[End of Software Requirements Specification v1.5]**
+**[End of Software Requirements Specification v1.6]**
