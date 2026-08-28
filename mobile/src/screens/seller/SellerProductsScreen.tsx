@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Image, FlatList, StyleSheet, TouchableOpacity, Switch } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Image, FlatList, StyleSheet, TouchableOpacity, Switch, RefreshControl } from 'react-native';
 import { ScreenContainer, Text, Card, Input, Button, Badge, Toast } from '../../components/ui';
 import { MOCK_PRODUCTS } from '../../services/mockProducts';
 import { Product, QualityTier } from '@wunabuy/types';
@@ -12,6 +12,12 @@ export const SellerProductsScreen = ({ navigation }: any) => {
   const [products, setProducts] = useState<Product[]>(MOCK_PRODUCTS);
   const [searchQuery, setSearchQuery] = useState('');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = useCallback(() => {
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 800);
+  }, []);
 
   const filteredProducts = products.filter((p) => {
     if (searchQuery.trim()) {
@@ -64,6 +70,14 @@ export const SellerProductsScreen = ({ navigation }: any) => {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={colors.primary[500]}
+            colors={[colors.primary[500]]}
+          />
+        }
         renderItem={({ item }) => (
           <Card style={styles.productCard}>
             <View style={styles.cardRow}>

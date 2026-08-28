@@ -78,8 +78,15 @@ export const SearchScreen = ({ navigation, route }: any) => {
     return true;
   });
 
+  const [refreshing, setRefreshing] = useState(false);
+
   const handleSelectProduct = (product: Product) => {
     navigation.navigate('ProductDetail', { productId: product.id });
+  };
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 800);
   };
 
   const hasActiveFilters =
@@ -187,6 +194,8 @@ export const SearchScreen = ({ navigation, route }: any) => {
       {/* Product Results Grid */}
       <ProductGrid
         products={searchResults}
+        refreshing={refreshing}
+        onRefresh={handleRefresh}
         onSelectProduct={handleSelectProduct}
         emptyTitle="No Category Items Found"
         emptyDescription="Try selecting another category chip or clear your search filters."

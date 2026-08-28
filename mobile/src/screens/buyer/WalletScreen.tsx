@@ -9,7 +9,7 @@
  * @version  1.0.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   StyleSheet,
@@ -20,6 +20,7 @@ import {
   ActivityIndicator,
   Dimensions,
   Platform,
+  RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -262,6 +263,12 @@ export const WalletScreen = ({ navigation }: any) => {
   const [formError, setFormError] = useState('');
 
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = useCallback(() => {
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 800);
+  }, []);
 
   // ── Handlers ───────────────────────────────────────────────────────────────
 
@@ -366,6 +373,14 @@ export const WalletScreen = ({ navigation }: any) => {
       {/* ── Scrollable body ────────────────────────────────────────────────── */}
       <ScrollView
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={colors.primary[500]}
+            colors={[colors.primary[500]]}
+          />
+        }
         contentContainerStyle={[
           styles.scrollContent,
           { paddingBottom: Math.max(insets.bottom + spacing['2xl'], spacing['3xl']) },

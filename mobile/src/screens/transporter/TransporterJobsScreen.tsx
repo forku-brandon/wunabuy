@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, FlatList, StyleSheet, TouchableOpacity, RefreshControl } from 'react-native';
 import { ScreenContainer, Text, Card, Button, Badge, Toast } from '../../components/ui';
 import { DeliveryJob } from '@wunabuy/types';
 import { formatXAF, formatDistance } from '@wunabuy/utils';
@@ -64,16 +64,16 @@ const MOCK_DELIVERY_JOBS: DeliveryJob[] = [
     delivery_address: {
       id: 'd_2',
       label: 'Buyer Office',
-      latitude: 4.0720,
-      longitude: 9.7900,
-      address_text: 'Bali, Douala',
+      latitude: 4.0520,
+      longitude: 9.7680,
+      address_text: 'Rue Prince Bell, Bali',
       city: 'Douala',
       is_default: true,
     },
-    items_summary: '2x Toghu Embroidered Outfits (Package size: Medium)',
-    delivery_fee: 2000,
+    items_summary: '2x Traditional Embroidered Toghu Garments',
+    delivery_fee: 2500,
     currency: 'XAF',
-    distance_km: 4.1,
+    distance_km: 1.8,
     status: 'pending',
     created_at: new Date().toISOString(),
   },
@@ -83,6 +83,15 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
   const { theme } = useThemeStore();
   const [jobs, setJobs] = useState<DeliveryJob[]>(MOCK_DELIVERY_JOBS);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = useCallback(() => {
+    setRefreshing(true);
+    setTimeout(() => {
+      setJobs(MOCK_DELIVERY_JOBS);
+      setRefreshing(false);
+    }, 800);
+  }, []);
 
   const handleAcceptJob = (job: DeliveryJob) => {
     setJobs((prev) => prev.filter((j) => j.id !== job.id));
@@ -114,6 +123,14 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={colors.role.transporter}
+            colors={[colors.role.transporter]}
+          />
+        }
         renderItem={({ item }) => (
           <Card style={styles.jobCard}>
             <View style={styles.jobHeader}>

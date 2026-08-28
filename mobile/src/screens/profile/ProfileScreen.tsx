@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, FlatList, Image } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, StyleSheet, TouchableOpacity, FlatList, Image, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScreenContainer, Text, Card, Avatar, Toast } from '../../components/ui';
@@ -16,6 +16,12 @@ export const ProfileScreen = ({ navigation }: any) => {
   const { user } = useAuthStore();
   const { theme, isDark } = useThemeStore();
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = useCallback(() => {
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 800);
+  }, []);
 
   const handleSelectProduct = (product: Product) => {
     navigation.navigate('ProductDetail', { productId: product.id });
@@ -291,6 +297,14 @@ export const ProfileScreen = ({ navigation }: any) => {
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={ListHeader}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={colors.primary[500]}
+            colors={[colors.primary[500]]}
+          />
+        }
         renderItem={({ item }) => (
           <View style={styles.cardWrapper}>
             <ProductCard product={item} onPress={handleSelectProduct} />

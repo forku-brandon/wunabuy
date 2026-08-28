@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, FlatList, StyleSheet } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, FlatList, StyleSheet, RefreshControl } from 'react-native';
 import { ScreenContainer, Text, Card, Button, Badge } from '../../components/ui';
 import { formatXAF } from '@wunabuy/utils';
 import { colors, spacing, borderRadius } from '@wunabuy/design-tokens';
@@ -13,6 +13,12 @@ const MOCK_TRIP_HISTORY = [
 
 export const TransporterEarningsScreen = () => {
   const { theme } = useThemeStore();
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = useCallback(() => {
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 800);
+  }, []);
 
   const totalEarned = 18500;
   const availablePayout = 14000;
@@ -78,6 +84,14 @@ export const TransporterEarningsScreen = () => {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor={colors.role.transporter}
+              colors={[colors.role.transporter]}
+            />
+          }
           renderItem={({ item }) => (
             <Card style={styles.tripCard}>
               <View style={styles.tripRow}>

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, FlatList, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, FlatList, StyleSheet, TouchableOpacity, TextInput, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScreenContainer, Text, Card, Button, Badge, EmptyState } from '../../components/ui';
@@ -28,6 +28,12 @@ export const BuyerCartScreen = ({ navigation }: any) => {
   const [deliveryAddress] = useState<Address>(MOCK_DEFAULT_ADDRESS);
   const [promoCode, setPromoCode] = useState('');
   const [appliedDiscount, setAppliedDiscount] = useState(2000); // 2000 FCFA promo discount
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = useCallback(() => {
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 800);
+  }, []);
 
   const subtotal = getSubtotal();
   const itemCount = getItemCount();
@@ -96,6 +102,14 @@ export const BuyerCartScreen = ({ navigation }: any) => {
         keyExtractor={(item) => item.product_id}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={colors.primary[500]}
+            colors={[colors.primary[500]]}
+          />
+        }
         renderItem={({ item }) => (
           <CartItemCard
             item={item}

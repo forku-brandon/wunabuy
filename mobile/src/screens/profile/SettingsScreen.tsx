@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Switch, ScrollView } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, StyleSheet, TouchableOpacity, Switch, ScrollView, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScreenContainer, Text, Card, Button, Toast } from '../../components/ui';
@@ -18,6 +18,12 @@ export const SettingsScreen = ({ navigation }: any) => {
 
   const [isLangModalOpen, setIsLangModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = useCallback(() => {
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 800);
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -43,7 +49,18 @@ export const SettingsScreen = ({ navigation }: any) => {
         </Text>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={colors.primary[500]}
+            colors={[colors.primary[500]]}
+          />
+        }
+        contentContainerStyle={styles.scrollContent}
+      >
         {/* Section 1: Saved Addresses & Notifications */}
         <Text variant="caption" bold color={theme.textSecondary} style={styles.sectionHeader}>
           ACCOUNT &amp; DELIVERY
