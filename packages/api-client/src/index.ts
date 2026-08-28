@@ -9,6 +9,7 @@ import { createChatApi } from './modules/chat.api';
 import { createWalletApi } from './modules/wallet.api';
 import { createReviewsApi } from './modules/reviews.api';
 import { createKYCApi } from './modules/kyc.api';
+import { createPromotionsApi } from './modules/promotions.api';
 
 export * from './client';
 export * from './modules/auth.api';
@@ -20,6 +21,7 @@ export * from './modules/chat.api';
 export * from './modules/wallet.api';
 export * from './modules/reviews.api';
 export * from './modules/kyc.api';
+export * from './modules/promotions.api';
 
 /**
  * Composite Wunabuy API SDK containing all strongly typed API client modules.
@@ -38,6 +40,6 @@ export function createWunabuyApiSDK(config: ApiClientConfig) {
     wallet: createWalletApi(client),
     reviews: createReviewsApi(client),
     kyc: createKYCApi(client),
+    promotions: createPromotionsApi(client),
   };
 }
-

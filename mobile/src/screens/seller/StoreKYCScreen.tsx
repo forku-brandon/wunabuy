@@ -16,6 +16,7 @@ import { ProductCategory, UserRole } from '@wunabuy/types';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
 import { useAuthStore } from '../../stores/auth.store';
+import { KYCService } from '../../services/api';
 
 const WUNABUY_LOGO = require('../../../assets/icon.png');
 
@@ -122,10 +123,21 @@ export const StoreKYCScreen = ({ navigation }: any) => {
       }
 
       setLoading(true);
-      setTimeout(() => {
+      KYCService.submitStoreKYC({
+        store_name: storeName.trim(),
+        description: description.trim(),
+        category: (selectedCategories[0] as any) || ProductCategory.HEALTH_BEAUTY,
+        address_text: addressText.trim(),
+        latitude: 4.0510564,
+        longitude: 9.7678687,
+        id_card_front: idFront[0] || '',
+        id_card_back: idBack[0] || '',
+        storefront_photo: storefrontPhoto[0] || '',
+        business_reg_or_affidavit: businessRegDoc[0] || '',
+      }).finally(() => {
         setLoading(false);
         setCurrentStage(5); // Completion celebration stage!
-      }, 800);
+      });
     }
   };
 

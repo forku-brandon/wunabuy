@@ -30,6 +30,7 @@ import { ImagePickerGrid } from '../../components/seller/ImagePickerGrid';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
 import { useAuthStore } from '../../stores/auth.store';
+import { KYCService } from '../../services/api';
 import { UserRole } from '@wunabuy/types';
 
 const WUNABUY_LOGO = require('../../../assets/icon.png');
@@ -173,10 +174,25 @@ export const TransporterKYCScreen = ({ navigation }: any) => {
 
       // Submit Form to Stage 5
       setLoading(true);
-      setTimeout(() => {
+      KYCService.submitTransporterKYC({
+        driver_name: fullName.trim(),
+        phone: phone.trim(),
+        bio: driverBio.trim(),
+        vehicle_type: selectedVehicleType === 'bicycle' ? 'bike' : (selectedVehicleType as any),
+        license_plate: licensePlate.trim(),
+        base_station_quarter: baseQuarter.trim(),
+        city: city || 'Douala',
+        cni_number: cniNumber.trim(),
+        id_card_front: idFront[0] || '',
+        id_card_back: idBack[0] || '',
+        drivers_license_photo: driverLicensePhoto[0] || '',
+        carte_grise_photo: vehicleRegDoc[0] || '',
+        vehicle_assurance_photo: vehicleInsuranceDoc[0] || '',
+        vehicle_exterior_photo: vehiclePhoto[0] || '',
+      }).finally(() => {
         setLoading(false);
         setCurrentStage(5);
-      }, 1200);
+      });
     }
   };
 

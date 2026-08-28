@@ -9,6 +9,7 @@ import { useThemeStore } from '../../stores/theme.store';
 import { spacing, colors, borderRadius } from '@wunabuy/design-tokens';
 import { Address } from '@wunabuy/types';
 import { formatXAF } from '@wunabuy/utils';
+import { PromotionsService } from '../../services/api';
 
 const MOCK_DEFAULT_ADDRESS: Address = {
   id: 'addr_1',
@@ -37,6 +38,25 @@ export const BuyerCartScreen = ({ navigation }: any) => {
     expiresInSeconds?: number;
   } | null>(null);
 
+  const fetchPromotions = useCallback(async () => {
+    try {
+      const promoData = await PromotionsService.getCartBanner();
+      if (promoData && promoData.show_banner && promoData.headline) {
+        setBackendPromo({
+          id: promoData.promo_id || 'promo_default',
+          message: promoData.headline,
+          expiresInSeconds: promoData.auto_dismiss_seconds || 6,
+        });
+      }
+    } catch {
+      // Safe fallback
+    }
+  }, []);
+
+  React.useEffect(() => {
+    fetchPromotions();
+  }, [fetchPromotions]);
+
   // Auto-dismiss timer when a backend promo is received
   React.useEffect(() => {
     if (!backendPromo) return;
@@ -49,8 +69,8 @@ export const BuyerCartScreen = ({ navigation }: any) => {
 
   const handleRefresh = useCallback(() => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 800);
-  }, []);
+    fetchPromotions().finally(() => setRefreshing(false));
+  }, [fetchPromotions]);
 
   const subtotal = getSubtotal();
   const itemCount = getItemCount();

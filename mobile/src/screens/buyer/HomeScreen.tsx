@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   FlatList,
@@ -17,7 +17,7 @@ import { PartnersCarousel } from '../../components/home/PartnersCarousel';
 import { SidebarDrawer } from '../../components/navigation/SidebarDrawer';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { ProductCategory, Product } from '@wunabuy/types';
-import { MOCK_PRODUCTS } from '../../services/mockProducts';
+import { ProductsService } from '../../services/api';
 import { useCartStore } from '../../stores/cart.store';
 import { useAuthStore } from '../../stores/auth.store';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
@@ -29,25 +29,33 @@ export const HomeScreen = ({ navigation }: any) => {
   const { user } = useAuthStore();
   const itemCount = useCartStore((state) => state.getItemCount());
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const displayCategories = ['All', 'Skincare', 'Makeup', 'Fragrance', 'Haircare', 'Tools', 'Offers'];
 
-  const filteredProducts =
-    selectedCategory === 'All'
-      ? MOCK_PRODUCTS
-      : MOCK_PRODUCTS.filter((p) => {
-          if (selectedCategory === 'Skincare' || selectedCategory === 'Makeup' || selectedCategory === 'Fragrance') {
-            return p.category === ProductCategory.HEALTH_BEAUTY;
-          }
-          return p.category === selectedCategory;
-        });
+  const loadProducts = useCallback(async (cat: string) => {
+    try {
+      const data = await ProductsService.getProducts({ category: cat });
+      setProducts(data);
+    } catch {
+      // ProductsService handles fallback
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadProducts(selectedCategory);
+  }, [selectedCategory, loadProducts]);
 
   const handleRefresh = useCallback(() => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1000);
-  }, []);
+    loadProducts(selectedCategory);
+  }, [selectedCategory, loadProducts]);
 
   const handleSelectProduct = useCallback(
     (product: Product) => {
@@ -187,7 +195,7 @@ export const HomeScreen = ({ navigation }: any) => {
 
       <FlatList
         horizontal
-        data={filteredProducts}
+        data={products}
         keyExtractor={(item) => item.id}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.horizontalScrollContent}
@@ -262,7 +270,7 @@ export const HomeScreen = ({ navigation }: any) => {
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <FlatList
-        data={filteredProducts}
+        data={products}
         keyExtractor={(item) => item.id}
         numColumns={2}
         columnWrapperStyle={styles.columnWrapper}

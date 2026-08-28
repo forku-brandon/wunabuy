@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -7,7 +7,7 @@ import { CategoryChip } from '../../components/product/CategoryChip';
 import { ProductGrid } from '../../components/product/ProductGrid';
 import { FilterBottomSheet } from '../../components/product/FilterBottomSheet';
 import { Product, ProductCategory } from '@wunabuy/types';
-import { MOCK_PRODUCTS } from '../../services/mockProducts';
+import { ProductsService } from '../../services/api';
 import { ProductFilters } from '@wunabuy/api-client';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
@@ -22,6 +22,9 @@ export const SearchScreen = ({ navigation, route }: any) => {
     sort_by: 'relevance',
   });
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [searchResults, setSearchResults] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const displayCategories = [
     'All',
@@ -39,46 +42,28 @@ export const SearchScreen = ({ navigation, route }: any) => {
     ProductCategory.AUTOMOTIVE,
   ];
 
-  // Filter products based on selected category, search query & bottom sheet filters
-  const searchResults = MOCK_PRODUCTS.filter((p) => {
-    // Category Manual Scroll Bar Filter
-    if (selectedCategory !== 'All') {
-      if (selectedCategory === 'Skincare' || selectedCategory === 'Makeup' || selectedCategory === 'Fragrance') {
-        if (p.category !== ProductCategory.HEALTH_BEAUTY) return false;
-      } else if (p.category !== selectedCategory) {
-        return false;
-      }
+  const executeSearch = useCallback(async () => {
+    setLoading(true);
+    try {
+      const results = await ProductsService.getProducts({
+        search: query,
+        category: selectedCategory,
+        min_price: filters.min_price,
+        max_price: filters.max_price,
+        sort_by: filters.sort_by,
+      });
+      setSearchResults(results);
+    } catch {
+      // ProductsService handles fallback
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
     }
+  }, [query, selectedCategory, filters]);
 
-    // Text Query Filter
-    if (query.trim()) {
-      const q = query.toLowerCase();
-      const nameMatch = p.name.toLowerCase().includes(q);
-      const descMatch = p.description.toLowerCase().includes(q);
-      const categoryMatch = p.category.toLowerCase().includes(q);
-      if (!nameMatch && !descMatch && !categoryMatch) return false;
-    }
-
-    if (filters.quality_tier && p.quality_tier !== filters.quality_tier) {
-      return false;
-    }
-
-    if (filters.min_price && p.price < filters.min_price) {
-      return false;
-    }
-
-    if (filters.max_price && p.price > filters.max_price) {
-      return false;
-    }
-
-    if (filters.radius_km && p.distance_km && p.distance_km > filters.radius_km) {
-      return false;
-    }
-
-    return true;
-  });
-
-  const [refreshing, setRefreshing] = useState(false);
+  useEffect(() => {
+    executeSearch();
+  }, [executeSearch]);
 
   const handleSelectProduct = (product: Product) => {
     navigation.navigate('ProductDetail', { productId: product.id });
@@ -86,7 +71,7 @@ export const SearchScreen = ({ navigation, route }: any) => {
 
   const handleRefresh = () => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 800);
+    executeSearch();
   };
 
   const hasActiveFilters =

@@ -8,6 +8,7 @@ import { useCartStore } from '../../stores/cart.store';
 import { useAuthStore } from '../../stores/auth.store';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
+import { OrdersService } from '../../services/api';
 
 export const CheckoutPaymentScreen = ({ route, navigation }: any) => {
   const { subtotal = 185000 } = route.params || {};
@@ -31,52 +32,69 @@ export const CheckoutPaymentScreen = ({ route, navigation }: any) => {
   const [error, setError] = useState('');
 
   const handleChargePayment = async () => {
-    if (selectedMethod === PaymentMethod.MOMO) {
-      if (!accountPhone.trim()) {
-        setError('Please enter a valid Mobile Money account phone number.');
-        return;
-      }
+    setIsProcessing(true);
+    setError('');
 
-      setIsProcessing(true);
-      setError('');
-      const ussdCode = provider === 'MTN' ? '*126#' : '#150*50#';
-      setUssdPromptText(
-        `USSD Push sent to ${formatPhone(accountPhone)}. Please dial ${ussdCode} or enter PIN to authorize ${formatXAF(totalAmount)}.`
-      );
+    try {
+      if (selectedMethod === PaymentMethod.MOMO) {
+        if (!accountPhone.trim()) {
+          setError('Please enter a valid Mobile Money account phone number.');
+          setIsProcessing(false);
+          return;
+        }
 
-      // Simulate 3.5s gateway authorization polling
-      setTimeout(() => {
-        clearCart();
-        setIsProcessing(false);
-        navigation.navigate('OrderSuccess', {
-          orderCode: `WB-2026-${Math.floor(1000 + Math.random() * 9000)}`,
-          totalAmount,
-          provider,
+        const ussdCode = provider === 'MTN' ? '*126#' : '#150*50#';
+        setUssdPromptText(
+          `USSD Push sent to ${formatPhone(accountPhone)}. Please dial ${ussdCode} or enter PIN to authorize ${formatXAF(totalAmount)}.`
+        );
+
+        const result = await OrdersService.payCheckout({
+          order_id: 'wb_order_' + Date.now(),
+          method: 'momo',
+          provider: provider === 'MTN' ? 'mtn' : 'orange',
           phone: accountPhone,
-          paymentMethod: 'Mobile Money',
+          amount: totalAmount,
         });
-      }, 3500);
-    } else if (selectedMethod === PaymentMethod.WALLET) {
-      if (!isWalletSufficient) {
-        setError(`Insufficient wallet balance. Please top up your wallet.`);
-        return;
+
+        setTimeout(() => {
+          clearCart();
+          setIsProcessing(false);
+          navigation.navigate('OrderSuccess', {
+            orderCode: result.payment_ref || `WB-2026-${Math.floor(1000 + Math.random() * 9000)}`,
+            totalAmount,
+            provider,
+            phone: accountPhone,
+            paymentMethod: 'Mobile Money',
+          });
+        }, 3000);
+      } else if (selectedMethod === PaymentMethod.WALLET) {
+        if (!isWalletSufficient) {
+          setError(`Insufficient wallet balance. Please top up your wallet.`);
+          setIsProcessing(false);
+          return;
+        }
+
+        const result = await OrdersService.payCheckout({
+          order_id: 'wb_order_' + Date.now(),
+          method: 'wallet',
+          amount: totalAmount,
+        });
+
+        setTimeout(() => {
+          clearCart();
+          setIsProcessing(false);
+          navigation.navigate('OrderSuccess', {
+            orderCode: result.payment_ref || `WB-2026-${Math.floor(1000 + Math.random() * 9000)}`,
+            totalAmount,
+            provider: 'Wunabuy Wallet',
+            phone: user?.phone ?? accountPhone,
+            paymentMethod: 'Wallet Balance',
+          });
+        }, 1200);
       }
-
-      setIsProcessing(true);
-      setError('');
-
-      // Fast 1-tap wallet escrow payment
-      setTimeout(() => {
-        clearCart();
-        setIsProcessing(false);
-        navigation.navigate('OrderSuccess', {
-          orderCode: `WB-2026-${Math.floor(1000 + Math.random() * 9000)}`,
-          totalAmount,
-          provider: 'Wunabuy Wallet',
-          phone: user?.phone ?? accountPhone,
-          paymentMethod: 'Wallet Balance',
-        });
-      }, 1500);
+    } catch (err: any) {
+      setIsProcessing(false);
+      setError(err?.message || 'Payment processing failed. Please try again.');
     }
   };
 
