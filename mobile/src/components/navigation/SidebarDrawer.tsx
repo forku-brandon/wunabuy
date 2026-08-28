@@ -181,21 +181,21 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({
             {/* Become a Transporter */}
             <TouchableOpacity
               activeOpacity={0.82}
-              onPress={() => handleNavigate('StoreKYC', { role: 'transporter' })}
+              onPress={() => handleNavigate('TransporterWelcome')}
               style={[
                 styles.partnerMenuCard,
                 { backgroundColor: isDark ? colors.neutral[800] : '#F8FAFC' },
               ]}
             >
-              <View style={[styles.menuIconCircle, { backgroundColor: colors.accent[500] }]}>
-                <Ionicons name="car" size={20} color={colors.neutral[0]} />
+              <View style={[styles.menuIconCircle, { backgroundColor: colors.role.transporter }]}>
+                <Ionicons name="bicycle" size={20} color={colors.neutral[0]} />
               </View>
               <View style={styles.menuTextCol}>
                 <Text variant="bodyLarge" bold>
                   Become a Transporter
                 </Text>
                 <Text variant="caption" secondary numberOfLines={1}>
-                  Earn money delivering packages with live GPS
+                  Deliver packages &amp; earn instant daily MoMo cashouts
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color={theme.placeholder} />

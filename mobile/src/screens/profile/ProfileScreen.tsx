@@ -275,6 +275,61 @@ export const ProfileScreen = ({ navigation }: any) => {
         </View>
       </Card>
 
+      {/* Partner Opportunities Dual Banner Cards */}
+      <View style={styles.partnerCardsRow}>
+        {/* Become a Seller */}
+        <TouchableOpacity
+          activeOpacity={0.88}
+          onPress={() => navigation.navigate('SellerWelcome')}
+          style={[
+            styles.partnerBannerCard,
+            {
+              backgroundColor: isDark ? colors.neutral[800] : '#EFF6FF',
+              borderColor: isDark ? 'rgba(37, 99, 235, 0.3)' : '#BFDBFE',
+            },
+          ]}
+        >
+          <View style={[styles.partnerBannerIcon, { backgroundColor: colors.role.seller }]}>
+            <Ionicons name="storefront" size={18} color={colors.neutral[0]} />
+          </View>
+          <View style={styles.partnerBannerTextCol}>
+            <Text variant="bodyMedium" bold color={colors.role.seller}>
+              Open a Store
+            </Text>
+            <Text variant="caption" secondary numberOfLines={1}>
+              Sell on Wunabuy
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={16} color={colors.role.seller} />
+        </TouchableOpacity>
+
+        {/* Become a Transporter */}
+        <TouchableOpacity
+          activeOpacity={0.88}
+          onPress={() => navigation.navigate('TransporterWelcome')}
+          style={[
+            styles.partnerBannerCard,
+            {
+              backgroundColor: isDark ? colors.neutral[800] : '#FEF3C7',
+              borderColor: isDark ? 'rgba(245, 158, 11, 0.3)' : '#FDE68A',
+            },
+          ]}
+        >
+          <View style={[styles.partnerBannerIcon, { backgroundColor: colors.role.transporter }]}>
+            <Ionicons name="bicycle" size={18} color={colors.neutral[0]} />
+          </View>
+          <View style={styles.partnerBannerTextCol}>
+            <Text variant="bodyMedium" bold color={colors.role.transporter}>
+              Deliver &amp; Earn
+            </Text>
+            <Text variant="caption" secondary numberOfLines={1}>
+              Rider onboarding
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={16} color={colors.role.transporter} />
+        </TouchableOpacity>
+      </View>
+
       {/* Recommended For You Section Header */}
       <View style={styles.gridHeader}>
         <Text variant="h2" bold style={styles.gridTitle}>
@@ -486,6 +541,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     ...shadows.sm,
+  },
+  partnerCardsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.base,
+  },
+  partnerBannerCard: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.sm + 2,
+    borderRadius: borderRadius.xl,
+    borderWidth: 1,
+    ...shadows.sm,
+  },
+  partnerBannerIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.xs + 2,
+  },
+  partnerBannerTextCol: {
+    flex: 1,
   },
 });
 

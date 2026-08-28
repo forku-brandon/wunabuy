@@ -44,6 +44,8 @@ export type RootStackParamList = {
   BuyerWallet: undefined;
   SellerWelcome: undefined;
   StoreKYC: { role?: string } | undefined;
+  TransporterWelcome: undefined;
+  TransporterKYC: { role?: string } | undefined;
   AddEditProduct: { product?: any } | undefined;
   CheckoutPayment: { subtotal: number; addressId?: string };
   OrderSuccess: { orderCode: string; totalAmount: number; provider: string; phone: string };

@@ -31,6 +31,8 @@ import { AddressManagerScreen } from '../screens/profile/AddressManagerScreen';
 import { SettingsScreen } from '../screens/profile/SettingsScreen';
 import { SellerWelcomeScreen } from '../screens/seller/SellerWelcomeScreen';
 import { StoreKYCScreen } from '../screens/seller/StoreKYCScreen';
+import { TransporterWelcomeScreen } from '../screens/transporter/TransporterWelcomeScreen';
+import { TransporterKYCScreen } from '../screens/transporter/TransporterKYCScreen';
 import { AddEditProductScreen } from '../screens/seller/AddEditProductScreen';
 import { CheckoutPaymentScreen } from '../screens/buyer/CheckoutPaymentScreen';
 import { OrderSuccessScreen } from '../screens/buyer/OrderSuccessScreen';
@@ -86,6 +88,8 @@ export const RootNavigator = () => {
             <Stack.Screen name="Settings" component={SettingsScreen} />
             <Stack.Screen name="SellerWelcome" component={SellerWelcomeScreen} />
             <Stack.Screen name="StoreKYC" component={StoreKYCScreen} />
+            <Stack.Screen name="TransporterWelcome" component={TransporterWelcomeScreen} />
+            <Stack.Screen name="TransporterKYC" component={TransporterKYCScreen} />
             <Stack.Screen name="AddEditProduct" component={AddEditProductScreen} />
             <Stack.Screen name="CheckoutPayment" component={CheckoutPaymentScreen} />
             <Stack.Screen name="OrderSuccess" component={OrderSuccessScreen} />
