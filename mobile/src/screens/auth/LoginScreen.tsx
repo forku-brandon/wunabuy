@@ -31,7 +31,7 @@ export const LoginScreen = ({ navigation }: any) => {
     const normalized = normalizePhone(phone);
     // Flexible validation for local 9-digit or full E.164 phone numbers
     if (normalized.length < 10) {
-      setError('Please enter a valid 9-digit Cameroon phone number (e.g. 670 123 456)');
+      setError('Please enter a valid 9-digit phone number (e.g. 670 123 456)');
       return;
     }
 
@@ -63,7 +63,7 @@ export const LoginScreen = ({ navigation }: any) => {
         </View>
 
         <Input
-          label="Cameroon Mobile Number"
+          label="Mobile Phone Number"
           placeholder="670 123 456 or +237 6XX XXX XXX"
           keyboardType="phone-pad"
           value={phone}

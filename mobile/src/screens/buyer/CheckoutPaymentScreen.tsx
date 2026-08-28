@@ -1,22 +1,27 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { ScreenContainer, Text, Input, Button, Card, Toast, Badge } from '../../components/ui';
-import { PaymentMethod, PaymentProvider } from '@wunabuy/types';
+import { PaymentMethod } from '@wunabuy/types';
 import { formatXAF, generateIdempotencyKey, formatPhone } from '@wunabuy/utils';
 import { useCartStore } from '../../stores/cart.store';
 import { useAuthStore } from '../../stores/auth.store';
-import { colors, spacing, borderRadius } from '@wunabuy/design-tokens';
+import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
 
 export const CheckoutPaymentScreen = ({ route, navigation }: any) => {
   const { subtotal = 185000 } = route.params || {};
-  const { theme } = useThemeStore();
+  const { theme, isDark } = useThemeStore();
   const user = useAuthStore((state) => state.user);
   const clearCart = useCartStore((state) => state.clearCart);
 
   const commission = Math.round(subtotal * 0.035);
   const deliveryFee = 1500;
   const totalAmount = subtotal + commission + deliveryFee;
+
+  // Mock available wallet balance
+  const walletBalance = 47500;
+  const isWalletSufficient = walletBalance >= totalAmount;
 
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>(PaymentMethod.MOMO);
   const [provider, setProvider] = useState<'MTN' | 'ORANGE'>('MTN');
@@ -26,127 +31,300 @@ export const CheckoutPaymentScreen = ({ route, navigation }: any) => {
   const [error, setError] = useState('');
 
   const handleChargePayment = async () => {
-    if (!accountPhone.trim()) {
-      setError('Please enter a valid Mobile Money account phone number.');
-      return;
+    if (selectedMethod === PaymentMethod.MOMO) {
+      if (!accountPhone.trim()) {
+        setError('Please enter a valid Mobile Money account phone number.');
+        return;
+      }
+
+      setIsProcessing(true);
+      setError('');
+      const ussdCode = provider === 'MTN' ? '*126#' : '#150*50#';
+      setUssdPromptText(
+        `USSD Push sent to ${formatPhone(accountPhone)}. Please dial ${ussdCode} or enter PIN to authorize ${formatXAF(totalAmount)}.`
+      );
+
+      // Simulate 3.5s gateway authorization polling
+      setTimeout(() => {
+        clearCart();
+        setIsProcessing(false);
+        navigation.navigate('OrderSuccess', {
+          orderCode: `WB-2026-${Math.floor(1000 + Math.random() * 9000)}`,
+          totalAmount,
+          provider,
+          phone: accountPhone,
+          paymentMethod: 'Mobile Money',
+        });
+      }, 3500);
+    } else if (selectedMethod === PaymentMethod.WALLET) {
+      if (!isWalletSufficient) {
+        setError(`Insufficient wallet balance. Please top up your wallet.`);
+        return;
+      }
+
+      setIsProcessing(true);
+      setError('');
+
+      // Fast 1-tap wallet escrow payment
+      setTimeout(() => {
+        clearCart();
+        setIsProcessing(false);
+        navigation.navigate('OrderSuccess', {
+          orderCode: `WB-2026-${Math.floor(1000 + Math.random() * 9000)}`,
+          totalAmount,
+          provider: 'Wunabuy Wallet',
+          phone: user?.phone ?? accountPhone,
+          paymentMethod: 'Wallet Balance',
+        });
+      }, 1500);
     }
-
-    setIsProcessing(true);
-    setError('');
-    const idempotencyKey = generateIdempotencyKey();
-
-    const ussdCode = provider === 'MTN' ? '*126#' : '#150#';
-    setUssdPromptText(`USSD Push sent to ${formatPhone(accountPhone)}. Please dial ${ussdCode} or enter PIN to authorize ${formatXAF(totalAmount)}.`);
-
-    // Simulate 3-second gateway authorization polling
-    setTimeout(() => {
-      clearCart();
-      setIsProcessing(false);
-      navigation.navigate('OrderSuccess', {
-        orderCode: `WB-2026-${Math.floor(1000 + Math.random() * 9000)}`,
-        totalAmount,
-        provider,
-        phone: accountPhone,
-      });
-    }, 3500);
   };
 
   return (
     <ScreenContainer>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text variant="h2">←</Text>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={[styles.backBtn, { backgroundColor: theme.card }]}
+        >
+          <Ionicons name="arrow-back" size={20} color={theme.text} />
         </TouchableOpacity>
         <Text variant="h1" bold style={styles.title}>
-          Mobile Money Escrow Payment
+          Escrow Checkout Payment
         </Text>
         <Text variant="bodyMedium" secondary style={styles.subtitle}>
-          Single escrow payment. Your funds stay locked until delivery is verified.
+          Funds stay safely locked in 48-hour escrow protection until delivery is verified.
         </Text>
       </View>
 
       {/* Payable Amount Summary */}
       <Card style={styles.amountCard}>
-        <Text variant="caption" color="rgba(255,255,255,0.8)" bold>
+        <Text variant="caption" color="rgba(255,255,255,0.85)" bold>
           TOTAL PAYABLE ESCROW AMOUNT
         </Text>
         <Text variant="display" bold color={colors.neutral[0]} style={styles.amountText}>
           {formatXAF(totalAmount)}
         </Text>
-        <Badge label="PROTECTED BY WUNABUY ESCROW" variant="success" size="small" />
+        <View style={styles.escrowBadgePill}>
+          <Ionicons name="shield-checkmark" size={12} color="#10B981" style={{ marginRight: 4 }} />
+          <Text variant="caption" bold color="#10B981" style={{ fontSize: 10 }}>
+            48-HOUR ESCROW PROTECTED
+          </Text>
+        </View>
       </Card>
 
-      {/* Provider Selector */}
+      {/* Payment Method Selector Tabs */}
       <Text variant="caption" bold color={theme.textSecondary} style={styles.label}>
-        SELECT CAMEROON MOBILE MONEY PROVIDER
+        SELECT PAYMENT METHOD
       </Text>
-      <View style={styles.providerRow}>
-        {/* MTN MoMo */}
+      <View style={[styles.methodTabContainer, { backgroundColor: isDark ? colors.neutral[800] : colors.neutral[100] }]}>
+        {/* Mobile Money Tab */}
         <TouchableOpacity
           activeOpacity={0.8}
           onPress={() => {
-            setProvider('MTN');
             setSelectedMethod(PaymentMethod.MOMO);
+            setError('');
           }}
           style={[
-            styles.providerCard,
-            provider === 'MTN' && styles.providerSelectedMTN,
+            styles.methodTab,
+            selectedMethod === PaymentMethod.MOMO && [
+              styles.methodTabActive,
+              { backgroundColor: theme.card },
+            ],
           ]}
         >
-          <Text variant="h2">💛</Text>
-          <Text variant="bodyLarge" bold color={provider === 'MTN' ? colors.neutral[900] : theme.text}>
-            MTN MoMo
-          </Text>
-          <Text variant="caption" secondary>
-            *126# USSD
+          <Ionicons
+            name="phone-portrait-outline"
+            size={18}
+            color={selectedMethod === PaymentMethod.MOMO ? colors.primary[500] : theme.textSecondary}
+            style={{ marginRight: 6 }}
+          />
+          <Text
+            variant="bodyMedium"
+            bold={selectedMethod === PaymentMethod.MOMO}
+            color={selectedMethod === PaymentMethod.MOMO ? colors.primary[500] : theme.textSecondary}
+          >
+            Mobile Money
           </Text>
         </TouchableOpacity>
 
-        {/* Orange Money */}
+        {/* Wunabuy Wallet Tab */}
         <TouchableOpacity
           activeOpacity={0.8}
           onPress={() => {
-            setProvider('ORANGE');
-            setSelectedMethod(PaymentMethod.MOMO);
+            setSelectedMethod(PaymentMethod.WALLET);
+            setError('');
           }}
           style={[
-            styles.providerCard,
-            provider === 'ORANGE' && styles.providerSelectedOrange,
+            styles.methodTab,
+            selectedMethod === PaymentMethod.WALLET && [
+              styles.methodTabActive,
+              { backgroundColor: theme.card },
+            ],
           ]}
         >
-          <Text variant="h2">🧡</Text>
-          <Text variant="bodyLarge" bold color={provider === 'ORANGE' ? colors.neutral[0] : theme.text}>
-            Orange Money
-          </Text>
-          <Text variant="caption" secondary>
-            #150# USSD
+          <Ionicons
+            name="wallet-outline"
+            size={18}
+            color={selectedMethod === PaymentMethod.WALLET ? colors.primary[500] : theme.textSecondary}
+            style={{ marginRight: 6 }}
+          />
+          <Text
+            variant="bodyMedium"
+            bold={selectedMethod === PaymentMethod.WALLET}
+            color={selectedMethod === PaymentMethod.WALLET ? colors.primary[500] : theme.textSecondary}
+          >
+            Wunabuy Wallet
           </Text>
         </TouchableOpacity>
       </View>
 
-      {/* Account Phone Input */}
-      <Input
-        label="Mobile Money Account Phone Number *"
-        placeholder="+237 6XX XXX XXX"
-        keyboardType="phone-pad"
-        value={accountPhone}
-        onChangeText={(text) => {
-          setError('');
-          setAccountPhone(text);
-        }}
-        hint="Registered MoMo account that will receive the USSD PIN prompt"
-        error={error}
-      />
+      {/* ─── OPTION 1: MOBILE MONEY PROVIDERS ───────────────────────── */}
+      {selectedMethod === PaymentMethod.MOMO && (
+        <View style={styles.sectionContainer}>
+          <Text variant="caption" bold color={theme.textSecondary} style={styles.label}>
+            SELECT MOBILE MONEY PROVIDER
+          </Text>
+          <View style={styles.providerRow}>
+            {/* MTN MoMo */}
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => {
+                setProvider('MTN');
+                setError('');
+              }}
+              style={[
+                styles.providerCard,
+                { backgroundColor: theme.card, borderColor: theme.border },
+                provider === 'MTN' && styles.providerSelectedMTN,
+              ]}
+            >
+              <View style={styles.providerIconRingMTN}>
+                <Ionicons name="flash" size={20} color="#F59E0B" />
+              </View>
+              <Text variant="bodyLarge" bold color={provider === 'MTN' ? '#B45309' : theme.text}>
+                MTN MoMo
+              </Text>
+              <Text variant="caption" secondary>
+                *126# USSD
+              </Text>
+            </TouchableOpacity>
+
+            {/* Orange Money */}
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => {
+                setProvider('ORANGE');
+                setError('');
+              }}
+              style={[
+                styles.providerCard,
+                { backgroundColor: theme.card, borderColor: theme.border },
+                provider === 'ORANGE' && styles.providerSelectedOrange,
+              ]}
+            >
+              <View style={styles.providerIconRingOrange}>
+                <Ionicons name="card" size={20} color="#EA580C" />
+              </View>
+              <Text variant="bodyLarge" bold color={provider === 'ORANGE' ? '#C2410C' : theme.text}>
+                Orange Money
+              </Text>
+              <Text variant="caption" secondary>
+                #150*50# USSD
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Account Phone Input */}
+          <Input
+            label="Mobile Money Account Phone Number *"
+            placeholder="6XX XXX XXX or +237 6XX XXX XXX"
+            keyboardType="phone-pad"
+            value={accountPhone}
+            onChangeText={(text) => {
+              setError('');
+              setAccountPhone(text);
+            }}
+            hint="Registered account that will receive the USSD PIN push authorization"
+            error={error}
+          />
+        </View>
+      )}
+
+      {/* ─── OPTION 2: WUNABUY WALLET ─────────────────────────────── */}
+      {selectedMethod === PaymentMethod.WALLET && (
+        <View style={styles.sectionContainer}>
+          <Card
+            style={[
+              styles.walletOverviewCard,
+              {
+                backgroundColor: isDark ? '#1E293B' : '#F0FDFA',
+                borderColor: isWalletSufficient ? colors.primary[500] : colors.semantic.warning[500],
+              },
+            ]}
+          >
+            <View style={styles.walletOverviewHeader}>
+              <View style={styles.walletIconCircle}>
+                <Ionicons name="wallet" size={22} color={colors.primary[500]} />
+              </View>
+              <View style={{ flex: 1, marginLeft: spacing.sm }}>
+                <Text variant="caption" secondary bold>
+                  CURRENT WALLET BALANCE
+                </Text>
+                <Text variant="h2" bold color={colors.primary[600]}>
+                  {formatXAF(walletBalance)}
+                </Text>
+              </View>
+              <Badge
+                label={isWalletSufficient ? 'SUFFICIENT' : 'LOW BALANCE'}
+                variant={isWalletSufficient ? 'success' : 'warning'}
+                size="small"
+              />
+            </View>
+
+            <View style={styles.walletDivider} />
+
+            {isWalletSufficient ? (
+              <View style={styles.walletBenefitRow}>
+                <Ionicons name="checkmark-circle" size={16} color={colors.semantic.success[500]} style={{ marginRight: 6 }} />
+                <Text variant="caption" color={colors.semantic.success[700]}>
+                  Instant 1-tap escrow lock • Remaining balance: {formatXAF(walletBalance - totalAmount)}
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.walletShortfallContainer}>
+                <View style={styles.walletBenefitRow}>
+                  <Ionicons name="alert-circle" size={16} color={colors.semantic.warning[500]} style={{ marginRight: 6 }} />
+                  <Text variant="caption" color={colors.semantic.warning[700]}>
+                    Shortfall: {formatXAF(totalAmount - walletBalance)} needed to complete checkout.
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => navigation.navigate('BuyerWallet')}
+                  style={styles.topUpBtn}
+                >
+                  <Text variant="caption" bold color={colors.primary[500]}>
+                    + Top Up Wallet Now ➔
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </Card>
+        </View>
+      )}
 
       {/* Processing Indicator / USSD Banner */}
       {isProcessing && (
-        <Card style={styles.processingCard}>
+        <Card style={[styles.processingCard, { backgroundColor: isDark ? colors.neutral[800] : colors.primary[50] }]}>
           <ActivityIndicator color={colors.primary[500]} size="large" style={{ marginBottom: spacing.sm }} />
           <Text variant="bodyMedium" bold align="center" color={colors.primary[700]}>
-            Authorizing Escrow Charge...
+            {selectedMethod === PaymentMethod.WALLET
+              ? 'Locking Escrow from Wallet Balance...'
+              : 'Authorizing Mobile Money Escrow Charge...'}
           </Text>
           {ussdPromptText && (
-            <Text variant="caption" align="center" secondary style={{ marginTop: spacing.xs }}>
+            <Text variant="caption" align="center" secondary style={{ marginTop: spacing.xs, lineHeight: 18 }}>
               {ussdPromptText}
             </Text>
           )}
@@ -155,9 +333,14 @@ export const CheckoutPaymentScreen = ({ route, navigation }: any) => {
 
       {!isProcessing && (
         <Button
-          title={`Pay ${formatXAF(totalAmount)} into Escrow`}
+          title={
+            selectedMethod === PaymentMethod.WALLET
+              ? `Pay ${formatXAF(totalAmount)} from Wallet ➔`
+              : `Pay ${formatXAF(totalAmount)} via Mobile Money ➔`
+          }
           variant="primary"
           onPress={handleChargePayment}
+          disabled={selectedMethod === PaymentMethod.WALLET && !isWalletSufficient}
           style={styles.payBtn}
         />
       )}
@@ -167,11 +350,17 @@ export const CheckoutPaymentScreen = ({ route, navigation }: any) => {
 
 const styles = StyleSheet.create({
   header: {
-    marginTop: spacing.sm,
+    marginTop: spacing.xs,
     marginBottom: spacing.md,
   },
   backBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: borderRadius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: spacing.xs,
+    ...shadows.sm,
   },
   title: {
     marginBottom: spacing.xs,
@@ -180,49 +369,132 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   amountCard: {
-    backgroundColor: colors.primary[700],
+    backgroundColor: '#0F766E',
     borderRadius: borderRadius.xl,
     padding: spacing.lg,
     alignItems: 'center',
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
+    ...shadows.md,
   },
   amountText: {
     marginVertical: spacing.xs,
   },
+  escrowBadgePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#064E3B',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
+    borderRadius: borderRadius.full,
+    marginTop: 2,
+  },
   label: {
     marginBottom: spacing.xs,
+    letterSpacing: 0.5,
+  },
+  methodTabContainer: {
+    flexDirection: 'row',
+    padding: 4,
+    borderRadius: borderRadius.lg,
+    marginBottom: spacing.lg,
+  },
+  methodTab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.md,
+  },
+  methodTabActive: {
+    ...shadows.sm,
+  },
+  sectionContainer: {
+    marginBottom: spacing.md,
   },
   providerRow: {
     flexDirection: 'row',
     gap: spacing.md,
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
   },
   providerCard: {
     flex: 1,
     padding: spacing.md,
-    borderRadius: borderRadius.lg,
+    borderRadius: borderRadius.xl,
     borderWidth: 1.5,
-    borderColor: colors.neutral[300],
     alignItems: 'center',
+    ...shadows.sm,
+  },
+  providerIconRingMTN: {
+    width: 40,
+    height: 40,
+    borderRadius: borderRadius.full,
+    backgroundColor: '#FEF3C7',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.xs,
+  },
+  providerIconRingOrange: {
+    width: 40,
+    height: 40,
+    borderRadius: borderRadius.full,
+    backgroundColor: '#FFEDD5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.xs,
   },
   providerSelectedMTN: {
-    borderColor: '#EAB308',
-    backgroundColor: '#FEF08A',
+    borderColor: '#F59E0B',
+    backgroundColor: '#FFFBEB',
   },
   providerSelectedOrange: {
     borderColor: '#EA580C',
-    backgroundColor: '#C2410C',
+    backgroundColor: '#FFF7ED',
+  },
+  walletOverviewCard: {
+    borderRadius: borderRadius.xl,
+    padding: spacing.md,
+    borderWidth: 1.5,
+    marginBottom: spacing.sm,
+  },
+  walletOverviewHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  walletIconCircle: {
+    width: 42,
+    height: 42,
+    borderRadius: borderRadius.full,
+    backgroundColor: '#CCFBF1',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  walletDivider: {
+    height: 1,
+    backgroundColor: 'rgba(13, 148, 136, 0.15)',
+    marginVertical: spacing.sm,
+  },
+  walletBenefitRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  walletShortfallContainer: {
+    marginTop: 2,
+  },
+  topUpBtn: {
+    marginTop: spacing.xs,
+    paddingVertical: 4,
   },
   processingCard: {
-    backgroundColor: colors.primary[50],
+    borderRadius: borderRadius.xl,
     borderColor: colors.primary[500],
+    borderWidth: 1,
     alignItems: 'center',
     paddingVertical: spacing.lg,
     marginBottom: spacing.lg,
   },
   payBtn: {
-    marginTop: spacing.sm,
+    marginTop: spacing.xs,
     marginBottom: spacing.xl,
   },
 });
-

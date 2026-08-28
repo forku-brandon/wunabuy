@@ -34,7 +34,7 @@ const SELLER_SLIDES: SellerSlide[] = [
     badge: 'VERIFIED MERCHANT BADGE',
     badgeColor: colors.role.seller,
     title: 'Grow Your Store, ✨\nReach 50,000+ Buyers',
-    subtitle: 'Get a verified merchant store badge & list your products directly to active buyers across Cameroon with guaranteed trust.',
+    subtitle: 'Get a verified merchant store badge & list your products directly to active local buyers with guaranteed trust.',
     iconName: 'storefront',
   },
   {

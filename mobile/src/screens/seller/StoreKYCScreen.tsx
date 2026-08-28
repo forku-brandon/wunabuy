@@ -358,7 +358,7 @@ export const StoreKYCScreen = ({ navigation }: any) => {
                         Location &amp; Address
                       </Text>
                       <Text variant="caption" secondary>
-                        Provide your store street address in Cameroon
+                        Provide your store physical street address
                       </Text>
                     </View>
                   </View>

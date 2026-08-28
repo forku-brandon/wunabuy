@@ -172,7 +172,7 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({
                   Become a Seller
                 </Text>
                 <Text variant="caption" secondary numberOfLines={1}>
-                  Register store &amp; sell products across Cameroon
+                  Register store &amp; sell products online
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color={theme.placeholder} />

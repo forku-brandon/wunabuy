@@ -76,7 +76,7 @@ const TRANSPORTER_SLIDES: TransporterSlide[] = [
     badge: 'VERIFIED FLEET',
     badgeColor: '#6366F1',
     title: 'Verified Rider Badge, ✨\nPriority Job Dispatch',
-    subtitle: 'Join Cameroon’s premier verified logistics network and receive priority high-value merchant dispatch requests.',
+    subtitle: 'Join the premier verified logistics network and receive priority high-value merchant dispatch requests.',
     statHighlight: 'Priority Dispatch',
     iconName: 'shield-checkmark',
   },

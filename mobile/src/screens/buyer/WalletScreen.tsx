@@ -292,7 +292,7 @@ export const WalletScreen = ({ navigation }: any) => {
 
     const phoneDigits = phone.replace(/\D/g, '');
     if (phoneDigits.length < 9) {
-      setFormError('Please enter a valid 9-digit Cameroon phone number.');
+      setFormError('Please enter a valid 9-digit mobile phone number.');
       return;
     }
 
