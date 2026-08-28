@@ -126,6 +126,20 @@ export const ProductDetailScreen = ({ route, navigation }: any) => {
         </TouchableOpacity>
 
         <View style={styles.topBarRight}>
+          {/* Favorite Love Icon on the SAME line with Share and Shopping */}
+          <TouchableOpacity
+            activeOpacity={0.8}
+            style={[styles.headerIconBtn, { backgroundColor: theme.card }]}
+            onPress={() => setIsFavorite(!isFavorite)}
+          >
+            <Ionicons
+              name={isFavorite ? 'heart' : 'heart-outline'}
+              size={20}
+              color={isFavorite ? colors.semantic.error[500] : theme.text}
+            />
+          </TouchableOpacity>
+
+          {/* Share Icon */}
           <TouchableOpacity
             activeOpacity={0.8}
             style={[styles.headerIconBtn, { backgroundColor: theme.card }]}
@@ -134,6 +148,7 @@ export const ProductDetailScreen = ({ route, navigation }: any) => {
             <Ionicons name="share-social-outline" size={20} color={theme.text} />
           </TouchableOpacity>
 
+          {/* Shopping Cart Icon with Badge */}
           <TouchableOpacity
             activeOpacity={0.8}
             style={[styles.headerIconBtn, { backgroundColor: theme.card }]}
@@ -176,7 +191,7 @@ export const ProductDetailScreen = ({ route, navigation }: any) => {
               resizeMode="cover"
             />
 
-            {/* Top Overlay Badges: Quality Tier + Favorite Heart */}
+            {/* Top Overlay Badge: Quality Tier Only */}
             <View style={styles.heroOverlayHeader}>
               <View style={styles.qualityPill}>
                 <Ionicons name="shield-checkmark" size={13} color={colors.semantic.success[500]} />
@@ -184,18 +199,6 @@ export const ProductDetailScreen = ({ route, navigation }: any) => {
                   {product.quality_tier?.toUpperCase() ?? 'NEW'} • 100% VERIFIED
                 </Text>
               </View>
-
-              <TouchableOpacity
-                activeOpacity={0.85}
-                style={[styles.favoriteBtn, { backgroundColor: theme.card }]}
-                onPress={() => setIsFavorite(!isFavorite)}
-              >
-                <Ionicons
-                  name={isFavorite ? 'heart' : 'heart-outline'}
-                  size={20}
-                  color={isFavorite ? colors.semantic.error[500] : theme.text}
-                />
-              </TouchableOpacity>
             </View>
 
             {/* Thumbnail Strip (if multiple images) */}
