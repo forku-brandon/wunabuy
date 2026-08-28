@@ -59,7 +59,6 @@ export const AddressManagerScreen = ({ navigation }: any) => {
     if (!label.trim() || !addressText.trim()) return;
 
     if (editingAddressId) {
-      // UPDATE operation
       setAddresses((prev) =>
         prev.map((a) =>
           a.id === editingAddressId
@@ -69,7 +68,6 @@ export const AddressManagerScreen = ({ navigation }: any) => {
       );
       setToastMessage('Address updated successfully!');
     } else {
-      // CREATE operation
       const newAddress: Address = {
         id: `addr_${Date.now()}`,
         label: label.trim(),
@@ -90,7 +88,6 @@ export const AddressManagerScreen = ({ navigation }: any) => {
   };
 
   const handleSetDefault = (id: string) => {
-    // UPDATE default address
     setAddresses((prev) =>
       prev.map((a) => ({
         ...a,
@@ -101,7 +98,6 @@ export const AddressManagerScreen = ({ navigation }: any) => {
   };
 
   const handleDeleteAddress = (id: string) => {
-    // DELETE operation
     setAddresses((prev) => {
       const remaining = prev.filter((a) => a.id !== id);
       if (remaining.length > 0 && !remaining.some((a) => a.is_default)) {
