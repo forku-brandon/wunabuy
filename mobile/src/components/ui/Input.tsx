@@ -55,16 +55,21 @@ export const Input: React.FC<InputProps> = ({
           {
             backgroundColor: theme.input,
             borderColor: getBorderColor(),
+            height: rest.multiline ? undefined : 48,
+            minHeight: rest.multiline ? 48 : undefined,
+            alignItems: rest.multiline ? 'flex-start' : 'center',
+            paddingVertical: rest.multiline ? spacing.xs : 0,
           },
         ]}
       >
-        {leftIcon && <View style={styles.leftIcon}>{leftIcon}</View>}
+        {leftIcon && <View style={[styles.leftIcon, rest.multiline && { marginTop: spacing.xs }]}>{leftIcon}</View>}
 
         <RNTextInput
           style={[
             styles.input,
             {
               color: theme.text,
+              textAlignVertical: rest.multiline ? 'top' : 'center',
             },
             style,
           ]}
@@ -80,7 +85,7 @@ export const Input: React.FC<InputProps> = ({
           {...rest}
         />
 
-        {rightIcon && <View style={styles.rightIcon}>{rightIcon}</View>}
+        {rightIcon && <View style={[styles.rightIcon, rest.multiline && { marginTop: spacing.xs }]}>{rightIcon}</View>}
       </View>
 
       {error ? (

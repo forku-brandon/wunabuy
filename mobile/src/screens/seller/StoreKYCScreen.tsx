@@ -666,9 +666,11 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   descriptionContainer: {
+    width: '100%',
     marginBottom: spacing.md,
   },
   descriptionHeaderRow: {
+    width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -678,10 +680,12 @@ const styles = StyleSheet.create({
     fontSize: 10,
   },
   descriptionInputWrapper: {
+    width: '100%',
     marginBottom: 4,
   },
   flexibleDescriptionInput: {
-    minHeight: 78,
+    width: '100%',
+    minHeight: 84,
     textAlignVertical: 'top',
     fontSize: 14,
     lineHeight: 20,
