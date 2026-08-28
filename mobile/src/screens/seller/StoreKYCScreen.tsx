@@ -49,7 +49,7 @@ export const StoreKYCScreen = ({ navigation }: any) => {
   const [loading, setLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Category toggle handler for multi-select checkboxes
+  // Category toggle handler for multi-select horizontal slider
   const toggleCategory = (cat: ProductCategory) => {
     setError('');
     if (selectedCategories.includes(cat)) {
@@ -227,7 +227,7 @@ export const StoreKYCScreen = ({ navigation }: any) => {
                         Store Basic Details
                       </Text>
                       <Text variant="caption" secondary>
-                        Enter official store details and select your categories
+                        Enter official store details and select categories
                       </Text>
                     </View>
                   </View>
@@ -244,7 +244,7 @@ export const StoreKYCScreen = ({ navigation }: any) => {
                     containerStyle={styles.inputSpacing}
                   />
 
-                  {/* Flexible Multi-Line Business Description Entry */}
+                  {/* Flexible Multi-Line Business Description Textarea with Short Placeholder */}
                   <View style={styles.descriptionContainer}>
                     <View style={styles.descriptionHeaderRow}>
                       <Text variant="caption" bold color={theme.textSecondary}>
@@ -255,7 +255,7 @@ export const StoreKYCScreen = ({ navigation }: any) => {
                       </Text>
                     </View>
                     <Input
-                      placeholder="e.g. Quality electronics, original phone accessories, repair services, and laptops available in Akwa Douala."
+                      placeholder="Describe what your store sells..."
                       value={description}
                       onChangeText={(text) => {
                         setError('');
@@ -264,16 +264,13 @@ export const StoreKYCScreen = ({ navigation }: any) => {
                         }
                       }}
                       multiline
-                      numberOfLines={4}
+                      numberOfLines={3}
                       style={styles.flexibleDescriptionInput}
                       containerStyle={styles.descriptionInputWrapper}
                     />
-                    <Text variant="caption" secondary style={styles.descriptionHint}>
-                      Tell buyers about your products, quality assurance, and services.
-                    </Text>
                   </View>
 
-                  {/* Multi-Select Category Checkboxes */}
+                  {/* Horizontal Category Slider with Multi-Select Checked State */}
                   <View style={styles.categorySection}>
                     <View style={styles.categorySectionHeader}>
                       <Text variant="caption" bold color={theme.textSecondary}>
@@ -283,47 +280,48 @@ export const StoreKYCScreen = ({ navigation }: any) => {
                         {selectedCategories.length} Selected
                       </Text>
                     </View>
-                    <Text variant="caption" secondary style={styles.categoryHelperText}>
-                      Select all categories that apply to your store inventory:
-                    </Text>
 
-                    <View style={styles.categoryCheckboxGrid}>
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      contentContainerStyle={styles.categorySliderContent}
+                    >
                       {Object.values(ProductCategory).map((cat) => {
                         const isSelected = selectedCategories.includes(cat);
                         return (
                           <TouchableOpacity
                             key={cat}
-                            activeOpacity={0.75}
+                            activeOpacity={0.8}
                             onPress={() => toggleCategory(cat)}
                             style={[
-                              styles.categoryCheckboxItem,
+                              styles.categorySliderChip,
                               {
                                 backgroundColor: isSelected
-                                  ? (isDark ? 'rgba(37, 99, 235, 0.18)' : '#EFF6FF')
-                                  : (isDark ? colors.neutral[800] : '#F8FAFC'),
+                                  ? colors.role.seller
+                                  : (isDark ? colors.neutral[800] : theme.input),
                                 borderColor: isSelected ? colors.role.seller : theme.border,
                               },
                             ]}
                           >
-                            <Ionicons
-                              name={isSelected ? 'checkbox' : 'square-outline'}
-                              size={20}
-                              color={isSelected ? colors.role.seller : theme.textSecondary}
-                              style={{ marginRight: 8 }}
-                            />
+                            {isSelected && (
+                              <Ionicons
+                                name="checkmark"
+                                size={16}
+                                color={colors.neutral[0]}
+                                style={{ marginRight: 5 }}
+                              />
+                            )}
                             <Text
                               variant="bodyMedium"
                               bold={isSelected}
-                              color={isSelected ? colors.role.seller : theme.text}
-                              style={{ flex: 1 }}
-                              numberOfLines={1}
+                              color={isSelected ? colors.neutral[0] : theme.text}
                             >
                               {cat}
                             </Text>
                           </TouchableOpacity>
                         );
                       })}
-                    </View>
+                    </ScrollView>
                   </View>
                 </Card>
               )}
@@ -683,14 +681,10 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   flexibleDescriptionInput: {
-    minHeight: 85,
+    minHeight: 78,
     textAlignVertical: 'top',
     fontSize: 14,
     lineHeight: 20,
-  },
-  descriptionHint: {
-    fontSize: 10,
-    marginTop: 2,
   },
   categorySection: {
     marginTop: spacing.xs,
@@ -700,23 +694,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 2,
+    marginBottom: spacing.xs + 2,
   },
-  categoryHelperText: {
-    fontSize: 11,
-    marginBottom: spacing.sm,
+  categorySliderContent: {
+    gap: spacing.xs + 4,
+    paddingVertical: spacing.xs,
   },
-  categoryCheckboxGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.xs + 2,
-  },
-  categoryCheckboxItem: {
-    width: '48.5%',
+  categorySliderChip: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: spacing.md + 2,
     paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.sm,
     borderRadius: borderRadius.lg,
     borderWidth: 1.5,
   },
