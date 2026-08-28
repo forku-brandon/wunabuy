@@ -1,5 +1,13 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScreenContainer, Text, Input, Button, Card, Toast } from '../../components/ui';
@@ -20,7 +28,9 @@ export const StoreKYCScreen = ({ navigation }: any) => {
   // Stage 1
   const [storeName, setStoreName] = useState('');
   const [description, setDescription] = useState('');
-  const [category, setCategory] = useState<ProductCategory>(ProductCategory.ELECTRONICS);
+  const [selectedCategories, setSelectedCategories] = useState<ProductCategory[]>([
+    ProductCategory.ELECTRONICS,
+  ]);
 
   // Stage 2
   const [addressText, setAddressText] = useState('');
@@ -38,6 +48,20 @@ export const StoreKYCScreen = ({ navigation }: any) => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Category toggle handler for multi-select checkboxes
+  const toggleCategory = (cat: ProductCategory) => {
+    setError('');
+    if (selectedCategories.includes(cat)) {
+      if (selectedCategories.length === 1) {
+        setError('Please keep at least one category selected.');
+        return;
+      }
+      setSelectedCategories(selectedCategories.filter((c) => c !== cat));
+    } else {
+      setSelectedCategories([...selectedCategories, cat]);
+    }
+  };
 
   // Progress percentage calculation
   const getProgressPercentage = () => {
@@ -62,6 +86,14 @@ export const StoreKYCScreen = ({ navigation }: any) => {
     if (currentStage === 1) {
       if (!storeName.trim() || storeName.trim().length < 3) {
         setError('Please enter a valid store name (at least 3 characters).');
+        return;
+      }
+      if (!description.trim() || description.trim().length < 10) {
+        setError('Please provide a short business description (at least 10 characters).');
+        return;
+      }
+      if (selectedCategories.length === 0) {
+        setError('Please select at least one primary store category.');
         return;
       }
       setCurrentStage(2);
@@ -104,398 +136,452 @@ export const StoreKYCScreen = ({ navigation }: any) => {
 
   return (
     <ScreenContainer scrollable={false} padded={false}>
-      {/* Top Header Bar */}
-      <View style={[styles.headerBar, { paddingTop: Math.max(insets.top + spacing.xs, spacing.md) }]}>
-        <TouchableOpacity
-          activeOpacity={0.8}
-          onPress={() => navigation.goBack()}
-          style={[styles.backBtn, { backgroundColor: theme.card }]}
-        >
-          <Ionicons name="arrow-back" size={20} color={theme.text} />
-        </TouchableOpacity>
-        <View style={styles.headerTextCol}>
-          <Text variant="h1" bold style={styles.headerTitle}>
-            Store KYC Verification
-          </Text>
-          <Text variant="caption" secondary>
-            {currentStage === 5 ? 'Application Submitted' : `Stage ${currentStage} of 4`}
-          </Text>
+      <KeyboardAvoidingView
+        style={styles.flexWrapper}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        {/* Top Header Bar */}
+        <View style={[styles.headerBar, { paddingTop: Math.max(insets.top + spacing.xs, spacing.md) }]}>
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => navigation.goBack()}
+            style={[styles.backBtn, { backgroundColor: theme.card }]}
+          >
+            <Ionicons name="arrow-back" size={20} color={theme.text} />
+          </TouchableOpacity>
+          <View style={styles.headerTextCol}>
+            <Text variant="h1" bold style={styles.headerTitle}>
+              Store KYC Verification
+            </Text>
+            <Text variant="caption" secondary>
+              {currentStage === 5 ? 'Application Submitted' : `Stage ${currentStage} of 4`}
+            </Text>
+          </View>
         </View>
-      </View>
 
-      {/* Main Body Split: Top 80% Form Section + Bottom 20% Action Button Section */}
-      <View style={styles.bodySplitContainer}>
-        {/* Top 80% Form Section */}
-        <View style={styles.formSection80}>
-          {/* Animated Top Progress Bar & Step Indicators */}
-          {currentStage < 5 && (
-            <View style={styles.progressContainer}>
-              <View style={[styles.progressBarTrack, { backgroundColor: theme.border }]}>
-                <View
-                  style={[
-                    styles.progressBarFill,
-                    { width: getProgressPercentage() as any, backgroundColor: colors.role.seller },
-                  ]}
-                />
-              </View>
-
-              <View style={styles.stepLabelsRow}>
-                <Text
-                  variant="caption"
-                  bold={currentStage === 1}
-                  color={currentStage >= 1 ? colors.role.seller : theme.textSecondary}
-                >
-                  1. Basic
-                </Text>
-                <Text
-                  variant="caption"
-                  bold={currentStage === 2}
-                  color={currentStage >= 2 ? colors.role.seller : theme.textSecondary}
-                >
-                  2. Address
-                </Text>
-                <Text
-                  variant="caption"
-                  bold={currentStage === 3}
-                  color={currentStage >= 3 ? colors.role.seller : theme.textSecondary}
-                >
-                  3. Identity
-                </Text>
-                <Text
-                  variant="caption"
-                  bold={currentStage === 4}
-                  color={currentStage >= 4 ? colors.role.seller : theme.textSecondary}
-                >
-                  4. Storefront
-                </Text>
-              </View>
-            </View>
-          )}
-
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-            {/* STAGE 1: Store Basic Details */}
-            {currentStage === 1 && (
-              <Card style={styles.stageCard}>
-                <View style={styles.stageCardHeader}>
-                  <View style={[styles.stageBadgeCircle, { backgroundColor: colors.role.seller }]}>
-                    <Text variant="bodyLarge" bold color={colors.neutral[0]}>
-                      1
-                    </Text>
-                  </View>
-                  <View>
-                    <Text variant="h2" bold>
-                      Store Basic Details
-                    </Text>
-                    <Text variant="caption" secondary>
-                      Enter your official store name, description and category
-                    </Text>
-                  </View>
+        {/* Main Body Split: Top 80% Form Section + Bottom 20% Action Button Section */}
+        <View style={styles.bodySplitContainer}>
+          {/* Top 80% Form Section */}
+          <View style={styles.formSection80}>
+            {/* Animated Top Progress Bar & Step Indicators */}
+            {currentStage < 5 && (
+              <View style={styles.progressContainer}>
+                <View style={[styles.progressBarTrack, { backgroundColor: theme.border }]}>
+                  <View
+                    style={[
+                      styles.progressBarFill,
+                      { width: getProgressPercentage() as any, backgroundColor: colors.role.seller },
+                    ]}
+                  />
                 </View>
 
-                <Input
-                  label="Store / Business Name *"
-                  placeholder="e.g. Douala Tech Hub"
-                  value={storeName}
-                  onChangeText={(text) => {
-                    setError('');
-                    setStoreName(text);
-                  }}
-                  autoFocus
-                  containerStyle={styles.inputSpacingLarge}
-                />
-
-                <Input
-                  label="Short Business Description *"
-                  placeholder="e.g. Quality electronics, original phone accessories, repair services, and laptops available in Akwa Douala."
-                  value={description}
-                  onChangeText={setDescription}
-                  multiline
-                  numberOfLines={5}
-                  style={styles.tallDescriptionInput}
-                  containerStyle={styles.inputSpacingLarge}
-                />
-
-                <Text variant="caption" bold color={theme.textSecondary} style={styles.label}>
-                  Primary Store Category *
-                </Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryScroll}>
-                  {Object.values(ProductCategory).map((cat) => {
-                    const isSelected = category === cat;
-                    return (
-                      <TouchableOpacity
-                        key={cat}
-                        onPress={() => setCategory(cat)}
-                        style={[
-                          styles.categoryChip,
-                          {
-                            backgroundColor: isSelected ? colors.role.seller : theme.input,
-                            borderColor: isSelected ? colors.role.seller : theme.border,
-                          },
-                        ]}
-                      >
-                        <Text variant="bodyMedium" bold={isSelected} color={isSelected ? colors.neutral[0] : theme.text}>
-                          {cat}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </ScrollView>
-              </Card>
-            )}
-
-            {/* STAGE 2: Physical Location & Address */}
-            {currentStage === 2 && (
-              <Card style={styles.stageCard}>
-                <View style={styles.stageCardHeader}>
-                  <View style={[styles.stageBadgeCircle, { backgroundColor: colors.role.seller }]}>
-                    <Text variant="bodyLarge" bold color={colors.neutral[0]}>
-                      2
-                    </Text>
-                  </View>
-                  <View>
-                    <Text variant="h2" bold>
-                      Location &amp; Address
-                    </Text>
-                    <Text variant="caption" secondary>
-                      Provide your store street address in Cameroon
-                    </Text>
-                  </View>
-                </View>
-
-                <Input
-                  label="Physical Street Address *"
-                  placeholder="e.g. Rue Joss, Akwa, Bonanjo"
-                  value={addressText}
-                  onChangeText={(text) => {
-                    setError('');
-                    setAddressText(text);
-                  }}
-                  autoFocus
-                  containerStyle={styles.inputSpacingLarge}
-                />
-
-                <Input
-                  label="City *"
-                  placeholder="Douala / Yaoundé"
-                  value={city}
-                  onChangeText={setCity}
-                  containerStyle={styles.inputSpacingLarge}
-                />
-
-                <View style={[styles.gpsCardNotice, { backgroundColor: isDark ? colors.neutral[800] : colors.primary[50] }]}>
-                  <Ionicons name="location" size={24} color={colors.primary[500]} style={{ marginRight: spacing.md }} />
-                  <View style={{ flex: 1 }}>
-                    <Text variant="bodyLarge" bold color={colors.primary[600]}>
-                      GPS Location Auto-Pin Active
-                    </Text>
-                    <Text variant="caption" secondary style={{ marginTop: 2 }}>
-                      Lat: 4.0510564, Lng: 9.7678687 (Akwa Merchant Hub)
-                    </Text>
-                  </View>
-                </View>
-              </Card>
-            )}
-
-            {/* STAGE 3: Legal & Identity Verification */}
-            {currentStage === 3 && (
-              <Card style={styles.stageCard}>
-                <View style={styles.stageCardHeader}>
-                  <View style={[styles.stageBadgeCircle, { backgroundColor: colors.role.seller }]}>
-                    <Text variant="bodyLarge" bold color={colors.neutral[0]}>
-                      3
-                    </Text>
-                  </View>
-                  <View>
-                    <Text variant="h2" bold>
-                      Government ID Verification
-                    </Text>
-                    <Text variant="caption" secondary>
-                      Upload clear photos of your National ID Card
-                    </Text>
-                  </View>
-                </View>
-
-                <Input
-                  label="National ID / CNI Number *"
-                  placeholder="e.g. 1092849201"
-                  value={cniNumber}
-                  onChangeText={(text) => {
-                    setError('');
-                    setCniNumber(text);
-                  }}
-                  autoFocus
-                  containerStyle={styles.inputSpacingLarge}
-                />
-
-                <Text variant="caption" bold color={theme.textSecondary} style={styles.label}>
-                  National ID Card (Front Photo) *
-                </Text>
-                <ImagePickerGrid
-                  images={idFront}
-                  maxImages={1}
-                  onAddImage={(uri) => {
-                    setError('');
-                    setIdFront([uri]);
-                  }}
-                  onRemoveImage={() => setIdFront([])}
-                />
-
-                <Text variant="caption" bold color={theme.textSecondary} style={styles.label}>
-                  National ID Card (Back Photo) *
-                </Text>
-                <ImagePickerGrid
-                  images={idBack}
-                  maxImages={1}
-                  onAddImage={(uri) => {
-                    setError('');
-                    setIdBack([uri]);
-                  }}
-                  onRemoveImage={() => setIdBack([])}
-                />
-              </Card>
-            )}
-
-            {/* STAGE 4: Storefront & Ownership Proof */}
-            {currentStage === 4 && (
-              <Card style={styles.stageCard}>
-                <View style={styles.stageCardHeader}>
-                  <View style={[styles.stageBadgeCircle, { backgroundColor: colors.role.seller }]}>
-                    <Text variant="bodyLarge" bold color={colors.neutral[0]}>
-                      4
-                    </Text>
-                  </View>
-                  <View>
-                    <Text variant="h2" bold>
-                      Storefront Verification
-                    </Text>
-                    <Text variant="caption" secondary>
-                      Upload your physical storefront photo
-                    </Text>
-                  </View>
-                </View>
-
-                <Text variant="caption" bold color={theme.textSecondary} style={styles.label}>
-                  Physical Storefront / Workshop Photo *
-                </Text>
-                <ImagePickerGrid
-                  images={storefrontPhoto}
-                  maxImages={1}
-                  onAddImage={(uri) => {
-                    setError('');
-                    setStorefrontPhoto([uri]);
-                  }}
-                  onRemoveImage={() => setStorefrontPhoto([])}
-                />
-
-                <Text variant="caption" bold color={theme.textSecondary} style={styles.label}>
-                  Business Registration or Affidavit (Optional)
-                </Text>
-                <ImagePickerGrid
-                  images={businessRegDoc}
-                  maxImages={1}
-                  onAddImage={(uri) => setBusinessRegDoc([uri])}
-                  onRemoveImage={() => setBusinessRegDoc([])}
-                />
-              </Card>
-            )}
-
-            {/* STAGE 5: Completion Celebration & Verification Notice */}
-            {currentStage === 5 && (
-              <View style={styles.celebrationContainer}>
-                {/* Thank You Celebration Card */}
-                <View style={[styles.thankYouCard, { backgroundColor: isDark ? '#1E293B' : colors.role.seller }]}>
-                  <View style={styles.celebrationLogoCircle}>
-                    <Image source={WUNABUY_LOGO} style={styles.celebrationLogo} resizeMode="contain" />
-                  </View>
-
-                  <Text variant="h1" bold color={colors.neutral[0]} align="center" style={styles.thankYouTitle}>
-                    Thank You for Becoming Part of Wunabuy Family! 🎉
+                <View style={styles.stepLabelsRow}>
+                  <Text
+                    variant="caption"
+                    bold={currentStage === 1}
+                    color={currentStage >= 1 ? colors.role.seller : theme.textSecondary}
+                  >
+                    1. Basic
                   </Text>
-
-                  <Text variant="bodyMedium" color="rgba(255,255,255,0.9)" align="center" style={styles.thankYouSub}>
-                    Your store registration documents have been successfully received and submitted to our verification team.
+                  <Text
+                    variant="caption"
+                    bold={currentStage === 2}
+                    color={currentStage >= 2 ? colors.role.seller : theme.textSecondary}
+                  >
+                    2. Address
+                  </Text>
+                  <Text
+                    variant="caption"
+                    bold={currentStage === 3}
+                    color={currentStage >= 3 ? colors.role.seller : theme.textSecondary}
+                  >
+                    3. Identity
+                  </Text>
+                  <Text
+                    variant="caption"
+                    bold={currentStage === 4}
+                    color={currentStage >= 4 ? colors.role.seller : theme.textSecondary}
+                  >
+                    4. Storefront
                   </Text>
                 </View>
+              </View>
+            )}
 
-                {/* Status Notice Card */}
-                <Card style={styles.statusNoticeCard}>
-                  <View style={styles.statusNoticeHeader}>
-                    <View style={styles.timeIconCircle}>
-                      <Ionicons name="time" size={24} color={colors.accent[500]} />
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={styles.scrollContent}
+            >
+              {/* STAGE 1: Store Basic Details */}
+              {currentStage === 1 && (
+                <Card style={styles.stageCard}>
+                  <View style={styles.stageCardHeader}>
+                    <View style={[styles.stageBadgeCircle, { backgroundColor: colors.role.seller }]}>
+                      <Text variant="bodyLarge" bold color={colors.neutral[0]}>
+                        1
+                      </Text>
                     </View>
                     <View style={{ flex: 1 }}>
-                      <Text variant="bodyLarge" bold color={colors.neutral[900]}>
-                        KYC Verification Under Review
+                      <Text variant="h2" bold>
+                        Store Basic Details
+                      </Text>
+                      <Text variant="caption" secondary>
+                        Enter official store details and select your categories
+                      </Text>
+                    </View>
+                  </View>
+
+                  <Input
+                    label="Store / Business Name *"
+                    placeholder="e.g. Douala Tech Hub"
+                    value={storeName}
+                    onChangeText={(text) => {
+                      setError('');
+                      setStoreName(text);
+                    }}
+                    autoFocus
+                    containerStyle={styles.inputSpacing}
+                  />
+
+                  {/* Flexible Multi-Line Business Description Entry */}
+                  <View style={styles.descriptionContainer}>
+                    <View style={styles.descriptionHeaderRow}>
+                      <Text variant="caption" bold color={theme.textSecondary}>
+                        Short Business Description *
+                      </Text>
+                      <Text variant="caption" secondary style={styles.charCountText}>
+                        {description.length}/300
+                      </Text>
+                    </View>
+                    <Input
+                      placeholder="e.g. Quality electronics, original phone accessories, repair services, and laptops available in Akwa Douala."
+                      value={description}
+                      onChangeText={(text) => {
+                        setError('');
+                        if (text.length <= 300) {
+                          setDescription(text);
+                        }
+                      }}
+                      multiline
+                      numberOfLines={4}
+                      style={styles.flexibleDescriptionInput}
+                      containerStyle={styles.descriptionInputWrapper}
+                    />
+                    <Text variant="caption" secondary style={styles.descriptionHint}>
+                      Tell buyers about your products, quality assurance, and services.
+                    </Text>
+                  </View>
+
+                  {/* Multi-Select Category Checkboxes */}
+                  <View style={styles.categorySection}>
+                    <View style={styles.categorySectionHeader}>
+                      <Text variant="caption" bold color={theme.textSecondary}>
+                        Primary Store Categories *
+                      </Text>
+                      <Text variant="caption" color={colors.role.seller} bold>
+                        {selectedCategories.length} Selected
+                      </Text>
+                    </View>
+                    <Text variant="caption" secondary style={styles.categoryHelperText}>
+                      Select all categories that apply to your store inventory:
+                    </Text>
+
+                    <View style={styles.categoryCheckboxGrid}>
+                      {Object.values(ProductCategory).map((cat) => {
+                        const isSelected = selectedCategories.includes(cat);
+                        return (
+                          <TouchableOpacity
+                            key={cat}
+                            activeOpacity={0.75}
+                            onPress={() => toggleCategory(cat)}
+                            style={[
+                              styles.categoryCheckboxItem,
+                              {
+                                backgroundColor: isSelected
+                                  ? (isDark ? 'rgba(37, 99, 235, 0.18)' : '#EFF6FF')
+                                  : (isDark ? colors.neutral[800] : '#F8FAFC'),
+                                borderColor: isSelected ? colors.role.seller : theme.border,
+                              },
+                            ]}
+                          >
+                            <Ionicons
+                              name={isSelected ? 'checkbox' : 'square-outline'}
+                              size={20}
+                              color={isSelected ? colors.role.seller : theme.textSecondary}
+                              style={{ marginRight: 8 }}
+                            />
+                            <Text
+                              variant="bodyMedium"
+                              bold={isSelected}
+                              color={isSelected ? colors.role.seller : theme.text}
+                              style={{ flex: 1 }}
+                              numberOfLines={1}
+                            >
+                              {cat}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  </View>
+                </Card>
+              )}
+
+              {/* STAGE 2: Physical Location & Address */}
+              {currentStage === 2 && (
+                <Card style={styles.stageCard}>
+                  <View style={styles.stageCardHeader}>
+                    <View style={[styles.stageBadgeCircle, { backgroundColor: colors.role.seller }]}>
+                      <Text variant="bodyLarge" bold color={colors.neutral[0]}>
+                        2
+                      </Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text variant="h2" bold>
+                        Location &amp; Address
+                      </Text>
+                      <Text variant="caption" secondary>
+                        Provide your store street address in Cameroon
+                      </Text>
+                    </View>
+                  </View>
+
+                  <Input
+                    label="Physical Street Address *"
+                    placeholder="e.g. Rue Joss, Akwa, Bonanjo"
+                    value={addressText}
+                    onChangeText={(text) => {
+                      setError('');
+                      setAddressText(text);
+                    }}
+                    autoFocus
+                    containerStyle={styles.inputSpacingLarge}
+                  />
+
+                  <Input
+                    label="City *"
+                    placeholder="Douala / Yaoundé"
+                    value={city}
+                    onChangeText={setCity}
+                    containerStyle={styles.inputSpacingLarge}
+                  />
+
+                  <View style={[styles.gpsCardNotice, { backgroundColor: isDark ? colors.neutral[800] : colors.primary[50] }]}>
+                    <Ionicons name="location" size={24} color={colors.primary[500]} style={{ marginRight: spacing.md }} />
+                    <View style={{ flex: 1 }}>
+                      <Text variant="bodyLarge" bold color={colors.primary[600]}>
+                        GPS Location Auto-Pin Active
                       </Text>
                       <Text variant="caption" secondary style={{ marginTop: 2 }}>
-                        Our compliance team will verify your documents within 24 hours. You will receive an instant notification &amp; SMS once approved.
+                        Lat: 4.0510564, Lng: 9.7678687 (Akwa Merchant Hub)
                       </Text>
                     </View>
                   </View>
                 </Card>
-              </View>
-            )}
-
-            {/* High-End Error Callout Alert Banner */}
-            {error ? (
-              <View style={styles.errorCalloutCard}>
-                <Ionicons name="alert-circle-sharp" size={22} color={colors.semantic.error[500]} style={{ marginRight: 8 }} />
-                <View style={{ flex: 1 }}>
-                  <Text variant="bodyMedium" bold color={colors.semantic.error[700]}>
-                    Validation Notice
-                  </Text>
-                  <Text variant="caption" color={colors.semantic.error[700]} style={{ marginTop: 1 }}>
-                    {error}
-                  </Text>
-                </View>
-              </View>
-            ) : null}
-          </ScrollView>
-        </View>
-
-        {/* Bottom 20% Action Button Section */}
-        <View style={[styles.actionSection20, { paddingBottom: Math.max(insets.bottom + spacing.xs, spacing.md) }]}>
-          {currentStage < 5 ? (
-            <View style={styles.actionRow}>
-              {currentStage > 1 && (
-                <TouchableOpacity
-                  activeOpacity={0.82}
-                  onPress={handlePrevStage}
-                  style={[styles.advancedBackBtn, { borderColor: theme.border }]}
-                >
-                  <Ionicons name="arrow-back-outline" size={18} color={theme.text} style={{ marginRight: 4 }} />
-                  <Text variant="bodyLarge" bold color={theme.text}>
-                    Back
-                  </Text>
-                </TouchableOpacity>
               )}
 
-              <TouchableOpacity
-                activeOpacity={0.85}
-                onPress={handleNextStage}
-                style={[
-                  styles.advancedContinueBtn,
-                  currentStage === 1 && { flex: 1 },
-                ]}
-              >
-                <Text variant="bodyLarge" bold color={colors.neutral[0]} style={{ marginRight: 6 }}>
-                  {currentStage === 4 ? 'Submit Documents' : 'Continue to Next Stage'}
-                </Text>
-                <View style={styles.continueArrowCircle}>
-                  <Ionicons name="arrow-forward-outline" size={18} color={colors.role.seller} />
+              {/* STAGE 3: Legal & Identity Verification */}
+              {currentStage === 3 && (
+                <Card style={styles.stageCard}>
+                  <View style={styles.stageCardHeader}>
+                    <View style={[styles.stageBadgeCircle, { backgroundColor: colors.role.seller }]}>
+                      <Text variant="bodyLarge" bold color={colors.neutral[0]}>
+                        3
+                      </Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text variant="h2" bold>
+                        Government ID Verification
+                      </Text>
+                      <Text variant="caption" secondary>
+                        Upload clear photos of your National ID Card
+                      </Text>
+                    </View>
+                  </View>
+
+                  <Input
+                    label="National ID / CNI Number *"
+                    placeholder="e.g. 1092849201"
+                    value={cniNumber}
+                    onChangeText={(text) => {
+                      setError('');
+                      setCniNumber(text);
+                    }}
+                    autoFocus
+                    containerStyle={styles.inputSpacingLarge}
+                  />
+
+                  <Text variant="caption" bold color={theme.textSecondary} style={styles.label}>
+                    National ID Card (Front Photo) *
+                  </Text>
+                  <ImagePickerGrid
+                    images={idFront}
+                    maxImages={1}
+                    onAddImage={(uri) => {
+                      setError('');
+                      setIdFront([uri]);
+                    }}
+                    onRemoveImage={() => setIdFront([])}
+                  />
+
+                  <Text variant="caption" bold color={theme.textSecondary} style={styles.label}>
+                    National ID Card (Back Photo) *
+                  </Text>
+                  <ImagePickerGrid
+                    images={idBack}
+                    maxImages={1}
+                    onAddImage={(uri) => {
+                      setError('');
+                      setIdBack([uri]);
+                    }}
+                    onRemoveImage={() => setIdBack([])}
+                  />
+                </Card>
+              )}
+
+              {/* STAGE 4: Storefront & Ownership Proof */}
+              {currentStage === 4 && (
+                <Card style={styles.stageCard}>
+                  <View style={styles.stageCardHeader}>
+                    <View style={[styles.stageBadgeCircle, { backgroundColor: colors.role.seller }]}>
+                      <Text variant="bodyLarge" bold color={colors.neutral[0]}>
+                        4
+                      </Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text variant="h2" bold>
+                        Storefront Verification
+                      </Text>
+                      <Text variant="caption" secondary>
+                        Upload your physical storefront photo
+                      </Text>
+                    </View>
+                  </View>
+
+                  <Text variant="caption" bold color={theme.textSecondary} style={styles.label}>
+                    Physical Storefront / Workshop Photo *
+                  </Text>
+                  <ImagePickerGrid
+                    images={storefrontPhoto}
+                    maxImages={1}
+                    onAddImage={(uri) => {
+                      setError('');
+                      setStorefrontPhoto([uri]);
+                    }}
+                    onRemoveImage={() => setStorefrontPhoto([])}
+                  />
+
+                  <Text variant="caption" bold color={theme.textSecondary} style={styles.label}>
+                    Business Registration or Affidavit (Optional)
+                  </Text>
+                  <ImagePickerGrid
+                    images={businessRegDoc}
+                    maxImages={1}
+                    onAddImage={(uri) => setBusinessRegDoc([uri])}
+                    onRemoveImage={() => setBusinessRegDoc([])}
+                  />
+                </Card>
+              )}
+
+              {/* STAGE 5: Completion Celebration & Verification Notice */}
+              {currentStage === 5 && (
+                <View style={styles.celebrationContainer}>
+                  {/* Thank You Celebration Card */}
+                  <View style={[styles.thankYouCard, { backgroundColor: isDark ? '#1E293B' : colors.role.seller }]}>
+                    <View style={styles.celebrationLogoCircle}>
+                      <Image source={WUNABUY_LOGO} style={styles.celebrationLogo} resizeMode="contain" />
+                    </View>
+
+                    <Text variant="h1" bold color={colors.neutral[0]} align="center" style={styles.thankYouTitle}>
+                      Thank You for Becoming Part of Wunabuy Family! 🎉
+                    </Text>
+
+                    <Text variant="bodyMedium" color="rgba(255,255,255,0.9)" align="center" style={styles.thankYouSub}>
+                      Your store registration documents have been successfully received and submitted to our verification team.
+                    </Text>
+                  </View>
+
+                  {/* Status Notice Card */}
+                  <Card style={styles.statusNoticeCard}>
+                    <View style={styles.statusNoticeHeader}>
+                      <View style={styles.timeIconCircle}>
+                        <Ionicons name="time" size={24} color={colors.accent[500]} />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text variant="bodyLarge" bold color={colors.neutral[900]}>
+                          KYC Verification Under Review
+                        </Text>
+                        <Text variant="caption" secondary style={{ marginTop: 2 }}>
+                          Our compliance team will verify your documents within 24 hours. You will receive an instant notification &amp; SMS once approved.
+                        </Text>
+                      </View>
+                    </View>
+                  </Card>
                 </View>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <Button
-              title="Go Back to Home Page →"
-              variant="primary"
-              onPress={() => navigation.navigate('BuyerHome')}
-              style={styles.homeBtn}
-            />
-          )}
+              )}
+
+              {/* High-End Error Callout Alert Banner */}
+              {error ? (
+                <View style={styles.errorCalloutCard}>
+                  <Ionicons name="alert-circle-sharp" size={22} color={colors.semantic.error[500]} style={{ marginRight: 8 }} />
+                  <View style={{ flex: 1 }}>
+                    <Text variant="bodyMedium" bold color={colors.semantic.error[700]}>
+                      Validation Notice
+                    </Text>
+                    <Text variant="caption" color={colors.semantic.error[700]} style={{ marginTop: 1 }}>
+                      {error}
+                    </Text>
+                  </View>
+                </View>
+              ) : null}
+            </ScrollView>
+          </View>
+
+          {/* Bottom 20% Action Button Section */}
+          <View style={[styles.actionSection20, { paddingBottom: Math.max(insets.bottom + spacing.xs, spacing.md) }]}>
+            {currentStage < 5 ? (
+              <View style={styles.actionRow}>
+                {currentStage > 1 && (
+                  <TouchableOpacity
+                    activeOpacity={0.82}
+                    onPress={handlePrevStage}
+                    style={[styles.advancedBackBtn, { borderColor: theme.border }]}
+                  >
+                    <Ionicons name="arrow-back-outline" size={18} color={theme.text} style={{ marginRight: 4 }} />
+                    <Text variant="bodyLarge" bold color={theme.text}>
+                      Back
+                    </Text>
+                  </TouchableOpacity>
+                )}
+
+                <TouchableOpacity
+                  activeOpacity={0.85}
+                  onPress={handleNextStage}
+                  style={[
+                    styles.advancedContinueBtn,
+                    currentStage === 1 && { flex: 1 },
+                  ]}
+                >
+                  <Text variant="bodyLarge" bold color={colors.neutral[0]} style={{ marginRight: 6 }}>
+                    {currentStage === 4 ? 'Submit Documents' : 'Continue to Next Stage'}
+                  </Text>
+                  <View style={styles.continueArrowCircle}>
+                    <Ionicons name="arrow-forward-outline" size={18} color={colors.role.seller} />
+                  </View>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <Button
+                title="Go Back to Home Page →"
+                variant="primary"
+                onPress={() => navigation.navigate('BuyerHome')}
+                style={styles.homeBtn}
+              />
+            )}
+          </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
 
       {toastMessage && <Toast message={toastMessage} type="success" />}
     </ScreenContainer>
@@ -503,6 +589,9 @@ export const StoreKYCScreen = ({ navigation }: any) => {
 };
 
 const styles = StyleSheet.create({
+  flexWrapper: {
+    flex: 1,
+  },
   headerBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -555,46 +644,85 @@ const styles = StyleSheet.create({
   },
   stageCard: {
     borderRadius: borderRadius.xl,
-    padding: spacing.xl,
+    padding: spacing.lg,
     marginBottom: spacing.md,
-    minHeight: 380,
-    justifyContent: 'space-between',
   },
   stageCardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
     gap: spacing.md,
   },
   stageBadgeCircle: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
     ...shadows.sm,
   },
+  inputSpacing: {
+    marginBottom: spacing.sm,
+  },
   inputSpacingLarge: {
     marginBottom: spacing.lg,
   },
-  tallDescriptionInput: {
-    minHeight: 110,
+  descriptionContainer: {
+    marginBottom: spacing.md,
+  },
+  descriptionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.xs,
+  },
+  charCountText: {
+    fontSize: 10,
+  },
+  descriptionInputWrapper: {
+    marginBottom: 4,
+  },
+  flexibleDescriptionInput: {
+    minHeight: 85,
     textAlignVertical: 'top',
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  descriptionHint: {
+    fontSize: 10,
+    marginTop: 2,
+  },
+  categorySection: {
+    marginTop: spacing.xs,
+    marginBottom: spacing.xs,
+  },
+  categorySectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 2,
+  },
+  categoryHelperText: {
+    fontSize: 11,
+    marginBottom: spacing.sm,
+  },
+  categoryCheckboxGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs + 2,
+  },
+  categoryCheckboxItem: {
+    width: '48.5%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1.5,
   },
   label: {
     marginBottom: spacing.xs + 2,
     marginTop: spacing.xs,
-  },
-  categoryScroll: {
-    gap: spacing.xs + 2,
-    paddingVertical: spacing.xs,
-    marginBottom: spacing.sm,
-  },
-  categoryChip: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.lg,
-    borderWidth: 1,
   },
   gpsCardNotice: {
     flexDirection: 'row',
