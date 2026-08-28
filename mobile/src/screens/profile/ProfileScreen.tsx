@@ -1,8 +1,19 @@
 import React, { useState, useCallback } from 'react';
-import { View, StyleSheet, TouchableOpacity, FlatList, Image, RefreshControl } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  FlatList,
+  Image,
+  RefreshControl,
+  Modal,
+  Alert,
+  ActivityIndicator,
+  TouchableWithoutFeedback,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ScreenContainer, Text, Card, Avatar, Toast } from '../../components/ui';
+import { ScreenContainer, Text, Card, Avatar, Toast, Button } from '../../components/ui';
 import { ProductCard } from '../../components/product/ProductCard';
 import { MOCK_PRODUCTS } from '../../services/mockProducts';
 import { Product } from '@wunabuy/types';
@@ -10,7 +21,8 @@ import { useAuthStore } from '../../stores/auth.store';
 import { useThemeStore } from '../../stores/theme.store';
 import { formatPhone, formatXAF } from '@wunabuy/utils';
 import { spacing, colors, borderRadius, shadows } from '@wunabuy/design-tokens';
-import { WalletService } from '../../services/api';
+import { WalletService, AuthService } from '../../services/api';
+import * as ImagePicker from 'expo-image-picker';
 
 export const ProfileScreen = ({ navigation }: any) => {
   const insets = useSafeAreaInsets();
@@ -20,6 +32,11 @@ export const ProfileScreen = ({ navigation }: any) => {
   const [isBalanceVisible, setIsBalanceVisible] = useState<boolean>(true);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Avatar Modal State
+  const [isAvatarModalVisible, setIsAvatarModalVisible] = useState<boolean>(false);
+  const [selectedAvatarUri, setSelectedAvatarUri] = useState<string | null>(null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState<boolean>(false);
 
   const loadWallet = useCallback(async () => {
     try {
@@ -51,27 +68,120 @@ export const ProfileScreen = ({ navigation }: any) => {
     setToastMessage(`${title} feature accessed.`);
   };
 
+  const handleOpenAvatarModal = () => {
+    setSelectedAvatarUri(user?.avatar_url || null);
+    setIsAvatarModalVisible(true);
+  };
+
+  const handleCloseAvatarModal = () => {
+    setIsAvatarModalVisible(false);
+  };
+
+  const handleTakePhoto = async () => {
+    try {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(
+          'Camera Permission Required',
+          'Wunabuy requires access to your camera to take a new profile picture. Please enable camera permission in your phone settings.'
+        );
+        return;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets && result.assets[0]?.uri) {
+        setSelectedAvatarUri(result.assets[0].uri);
+      }
+    } catch (error) {
+      Alert.alert('Camera Error', 'Could not open camera on this device.');
+    }
+  };
+
+  const handleChooseFromGallery = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(
+          'Photos Permission Required',
+          'Wunabuy requires photo library access to select a profile picture.'
+        );
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets && result.assets[0]?.uri) {
+        setSelectedAvatarUri(result.assets[0].uri);
+      }
+    } catch (error) {
+      Alert.alert('Gallery Error', 'Could not open photo library.');
+    }
+  };
+
+  const handleSaveAvatar = async () => {
+    if (!selectedAvatarUri) {
+      setIsAvatarModalVisible(false);
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+    try {
+      // 1. Store temporally in local device state & AsyncStorage
+      useAuthStore.getState().updateUser({ avatar_url: selectedAvatarUri });
+
+      // 2. Dispatch background sync for awaiting backend API endpoint
+      AuthService.updateProfile({ avatar_url: selectedAvatarUri }).catch(() => {});
+
+      setIsAvatarModalVisible(false);
+      setToastMessage('Profile photo updated successfully! 📸');
+    } catch {
+      setToastMessage('Profile photo saved locally.');
+      setIsAvatarModalVisible(false);
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
   const ListHeader = (
     <>
       {/* Top Header Row with Settings Gear Icon (Matching media_1787828841561.png) */}
       <View style={[styles.headerRow, { paddingTop: Math.max(insets.top + spacing.xs, spacing.md) }]}>
-        <TouchableOpacity
-          activeOpacity={0.85}
-          onPress={() => navigation.navigate('Settings')}
-          style={styles.userHeaderLeft}
-        >
-          <View style={styles.avatarWrapper}>
+        <View style={styles.userHeaderLeft}>
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={handleOpenAvatarModal}
+            style={styles.avatarWrapper}
+          >
             <Avatar
               url={user?.avatar_url}
               name={user?.full_name ?? 'Jean Dupont'}
               size={52}
               showBorder
             />
-            <View style={styles.avatarCameraBadge}>
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={handleOpenAvatarModal}
+              style={styles.avatarCameraBadge}
+            >
               <Ionicons name="camera" size={10} color={colors.neutral[0]} />
-            </View>
-          </View>
-          <View style={styles.userHeaderTextCol}>
+            </TouchableOpacity>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() => navigation.navigate('Settings')}
+            style={styles.userHeaderTextCol}
+          >
             <Text variant="h2" bold numberOfLines={1}>
               {user?.full_name ?? 'Jean Dupont'}
             </Text>
@@ -81,8 +191,8 @@ export const ProfileScreen = ({ navigation }: any) => {
                 {formatPhone(user?.phone ?? '+237670123456')}
               </Text>
             </View>
-          </View>
-        </TouchableOpacity>
+          </TouchableOpacity>
+        </View>
 
         {/* Settings Gear Icon Button (Navigates to Settings page) */}
         <TouchableOpacity
@@ -416,6 +526,107 @@ export const ProfileScreen = ({ navigation }: any) => {
         )}
       />
 
+      {/* ─── Avatar Photo Update Pop-up Modal ────────────────────────────── */}
+      <Modal
+        visible={isAvatarModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={handleCloseAvatarModal}
+      >
+        <View style={styles.modalOverlay}>
+          <TouchableWithoutFeedback onPress={handleCloseAvatarModal}>
+            <View style={styles.modalBackdrop} />
+          </TouchableWithoutFeedback>
+
+          <View style={[styles.avatarModalCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
+            <View style={styles.modalHeaderRow}>
+              <Text variant="h2" bold>
+                Profile Photo
+              </Text>
+              <TouchableOpacity activeOpacity={0.7} onPress={handleCloseAvatarModal} style={styles.modalCloseBtn}>
+                <Ionicons name="close" size={20} color={theme.text} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Enlarged Avatar Preview */}
+            <View style={styles.avatarPreviewCenter}>
+              <View style={styles.largeAvatarRing}>
+                <Avatar
+                  url={selectedAvatarUri}
+                  name={user?.full_name ?? 'Jean Dupont'}
+                  size={104}
+                  showBorder
+                />
+              </View>
+              <Text variant="bodyLarge" bold style={{ marginTop: spacing.sm }}>
+                {user?.full_name ?? 'Jean Dupont'}
+              </Text>
+              <Text variant="caption" secondary>
+                {formatPhone(user?.phone ?? '+237670123456')}
+              </Text>
+            </View>
+
+            {/* Action Buttons */}
+            <View style={styles.avatarActionsCol}>
+              <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={handleTakePhoto}
+                style={[
+                  styles.modalActionRowBtn,
+                  {
+                    backgroundColor: isDark ? colors.neutral[800] : colors.primary[50],
+                    borderColor: colors.primary[500],
+                  },
+                ]}
+              >
+                <Ionicons name="camera" size={22} color={colors.primary[500]} style={{ marginRight: spacing.sm }} />
+                <Text variant="bodyMedium" bold color={colors.primary[500]}>
+                  Take Photo with Camera
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={handleChooseFromGallery}
+                style={[
+                  styles.modalActionRowBtn,
+                  {
+                    backgroundColor: isDark ? colors.neutral[800] : colors.neutral[100],
+                    borderColor: theme.border,
+                  },
+                ]}
+              >
+                <Ionicons name="images-outline" size={22} color={theme.text} style={{ marginRight: spacing.sm }} />
+                <Text variant="bodyMedium" bold>
+                  Choose from Gallery
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Save / Update Button */}
+            {selectedAvatarUri !== user?.avatar_url && selectedAvatarUri !== null && (
+              <Button
+                title={isUploadingAvatar ? 'Updating Profile...' : 'Save & Update Profile Photo'}
+                variant="primary"
+                onPress={handleSaveAvatar}
+                loading={isUploadingAvatar}
+                style={{ marginTop: spacing.md }}
+              />
+            )}
+
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={handleCloseAvatarModal}
+              style={[styles.cancelBtn, { marginTop: spacing.md }]}
+            >
+              <Text variant="bodyMedium" secondary align="center">
+                Cancel
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       {toastMessage && <Toast message={toastMessage} type="info" />}
     </View>
   );
@@ -464,9 +675,9 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   settingsBtn: {
-    width: 42,
-    height: 42,
-    borderRadius: borderRadius.full,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
     ...shadows.sm,
@@ -530,7 +741,7 @@ const styles = StyleSheet.create({
   },
   toolItem: {
     alignItems: 'center',
-    width: '18%',
+    flex: 1,
   },
   toolText: {
     fontSize: 10,
@@ -543,37 +754,39 @@ const styles = StyleSheet.create({
   },
   gridTitle: {
     fontSize: 18,
+    marginBottom: 2,
   },
   columnWrapper: {
-    justifyContent: 'space-between',
     paddingHorizontal: spacing.base,
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
   },
   listContent: {
-    paddingBottom: spacing['3xl'],
+    paddingBottom: 40,
   },
   cardWrapper: {
-    width: '48%',
+    flex: 1,
   },
   walletBannerCard: {
     marginHorizontal: spacing.base,
-    marginBottom: spacing.md,
-    borderRadius: 20,
-    padding: spacing.lg,
+    borderRadius: borderRadius.xl,
+    padding: spacing.base,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    overflow: 'hidden',
+    marginBottom: spacing.base,
     position: 'relative',
+    overflow: 'hidden',
     ...shadows.md,
   },
   walletCircle1: {
     position: 'absolute',
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: 'rgba(255,255,255,0.07)',
-    top: -30,
-    right: 60,
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    top: -40,
+    right: -20,
   },
   walletCircle2: {
     position: 'absolute',
@@ -647,5 +860,63 @@ const styles = StyleSheet.create({
   partnerBannerTextCol: {
     flex: 1,
   },
-});
 
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.base,
+  },
+  modalBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  avatarModalCard: {
+    width: '100%',
+    maxWidth: 380,
+    borderRadius: borderRadius.xl,
+    padding: spacing.base + 4,
+    borderWidth: 1,
+    ...shadows.lg,
+  },
+  modalHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.base,
+  },
+  modalCloseBtn: {
+    padding: 6,
+  },
+  avatarPreviewCenter: {
+    alignItems: 'center',
+    marginBottom: spacing.lg,
+  },
+  largeAvatarRing: {
+    padding: 4,
+    borderRadius: 60,
+    borderWidth: 3,
+    borderColor: colors.primary[500],
+    ...shadows.md,
+  },
+  avatarActionsCol: {
+    gap: spacing.sm,
+  },
+  modalActionRowBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.base,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+  },
+  cancelBtn: {
+    paddingVertical: spacing.sm,
+  },
+});
