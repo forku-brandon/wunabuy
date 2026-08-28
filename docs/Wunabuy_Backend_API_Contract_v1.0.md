@@ -907,3 +907,4 @@ CREATE TABLE wallets (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 ```
+

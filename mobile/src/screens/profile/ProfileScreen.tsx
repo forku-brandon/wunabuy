@@ -17,6 +17,7 @@ export const ProfileScreen = ({ navigation }: any) => {
   const { user } = useAuthStore();
   const { theme, isDark } = useThemeStore();
   const [walletBalance, setWalletBalance] = useState<number>(47500);
+  const [isBalanceVisible, setIsBalanceVisible] = useState<boolean>(true);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -110,9 +111,25 @@ export const ProfileScreen = ({ navigation }: any) => {
           <Text variant="caption" color="rgba(255,255,255,0.8)" style={{ marginBottom: 2 }}>
             Wunabuy Wallet
           </Text>
-          <Text variant="h2" bold color={colors.neutral[0]} style={styles.walletBalanceText}>
-            {formatXAF(walletBalance)}
-          </Text>
+          <View style={styles.walletBalanceRow}>
+            <Text variant="h2" bold color={colors.neutral[0]} style={styles.walletBalanceText}>
+              {isBalanceVisible ? formatXAF(walletBalance) : '•••••• FCFA'}
+            </Text>
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={(e) => {
+                e.stopPropagation?.();
+                setIsBalanceVisible(!isBalanceVisible);
+              }}
+              style={styles.eyeToggleBtn}
+            >
+              <Ionicons
+                name={isBalanceVisible ? 'eye-outline' : 'eye-off-outline'}
+                size={18}
+                color="rgba(255,255,255,0.9)"
+              />
+            </TouchableOpacity>
+          </View>
           <View style={styles.walletEscrowBadge}>
             <Ionicons name="shield-checkmark" size={10} color="rgba(255,255,255,0.9)" style={{ marginRight: 3 }} />
             <Text variant="caption" color="rgba(255,255,255,0.9)" style={{ fontSize: 9 }}>
@@ -217,7 +234,7 @@ export const ProfileScreen = ({ navigation }: any) => {
           {/* Refund */}
           <TouchableOpacity
             activeOpacity={0.8}
-            onPress={() => navigation.navigate('BuyerOrders', { status: 'disputed' })}
+            onPress={() => navigation.navigate('Refunds')}
             style={styles.statusItem}
           >
             <Ionicons name="cash-outline" size={26} color={theme.text} />
@@ -246,22 +263,22 @@ export const ProfileScreen = ({ navigation }: any) => {
             </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => showNotice('Followed Stores')} style={styles.toolItem}>
+          <TouchableOpacity onPress={() => navigation.navigate('FollowedStores')} style={styles.toolItem}>
             <Ionicons name="storefront-outline" size={22} color={colors.primary[500]} />
             <Text variant="caption" style={styles.toolText}>
               Followed Stores
             </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => navigation.navigate('BuyerCart')} style={styles.toolItem}>
-            <Ionicons name="star-outline" size={22} color={colors.primary[500]} />
+          <TouchableOpacity onPress={() => navigation.navigate('Favorites')} style={styles.toolItem}>
+            <Ionicons name="heart-outline" size={22} color={colors.semantic.error[500]} />
             <Text variant="caption" style={styles.toolText}>
               Favorites
             </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => showNotice('Footprints')} style={styles.toolItem}>
-            <Ionicons name="footsteps-outline" size={22} color={colors.primary[500]} />
+          <TouchableOpacity onPress={() => navigation.navigate('Footprint')} style={styles.toolItem}>
+            <Ionicons name="footsteps-outline" size={22} color={colors.accent[500]} />
             <Text variant="caption" style={styles.toolText}>
               Footprints
             </Text>
@@ -570,9 +587,17 @@ const styles = StyleSheet.create({
   walletBannerLeft: {
     flex: 1,
   },
+  walletBalanceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
   walletBalanceText: {
     fontSize: 22,
-    marginBottom: 4,
+  },
+  eyeToggleBtn: {
+    padding: 6,
+    marginLeft: 6,
   },
   walletEscrowBadge: {
     flexDirection: 'row',

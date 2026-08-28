@@ -26,6 +26,10 @@ import { AddEditProductScreen } from '../screens/seller/AddEditProductScreen';
 import { CheckoutPaymentScreen } from '../screens/buyer/CheckoutPaymentScreen';
 import { OrderSuccessScreen } from '../screens/buyer/OrderSuccessScreen';
 import { WalletScreen } from '../screens/buyer/WalletScreen';
+import { FollowedStoresScreen } from '../screens/buyer/FollowedStoresScreen';
+import { FavoritesScreen } from '../screens/buyer/FavoritesScreen';
+import { FootprintScreen } from '../screens/buyer/FootprintScreen';
+import { RefundsScreen } from '../screens/buyer/RefundsScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -92,6 +96,10 @@ export const RootNavigator = () => {
             <Stack.Screen name="CheckoutPayment" component={CheckoutPaymentScreen} />
             <Stack.Screen name="OrderSuccess" component={OrderSuccessScreen} />
             <Stack.Screen name="BuyerWallet" component={WalletScreen} />
+            <Stack.Screen name="FollowedStores" component={FollowedStoresScreen} />
+            <Stack.Screen name="Favorites" component={FavoritesScreen} />
+            <Stack.Screen name="Footprint" component={FootprintScreen} />
+            <Stack.Screen name="Refunds" component={RefundsScreen} />
           </>
         )}
       </Stack.Navigator>

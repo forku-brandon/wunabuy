@@ -49,5 +49,9 @@ export type RootStackParamList = {
   AddEditProduct: { product?: any } | undefined;
   CheckoutPayment: { subtotal: number; addressId?: string };
   OrderSuccess: { orderCode: string; totalAmount: number; provider: string; phone: string };
+  FollowedStores: undefined;
+  Favorites: undefined;
+  Footprint: undefined;
+  Refunds: undefined;
 };
 

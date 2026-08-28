@@ -19,6 +19,8 @@ import { useThemeStore } from '../../stores/theme.store';
 import { Text } from '../ui/Text';
 import { Badge } from '../ui/Badge';
 import { useCartStore } from '../../stores/cart.store';
+import { useFavoritesStore } from '../../stores/favorites.store';
+import { useFootprintStore } from '../../stores/footprint.store';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const PLACEHOLDER = require('../../../assets/placeholder_product.png');
@@ -38,13 +40,16 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 }) => {
   const { theme, isDark } = useThemeStore();
   const [imageError, setImageError] = useState(false);
-  const [isFavorite, setIsFavorite] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [showAddedNotice, setShowAddedNotice] = useState(false);
 
   const addItemToCart = useCartStore((state) => state.addItem);
+  const { isFavorite: checkFavorite, toggleFavorite: storeToggleFavorite } = useFavoritesStore();
+  const recordFootprint = useFootprintStore((state) => state.recordFootprint);
+
+  const isFavorited = checkFavorite(product.id);
 
   // Gallery image list (at least 2 images for swipe demo if product has only 1)
   const productImages =
@@ -54,8 +59,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
   const mainImage = productImages[0];
 
+  const handleCardPress = () => {
+    recordFootprint(product);
+    onPress(product);
+  };
+
   const handleOpenExpand = (e: any) => {
     e.stopPropagation?.();
+    recordFootprint(product);
     setIsExpanded(true);
   };
 
@@ -66,7 +77,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
   const toggleFavorite = (e: any) => {
     e.stopPropagation?.();
-    setIsFavorite(!isFavorite);
+    storeToggleFavorite(product);
   };
 
   const handleAddToCart = () => {
@@ -79,6 +90,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
   const handleNavigateToDetail = () => {
     setIsExpanded(false);
+    recordFootprint(product);
     onPress(product);
   };
 
@@ -88,7 +100,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     <>
       <TouchableOpacity
         activeOpacity={0.88}
-        onPress={() => onPress(product)}
+        onPress={handleCardPress}
         style={[
           styles.card,
           horizontal && styles.horizontalCard,
@@ -119,9 +131,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             ]}
           >
             <Ionicons
-              name={isFavorite ? 'heart' : 'heart-outline'}
+              name={isFavorited ? 'heart' : 'heart-outline'}
               size={15}
-              color={isFavorite ? colors.semantic.error[500] : theme.textSecondary}
+              color={isFavorited ? colors.semantic.error[500] : theme.textSecondary}
             />
           </TouchableOpacity>
         </View>
@@ -201,9 +213,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                   style={[styles.modalActionCircle, { backgroundColor: isDark ? colors.neutral[800] : colors.neutral[100] }]}
                 >
                   <Ionicons
-                    name={isFavorite ? 'heart' : 'heart-outline'}
+                    name={isFavorited ? 'heart' : 'heart-outline'}
                     size={18}
-                    color={isFavorite ? colors.semantic.error[500] : theme.text}
+                    color={isFavorited ? colors.semantic.error[500] : theme.text}
                   />
                 </TouchableOpacity>
 

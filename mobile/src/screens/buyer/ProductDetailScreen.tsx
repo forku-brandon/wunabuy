@@ -31,6 +31,8 @@ import { formatXAF, formatDistance } from '@wunabuy/utils';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
 import { Product } from '@wunabuy/types';
+import { useFavoritesStore } from '../../stores/favorites.store';
+import { useFootprintStore } from '../../stores/footprint.store';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -41,17 +43,24 @@ export const ProductDetailScreen = ({ route, navigation }: any) => {
 
   const addItemToCart = useCartStore((state) => state.addItem);
   const cartItemCount = useCartStore((state) => state.getItemCount());
+  const { isFavorite: checkFavorite, toggleFavorite: storeToggleFavorite } = useFavoritesStore();
+  const recordFootprint = useFootprintStore((state) => state.recordFootprint);
 
   // Find product or fallback to first item
   const product: Product = useMemo(() => {
     return MOCK_PRODUCTS.find((p) => p.id === productId) || MOCK_PRODUCTS[0];
   }, [productId]);
 
+  const isFavorited = checkFavorite(product.id);
+
+  React.useEffect(() => {
+    recordFootprint(product);
+  }, [product, recordFootprint]);
+
   // Gallery and Variant state
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [selectedColor, setSelectedColor] = useState(0);
   const [quantity, setQuantity] = useState(1);
-  const [isFavorite, setIsFavorite] = useState(false);
   const [isDescExpanded, setIsDescExpanded] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -139,12 +148,15 @@ export const ProductDetailScreen = ({ route, navigation }: any) => {
           <TouchableOpacity
             activeOpacity={0.8}
             style={[styles.headerIconBtn, { backgroundColor: theme.card }]}
-            onPress={() => setIsFavorite(!isFavorite)}
+            onPress={() => {
+              storeToggleFavorite(product);
+              setToastMessage(isFavorited ? 'Removed from favorites' : 'Added to favorites ❤️');
+            }}
           >
             <Ionicons
-              name={isFavorite ? 'heart' : 'heart-outline'}
+              name={isFavorited ? 'heart' : 'heart-outline'}
               size={20}
-              color={isFavorite ? colors.semantic.error[500] : theme.text}
+              color={isFavorited ? colors.semantic.error[500] : theme.text}
             />
           </TouchableOpacity>
 
