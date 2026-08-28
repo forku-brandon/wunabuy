@@ -29,6 +29,8 @@ import { ScreenContainer, Text, Input, Button, Card, Toast } from '../../compone
 import { ImagePickerGrid } from '../../components/seller/ImagePickerGrid';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
+import { useAuthStore } from '../../stores/auth.store';
+import { UserRole } from '@wunabuy/types';
 
 const WUNABUY_LOGO = require('../../../assets/icon.png');
 
@@ -51,6 +53,7 @@ const VEHICLE_OPTIONS: VehicleOption[] = [
 export const TransporterKYCScreen = ({ navigation }: any) => {
   const insets = useSafeAreaInsets();
   const { theme, isDark } = useThemeStore();
+  const { setActiveRole } = useAuthStore();
 
   const [currentStage, setCurrentStage] = useState<number>(1); // 1, 2, 3, 4, 5 (completed)
 
@@ -699,9 +702,22 @@ export const TransporterKYCScreen = ({ navigation }: any) => {
                   <Button
                     title="Go to Transporter Dashboard ➔"
                     variant="primary"
-                    onPress={() => navigation.navigate('TransporterApp')}
+                    onPress={() => setActiveRole(UserRole.TRANSPORTER)}
                     style={[styles.celebrationActionBtn, { backgroundColor: colors.role.transporter }]}
                   />
+
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    onPress={() => {
+                      setActiveRole(UserRole.BUYER);
+                      navigation.navigate('BuyerApp');
+                    }}
+                    style={styles.returnHomeBtn}
+                  >
+                    <Text variant="bodyMedium" bold color={theme.textSecondary}>
+                      Return to Buyer Home
+                    </Text>
+                  </TouchableOpacity>
                 </Card>
               )}
             </ScrollView>
@@ -981,6 +997,13 @@ const styles = StyleSheet.create({
   celebrationActionBtn: {
     width: '100%',
     height: 52,
+    marginBottom: spacing.sm,
+  },
+  returnHomeBtn: {
+    width: '100%',
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   actionButtonsContainer: {
     flex: 0.20, // Takes 20% height of the body split

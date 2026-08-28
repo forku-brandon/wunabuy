@@ -38,9 +38,14 @@ export const useAuthStore = create<AuthState>()(
 
       setActiveRole: (role) => {
         const { user } = get();
-        // Check if user has permission for this role
-        const availableRoles = user?.available_roles ?? [user?.role ?? UserRole.BUYER];
-        if (availableRoles.includes(role)) {
+        if (user) {
+          const currentRoles = user.available_roles ?? [user.role ?? UserRole.BUYER];
+          const updatedRoles = currentRoles.includes(role) ? currentRoles : [...currentRoles, role];
+          set({
+            activeRole: role,
+            user: { ...user, available_roles: updatedRoles },
+          });
+        } else {
           set({ activeRole: role });
         }
       },

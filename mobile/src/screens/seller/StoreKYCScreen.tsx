@@ -12,15 +12,17 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScreenContainer, Text, Input, Button, Card, Toast } from '../../components/ui';
 import { ImagePickerGrid } from '../../components/seller/ImagePickerGrid';
-import { ProductCategory } from '@wunabuy/types';
+import { ProductCategory, UserRole } from '@wunabuy/types';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
+import { useAuthStore } from '../../stores/auth.store';
 
 const WUNABUY_LOGO = require('../../../assets/icon.png');
 
 export const StoreKYCScreen = ({ navigation }: any) => {
   const insets = useSafeAreaInsets();
   const { theme, isDark } = useThemeStore();
+  const { setActiveRole } = useAuthStore();
 
   const [currentStage, setCurrentStage] = useState<number>(1); // 1, 2, 3, 4, 5 (completed)
 
@@ -572,10 +574,10 @@ export const StoreKYCScreen = ({ navigation }: any) => {
               </View>
             ) : (
               <Button
-                title="Go Back to Home Page →"
+                title="Go to Seller Dashboard ➔"
                 variant="primary"
-                onPress={() => navigation.navigate('BuyerHome')}
-                style={styles.homeBtn}
+                onPress={() => setActiveRole(UserRole.SELLER)}
+                style={[styles.homeBtn, { backgroundColor: colors.role.seller }]}
               />
             )}
           </View>
