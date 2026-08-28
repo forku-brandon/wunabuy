@@ -340,7 +340,7 @@ A requirement is considered **Complete and Ready for Release** when:
 1. **Code Completeness:** Source code written, peer-reviewed, and merged into `main`.
 2. **Type Safety:** Zero TypeScript build errors across all monorepo packages (`7 successful, 7 total`).
 3. **Integration Verification:** End-to-end user journeys pass successfully on physical iOS and Android devices.
-4. **Documentation:** PRD, SRS, and Backend Tech Spec documents updated to reflect exact codebase state and UI specifications.
+4. **Documentation:** PRD, SRS, Frontend Tech Spec, Backend Tech Spec, and [Backend API Contract v1.0](file:///c:/Users/HP/Desktop/wunabuy%20mobile%20project/wunabuy/docs/Wunabuy_Backend_API_Contract_v1.0.md) synchronized with exact codebase state and UI specifications.
 
 ---
 
@@ -351,4 +351,4 @@ A requirement is considered **Complete and Ready for Release** when:
 **Lead QA Engineer:** _Wunabuy Quality Assurance Team_  
 
 ---
-**[End of Product Requirements Document v1.4]**
+**[End of Product Requirements Document v1.5]**
