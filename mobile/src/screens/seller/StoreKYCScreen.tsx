@@ -574,9 +574,12 @@ export const StoreKYCScreen = ({ navigation }: any) => {
               </View>
             ) : (
               <Button
-                title="Go to Seller Dashboard ➔"
+                title="Back to Home Dashboard ➔"
                 variant="primary"
-                onPress={() => setActiveRole(UserRole.SELLER)}
+                onPress={() => {
+                  setActiveRole(UserRole.BUYER);
+                  navigation.navigate('BuyerApp');
+                }}
                 style={[styles.homeBtn, { backgroundColor: colors.role.seller }]}
               />
             )}

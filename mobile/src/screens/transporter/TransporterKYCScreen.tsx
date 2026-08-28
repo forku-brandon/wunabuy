@@ -700,24 +700,14 @@ export const TransporterKYCScreen = ({ navigation }: any) => {
                   </View>
 
                   <Button
-                    title="Go to Transporter Dashboard ➔"
+                    title="Back to Home Dashboard ➔"
                     variant="primary"
-                    onPress={() => setActiveRole(UserRole.TRANSPORTER)}
-                    style={[styles.celebrationActionBtn, { backgroundColor: colors.role.transporter }]}
-                  />
-
-                  <TouchableOpacity
-                    activeOpacity={0.8}
                     onPress={() => {
                       setActiveRole(UserRole.BUYER);
                       navigation.navigate('BuyerApp');
                     }}
-                    style={styles.returnHomeBtn}
-                  >
-                    <Text variant="bodyMedium" bold color={theme.textSecondary}>
-                      Return to Buyer Home
-                    </Text>
-                  </TouchableOpacity>
+                    style={[styles.celebrationActionBtn, { backgroundColor: colors.role.transporter }]}
+                  />
                 </Card>
               )}
             </ScrollView>
