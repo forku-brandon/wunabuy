@@ -27,26 +27,32 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
 
       setAuth: (user, accessToken, refreshToken) => {
+        // Enforce default buyer role and ensure available_roles contains only approved roles from backend
+        const approvedRoles = user.available_roles && user.available_roles.length > 0
+          ? user.available_roles
+          : [UserRole.BUYER];
+
         set({
-          user,
+          user: { ...user, available_roles: approvedRoles },
           accessToken,
           refreshToken,
-          activeRole: user.role ?? UserRole.BUYER,
+          activeRole: approvedRoles.includes(user.role ?? UserRole.BUYER)
+            ? (user.role ?? UserRole.BUYER)
+            : UserRole.BUYER,
           isAuthenticated: true,
         });
       },
 
       setActiveRole: (role) => {
         const { user } = get();
-        if (user) {
-          const currentRoles = user.available_roles ?? [user.role ?? UserRole.BUYER];
-          const updatedRoles = currentRoles.includes(role) ? currentRoles : [...currentRoles, role];
-          set({
-            activeRole: role,
-            user: { ...user, available_roles: updatedRoles },
-          });
-        } else {
+        const approvedRoles = user?.available_roles ?? [UserRole.BUYER];
+
+        // Only allow switching to a role that has been approved by backend
+        if (approvedRoles.includes(role)) {
           set({ activeRole: role });
+        } else {
+          // Default fallback to Buyer
+          set({ activeRole: UserRole.BUYER });
         }
       },
 
@@ -73,4 +79,3 @@ export const useAuthStore = create<AuthState>()(
     }
   )
 );
-
