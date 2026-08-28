@@ -2,15 +2,16 @@
  * TransporterWelcomeScreen.tsx
  *
  * Wunabuy Transporter Onboarding Welcome Screen.
- * Advanced UI / UX architecture:
+ * Advanced, ultra-flexible, responsive layout:
  * - Clean header without logo, featuring safe back navigation & live status badge
  * - 70% automated hero benefit carousel (rotating every 3.5s across 4 benefit cards)
- * - Fleet statistics banner (★ 4.9 Fleet Rating • 2,400+ Active Riders)
+ * - Perfectly centered screen-width snapping (zero packed/overlapping sliders)
+ * - Flexible auto-adjusting badges and stat chips (zero text overflow)
  * - 3-pillar quick perks bar (⚡ 10s Dispatch • 💰 Daily MoMo • 🛡️ Trip Insured)
  * - 20% high-end capsule CTA action container
  *
  * @author   Wunabuy Engineering Team
- * @version  2.0.0
+ * @version  2.1.0
  */
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -31,8 +32,7 @@ import { useAuthStore } from '../../stores/auth.store';
 import { UserRole } from '@wunabuy/types';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-const BANNER_WIDTH = SCREEN_WIDTH - spacing.base * 2;
-const SLIDESHOW_HEIGHT = Math.max(SCREEN_HEIGHT * 0.58, 400);
+const SLIDESHOW_HEIGHT = Math.max(SCREEN_HEIGHT * 0.54, 380);
 
 export interface TransporterSlide {
   id: string;
@@ -47,38 +47,38 @@ export interface TransporterSlide {
 const TRANSPORTER_SLIDES: TransporterSlide[] = [
   {
     id: 'slide_transporter_1',
-    badge: 'HIGH-VOLUME EARNINGS',
+    badge: 'HIGH EARNINGS',
     badgeColor: colors.role.transporter,
     title: 'Earn on Every Trip, ✨\n1,500 – 3,500 XAF/Drop',
     subtitle: 'Get matched with high-volume merchant pickup and delivery jobs across Douala & Yaoundé with flexible hours.',
-    statHighlight: 'Avg. 35,000 XAF / Day',
+    statHighlight: 'Avg. 35K XAF/Day',
     iconName: 'bicycle',
   },
   {
     id: 'slide_transporter_2',
-    badge: 'INSTANT DIGITAL CASHOUT',
+    badge: 'DIGITAL CASHOUT',
     badgeColor: colors.accent[500],
     title: 'Instant Daily Payouts, ✨\nDirect to MoMo & Orange',
     subtitle: 'Withdraw your driver earnings directly to MTN Mobile Money (*126#) or Orange Money (#150*50#) anytime with zero delay.',
-    statHighlight: '100% Guaranteed Payouts',
+    statHighlight: 'Instant MoMo/OM',
     iconName: 'wallet',
   },
   {
     id: 'slide_transporter_3',
-    badge: 'SMART GPS TURN-BY-TURN',
+    badge: 'SMART GPS ROUTING',
     badgeColor: colors.primary[500],
     title: 'Live GPS Navigation, ✨\nOptimized Drop-Offs',
     subtitle: 'Turn-by-turn route directions from verified merchant stores to buyer doorsteps with automated mileage bonuses.',
-    statHighlight: '10-Second GPS Refresh',
+    statHighlight: '10s GPS Refresh',
     iconName: 'navigate',
   },
   {
     id: 'slide_transporter_4',
-    badge: 'OFFICIAL FLEET VERIFICATION',
+    badge: 'VERIFIED FLEET',
     badgeColor: '#6366F1',
     title: 'Verified Rider Badge, ✨\nPriority Job Dispatch',
     subtitle: 'Join Cameroon’s premier verified logistics network and receive priority high-value merchant dispatch requests.',
-    statHighlight: 'Priority Order Matching',
+    statHighlight: 'Priority Dispatch',
     iconName: 'shield-checkmark',
   },
 ];
@@ -167,78 +167,115 @@ export const TransporterWelcomeScreen = ({ navigation }: any) => {
             showsHorizontalScrollIndicator={false}
             onViewableItemsChanged={onViewableItemsChanged}
             viewabilityConfig={{ viewAreaCoveragePercentThreshold: 50 }}
-            contentContainerStyle={styles.flatListContent}
+            getItemLayout={(_, index) => ({
+              length: SCREEN_WIDTH,
+              offset: SCREEN_WIDTH * index,
+              index,
+            })}
             renderItem={({ item }) => (
-              <View
-                style={[
-                  styles.slideCard,
-                  {
-                    backgroundColor: theme.card,
-                    borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#E2E8F0',
-                  },
-                ]}
-              >
-                {/* Decorative background glow circles */}
+              <View style={styles.slideOuterContainer}>
                 <View
                   style={[
-                    styles.glowCircle1,
+                    styles.slideCard,
                     {
-                      backgroundColor: isDark
-                        ? 'rgba(245, 158, 11, 0.12)'
-                        : 'rgba(245, 158, 11, 0.08)',
-                    },
-                  ]}
-                />
-                <View
-                  style={[
-                    styles.glowCircle2,
-                    {
-                      backgroundColor: isDark
-                        ? 'rgba(13, 148, 136, 0.08)'
-                        : 'rgba(13, 148, 136, 0.05)',
-                    },
-                  ]}
-                />
-
-                {/* Top Badge & Stat Pill */}
-                <View style={styles.slideHeaderRow}>
-                  <View style={[styles.slideBadge, { backgroundColor: item.badgeColor + '20' }]}>
-                    <Text variant="caption" bold color={item.badgeColor}>
-                      {item.badge}
-                    </Text>
-                  </View>
-
-                  <View style={[styles.statPill, { backgroundColor: isDark ? colors.neutral[800] : '#F1F5F9' }]}>
-                    <Ionicons name="sparkles" size={12} color={colors.accent[500]} />
-                    <Text variant="caption" bold color={theme.text} style={{ marginLeft: 4 }}>
-                      {item.statHighlight}
-                    </Text>
-                  </View>
-                </View>
-
-                {/* Icon Circle with Glowing Border */}
-                <View
-                  style={[
-                    styles.iconCircle,
-                    {
-                      backgroundColor: isDark
-                        ? 'rgba(245, 158, 11, 0.16)'
-                        : 'rgba(245, 158, 11, 0.10)',
-                      borderColor: item.badgeColor,
+                      backgroundColor: theme.card,
+                      borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#E2E8F0',
                     },
                   ]}
                 >
-                  <Ionicons name={item.iconName} size={46} color={item.badgeColor} />
+                  {/* Decorative background glow circles */}
+                  <View
+                    style={[
+                      styles.glowCircle1,
+                      {
+                        backgroundColor: isDark
+                          ? 'rgba(245, 158, 11, 0.10)'
+                          : 'rgba(245, 158, 11, 0.06)',
+                      },
+                    ]}
+                  />
+                  <View
+                    style={[
+                      styles.glowCircle2,
+                      {
+                        backgroundColor: isDark
+                          ? 'rgba(13, 148, 136, 0.08)'
+                          : 'rgba(13, 148, 136, 0.04)',
+                      },
+                    ]}
+                  />
+
+                  {/* Top Badge & Stat Pill Row (Fully Flexible & Contained) */}
+                  <View style={styles.slideHeaderRow}>
+                    <View
+                      style={[
+                        styles.slideBadge,
+                        {
+                          backgroundColor: item.badgeColor + '18',
+                          borderColor: item.badgeColor + '35',
+                        },
+                      ]}
+                    >
+                      <Ionicons name="sparkles" size={11} color={item.badgeColor} />
+                      <Text
+                        variant="caption"
+                        bold
+                        color={item.badgeColor}
+                        numberOfLines={1}
+                        style={styles.badgeLabel}
+                      >
+                        {item.badge}
+                      </Text>
+                    </View>
+
+                    <View
+                      style={[
+                        styles.statPill,
+                        {
+                          backgroundColor: isDark ? colors.neutral[800] : '#F1F5F9',
+                          borderColor: isDark ? colors.neutral[700] : '#E2E8F0',
+                        },
+                      ]}
+                    >
+                      <Ionicons name="shield-checkmark" size={11} color={colors.role.transporter} />
+                      <Text
+                        variant="caption"
+                        bold
+                        color={isDark ? colors.neutral[200] : colors.neutral[800]}
+                        numberOfLines={1}
+                        style={styles.statLabel}
+                      >
+                        {item.statHighlight}
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Icon Circle with Glowing Border */}
+                  <View
+                    style={[
+                      styles.iconCircle,
+                      {
+                        backgroundColor: isDark
+                          ? 'rgba(245, 158, 11, 0.14)'
+                          : 'rgba(245, 158, 11, 0.08)',
+                        borderColor: item.badgeColor,
+                      },
+                    ]}
+                  >
+                    <Ionicons name={item.iconName} size={38} color={item.badgeColor} />
+                  </View>
+
+                  {/* Title & Subtitle */}
+                  <View style={styles.textContainer}>
+                    <Text variant="h2" bold style={styles.slideTitle} numberOfLines={2}>
+                      {item.title}
+                    </Text>
+
+                    <Text variant="bodyMedium" secondary style={styles.slideSubtitle} numberOfLines={3}>
+                      {item.subtitle}
+                    </Text>
+                  </View>
                 </View>
-
-                {/* Title & Subtitle */}
-                <Text variant="h1" bold style={styles.slideTitle}>
-                  {item.title}
-                </Text>
-
-                <Text variant="bodyMedium" secondary style={styles.slideSubtitle}>
-                  {item.subtitle}
-                </Text>
               </View>
             )}
           />
@@ -265,22 +302,22 @@ export const TransporterWelcomeScreen = ({ navigation }: any) => {
         {/* 3-Pillar Quick Perks Bar */}
         <View style={styles.perksRow}>
           <View style={[styles.perkItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
-            <Ionicons name="flash-outline" size={15} color={colors.accent[500]} />
-            <Text variant="caption" bold style={styles.perkText}>
+            <Ionicons name="flash-outline" size={14} color={colors.accent[500]} />
+            <Text variant="caption" bold style={styles.perkText} numberOfLines={1}>
               10s Dispatch
             </Text>
           </View>
 
           <View style={[styles.perkItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
-            <Ionicons name="cash-outline" size={15} color={colors.semantic.success[500]} />
-            <Text variant="caption" bold style={styles.perkText}>
+            <Ionicons name="cash-outline" size={14} color={colors.semantic.success[500]} />
+            <Text variant="caption" bold style={styles.perkText} numberOfLines={1}>
               Daily MoMo
             </Text>
           </View>
 
           <View style={[styles.perkItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
-            <Ionicons name="shield-checkmark-outline" size={15} color={colors.primary[500]} />
-            <Text variant="caption" bold style={styles.perkText}>
+            <Ionicons name="shield-checkmark-outline" size={14} color={colors.primary[500]} />
+            <Text variant="caption" bold style={styles.perkText} numberOfLines={1}>
               Trip Insured
             </Text>
           </View>
@@ -313,7 +350,7 @@ export const TransporterWelcomeScreen = ({ navigation }: any) => {
           {/* Guarantee / Vehicle Scope Footnote */}
           <View style={styles.guaranteeRow}>
             <Ionicons name="checkmark-circle" size={14} color={colors.semantic.success[500]} />
-            <Text variant="caption" secondary style={styles.guaranteeText}>
+            <Text variant="caption" secondary style={styles.guaranteeText} numberOfLines={1}>
               Motorcycle, Car, Van &amp; Bicycle riders welcome in Douala &amp; Yaoundé
             </Text>
           </View>
@@ -366,35 +403,39 @@ const styles = StyleSheet.create({
     height: SLIDESHOW_HEIGHT,
     justifyContent: 'center',
   },
-  flatListContent: {
+  slideOuterContainer: {
+    width: SCREEN_WIDTH,
+    height: SLIDESHOW_HEIGHT - 28,
     paddingHorizontal: spacing.base,
+    justifyContent: 'center',
     alignItems: 'center',
   },
   slideCard: {
-    width: BANNER_WIDTH,
-    height: SLIDESHOW_HEIGHT - 32,
+    width: '100%',
+    height: '100%',
     borderRadius: borderRadius['2xl'],
     borderWidth: 1,
-    padding: spacing.lg,
+    paddingHorizontal: spacing.base,
+    paddingVertical: spacing.md,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     overflow: 'hidden',
     position: 'relative',
     ...shadows.md,
   },
   glowCircle1: {
     position: 'absolute',
-    width: 220,
-    height: 220,
-    borderRadius: 110,
+    width: 200,
+    height: 200,
+    borderRadius: 100,
     top: -40,
     right: -40,
   },
   glowCircle2: {
     position: 'absolute',
-    width: 160,
-    height: 160,
-    borderRadius: 80,
+    width: 150,
+    height: 150,
+    borderRadius: 75,
     bottom: -30,
     left: -30,
   },
@@ -403,73 +444,92 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     width: '100%',
-    marginBottom: spacing.md,
+    gap: spacing.xs,
   },
   slideBadge: {
-    paddingHorizontal: spacing.sm + 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.sm,
     paddingVertical: 4,
     borderRadius: borderRadius.full,
+    borderWidth: 1,
+    flexShrink: 1,
+    maxWidth: '52%',
+  },
+  badgeLabel: {
+    marginLeft: 4,
+    fontSize: 10,
   },
   statPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.sm + 2,
+    paddingHorizontal: spacing.sm,
     paddingVertical: 4,
     borderRadius: borderRadius.full,
+    borderWidth: 1,
+    flexShrink: 1,
+    maxWidth: '46%',
+  },
+  statLabel: {
+    marginLeft: 4,
+    fontSize: 10,
   },
   iconCircle: {
-    width: 84,
-    height: 84,
-    borderRadius: 42,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.md,
     ...shadows.sm,
+  },
+  textContainer: {
+    width: '100%',
+    alignItems: 'center',
   },
   slideTitle: {
     textAlign: 'center',
-    lineHeight: 28,
-    marginBottom: spacing.xs,
-    fontSize: 22,
+    lineHeight: 25,
+    marginBottom: 4,
+    fontSize: 19,
   },
   slideSubtitle: {
     textAlign: 'center',
-    lineHeight: 20,
-    paddingHorizontal: spacing.sm,
-    fontSize: 13,
+    lineHeight: 18,
+    paddingHorizontal: spacing.xs,
+    fontSize: 12,
   },
   dotsRow: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     gap: 6,
-    marginTop: spacing.sm,
+    marginTop: spacing.xs,
   },
   dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
   },
   activeDot: {
-    width: 24,
-    height: 8,
-    borderRadius: 4,
+    width: 22,
+    height: 7,
+    borderRadius: 3.5,
   },
   perksRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.base,
-    gap: spacing.xs + 2,
+    gap: spacing.xs,
   },
   perkItem: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: spacing.xs + 2,
-    paddingHorizontal: spacing.xs,
+    paddingVertical: 7,
+    paddingHorizontal: 4,
     borderRadius: borderRadius.lg,
     borderWidth: 1,
     gap: 4,
@@ -483,7 +543,7 @@ const styles = StyleSheet.create({
     paddingTop: spacing.xs,
   },
   capsuleBtn: {
-    height: 54,
+    height: 52,
     borderRadius: borderRadius.full,
     flexDirection: 'row',
     alignItems: 'center',
@@ -493,13 +553,13 @@ const styles = StyleSheet.create({
     ...shadows.md,
   },
   capsuleBtnText: {
-    fontSize: 16,
+    fontSize: 15,
     letterSpacing: 0.3,
   },
   arrowCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     backgroundColor: colors.neutral[0],
     alignItems: 'center',
     justifyContent: 'center',
@@ -509,7 +569,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.xs,
-    marginTop: spacing.xs + 2,
+    marginTop: spacing.xs,
   },
   guaranteeText: {
     fontSize: 11,
