@@ -433,7 +433,7 @@ export const ProductDetailScreen = ({ route, navigation }: any) => {
         </View>
       </ScrollView>
 
-      {/* ── Sticky Bottom Action Bar with Dual CTAs ─────────────────────────── */}
+      {/* ── Sticky Bottom Action Bar with Adjusted Dual CTAs ───────────────── */}
       <View
         style={[
           styles.bottomBar,
@@ -445,13 +445,22 @@ export const ProductDetailScreen = ({ route, navigation }: any) => {
         ]}
       >
         {/* Quantity Stepper Pill */}
-        <View style={[styles.stepperPill, { backgroundColor: isDark ? colors.neutral[800] : '#F1F5F9' }]}>
+        <View
+          style={[
+            styles.stepperPill,
+            {
+              backgroundColor: isDark ? colors.neutral[800] : '#F8FAFC',
+              borderColor: theme.border,
+            },
+          ]}
+        >
           <TouchableOpacity
             onPress={() => setQuantity(Math.max(1, quantity - 1))}
             style={styles.stepBtn}
             activeOpacity={0.7}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Text variant="h2" bold color={theme.text}>−</Text>
+            <Ionicons name="remove" size={18} color={theme.text} />
           </TouchableOpacity>
 
           <Text variant="bodyLarge" bold style={styles.stepQty}>
@@ -462,28 +471,46 @@ export const ProductDetailScreen = ({ route, navigation }: any) => {
             onPress={() => setQuantity(quantity + 1)}
             style={styles.stepBtn}
             activeOpacity={0.7}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Text variant="h2" bold color={theme.text}>+</Text>
+            <Ionicons name="add" size={18} color={theme.text} />
           </TouchableOpacity>
         </View>
 
-        {/* Add to Cart (Secondary) */}
-        <Button
-          title="Add to Cart"
-          variant="outline"
-          fullWidth={false}
+        {/* Adjusted "Add to Cart" Button */}
+        <TouchableOpacity
+          activeOpacity={0.85}
           onPress={handleAddToCart}
-          style={styles.addToCartBtn}
-        />
+          style={[
+            styles.addToCartBtn,
+            {
+              backgroundColor: isDark ? 'rgba(13, 148, 136, 0.15)' : '#F0FDFA',
+              borderColor: colors.primary[500],
+            },
+          ]}
+        >
+          <Ionicons name="cart-outline" size={18} color={colors.primary[500]} style={{ marginRight: 6 }} />
+          <Text variant="bodyMedium" bold color={colors.primary[500]}>
+            Add to Cart
+          </Text>
+        </TouchableOpacity>
 
-        {/* Buy Now with Escrow (Primary) */}
-        <Button
-          title="Buy Now ➔"
-          variant="primary"
-          fullWidth={false}
+        {/* "Buy Now" Button */}
+        <TouchableOpacity
+          activeOpacity={0.85}
           onPress={handleBuyNow}
-          style={styles.buyNowBtn}
-        />
+          style={[
+            styles.buyNowBtn,
+            {
+              backgroundColor: colors.primary[500],
+            },
+          ]}
+        >
+          <Ionicons name="flash" size={16} color={colors.neutral[0]} style={{ marginRight: 6 }} />
+          <Text variant="bodyMedium" bold color={colors.neutral[0]}>
+            Buy Now
+          </Text>
+        </TouchableOpacity>
       </View>
 
       {toastMessage && <Toast message={toastMessage} type="info" />}
@@ -809,25 +836,40 @@ const styles = StyleSheet.create({
   stepperPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: borderRadius.full,
-    height: 46,
-    paddingHorizontal: spacing.xs + 2,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    height: 48,
+    paddingHorizontal: spacing.xs,
   },
   stepBtn: {
-    width: 32,
-    height: 32,
+    width: 28,
+    height: 36,
     alignItems: 'center',
     justifyContent: 'center',
   },
   stepQty: {
-    paddingHorizontal: spacing.sm,
+    paddingHorizontal: spacing.xs + 2,
+    minWidth: 20,
+    textAlign: 'center',
   },
   addToCartBtn: {
-    flex: 1,
-    height: 46,
+    flex: 1.1,
+    height: 48,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1.5,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.xs,
   },
   buyNowBtn: {
     flex: 1.2,
-    height: 46,
+    height: 48,
+    borderRadius: borderRadius.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.xs,
+    ...shadows.sm,
   },
 });
