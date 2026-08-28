@@ -136,6 +136,20 @@ export const StoreKYCScreen = ({ navigation }: any) => {
     }
   };
 
+  const handleHeaderBack = () => {
+    if (currentStage > 1 && currentStage < 5) {
+      handlePrevStage();
+    } else if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      setActiveRole(UserRole.BUYER);
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'BuyerApp' }],
+      });
+    }
+  };
+
   return (
     <ScreenContainer scrollable={false} padded={false}>
       <KeyboardAvoidingView
@@ -146,8 +160,9 @@ export const StoreKYCScreen = ({ navigation }: any) => {
         <View style={[styles.headerBar, { paddingTop: Math.max(insets.top + spacing.xs, spacing.md) }]}>
           <TouchableOpacity
             activeOpacity={0.8}
-            onPress={() => navigation.goBack()}
+            onPress={handleHeaderBack}
             style={[styles.backBtn, { backgroundColor: theme.card }]}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
             <Ionicons name="arrow-back" size={20} color={theme.text} />
           </TouchableOpacity>
@@ -578,7 +593,10 @@ export const StoreKYCScreen = ({ navigation }: any) => {
                 variant="primary"
                 onPress={() => {
                   setActiveRole(UserRole.BUYER);
-                  navigation.navigate('BuyerApp');
+                  navigation.reset({
+                    index: 0,
+                    routes: [{ name: 'BuyerApp' }],
+                  });
                 }}
                 style={[styles.homeBtn, { backgroundColor: colors.role.seller }]}
               />

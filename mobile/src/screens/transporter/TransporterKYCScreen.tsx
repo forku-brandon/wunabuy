@@ -187,29 +187,55 @@ export const TransporterKYCScreen = ({ navigation }: any) => {
     }
   };
 
+  const handleHeaderBack = () => {
+    if (currentStage > 1 && currentStage < 5) {
+      handlePrevStage();
+    } else if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      setActiveRole(UserRole.BUYER);
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'BuyerApp' }],
+      });
+    }
+  };
+
   return (
     <ScreenContainer scrollable={false} padded={false}>
-      {/* Top Header Bar (~10% Height) */}
+      {/* Top Header Bar (~10% Height) — Logo-Free & Modern */}
       <View style={[styles.headerBar, { paddingTop: Math.max(insets.top + spacing.xs, spacing.md) }]}>
         <TouchableOpacity
           activeOpacity={0.8}
-          onPress={() => (currentStage > 1 && currentStage < 5 ? handlePrevStage() : navigation.goBack())}
+          onPress={handleHeaderBack}
           style={[styles.backBtn, { backgroundColor: theme.card }]}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
           <Ionicons name="arrow-back" size={20} color={theme.text} />
         </TouchableOpacity>
 
         <View style={styles.headerTitleCol}>
           <Text variant="h2" bold style={styles.headerTitleText}>
-            Transporter KYC Verification
+            Driver KYC Verification
           </Text>
           <Text variant="caption" secondary>
             {currentStage < 5 ? `Stage ${currentStage} of 4` : 'Verification Complete'}
           </Text>
         </View>
 
-        <View style={styles.headerLogoBox}>
-          <Image source={WUNABUY_LOGO} style={styles.headerLogo} resizeMode="contain" />
+        <View
+          style={[
+            styles.headerStatusBadge,
+            {
+              backgroundColor: isDark ? 'rgba(245, 158, 11, 0.15)' : '#FEF3C7',
+              borderColor: isDark ? 'rgba(245, 158, 11, 0.3)' : '#FDE68A',
+            },
+          ]}
+        >
+          <Ionicons name="shield-checkmark" size={13} color={colors.role.transporter} />
+          <Text variant="caption" bold color={colors.role.transporter} style={{ marginLeft: 4 }}>
+            VERIFIED
+          </Text>
         </View>
       </View>
 
@@ -704,7 +730,10 @@ export const TransporterKYCScreen = ({ navigation }: any) => {
                     variant="primary"
                     onPress={() => {
                       setActiveRole(UserRole.BUYER);
-                      navigation.navigate('BuyerApp');
+                      navigation.reset({
+                        index: 0,
+                        routes: [{ name: 'BuyerApp' }],
+                      });
                     }}
                     style={[styles.celebrationActionBtn, { backgroundColor: colors.role.transporter }]}
                   />
@@ -809,15 +838,13 @@ const styles = StyleSheet.create({
   headerTitleText: {
     fontSize: 18,
   },
-  headerLogoBox: {
-    width: 32,
-    height: 32,
+  headerStatusBadge: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerLogo: {
-    width: 28,
-    height: 28,
+    paddingHorizontal: spacing.sm + 2,
+    paddingVertical: 5,
+    borderRadius: borderRadius.full,
+    borderWidth: 1,
   },
   progressSection: {
     paddingHorizontal: spacing.base,

@@ -90,14 +90,26 @@ export const SellerWelcomeScreen = ({ navigation }: any) => {
     }
   ).current;
 
+  const handleBack = () => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'BuyerApp' }],
+      });
+    }
+  };
+
   return (
     <ScreenContainer scrollable={false} padded={false}>
       {/* Top Header Bar (~10% Height) */}
       <View style={[styles.headerBar, { paddingTop: Math.max(insets.top + spacing.xs, spacing.md) }]}>
         <TouchableOpacity
           activeOpacity={0.8}
-          onPress={() => navigation.goBack()}
+          onPress={handleBack}
           style={[styles.backBtn, { backgroundColor: theme.card }]}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
           <Ionicons name="arrow-back" size={20} color={theme.text} />
         </TouchableOpacity>
