@@ -34,6 +34,7 @@ import { StoreKYCScreen } from '../screens/seller/StoreKYCScreen';
 import { AddEditProductScreen } from '../screens/seller/AddEditProductScreen';
 import { CheckoutPaymentScreen } from '../screens/buyer/CheckoutPaymentScreen';
 import { OrderSuccessScreen } from '../screens/buyer/OrderSuccessScreen';
+import { WalletScreen } from '../screens/buyer/WalletScreen';
 
 export const RootNavigator = () => {
   const { isAuthenticated, activeRole } = useAuthStore();
@@ -88,6 +89,7 @@ export const RootNavigator = () => {
             <Stack.Screen name="AddEditProduct" component={AddEditProductScreen} />
             <Stack.Screen name="CheckoutPayment" component={CheckoutPaymentScreen} />
             <Stack.Screen name="OrderSuccess" component={OrderSuccessScreen} />
+            <Stack.Screen name="BuyerWallet" component={WalletScreen} />
           </>
         )}
       </Stack.Navigator>

@@ -187,6 +187,30 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({
               NAVIGATION &amp; ORDERS
             </Text>
 
+            {/* My Wallet */}
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => handleNavigate('BuyerWallet')}
+              style={styles.simpleMenuItem}
+            >
+              <View style={[styles.simpleIconBox, { backgroundColor: isDark ? '#1C3A2E' : '#ECFDF5' }]}>
+                <Ionicons name="wallet-outline" size={18} color={colors.semantic.success[500]} />
+              </View>
+              <View style={styles.simpleMenuTextCol}>
+                <Text variant="bodyLarge" style={styles.simpleMenuText}>
+                  My Wallet
+                </Text>
+                <Text variant="caption" secondary>
+                  Balance, Fund &amp; Withdraw
+                </Text>
+              </View>
+              <View style={styles.walletBadgePill}>
+                <Text variant="caption" bold color={colors.neutral[0]} style={{ fontSize: 9 }}>
+                  MoMo
+                </Text>
+              </View>
+            </TouchableOpacity>
+
             {/* My Orders & Escrow */}
             <TouchableOpacity
               activeOpacity={0.8}
@@ -434,6 +458,15 @@ const styles = StyleSheet.create({
   },
   simpleMenuText: {
     flex: 1,
+  },
+  simpleMenuTextCol: {
+    flex: 1,
+  },
+  walletBadgePill: {
+    backgroundColor: colors.semantic.success[500],
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: borderRadius.full,
   },
   switchMenuItem: {
     flexDirection: 'row',

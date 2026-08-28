@@ -55,6 +55,44 @@ export const ProfileScreen = ({ navigation }: any) => {
         </TouchableOpacity>
       </View>
 
+      {/* ─── Wallet Quick-Access Card ─────────────────────────────────── */}
+      <TouchableOpacity
+        activeOpacity={0.87}
+        onPress={() => navigation.navigate('BuyerWallet')}
+        style={[
+          styles.walletBannerCard,
+          { backgroundColor: colors.primary[500] },
+        ]}
+      >
+        {/* Decorative circles */}
+        <View style={styles.walletCircle1} />
+        <View style={styles.walletCircle2} />
+
+        <View style={styles.walletBannerLeft}>
+          <Text variant="caption" color="rgba(255,255,255,0.8)" style={{ marginBottom: 2 }}>
+            Wunabuy Wallet
+          </Text>
+          <Text variant="h2" bold color={colors.neutral[0]} style={styles.walletBalanceText}>
+            47,500 XAF
+          </Text>
+          <View style={styles.walletEscrowBadge}>
+            <Ionicons name="shield-checkmark" size={10} color="rgba(255,255,255,0.9)" style={{ marginRight: 3 }} />
+            <Text variant="caption" color="rgba(255,255,255,0.9)" style={{ fontSize: 9 }}>
+              48H ESCROW
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.walletBannerRight}>
+          <View style={styles.walletIconCircle}>
+            <Ionicons name="wallet" size={26} color={colors.primary[500]} />
+          </View>
+          <Text variant="caption" bold color={colors.neutral[0]} style={{ marginTop: 6 }}>
+            Open Wallet ›
+          </Text>
+        </View>
+      </TouchableOpacity>
+
       {/* "My Orders" Status Grid Section (Matching media_1787828841561.png) */}
       <Card style={styles.ordersCard}>
         <View style={styles.cardHeaderRow}>
@@ -201,10 +239,10 @@ export const ProfileScreen = ({ navigation }: any) => {
             </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => showNotice('Pay Later')} style={styles.toolItem}>
-            <Ionicons name="wallet-outline" size={22} color={colors.primary[500]} />
+          <TouchableOpacity onPress={() => navigation.navigate('BuyerWallet')} style={styles.toolItem}>
+            <Ionicons name="wallet" size={22} color={colors.semantic.success[500]} />
             <Text variant="caption" style={styles.toolText}>
-              Pay Later
+              My Wallet
             </Text>
           </TouchableOpacity>
 
@@ -376,4 +414,64 @@ const styles = StyleSheet.create({
   cardWrapper: {
     width: '48%',
   },
+  walletBannerCard: {
+    marginHorizontal: spacing.base,
+    marginBottom: spacing.md,
+    borderRadius: 20,
+    padding: spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    overflow: 'hidden',
+    position: 'relative',
+    ...shadows.md,
+  },
+  walletCircle1: {
+    position: 'absolute',
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(255,255,255,0.07)',
+    top: -30,
+    right: 60,
+  },
+  walletCircle2: {
+    position: 'absolute',
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255,255,255,0.09)',
+    bottom: -20,
+    left: 20,
+  },
+  walletBannerLeft: {
+    flex: 1,
+  },
+  walletBalanceText: {
+    fontSize: 22,
+    marginBottom: 4,
+  },
+  walletEscrowBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 99,
+    marginTop: 2,
+  },
+  walletBannerRight: {
+    alignItems: 'center',
+  },
+  walletIconCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...shadows.sm,
+  },
 });
+
