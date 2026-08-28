@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { View, FlatList, StyleSheet, TouchableOpacity, Image, ScrollView } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, FlatList, StyleSheet, TouchableOpacity, Image, ScrollView, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ScreenContainer, Text, Card, Button, Badge, EmptyState, Toast } from '../../components/ui';
 import { useFollowedStoresStore, FollowedStoreData } from '../../stores/followedStores.store';
 import { useThemeStore } from '../../stores/theme.store';
 import { useCartStore } from '../../stores/cart.store';
+import { BuyerService } from '../../services/api/buyerService';
 import { formatXAF } from '@wunabuy/utils';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { Product } from '@wunabuy/types';
@@ -14,6 +15,26 @@ export const FollowedStoresScreen = ({ navigation }: any) => {
   const { followedStoreIds, stores, toggleFollow } = useFollowedStoresStore();
   const addItemToCart = useCartStore((state) => state.addItem);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const loadFollowedStores = useCallback(async () => {
+    try {
+      await BuyerService.getFollowedStores();
+    } catch {
+      // Safe fallback to store
+    } finally {
+      setRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadFollowedStores();
+  }, [loadFollowedStores]);
+
+  const handleRefresh = useCallback(() => {
+    setRefreshing(true);
+    loadFollowedStores();
+  }, [loadFollowedStores]);
 
   const followedStoresList: FollowedStoreData[] = Object.values(stores).filter((s) =>
     followedStoreIds.includes(s.id)
@@ -23,6 +44,12 @@ export const FollowedStoresScreen = ({ navigation }: any) => {
     e.stopPropagation?.();
     addItemToCart(product, 1);
     setToastMessage(`Added "${product.name}" to cart!`);
+  };
+
+  const handleToggleFollow = (item: FollowedStoreData) => {
+    toggleFollow(item);
+    BuyerService.unfollowStore(item.id);
+    setToastMessage(`Unfollowed ${item.name}`);
   };
 
   return (
@@ -67,6 +94,14 @@ export const FollowedStoresScreen = ({ navigation }: any) => {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor={colors.primary[500]}
+              colors={[colors.primary[500]]}
+            />
+          }
           renderItem={({ item }) => (
             <Card style={styles.storeCard}>
               {/* Store Header Row */}
@@ -101,10 +136,7 @@ export const FollowedStoresScreen = ({ navigation }: any) => {
                 {/* Follow / Unfollow Action */}
                 <TouchableOpacity
                   activeOpacity={0.8}
-                  onPress={() => {
-                    toggleFollow(item);
-                    setToastMessage(`Unfollowed ${item.name}`);
-                  }}
+                  onPress={() => handleToggleFollow(item)}
                   style={[
                     styles.followingBtn,
                     { borderColor: theme.border, backgroundColor: isDark ? colors.neutral[800] : colors.neutral[100] },

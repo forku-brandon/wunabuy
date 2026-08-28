@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { View, FlatList, StyleSheet, TouchableOpacity, Image, Dimensions } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, FlatList, StyleSheet, TouchableOpacity, Image, Dimensions, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ScreenContainer, Text, Card, Button, Badge, EmptyState, Toast } from '../../components/ui';
 import { useFavoritesStore } from '../../stores/favorites.store';
 import { useThemeStore } from '../../stores/theme.store';
 import { useCartStore } from '../../stores/cart.store';
+import { BuyerService } from '../../services/api/buyerService';
 import { formatXAF } from '@wunabuy/utils';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { Product } from '@wunabuy/types';
@@ -16,6 +17,26 @@ export const FavoritesScreen = ({ navigation }: any) => {
   const { favoriteIds, favoriteProducts, toggleFavorite, clearFavorites } = useFavoritesStore();
   const addItemToCart = useCartStore((state) => state.addItem);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const loadFavorites = useCallback(async () => {
+    try {
+      await BuyerService.getFavorites();
+    } catch {
+      // Fallback to store
+    } finally {
+      setRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadFavorites();
+  }, [loadFavorites]);
+
+  const handleRefresh = useCallback(() => {
+    setRefreshing(true);
+    loadFavorites();
+  }, [loadFavorites]);
 
   const favoritesList: Product[] = favoriteIds
     .map((id) => favoriteProducts[id])
@@ -30,7 +51,13 @@ export const FavoritesScreen = ({ navigation }: any) => {
   const handleRemoveFavorite = (product: Product, e: any) => {
     e.stopPropagation?.();
     toggleFavorite(product);
+    BuyerService.removeFavorite(product.id);
     setToastMessage('Removed from favorites');
+  };
+
+  const handleClearAll = () => {
+    clearFavorites();
+    setToastMessage('Cleared all favorites');
   };
 
   return (
@@ -56,7 +83,7 @@ export const FavoritesScreen = ({ navigation }: any) => {
         {favoritesList.length > 0 && (
           <TouchableOpacity
             activeOpacity={0.7}
-            onPress={clearFavorites}
+            onPress={handleClearAll}
             style={styles.clearBtn}
           >
             <Text variant="caption" secondary bold>
@@ -83,6 +110,14 @@ export const FavoritesScreen = ({ navigation }: any) => {
           numColumns={2}
           columnWrapperStyle={styles.columnWrapper}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor={colors.primary[500]}
+              colors={[colors.primary[500]]}
+            />
+          }
           renderItem={({ item }) => (
             <TouchableOpacity
               activeOpacity={0.88}

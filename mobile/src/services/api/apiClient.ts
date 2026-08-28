@@ -27,3 +27,5 @@ export const api = createWunabuyApiSDK({
   timeout: 15000,
 });
 
+export const apiClient = api.client;
+

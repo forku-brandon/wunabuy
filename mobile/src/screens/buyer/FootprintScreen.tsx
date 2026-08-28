@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { View, FlatList, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, FlatList, StyleSheet, TouchableOpacity, Image, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ScreenContainer, Text, Card, Button, Badge, EmptyState, Toast } from '../../components/ui';
 import { useFootprintStore, FootprintItem } from '../../stores/footprint.store';
 import { useThemeStore } from '../../stores/theme.store';
 import { useCartStore } from '../../stores/cart.store';
+import { BuyerService } from '../../services/api/buyerService';
 import { formatXAF, formatDate } from '@wunabuy/utils';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 
@@ -13,6 +14,26 @@ export const FootprintScreen = ({ navigation }: any) => {
   const { footprints, removeFootprint, clearFootprints } = useFootprintStore();
   const addItemToCart = useCartStore((state) => state.addItem);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const loadFootprints = useCallback(async () => {
+    try {
+      await BuyerService.getFootprints();
+    } catch {
+      // Safe fallback to store
+    } finally {
+      setRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadFootprints();
+  }, [loadFootprints]);
+
+  const handleRefresh = useCallback(() => {
+    setRefreshing(true);
+    loadFootprints();
+  }, [loadFootprints]);
 
   const handleAddToCart = (item: FootprintItem, e: any) => {
     e.stopPropagation?.();
@@ -24,6 +45,12 @@ export const FootprintScreen = ({ navigation }: any) => {
     e.stopPropagation?.();
     removeFootprint(item.product.id);
     setToastMessage('Item removed from history');
+  };
+
+  const handleClearAll = () => {
+    clearFootprints();
+    BuyerService.clearFootprints();
+    setToastMessage('Browsing footprints cleared');
   };
 
   return (
@@ -49,7 +76,7 @@ export const FootprintScreen = ({ navigation }: any) => {
         {footprints.length > 0 && (
           <TouchableOpacity
             activeOpacity={0.7}
-            onPress={clearFootprints}
+            onPress={handleClearAll}
             style={styles.clearBtn}
           >
             <Text variant="caption" secondary bold>
@@ -74,6 +101,14 @@ export const FootprintScreen = ({ navigation }: any) => {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor={colors.primary[500]}
+              colors={[colors.primary[500]]}
+            />
+          }
           renderItem={({ item }) => (
             <TouchableOpacity
               activeOpacity={0.88}

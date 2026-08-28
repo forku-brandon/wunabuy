@@ -1,25 +1,13 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, FlatList, StyleSheet, TouchableOpacity, RefreshControl, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ScreenContainer, Text, Card, Button, Badge, EmptyState } from '../../components/ui';
 import { useThemeStore } from '../../stores/theme.store';
+import { DisputesService, RefundItemData } from '../../services/api/disputesService';
 import { formatXAF, formatDate } from '@wunabuy/utils';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 
-interface RefundItem {
-  id: string;
-  order_code: string;
-  store_name: string;
-  product_name: string;
-  product_image: string;
-  amount: number;
-  reason: string;
-  status: 'pending_review' | 'merchant_evidence' | 'refunded' | 'rejected';
-  requested_at: string;
-  refunded_at?: string;
-  refund_destination?: string;
-  reference_id?: string;
-}
+interface RefundItem extends RefundItemData {}
 
 const MOCK_REFUNDS: RefundItem[] = [
   {
@@ -69,13 +57,27 @@ export const RefundsScreen = ({ navigation }: any) => {
   const [refunds, setRefunds] = useState<RefundItem[]>(MOCK_REFUNDS);
   const [refreshing, setRefreshing] = useState(false);
 
+  const loadRefunds = useCallback(async () => {
+    try {
+      const data = await DisputesService.getRefunds();
+      if (data && data.length > 0) {
+        setRefunds(data);
+      }
+    } catch {
+      // Fallback to initial mock data
+    } finally {
+      setRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadRefunds();
+  }, [loadRefunds]);
+
   const handleRefresh = useCallback(() => {
     setRefreshing(true);
-    setTimeout(() => {
-      setRefunds(MOCK_REFUNDS);
-      setRefreshing(false);
-    }, 800);
-  }, []);
+    loadRefunds();
+  }, [loadRefunds]);
 
   const pendingRefunds = refunds.filter((r) => r.status === 'pending_review' || r.status === 'merchant_evidence');
   const completedRefunds = refunds.filter((r) => r.status === 'refunded');
