@@ -12,20 +12,9 @@ import { useThemeStore } from '../stores/theme.store';
 import { UserRole } from '@wunabuy/types';
 import { ScreenContainer, Text } from '../components/ui';
 
-const Stack = createNativeStackNavigator<RootStackParamList>();
-
-// Shared Detail Screen Placeholders
+// Screen Imports
 import { ProductDetailScreen } from '../screens/buyer/ProductDetailScreen';
-
 import { OrderTrackingScreen } from '../screens/buyer/OrderTrackingScreen';
-
-const ChatConversationScreen = ({ route }: any) => (
-  <ScreenContainer>
-    <Text variant="h1" bold>Chat Conversation</Text>
-    <Text variant="bodyMedium" secondary>Conversation ID: {route.params?.conversationId}</Text>
-  </ScreenContainer>
-);
-
 import { NotificationSettingsScreen } from '../screens/profile/NotificationSettingsScreen';
 import { AddressManagerScreen } from '../screens/profile/AddressManagerScreen';
 import { SettingsScreen } from '../screens/profile/SettingsScreen';
@@ -37,6 +26,15 @@ import { AddEditProductScreen } from '../screens/seller/AddEditProductScreen';
 import { CheckoutPaymentScreen } from '../screens/buyer/CheckoutPaymentScreen';
 import { OrderSuccessScreen } from '../screens/buyer/OrderSuccessScreen';
 import { WalletScreen } from '../screens/buyer/WalletScreen';
+
+const Stack = createNativeStackNavigator<RootStackParamList>();
+
+const ChatConversationScreen = ({ route }: any) => (
+  <ScreenContainer>
+    <Text variant="h1" bold>Chat Conversation</Text>
+    <Text variant="bodyMedium" secondary>Conversation ID: {route.params?.conversationId}</Text>
+  </ScreenContainer>
+);
 
 export const RootNavigator = () => {
   const { isAuthenticated, activeRole } = useAuthStore();

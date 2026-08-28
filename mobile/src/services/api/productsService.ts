@@ -94,3 +94,4 @@ function filterMockProducts(filters?: ProductQueryFilters): Product[] {
 
   return products;
 }
+

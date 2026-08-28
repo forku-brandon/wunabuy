@@ -171,3 +171,4 @@ function getMockTransactions(typeFilter?: string, providerFilter?: string): Wall
 
   return txs;
 }
+
