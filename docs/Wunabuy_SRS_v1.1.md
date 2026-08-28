@@ -233,13 +233,18 @@ The platform SHALL follow a constrained launch strategy. The following policy SH
 | FR-001 | Register via phone number with SMS OTP | High |
 | FR-002 | Register via email with password | High |
 | FR-003 | Social login (Google, Facebook) | Medium |
-| FR-004 | Role assignment on registration: Buyer, Seller (Store Owner), or Transport Provider | High |
-| FR-005 | Multi-role support (e.g., Buyer + Transport Provider with separate verification) | Low |
-| FR-006 | JWT-based session management (access + refresh tokens) | High |
-| FR-007 | Password reset via SMS or email | High |
+| FR-004 | Role assignment on registration: Buyer default; Seller and Transporter unlocked only after staff approval | High |
+| FR-005 | Guarded role switching (hidden until approved in user.available_roles by backend staff) | High |
+| FR-006 | Laravel Sanctum token-based session management (access + refresh tokens) | High |
+| FR-007 | Password reset via SMS OTP | High |
 | FR-008 | Phone number uniqueness enforced platform-wide | High |
-| FR-009 | Profile management: name, photo, contact, default address | Medium |
-| FR-010 | Multiple delivery addresses per customer | Medium |
+| FR-009 | Profile management: name, photo avatar, contact, preferences | Medium |
+| FR-009A | Wallet Balance Privacy Masking: Interactive eye toggle to hide/show balances | High |
+| FR-009B | Followed Stores Feed: Dedicated screen showing followed stores and their latest products | High |
+| FR-009C | Favorites & Wishlist: One-tap heart like interaction with dedicated management screen | High |
+| FR-009D | Browsing Footprint: Chronological tracking of viewed products with clearing capabilities | High |
+| FR-009E | Refunds & Disputes Dashboard: Dual-tab review of in-progress escrow claims vs. completed refunds | High |
+| FR-010 | Address Manager: Full CRUD for saved delivery addresses with default selection | High |
 
 > **Terminology change from v1.0:** "Customer" role renamed to "Buyer" for clarity. "Store Owner" renamed to "Seller." These are the three customer-facing roles: Buyer, Seller, Transport Provider.
 

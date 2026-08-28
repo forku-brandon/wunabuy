@@ -275,6 +275,14 @@ Wunabuy addresses these challenges through a **mobile-first, offline-resilient a
 - **FR-045 (High):** Dedicated `Apply to Sell` and `Apply to Transport` action cards are rendered underneath active roles for unapproved users.
 - **FR-046 (High):** Every back button across all mobile screens is guarded with `navigation.canGoBack()` and falls back to root stack reset (`BuyerApp`).
 
+### EPIC 13: Profile Privacy Masking & Buyer Service Discovery Hub
+- **FR-047 (High):** Wallet Balance Privacy Masking: `ProfileScreen` features an interactive eye toggle (`eye-outline` / `eye-off-outline`) on the Wunabuy Wallet card to seamlessly hide/mask (`•••••• FCFA`) or display live balances (`47 500 FCFA`) with event propagation isolation.
+- **FR-048 (High):** Followed Stores Feed (`FollowedStoresScreen`): Dedicated screen presenting all followed stores with merchant avatars, verified badges, ratings, follower count, location, follow/unfollow action, and a horizontal carousel of each store's latest products with 1-tap cart addition.
+- **FR-049 (High):** Favorites & Wishlist (`FavoritesScreen`): Dedicated screen displaying all liked products in a 2-column grid, hooked into `useFavoritesStore` and love heart triggers across `ProductCard` and `ProductDetailScreen`, with instant Add to Cart and Clear All actions.
+- **FR-050 (High):** Browsing Footprint Engine (`FootprintScreen`): Chronological browsing history tracking up to 50 viewed products with formatted timestamps (`formatDate`), individual removal, and Clear All action.
+- **FR-051 (High):** Refunds & Escrow Disputes Screen (`RefundsScreen`): Dedicated screen with segmented tab controls for In-Progress escrow disputes (reason, evidence photos, frozen escrow status, 48h staff arbitration timeline) vs. Completed refunds credited back to Wallet or Mobile Money.
+- **FR-052 (High):** Address Manager (`AddressManagerScreen`): Delivery addresses management with Default address badge, Add/Edit BottomSheet modal, instant default address switching, and deletion.
+
 ---
 
 ## 7. Critical Business Rules (Launch Requirements)

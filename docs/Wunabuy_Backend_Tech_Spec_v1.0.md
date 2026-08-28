@@ -618,6 +618,36 @@ All REST API endpoints are prefixed under `/api/v1`.
 }
 ```
 
+### 8.4 Delivery Address Manager (Full CRUD)
+- **Endpoints:**
+  - `GET /api/v1/user/addresses` (List saved addresses)
+  - `POST /api/v1/user/addresses` (Add new delivery address)
+  - `PUT /api/v1/user/addresses/{id}` (Update address details)
+  - `DELETE /api/v1/user/addresses/{id}` (Delete address)
+  - `POST /api/v1/user/addresses/{id}/default` (Set as default delivery address)
+
+### 8.5 Followed Stores Feed
+- **Endpoints:**
+  - `GET /api/v1/user/followed-stores` (Returns followed stores and their latest products)
+  - `POST /api/v1/stores/{id}/follow` (Follow store)
+  - `DELETE /api/v1/stores/{id}/unfollow` (Unfollow store)
+
+### 8.6 Favorites & Wishlist
+- **Endpoints:**
+  - `GET /api/v1/user/favorites` (Returns favorited products with stock & pricing)
+  - `POST /api/v1/user/favorites/{product_id}` (Add to favorites)
+  - `DELETE /api/v1/user/favorites/{product_id}` (Remove from favorites)
+
+### 8.7 Browsing Footprint Engine
+- **Endpoints:**
+  - `GET /api/v1/user/footprints` (Returns chronological history of viewed products)
+  - `POST /api/v1/user/footprints` (Log product view)
+  - `DELETE /api/v1/user/footprints` (Clear browsing history)
+
+### 8.8 Refunds & Escrow Disputes
+- **Endpoints:**
+  - `GET /api/v1/user/refunds` (Returns in-progress disputes and completed refunds)
+
 ---
 
 ## 9. Store & Transporter Onboarding & KYC API Contracts
