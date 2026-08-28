@@ -1,7 +1,7 @@
 # Product Requirements Document (PRD)
 # Wunabuy — Multi-Sided Mobile E-Commerce & Logistics Platform
 
-**Document Version:** 1.5  
+**Document Version:** 1.7  
 **Status:** Revised / Launch-Ready Production Baseline  
 **Date:** August 28, 2026  
 **Author:** Product Management & Engineering Architecture Team  
@@ -30,6 +30,7 @@ This PRD defines the product vision, market outcome, launch scope, UI/UX archite
 | 1.4 | August 28, 2026 | Architecture & Engineering Team | Added Buyer Wallet architecture (Fund, Withdraw, MTN MoMo `*126#`, Orange Money `#150*50#`, USSD prompt simulation, transaction history), Seller Welcome onboarding (70% hero carousel, 20% capsule CTA), 4-Stage Store KYC Form (80% form / 20% action button split, Error Callout Card, Stage 5 Celebration), and Profile & Drawer wallet entry points. |
 | 1.5 | August 28, 2026 | Architecture & Engineering Team | Added App-Wide Native Pull-to-Refresh (`RefreshControl`) standards across all screens (`ScreenContainer`, `Search`, `Cart`, `Orders`, `Profile`, `Wallet`, `SellerInventory`, `TransporterJobs`, `TransporterEarnings`, `Settings`), Product Detail v2.0 Redesign (expansive 92% width hero image gallery with 4% margins, Top Floating Header Bar with 3-action buttons on same line [Love, Share, Cart], 2-column Recommendation / Related Products grid replacing static features, and optimized Dual CTA bottom bar), and Store KYC Stage 1 textarea dynamic container expansion (`minHeight: 110px`) with zero text overflow and horizontal category multi-select slider chips. |
 | 1.6 | August 28, 2026 | Architecture & Engineering Team | Added "Become a Transporter" Onboarding Flow (`TransporterWelcomeScreen` with logo-free modern header, live status badge, 70% automated hero carousel with exact screen-width snapping, 4 Transport Modality Cards [Bike 🏍️, Taxi 🚕, Van 🚐, Plane ✈️], and 20% capsule CTA; `TransporterKYCScreen` with 4-stage Driver KYC and Stage 5 celebration modal), KYC Completion Redirection Rule (redirecting users back to initial Buyer Home Dashboard upon document submission while in 24-hour review queue), 3D Clay-Style Black Character Avatar System bundled in `mobile/assets/avatar.png` with 52px Profile header avatar and Camera Edit badge, and Dynamic Cart Promo Banner Architecture (hidden by default, backend-driven with 6-second auto-dismiss timeout). |
+| 1.7 | August 28, 2026 | Architecture & Engineering Team | Added Wunabuy Wallet Checkout integration in `CheckoutPaymentScreen` (dual options: Wallet Balance instant 1-tap escrow vs Mobile Money USSD push; country-neutral provider labels), ProductCard interactive Quick-View Expand Modal with horizontal swipeable multi-image gallery (`FlatList horizontal pagingEnabled`, counter badge, stepper, dual actions), Strict Default Buyer Role Isolation in Settings (`RoleSwitcherCard` hiding Seller/Transporter buttons until backend API staff approval, with dedicated Apply to Sell and Apply to Transport action cards), and App-Wide `canGoBack` Navigation Safety with root reset fallbacks across all 11+ screens. |
 
 ---
 
@@ -260,6 +261,19 @@ Wunabuy addresses these challenges through a **mobile-first, offline-resilient a
 ### EPIC 9: Dynamic Cart Promotion & Auto-Dismiss Architecture
 - **FR-038 (High):** Cart screen (`BuyerCartScreen`) hides promotional and free delivery banners by default to maintain a clean, uncluttered layout.
 - **FR-039 (High):** Promotional notices are dynamically triggered by backend coupon/discount payload events (`backendPromo`) with a mandatory auto-dismiss timeout (6 seconds) and manual close button `(X)`.
+
+### EPIC 10: Wunabuy Wallet Checkout & Neutral Payment Methods
+- **FR-040 (High):** Checkout payment screen (`CheckoutPaymentScreen`) supports dual payment options: **Wunabuy Wallet** (`PaymentMethod.WALLET`) with real-time balance inspection, instant 1-tap escrow lock, and low-balance shortfall warning; and **Mobile Money** (`PaymentMethod.MOMO`) with MTN MoMo (`*126#`) and Orange Money (`#150*50#`).
+- **FR-041 (High):** All payment method and provider labels SHALL be country-neutral ("Mobile Money Provider", "Mobile Phone Number").
+
+### EPIC 11: ProductCard Quick-View Expand & Swipeable Gallery
+- **FR-042 (High):** Tapping the circular `(+)` button on any `ProductCard` expands an interactive quick-view modal featuring a high-performance horizontal swipe gallery (`FlatList horizontal pagingEnabled`), real-time image counter (`1 / 4`), pagination dots, 5-star ratings, full description, quantity stepper `[ − 1 + ]`, and dual action buttons (`Add to Cart` + `View Full Product ➔`).
+
+### EPIC 12: Role Isolation & App-Wide Navigation Safety
+- **FR-043 (High):** All user accounts SHALL default strictly to **Buyer (Customer)** (`UserRole.BUYER`).
+- **FR-044 (High):** Seller (Store Owner) and Transport Driver workspace buttons remain completely **hidden** in Settings & Preferences until authorized by the backend API via Staff Portal KYC approval.
+- **FR-045 (High):** Dedicated `Apply to Sell` and `Apply to Transport` action cards are rendered underneath active roles for unapproved users.
+- **FR-046 (High):** Every back button across all mobile screens is guarded with `navigation.canGoBack()` and falls back to root stack reset (`BuyerApp`).
 
 ---
 

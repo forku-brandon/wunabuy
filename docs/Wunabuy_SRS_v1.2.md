@@ -1,10 +1,10 @@
 # Software Requirements Specification (SRS)
 # Wunabuy — Multi-Sided Mobile E-Commerce Platform
 
-**Document Version:** 1.6 (Production Synchronized Baseline)  
+**Document Version:** 1.7 (Production Synchronized Baseline)  
 **Date:** August 28, 2026  
 **Status:** Approved / In Production Use  
-**Companion Documents:** Wunabuy PRD v1.6, Wunabuy Frontend Tech Spec v1.6, Wunabuy Backend Tech Spec v1.3  
+**Companion Documents:** Wunabuy PRD v1.7, Wunabuy Frontend Tech Spec v1.7, Wunabuy Backend Tech Spec v1.3  
 
 > **Resolved Architecture & UI Specifications (August 28, 2026):**
 > - **Backend:** Laravel 13 + Laravel Reverb WebSockets + PostgreSQL 15 (PostGIS).
@@ -13,6 +13,10 @@
 > - **Partners Showcase (`PartnersCarousel`):** Replaces search bar with manual horizontal slideshow for official partners (MTN MoMo, Orange Money, Flutterwave, DHL, Ecobank).
 > - **Categories Circular Slider (`CategoryChip`):** Placed directly above Best Sellers.
 > - **Buyer Wallet Architecture (`WalletScreen`):** In-app mobile wallet supporting MTN MoMo (`*126#`) & Orange Money (`#150*50#`) funding/withdrawals with 50-70% responsive bottom sheets, USSD instructions, live validation, and transaction ledger.
+> - **Wunabuy Wallet Checkout (`CheckoutPaymentScreen`):** Integrated in-app wallet balance payment tab with real-time balance checking, instant 1-tap escrow lock, and low-balance shortcut alongside country-neutral Mobile Money providers (MTN MoMo, Orange Money).
+> - **ProductCard Quick-View Expand & Swipeable Gallery (`ProductCard`):** `(+)` button expands an interactive modal with horizontal multi-image paging gallery (`FlatList horizontal pagingEnabled`), counter badge (`1 / 4`), pagination dots, 5-star ratings, full description, quantity stepper `[ − 1 + ]`, `Add to Cart`, and `View Full Product ➔`.
+> - **Strict Default Buyer Role Isolation (`RoleSwitcherCard`):** All users default strictly to Buyer (`UserRole.BUYER`). Seller and Transporter role switchers are completely hidden in Settings until approved by backend API upon Staff Portal KYC verification, accompanied by dedicated `Apply to Sell` and `Apply to Transport` action cards.
+> - **App-Wide `canGoBack` Navigation Safety:** Every back button across all 11+ screens checks `navigation.canGoBack()` and falls back to graceful root stack reset (`BuyerApp`), permanently eliminating unhandled `GO_BACK` errors.
 > - **Seller Welcome Onboarding (`SellerWelcomeScreen`):** 70% automated hero carousel (3.5s interval, 4 benefit cards) and 20% capsule CTA button (`Get Started Now ➔`).
 > - **4-Stage Store KYC Form (`StoreKYCScreen`):** 80% scrollable form grid / 20% action button split, animated progress bar (`25%` -> `100%`), flexible multiline description textarea (`minHeight: 110px`, live `0/300` char counter), horizontal category multi-select chips (`✓ CategoryName`), Error Callout Alert Banner, and Stage 5 celebration modal.
 > - **Transporter Welcome Onboarding (`TransporterWelcomeScreen`):** Logo-free modern header, live status badge (`TRANSPORTER FLEET`), 70% automated hero carousel with exact screen-width snapping, 4 Transport Modality Cards (`Bike 🏍️`, `Taxi 🚕`, `Van 🚐`, `Plane ✈️`), and 20% capsule CTA button (`Start Driver Verification ➔`).
@@ -116,6 +120,19 @@ Wunabuy consists of a **React Native monorepo** (`wunabuy-mobile`, `@wunabuy/des
 - **FR-036:** `BuyerCartScreen` SHALL hide promotional banners by default.
 - **FR-037:** Promotional messages SHALL only be displayed upon receiving dynamic backend payload events (`backendPromo`) with a mandatory 6-second auto-dismiss timeout and manual close button.
 
+### 3.11 Wunabuy Wallet Checkout & Neutral Payment Method Architecture
+- **FR-038:** `CheckoutPaymentScreen` SHALL support dual payment tabs: **Wunabuy Wallet** (`PaymentMethod.WALLET`) with real-time balance checking, instant 1-tap escrow lock, and low-balance shortcut; and **Mobile Money** (`PaymentMethod.MOMO`) with MTN MoMo (`*126#`) and Orange Money (`#150*50#`).
+- **FR-039:** Labels across all checkout and authentication screens SHALL be country-neutral ("Mobile Money Provider", "Mobile Phone Number").
+
+### 3.12 ProductCard Quick-View Expand Modal & Horizontal Swipe Gallery
+- **FR-040:** Tapping the circular `(+)` button on `ProductCard` SHALL expand an interactive preview modal featuring a high-performance horizontal swipe gallery (`FlatList horizontal pagingEnabled`), counter badge (`1 / 4`), pagination dots, 5-star ratings, description, quantity stepper `[ − 1 + ]`, `Add to Cart`, and `View Full Product ➔`.
+
+### 3.13 Strict Default Buyer Role Isolation & App-Wide Navigation Safety
+- **FR-041:** All user accounts SHALL default strictly to **Buyer** (`UserRole.BUYER`).
+- **FR-042:** Seller and Transporter role switchers SHALL be completely **hidden** in Settings & Preferences until authorized by backend API staff approval.
+- **FR-043:** Dedicated `Apply to Sell (Store Owner)` and `Apply to Transport (Driver)` application cards SHALL be rendered underneath active roles for unapproved users.
+- **FR-044:** Every `navigation.goBack()` call across all 11+ screens SHALL check `navigation.canGoBack()` and fall back to graceful root stack reset (`BuyerApp`).
+
 ---
 
 ## 4. Non-Functional Requirements
@@ -135,4 +152,4 @@ Wunabuy consists of a **React Native monorepo** (`wunabuy-mobile`, `@wunabuy/des
 **QA Lead:** _Wunabuy QA Team_  
 
 ---
-**[End of Software Requirements Specification v1.6]**
+**[End of Software Requirements Specification v1.7]**

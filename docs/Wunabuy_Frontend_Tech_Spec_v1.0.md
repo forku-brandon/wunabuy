@@ -1234,11 +1234,29 @@ Production deployment must be blocked if any critical quality gate fails.
 
 ---
 
-## Final Document Status
+## 27. Recent Production UI Implementations (v1.7)
 
-This version of the Wunabuy Frontend Technical Specification is intended to represent a production-ready engineering baseline for the company. It establishes the design principles, technical architecture, operational expectations, security posture, quality gates, and governance needed to move from planning into controlled implementation and release management.
+### 27.1 Wunabuy Wallet Checkout Integration (`CheckoutPaymentScreen`)
+- **Dual Payment Tabs:** Provides **Wunabuy Wallet** balance payment (with real-time balance checking, instant 1-tap escrow lock, and direct top-up shortcut) alongside **Mobile Money** (MTN MoMo `*126#` and Orange Money `#150*50#`).
+- **Country Neutrality:** System-wide removal of country-specific labels, standardizing on regional terminology ("Mobile Money Provider", "Mobile Phone Number").
 
-The document remains a living specification and must be updated as the platform evolves, new product requirements are introduced, or significant technical decisions alter implementation strategy.
+### 27.2 ProductCard Quick-View Expand Modal & Multi-Image Gallery (`ProductCard`)
+- **`(+)` Button Action:** Tapping the circular `(+)` button on any `ProductCard` expands an interactive preview modal with a high-performance horizontal swipe gallery (`FlatList horizontal pagingEnabled`).
+- **Gallery Controls:** Real-time image counter badge (`1 / 4`), animated pagination dots, 5-star ratings, full description, quantity stepper `[ − 1 + ]`, and dual action buttons (`Add to Cart` + `View Full Product ➔`).
+
+### 27.3 Strict Default Buyer Role Isolation (`RoleSwitcherCard`)
+- **Active Role Isolation:** All user accounts default strictly to **Buyer (Customer)** (`UserRole.BUYER`).
+- **Staff-Approved Roles Only:** Seller (Store Owner) and Transport Driver workspace buttons remain completely **hidden** in Settings & Preferences until authorized by the backend API upon Staff Portal KYC verification.
+- **Application Shortcuts:** Dedicated `Apply to Sell (Store Owner)` and `Apply to Transport (Driver)` action cards are rendered underneath active roles.
+
+### 27.4 App-Wide `canGoBack` Navigation Safety
+- **Root Reset Fallbacks:** Every `navigation.goBack()` call across all 11+ screens is guarded with `navigation.canGoBack()` and falls back to graceful root stack reset (`BuyerApp`), permanently eliminating unhandled `GO_BACK` navigation errors.
 
 ---
-**End of Document**
+
+## Final Document Status
+
+This version of the Wunabuy Frontend Technical Specification represents a production-ready engineering baseline for the company (v1.7). It establishes the design principles, technical architecture, operational expectations, security posture, quality gates, and governance needed for deployment and launch readiness.
+
+---
+**End of Document (v1.7)**
