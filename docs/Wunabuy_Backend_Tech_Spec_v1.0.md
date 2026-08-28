@@ -1,9 +1,9 @@
 # Wunabuy — Backend Technical Specification & API Contracts
 
-**Document Version:** 1.2 (Production API Architecture Baseline)  
-**Date:** August 27, 2026  
+**Document Version:** 1.3 (Production API Architecture Baseline)  
+**Date:** August 28, 2026  
 **Status:** Approved / In Production Use  
-**Companion Documents:** Wunabuy SRS v1.3, Wunabuy PRD v1.3  
+**Companion Documents:** Wunabuy SRS v1.4, Wunabuy PRD v1.4  
 **Framework:** Laravel 13 (PHP 8.3+)  
 **Frontend Monorepo Targets:** `wunabuy-mobile` (Expo SDK 54), `@wunabuy/api-client`, `@wunabuy/types`, `@wunabuy/utils`
 
@@ -15,12 +15,13 @@
 2. [API Conventions & Response Schemas](#2-api-conventions--response-schemas)
 3. [Authentication & Direct OTP Endpoint Contracts](#3-authentication--direct-otp-endpoint-contracts)
 4. [Home Feed & Partners Endpoint Contracts](#4-home-feed--partners-endpoint-contracts)
-5. [Orders, Escrow Engine & Dispute Contracts](#5-orders-escrow-engine--dispute-contracts)
-6. [Real-Time Logistics & WebSocket Event Specifications](#6-real-time-logistics--websocket-event-specifications)
-7. [User Profile & Settings API Contracts](#7-user-profile--settings-api-contracts)
-8. [Store Onboarding & KYC API Contracts](#8-store-onboarding--kyc-api-contracts)
-9. [Database Schema & PostGIS Spatial Extensions](#9-database-schema--postgis-spatial-extensions)
-10. [Error Codes & Troubleshooting Matrix](#10-error-codes--troubleshooting-matrix)
+5. [Buyer Wallet & Mobile Money Engine Contracts](#5-buyer-wallet--mobile-money-engine-contracts)
+6. [Orders, Escrow Engine & Dispute Contracts](#6-orders-escrow-engine--dispute-contracts)
+7. [Real-Time Logistics & WebSocket Event Specifications](#7-real-time-logistics--websocket-event-specifications)
+8. [User Profile & Settings API Contracts](#8-user-profile--settings-api-contracts)
+9. [Store Onboarding & KYC API Contracts](#9-store-onboarding--kyc-api-contracts)
+10. [Database Schema & PostGIS Spatial Extensions](#10-database-schema--postgis-spatial-extensions)
+11. [Error Codes & Troubleshooting Matrix](#11-error-codes--troubleshooting-matrix)
 
 ---
 
@@ -43,7 +44,7 @@ Wunabuy backend operates as a **Modular Monolith** built on **Laravel 13 (PHP 8.
 │                                        ▼                                        │
 │  ┌───────────────────────────────────────────────────────────────────────────┐  │
 │  │ Laravel 13 Application (Modular Monolith)                                 │  │
-│  │ - Auth, Commerce, Payment, Escrow, Delivery, Chat, KYC, Staff Modules     │  │
+│  │ - Auth, Commerce, Wallet, Escrow, Delivery, Chat, KYC, Staff Modules      │  │
 │  │ - Sanctum Token Middleware, Form Requests, Eloquent ORM                   │  │
 │  └─────────────────────────────────────┬─────────────────────────────────────┘  │
 │                                        │                                        │
@@ -76,7 +77,7 @@ All REST API endpoints are prefixed under `/api/v1`.
   "success": true,
   "data": {},
   "meta": {
-    "timestamp": "2026-08-27T14:45:00Z",
+    "timestamp": "2026-08-28T09:00:00Z",
     "request_id": "req_88492019"
   }
 }
@@ -101,13 +102,14 @@ All REST API endpoints are prefixed under `/api/v1`.
 
 ## 3. Authentication & Direct OTP Endpoint Contracts
 
-### 3.1 Send Phone OTP Code
+### 3.1 Send 6-Digit SMS OTP
 - **Endpoint:** `POST /api/v1/auth/otp/send`
-- **Access:** Public
+- **Rate Limit:** 5 requests per 10 minutes per IP/Phone.
 - **Request Body:**
 ```json
 {
-  "phone": "+237670123456"
+  "phone": "+237670123456",
+  "purpose": "login"
 }
 ```
 - **Response (200 OK):**
@@ -115,17 +117,16 @@ All REST API endpoints are prefixed under `/api/v1`.
 {
   "success": true,
   "data": {
-    "user_id": "usr_99201029",
     "phone": "+237670123456",
     "otp_sent": true,
-    "expires_in_seconds": 300
+    "expires_in_seconds": 300,
+    "demo_code": "123456"
   }
 }
 ```
 
-### 3.2 Verify OTP & Authenticate User (Direct Home Login)
+### 3.2 Verify OTP & Direct Login
 - **Endpoint:** `POST /api/v1/auth/otp/verify`
-- **Access:** Public
 - **Request Body:**
 ```json
 {
@@ -138,30 +139,18 @@ All REST API endpoints are prefixed under `/api/v1`.
 {
   "success": true,
   "data": {
-    "access_token": "1|sanctum_access_token_mock_884920",
-    "refresh_token": "sanctum_refresh_token_mock_884920",
+    "access_token": "1|sanctum_token_88492019...",
     "token_type": "Bearer",
     "user": {
-      "id": "usr_670123456",
+      "id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
       "phone": "+237670123456",
-      "email": "user@wunabuy.com",
+      "email": "jean.dupont@wunabuy.com",
       "full_name": "Jean Dupont",
       "role": "buyer",
       "status": "active",
-      "avatar_url": null,
+      "avatar_url": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
       "is_phone_verified": true,
-      "default_address": {
-        "id": "addr_default_1",
-        "label": "Home",
-        "latitude": 4.0510564,
-        "longitude": 9.7678687,
-        "address_text": "Rue Joss, Akwa",
-        "city": "Douala",
-        "is_default": true
-      },
-      "available_roles": ["buyer"],
-      "created_at": "2026-08-27T12:00:00Z",
-      "updated_at": "2026-08-27T12:00:00Z"
+      "available_roles": ["buyer"]
     }
   }
 }
@@ -171,33 +160,33 @@ All REST API endpoints are prefixed under `/api/v1`.
 
 ## 4. Home Feed & Partners Endpoint Contracts
 
-### 4.1 Fetch Home Screen Feed Data
+### 4.1 Fetch Aggregated Home Feed
 - **Endpoint:** `GET /api/v1/home/feed`
-- **Access:** Public / Authenticated
+- **Access:** Public or Authenticated
 - **Response (200 OK):**
 ```json
 {
   "success": true,
   "data": {
-    "hero_carousel": [
+    "hero_banners": [
       {
-        "id": "slide_1",
-        "badge": "100% ESCROW GUARANTEE",
-        "badge_color": "#0D9488",
-        "title": "Shop Safely, ✨\nBuy Confidently",
-        "subtitle": "Your money stays 100% safe in 48-hour escrow protection until delivery is signed.",
-        "cta_text": "Explore Escrow",
-        "image_url": "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?auto=format&fit=crop&w=800&q=80"
+        "id": "hero_1",
+        "tag": "100% ESCROW GUARANTEE",
+        "title": "Shop with Total Peace of Mind",
+        "subtitle": "Your payment is held safely until you inspect & confirm delivery.",
+        "bg_color": "#0D9488",
+        "image_url": "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=1200&q=80"
       }
     ],
-    "official_partners": [
+    "partners": [
       {
         "id": "partner_1",
-        "name": "MTN MoMo",
-        "category": "Mobile Money Escrow",
+        "name": "MTN Mobile Money",
+        "category": "Official MoMo Partner",
         "icon_name": "phone-portrait-outline",
         "icon_color": "#F59E0B",
-        "badge": "1-Tap Cashout"
+        "badge": "1-Tap Cashout",
+        "dial_code": "*126#"
       },
       {
         "id": "partner_2",
@@ -205,7 +194,8 @@ All REST API endpoints are prefixed under `/api/v1`.
         "category": "Mobile Wallet Partner",
         "icon_name": "wallet-outline",
         "icon_color": "#F97316",
-        "badge": "Instant Transfer"
+        "badge": "Instant Transfer",
+        "dial_code": "#150*50#"
       },
       {
         "id": "partner_3",
@@ -249,9 +239,159 @@ All REST API endpoints are prefixed under `/api/v1`.
 
 ---
 
-## 5. Orders, Escrow Engine & Dispute Contracts
+## 5. Buyer Wallet & Mobile Money Engine Contracts
 
-### 5.1 Fetch Buyer Orders & Escrow Summary
+### 5.1 Fetch Wallet Balance & Escrow Metrics
+- **Endpoint:** `GET /api/v1/wallet`
+- **Access:** Authenticated (`Bearer <token>`)
+- **Response (200 OK):**
+```json
+{
+  "success": true,
+  "data": {
+    "wallet_id": "wal_99812039",
+    "currency": "XAF",
+    "balance_available": 47500,
+    "balance_escrow_locked": 236000,
+    "balance_total": 283500,
+    "total_deposited": 500000,
+    "total_spent": 216500,
+    "is_active": true,
+    "last_updated_at": "2026-08-28T08:50:00Z"
+  }
+}
+```
+
+### 5.2 Fetch Wallet Transactions (Paginated Ledger)
+- **Endpoint:** `GET /api/v1/wallet/transactions`
+- **Query Parameters:** `page=1`, `per_page=20`, `type` (`credit` | `debit`), `provider` (`mtn` | `orange`)
+- **Access:** Authenticated
+- **Response (200 OK):**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "tx001",
+      "type": "credit",
+      "amount": 20000,
+      "currency": "XAF",
+      "description": "Wallet Top-Up via MTN MoMo",
+      "provider": "mtn",
+      "status": "completed",
+      "reference": "WNB-MOMO-99120",
+      "created_at": "2026-08-27T14:02:00Z"
+    },
+    {
+      "id": "tx002",
+      "type": "debit",
+      "amount": 8500,
+      "currency": "XAF",
+      "description": "Escrow Payment — Order #WNB-00412",
+      "provider": "mtn",
+      "status": "completed",
+      "reference": "WNB-ESC-00412",
+      "created_at": "2026-08-26T09:18:00Z"
+    }
+  ],
+  "meta": {
+    "pagination": {
+      "current_page": 1,
+      "per_page": 20,
+      "total": 4,
+      "has_more": false
+    }
+  }
+}
+```
+
+### 5.3 Initiate Wallet Funding (Top-Up via Mobile Money)
+- **Endpoint:** `POST /api/v1/wallet/fund`
+- **Access:** Authenticated
+- **Request Body:**
+```json
+{
+  "provider": "mtn",
+  "phone": "+237670123456",
+  "amount": 25000,
+  "currency": "XAF"
+}
+```
+- **Response (200 OK):**
+```json
+{
+  "success": true,
+  "data": {
+    "transaction_id": "tx_fund_991203",
+    "status": "pending_dial",
+    "provider": "mtn",
+    "phone": "+237670123456",
+    "amount": 25000,
+    "currency": "XAF",
+    "dial_code": "*126#",
+    "instruction": "Please dial *126# on your mobile phone to approve payment of 25 000 FCFA to Wunabuy.",
+    "expires_at": "2026-08-28T09:10:00Z"
+  }
+}
+```
+
+### 5.4 Initiate Wallet Withdrawal (Payout to Mobile Money)
+- **Endpoint:** `POST /api/v1/wallet/withdraw`
+- **Access:** Authenticated
+- **Request Body:**
+```json
+{
+  "provider": "orange",
+  "phone": "+237699112233",
+  "amount": 15000,
+  "currency": "XAF"
+}
+```
+- **Response (200 OK):**
+```json
+{
+  "success": true,
+  "data": {
+    "transaction_id": "tx_with_883910",
+    "status": "processing",
+    "provider": "orange",
+    "phone": "+237699112233",
+    "amount": 15000,
+    "fee": 0,
+    "net_amount": 15000,
+    "currency": "XAF",
+    "estimated_arrival": "Instant (within 5 minutes)"
+  }
+}
+```
+
+### 5.5 Check Transaction Status (Polling Endpoint)
+- **Endpoint:** `GET /api/v1/wallet/transactions/{id}/status`
+- **Access:** Authenticated
+- **Response (200 OK):**
+```json
+{
+  "success": true,
+  "data": {
+    "transaction_id": "tx_fund_991203",
+    "status": "completed",
+    "amount": 25000,
+    "new_balance": 72500,
+    "completed_at": "2026-08-28T09:03:15Z"
+  }
+}
+```
+
+### 5.6 Payment Webhooks (MTN MoMo & Orange Money Callbacks)
+- **MTN Callback:** `POST /api/v1/webhooks/momo`
+- **Orange Callback:** `POST /api/v1/webhooks/orange`
+- **Security:** HMAC-SHA256 signature verification via `X-Signature` header.
+
+---
+
+## 6. Orders, Escrow Engine & Dispute Contracts
+
+### 6.1 Fetch Buyer Orders & Escrow Summary
 - **Endpoint:** `GET /api/v1/orders`
 - **Query Parameters:** `status` (`pending_payment`, `paid_escrow`, `preparing`, `en_route`, `in_transit`, `delivered`, `completed`, `disputed`)
 - **Access:** Authenticated (`Bearer <token>`)
@@ -281,7 +421,7 @@ All REST API endpoints are prefixed under `/api/v1`.
 }
 ```
 
-### 5.2 Confirm Receipt & Release Escrow
+### 6.2 Confirm Receipt & Release Escrow
 - **Endpoint:** `POST /api/v1/orders/{order_id}/confirm-delivery`
 - **Access:** Authenticated
 - **Request Body:**
@@ -306,7 +446,7 @@ All REST API endpoints are prefixed under `/api/v1`.
 }
 ```
 
-### 5.3 File Escrow Dispute
+### 6.3 File Escrow Dispute
 - **Endpoint:** `POST /api/v1/orders/{order_id}/dispute`
 - **Access:** Authenticated
 - **Request Body:**
@@ -335,13 +475,13 @@ All REST API endpoints are prefixed under `/api/v1`.
 
 ---
 
-## 6. Real-Time Logistics & WebSocket Event Specifications
+## 7. Real-Time Logistics & WebSocket Event Specifications
 
-### 6.1 Channel Definition
+### 7.1 Channel Definition
 - **Channel Name:** `private-tracking.{order_code}`
 - **Protocol:** Laravel Reverb (WSS)
 
-### 6.2 Event Payload: `DriverLocationUpdated`
+### 7.2 Event Payload: `DriverLocationUpdated`
 ```json
 {
   "event": "DriverLocationUpdated",
@@ -368,9 +508,9 @@ All REST API endpoints are prefixed under `/api/v1`.
 
 ---
 
-## 7. User Profile & Settings API Contracts
+## 8. User Profile & Settings API Contracts
 
-### 7.1 Update Profile Info
+### 8.1 Update Profile Info
 - **Endpoint:** `PUT /api/v1/user/profile`
 - **Request Body:**
 ```json
@@ -380,7 +520,7 @@ All REST API endpoints are prefixed under `/api/v1`.
 }
 ```
 
-### 7.2 Update User Preferences
+### 8.2 Update User Preferences
 - **Endpoint:** `PUT /api/v1/user/preferences`
 - **Request Body:**
 ```json
@@ -393,10 +533,61 @@ All REST API endpoints are prefixed under `/api/v1`.
 
 ---
 
-## 8. Database Schema & PostGIS Spatial Extensions
+## 9. Store Onboarding & KYC API Contracts
+
+### 9.1 Submit 4-Stage Store KYC Application
+- **Endpoint:** `POST /api/v1/seller/kyc/submit`
+- **Access:** Authenticated (`Bearer <token>`)
+- **Content-Type:** `multipart/form-data`
+- **Form Fields:**
+  - `store_name` (string, required): Business or store name (min 3 chars)
+  - `description` (string, required): Business description (min 10 chars)
+  - `category` (string, required): Primary store category (e.g. `Electronics`, `Fashion`)
+  - `address_text` (string, required): Street address in Cameroon
+  - `city` (string, required): City (e.g. `Douala`, `Yaoundé`)
+  - `latitude` (numeric, required): GPS latitude (e.g. `4.0510564`)
+  - `longitude` (numeric, required): GPS longitude (e.g. `9.7678687`)
+  - `cni_number` (string, required): National ID card number
+  - `id_card_front` (file, required): JPG/PNG/WEBP photo of CNI Front
+  - `id_card_back` (file, required): JPG/PNG/WEBP photo of CNI Back
+  - `storefront_photo` (file, required): Photo of physical storefront or workshop
+  - `business_reg_or_affidavit` (file, optional): Tax ID or Ownership affidavit doc
+- **Response (201 Created):**
+```json
+{
+  "success": true,
+  "data": {
+    "submission_id": "kyc_sub_881920",
+    "store_id": "store_991823",
+    "status": "under_review",
+    "estimated_review_hours": 24,
+    "submitted_at": "2026-08-28T09:15:00Z"
+  }
+}
+```
+
+### 9.2 Check KYC Review Status
+- **Endpoint:** `GET /api/v1/seller/kyc/status`
+- **Access:** Authenticated
+- **Response (200 OK):**
+```json
+{
+  "success": true,
+  "data": {
+    "status": "under_review",
+    "reviewer_notes": null,
+    "submitted_at": "2026-08-28T09:15:00Z",
+    "verified_at": null
+  }
+}
+```
+
+---
+
+## 10. Database Schema & PostGIS Spatial Extensions
 
 ```sql
--- PostgreSQL + PostGIS Core Tables
+-- PostgreSQL 15 + PostGIS Core Tables
 
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -409,6 +600,50 @@ CREATE TABLE users (
     is_phone_verified BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE wallets (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+    balance_available NUMERIC(14, 2) NOT NULL DEFAULT 0.00,
+    balance_escrow_locked NUMERIC(14, 2) NOT NULL DEFAULT 0.00,
+    currency VARCHAR(10) NOT NULL DEFAULT 'XAF',
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE wallet_transactions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    wallet_id UUID REFERENCES wallets(id) ON DELETE CASCADE,
+    type VARCHAR(20) NOT NULL, -- 'credit', 'debit'
+    amount NUMERIC(14, 2) NOT NULL,
+    currency VARCHAR(10) NOT NULL DEFAULT 'XAF',
+    provider VARCHAR(50) NOT NULL, -- 'mtn', 'orange', 'wallet_escrow'
+    status VARCHAR(30) NOT NULL DEFAULT 'pending', -- 'pending', 'completed', 'failed'
+    reference VARCHAR(100) UNIQUE NOT NULL,
+    description TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE seller_kyc_submissions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    store_name VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    category VARCHAR(100) NOT NULL,
+    address_text TEXT NOT NULL,
+    city VARCHAR(100) NOT NULL,
+    location GEOMETRY(Point, 4326),
+    cni_number VARCHAR(100) NOT NULL,
+    id_card_front_url TEXT NOT NULL,
+    id_card_back_url TEXT NOT NULL,
+    storefront_photo_url TEXT NOT NULL,
+    business_reg_url TEXT NULL,
+    status VARCHAR(30) NOT NULL DEFAULT 'under_review', -- 'pending', 'under_review', 'approved', 'rejected'
+    reviewer_notes TEXT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    reviewed_at TIMESTAMP WITH TIME ZONE NULL
 );
 
 CREATE TABLE orders (
@@ -428,6 +663,19 @@ CREATE TABLE orders (
 
 ---
 
+## 11. Error Codes & Troubleshooting Matrix
+
+| Error Code | HTTP Status | Description | User Message |
+|---|---|---|---|
+| `VALIDATION_ERROR` | 422 | Required fields missing or invalid format | Please check your form entries and try again. |
+| `UNAUTHENTICATED` | 401 | Missing or expired Sanctum Bearer token | Please log in to continue. |
+| `INSUFFICIENT_FUNDS` | 400 | Wallet available balance is lower than withdrawal amount | Insufficient wallet balance for this withdrawal. |
+| `MOMO_GATEWAY_TIMEOUT` | 504 | Telco USSD gateway did not respond in time | Telco verification timed out. Please retry dialing *126# or #150*50#. |
+| `KYC_ALREADY_SUBMITTED` | 409 | KYC application already under active review | Your KYC application is currently being verified. |
+| `ESCROW_LOCKED` | 403 | Attempt to modify order while escrow is frozen | Order is protected under 48-hour escrow lock. |
+
+---
+
 ### Approval Signatures
 
 **Backend Lead Architect:** _Laravel Engineering Team_  
@@ -435,4 +683,4 @@ CREATE TABLE orders (
 **Product Manager:** _Agemo Technologies Product Lead_  
 
 ---
-**[End of Backend Technical Specification & API Contracts]**
+**[End of Backend Technical Specification & API Contracts v1.3]**
