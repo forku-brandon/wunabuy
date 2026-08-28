@@ -206,8 +206,8 @@ export const SettingsScreen = ({ navigation }: any) => {
           </TouchableOpacity>
         </Card>
 
-        {/* Dynamic Role Switcher */}
-        <RoleSwitcherCard />
+        {/* Dynamic Role Switcher (Transporter & Seller hidden until approved by Staff API) */}
+        <RoleSwitcherCard navigation={navigation} />
 
         {/* Logout Button */}
         <Button
