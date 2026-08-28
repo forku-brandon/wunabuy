@@ -17,6 +17,7 @@ export interface InputProps extends RNTextInputProps {
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   containerStyle?: ViewStyle;
+  inputContainerStyle?: ViewStyle;
 }
 
 export const Input: React.FC<InputProps> = ({
@@ -26,6 +27,7 @@ export const Input: React.FC<InputProps> = ({
   leftIcon,
   rightIcon,
   containerStyle,
+  inputContainerStyle,
   style,
   onFocus,
   onBlur,
@@ -34,6 +36,7 @@ export const Input: React.FC<InputProps> = ({
 }) => {
   const { theme } = useThemeStore();
   const [isFocused, setIsFocused] = useState(false);
+  const isMultiline = Boolean(rest.multiline);
 
   const getBorderColor = (): string => {
     if (error) return colors.semantic.error[500];
@@ -55,21 +58,19 @@ export const Input: React.FC<InputProps> = ({
           {
             backgroundColor: theme.input,
             borderColor: getBorderColor(),
-            height: rest.multiline ? undefined : 48,
-            minHeight: rest.multiline ? 48 : undefined,
-            alignItems: rest.multiline ? 'flex-start' : 'center',
-            paddingVertical: rest.multiline ? spacing.xs : 0,
           },
+          isMultiline ? styles.multilineInputContainer : styles.singlelineInputContainer,
+          inputContainerStyle,
         ]}
       >
-        {leftIcon && <View style={[styles.leftIcon, rest.multiline && { marginTop: spacing.xs }]}>{leftIcon}</View>}
+        {leftIcon && <View style={[styles.leftIcon, isMultiline && { marginTop: spacing.xs }]}>{leftIcon}</View>}
 
         <RNTextInput
           style={[
             styles.input,
+            isMultiline ? styles.multilineInput : styles.singlelineInput,
             {
               color: theme.text,
-              textAlignVertical: rest.multiline ? 'top' : 'center',
             },
             style,
           ]}
@@ -85,7 +86,7 @@ export const Input: React.FC<InputProps> = ({
           {...rest}
         />
 
-        {rightIcon && <View style={[styles.rightIcon, rest.multiline && { marginTop: spacing.xs }]}>{rightIcon}</View>}
+        {rightIcon && <View style={[styles.rightIcon, isMultiline && { marginTop: spacing.xs }]}>{rightIcon}</View>}
       </View>
 
       {error ? (
@@ -110,16 +111,33 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    height: 48,
     borderWidth: 1,
     borderRadius: borderRadius.md,
+  },
+  singlelineInputContainer: {
+    height: 48,
+    alignItems: 'center',
     paddingHorizontal: spacing.md,
+  },
+  multilineInputContainer: {
+    minHeight: 100,
+    alignItems: 'flex-start',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
   },
   input: {
     flex: 1,
-    height: '100%',
     fontSize: 14,
+  },
+  singlelineInput: {
+    height: '100%',
+  },
+  multilineInput: {
+    width: '100%',
+    minHeight: 80,
+    textAlignVertical: 'top',
+    paddingTop: 0,
+    paddingBottom: 0,
   },
   leftIcon: {
     marginRight: spacing.xs,
@@ -131,4 +149,3 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
 });
-

@@ -264,7 +264,8 @@ export const StoreKYCScreen = ({ navigation }: any) => {
                         }
                       }}
                       multiline
-                      numberOfLines={3}
+                      numberOfLines={4}
+                      inputContainerStyle={styles.descriptionInputContainer}
                       style={styles.flexibleDescriptionInput}
                       containerStyle={styles.descriptionInputWrapper}
                     />
@@ -683,9 +684,14 @@ const styles = StyleSheet.create({
     width: '100%',
     marginBottom: 4,
   },
+  descriptionInputContainer: {
+    minHeight: 110,
+    paddingVertical: spacing.sm,
+    alignItems: 'flex-start',
+  },
   flexibleDescriptionInput: {
     width: '100%',
-    minHeight: 84,
+    minHeight: 90,
     textAlignVertical: 'top',
     fontSize: 14,
     lineHeight: 20,
