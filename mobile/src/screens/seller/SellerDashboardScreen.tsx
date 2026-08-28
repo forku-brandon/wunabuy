@@ -1,19 +1,49 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import { ScreenContainer, Text, Card, Button, Badge } from '../../components/ui';
 import { KYCStatusBanner } from '../../components/seller/KYCStatusBanner';
 import { KYCStatus } from '@wunabuy/types';
 import { formatXAF } from '@wunabuy/utils';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
+import { WalletService, KYCService } from '../../services/api';
 
 export const SellerDashboardScreen = ({ navigation }: any) => {
   const { theme } = useThemeStore();
   const [kycStatus, setKycStatus] = useState<KYCStatus>(KYCStatus.APPROVED);
+  const [escrowBalance, setEscrowBalance] = useState(185000);
+  const [availableBalance, setAvailableBalance] = useState(450000);
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Mock revenue balances
-  const escrowBalance = 185000;
-  const availableBalance = 450000;
+  const loadDashboardData = useCallback(async () => {
+    try {
+      const [walletData, kycData] = await Promise.all([
+        WalletService.getWallet(),
+        KYCService.getStoreKYCStatus(),
+      ]);
+
+      if (walletData) {
+        setAvailableBalance(walletData.balance_available);
+        setEscrowBalance(walletData.balance_escrow_locked);
+      }
+      if (kycData?.status) {
+        setKycStatus(kycData.status as any);
+      }
+    } catch {
+      // Fallbacks handled
+    } finally {
+      setRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadDashboardData();
+  }, [loadDashboardData]);
+
+  const handleRefresh = useCallback(() => {
+    setRefreshing(true);
+    loadDashboardData();
+  }, [loadDashboardData]);
 
   const handleStartKYC = () => {
     navigation.navigate('StoreKYC');

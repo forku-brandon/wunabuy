@@ -1,9 +1,10 @@
-import React, { useState, useCallback } from 'react';
-import { View, FlatList, StyleSheet, RefreshControl } from 'react-native';
-import { ScreenContainer, Text, Card, Button, Badge } from '../../components/ui';
-import { formatXAF } from '@wunabuy/utils';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, FlatList, StyleSheet, RefreshControl, TouchableOpacity } from 'react-native';
+import { ScreenContainer, Text, Card, Button, Badge, Input, BottomSheet, Toast } from '../../components/ui';
+import { formatXAF, formatPhone } from '@wunabuy/utils';
 import { colors, spacing, borderRadius } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
+import { WalletService } from '../../services/api';
 
 const MOCK_TRIP_HISTORY = [
   { id: 't1', code: 'WB-2026-9842', distance: '2.4 km', fee: 1500, date: 'Today, 14:20' },
@@ -13,15 +14,75 @@ const MOCK_TRIP_HISTORY = [
 
 export const TransporterEarningsScreen = () => {
   const { theme } = useThemeStore();
+  const [availablePayout, setAvailablePayout] = useState(14000);
+  const [totalEarned, setTotalEarned] = useState(18500);
+  const [trips, setTrips] = useState(MOCK_TRIP_HISTORY);
   const [refreshing, setRefreshing] = useState(false);
+  const [isWithdrawModalVisible, setIsWithdrawModalVisible] = useState(false);
+  const [withdrawAmount, setWithdrawAmount] = useState('');
+  const [withdrawPhone, setWithdrawPhone] = useState('+237 670 123 456');
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [error, setError] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const loadWalletData = useCallback(async () => {
+    try {
+      const walletData = await WalletService.getWallet();
+      if (walletData) {
+        setAvailablePayout(walletData.balance_available);
+        setTotalEarned(walletData.total_deposited || walletData.balance_total);
+      }
+    } catch {
+      // Safe fallback
+    } finally {
+      setRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadWalletData();
+  }, [loadWalletData]);
 
   const handleRefresh = useCallback(() => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 800);
-  }, []);
+    loadWalletData();
+  }, [loadWalletData]);
 
-  const totalEarned = 18500;
-  const availablePayout = 14000;
+  const handleWithdraw = async () => {
+    const amount = Number(withdrawAmount);
+    if (!amount || isNaN(amount) || amount < 500) {
+      setError('Minimum withdrawal amount is 500 FCFA.');
+      return;
+    }
+    if (amount > availablePayout) {
+      setError('Withdrawal amount exceeds available driver balance.');
+      return;
+    }
+
+    setIsProcessing(true);
+    setError('');
+
+    try {
+      await WalletService.withdrawWallet({
+        amount,
+        destination_details: {
+          type: 'momo' as any,
+          phone: withdrawPhone,
+          bank_code: null,
+          account_number: withdrawPhone,
+        },
+      });
+
+      setAvailablePayout((prev) => Math.max(0, prev - amount));
+      setToastMessage(`Payout of ${formatXAF(amount)} initiated to ${formatPhone(withdrawPhone)}!`);
+      setIsWithdrawModalVisible(false);
+      setWithdrawAmount('');
+    } catch (err: any) {
+      setError(err?.message || 'Payout failed. Please try again.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   return (
     <ScreenContainer scrollable={false} padded={false}>
@@ -60,7 +121,7 @@ export const TransporterEarningsScreen = () => {
                 Completed Trips
               </Text>
               <Text variant="bodyLarge" bold color={colors.neutral[0]}>
-                12 Trips
+                {trips.length} Trips
               </Text>
             </View>
           </View>
@@ -70,7 +131,7 @@ export const TransporterEarningsScreen = () => {
             variant="secondary"
             size="medium"
             style={styles.payoutBtn}
-            onPress={() => {}}
+            onPress={() => setIsWithdrawModalVisible(true)}
           />
         </Card>
 
@@ -80,7 +141,7 @@ export const TransporterEarningsScreen = () => {
         </Text>
 
         <FlatList
-          data={MOCK_TRIP_HISTORY}
+          data={trips}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
@@ -104,14 +165,54 @@ export const TransporterEarningsScreen = () => {
                   </Text>
                 </View>
 
-                <Text variant="h3" bold color={colors.role.transporter}>
-                  +{formatXAF(item.fee)}
-                </Text>
+                <View style={{ alignItems: 'flex-end' }}>
+                  <Text variant="bodyLarge" bold color={colors.role.transporter}>
+                    +{formatXAF(item.fee)}
+                  </Text>
+                  <Badge label="CREDITED" variant="success" size="small" />
+                </View>
               </View>
             </Card>
           )}
         />
       </View>
+
+      <BottomSheet
+        visible={isWithdrawModalVisible}
+        onClose={() => setIsWithdrawModalVisible(false)}
+        title="Withdraw Driver Earnings"
+      >
+        <Input
+          label="Withdrawal Amount (FCFA)"
+          placeholder="e.g. 5000"
+          keyboardType="numeric"
+          value={withdrawAmount}
+          onChangeText={setWithdrawAmount}
+          error={error}
+        />
+
+        <Input
+          label="Mobile Money Phone Number"
+          placeholder="+237 6XX XXX XXX"
+          keyboardType="phone-pad"
+          value={withdrawPhone}
+          onChangeText={setWithdrawPhone}
+        />
+
+        <Button
+          title={isProcessing ? 'Processing Payout...' : 'Confirm Instant Withdrawal'}
+          variant="primary"
+          onPress={handleWithdraw}
+          style={styles.withdrawActionBtn}
+        />
+      </BottomSheet>
+
+      {toastMessage && (
+        <Toast
+          message={toastMessage}
+          type="success"
+        />
+      )}
     </ScreenContainer>
   );
 };
@@ -120,43 +221,50 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: spacing.base,
     paddingTop: spacing.md,
-    paddingBottom: spacing.xs,
+    paddingBottom: spacing.sm,
     borderBottomWidth: 1,
   },
   content: {
-    padding: spacing.base,
     flex: 1,
+    padding: spacing.base,
   },
   walletCard: {
-    backgroundColor: colors.neutral[900],
-    borderRadius: borderRadius.xl,
-    padding: spacing.lg,
+    backgroundColor: colors.role.transporter,
+    padding: spacing.base,
     marginBottom: spacing.lg,
   },
   balanceText: {
-    marginVertical: spacing.xs,
+    marginTop: spacing.xs,
+    marginBottom: spacing.md,
   },
   statsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginVertical: spacing.sm,
+    marginBottom: spacing.base,
+    paddingTop: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.2)',
   },
   payoutBtn: {
-    marginTop: spacing.md,
+    backgroundColor: colors.neutral[0],
   },
   sectionLabel: {
-    marginBottom: spacing.xs,
+    marginBottom: spacing.sm,
   },
   listContent: {
     gap: spacing.sm,
+    paddingBottom: spacing.xl,
   },
   tripCard: {
-    marginBottom: 0,
+    padding: spacing.md,
   },
   tripRow: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  withdrawActionBtn: {
+    marginTop: spacing.md,
+    marginBottom: spacing.lg,
   },
 });
-

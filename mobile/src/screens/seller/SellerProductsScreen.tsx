@@ -6,6 +6,7 @@ import { Product, QualityTier } from '@wunabuy/types';
 import { formatXAF } from '@wunabuy/utils';
 import { colors, spacing, borderRadius } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
+import { ProductsService } from '../../services/api';
 
 export const SellerProductsScreen = ({ navigation }: any) => {
   const { theme } = useThemeStore();
@@ -14,10 +15,21 @@ export const SellerProductsScreen = ({ navigation }: any) => {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
+  const loadProducts = useCallback(async () => {
+    try {
+      const data = await ProductsService.getProducts();
+      setProducts(data);
+    } catch {
+      // Safe fallback
+    } finally {
+      setRefreshing(false);
+    }
+  }, []);
+
   const handleRefresh = useCallback(() => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 800);
-  }, []);
+    loadProducts();
+  }, [loadProducts]);
 
   const filteredProducts = products.filter((p) => {
     if (searchQuery.trim()) {
@@ -30,7 +42,7 @@ export const SellerProductsScreen = ({ navigation }: any) => {
     setProducts((prev) =>
       prev.map((p) => (p.id === productId ? { ...p, is_active: !p.is_active } : p))
     );
-    setToastMessage('Product status updated!');
+    setToastMessage('Product listing visibility updated!');
   };
 
   const handleDeleteProduct = (productId: string) => {

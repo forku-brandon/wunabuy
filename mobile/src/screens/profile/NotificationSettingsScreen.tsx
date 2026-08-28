@@ -1,21 +1,49 @@
 import React, { useState } from 'react';
-import { View, Switch, StyleSheet } from 'react-native';
-import { ScreenContainer, Text, Card } from '../../components/ui';
+import { View, Switch, StyleSheet, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { ScreenContainer, Text, Card, Toast } from '../../components/ui';
 import { useThemeStore } from '../../stores/theme.store';
-import { spacing, colors } from '@wunabuy/design-tokens';
+import { spacing, colors, borderRadius } from '@wunabuy/design-tokens';
+import { AuthService } from '../../services/api';
 
-export const NotificationSettingsScreen = () => {
+export const NotificationSettingsScreen = ({ navigation }: any) => {
   const { theme } = useThemeStore();
   const [orderUpdates, setOrderUpdates] = useState(true);
   const [chatMessages, setChatMessages] = useState(true);
   const [promotions, setPromotions] = useState(false);
   const [priceAlerts, setPriceAlerts] = useState(true);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const handleToggle = (key: string, value: boolean, setter: (v: boolean) => void) => {
+    setter(value);
+    AuthService.updatePreferences({ [key]: value });
+    setToastMessage(`Preferences updated.`);
+  };
 
   return (
     <ScreenContainer>
-      <Text variant="h1" bold style={styles.title}>
-        Notification Preferences
-      </Text>
+      <View style={styles.header}>
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={() => {
+            if (navigation?.canGoBack && navigation.canGoBack()) {
+              navigation.goBack();
+            } else if (navigation?.reset) {
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'BuyerApp' }],
+              });
+            }
+          }}
+          style={[styles.backBtn, { backgroundColor: theme.card }]}
+        >
+          <Ionicons name="arrow-back" size={20} color={theme.text} />
+        </TouchableOpacity>
+        <Text variant="h1" bold style={styles.title}>
+          Notification Preferences
+        </Text>
+      </View>
+
       <Text variant="bodyMedium" secondary style={styles.subtitle}>
         Choose how and when you want Wunabuy to notify you.
       </Text>
@@ -32,7 +60,7 @@ export const NotificationSettingsScreen = () => {
           </View>
           <Switch
             value={orderUpdates}
-            onValueChange={setOrderUpdates}
+            onValueChange={(val) => handleToggle('order_updates', val, setOrderUpdates)}
             trackColor={{ false: theme.border, true: colors.primary[500] }}
           />
         </View>
@@ -48,7 +76,7 @@ export const NotificationSettingsScreen = () => {
           </View>
           <Switch
             value={chatMessages}
-            onValueChange={setChatMessages}
+            onValueChange={(val) => handleToggle('chat_messages', val, setChatMessages)}
             trackColor={{ false: theme.border, true: colors.primary[500] }}
           />
         </View>
@@ -64,7 +92,7 @@ export const NotificationSettingsScreen = () => {
           </View>
           <Switch
             value={priceAlerts}
-            onValueChange={setPriceAlerts}
+            onValueChange={(val) => handleToggle('price_alerts', val, setPriceAlerts)}
             trackColor={{ false: theme.border, true: colors.primary[500] }}
           />
         </View>
@@ -80,19 +108,39 @@ export const NotificationSettingsScreen = () => {
           </View>
           <Switch
             value={promotions}
-            onValueChange={setPromotions}
+            onValueChange={(val) => handleToggle('promotions', val, setPromotions)}
             trackColor={{ false: theme.border, true: colors.primary[500] }}
           />
         </View>
       </Card>
+
+      {toastMessage && (
+        <Toast
+          message={toastMessage}
+          type="info"
+        />
+      )}
     </ScreenContainer>
   );
 };
 
 const styles = StyleSheet.create({
-  title: {
-    marginTop: spacing.md,
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.sm,
     marginBottom: spacing.xs,
+  },
+  backBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.sm,
+  },
+  title: {
+    flex: 1,
   },
   subtitle: {
     marginBottom: spacing.lg,
@@ -115,4 +163,3 @@ const styles = StyleSheet.create({
     paddingRight: spacing.md,
   },
 });
-

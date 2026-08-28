@@ -8,20 +8,39 @@ import { MOCK_PRODUCTS } from '../../services/mockProducts';
 import { Product } from '@wunabuy/types';
 import { useAuthStore } from '../../stores/auth.store';
 import { useThemeStore } from '../../stores/theme.store';
-import { formatPhone } from '@wunabuy/utils';
+import { formatPhone, formatXAF } from '@wunabuy/utils';
 import { spacing, colors, borderRadius, shadows } from '@wunabuy/design-tokens';
+import { WalletService } from '../../services/api';
 
 export const ProfileScreen = ({ navigation }: any) => {
   const insets = useSafeAreaInsets();
   const { user } = useAuthStore();
   const { theme, isDark } = useThemeStore();
+  const [walletBalance, setWalletBalance] = useState<number>(47500);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
+  const loadWallet = useCallback(async () => {
+    try {
+      const data = await WalletService.getWallet();
+      if (data) {
+        setWalletBalance(data.balance_available);
+      }
+    } catch {
+      // Safe fallback
+    } finally {
+      setRefreshing(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    loadWallet();
+  }, [loadWallet]);
+
   const handleRefresh = useCallback(() => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 800);
-  }, []);
+    loadWallet();
+  }, [loadWallet]);
 
   const handleSelectProduct = (product: Product) => {
     navigation.navigate('ProductDetail', { productId: product.id });
@@ -92,7 +111,7 @@ export const ProfileScreen = ({ navigation }: any) => {
             Wunabuy Wallet
           </Text>
           <Text variant="h2" bold color={colors.neutral[0]} style={styles.walletBalanceText}>
-            47,500 XAF
+            {formatXAF(walletBalance)}
           </Text>
           <View style={styles.walletEscrowBadge}>
             <Ionicons name="shield-checkmark" size={10} color="rgba(255,255,255,0.9)" style={{ marginRight: 3 }} />

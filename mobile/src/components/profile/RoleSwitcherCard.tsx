@@ -6,6 +6,7 @@ import { useAuthStore } from '../../stores/auth.store';
 import { UserRole } from '@wunabuy/types';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
+import { AuthService } from '../../services/api';
 
 export interface RoleSwitcherCardProps {
   navigation?: any;
@@ -14,6 +15,10 @@ export interface RoleSwitcherCardProps {
 export const RoleSwitcherCard: React.FC<RoleSwitcherCardProps> = ({ navigation }) => {
   const { user, activeRole, setActiveRole } = useAuthStore();
   const { theme, isDark } = useThemeStore();
+
+  const handleRoleSelect = (role: UserRole) => {
+    AuthService.switchRole(role);
+  };
 
   // Enforce Buyer as the only default active role.
   // Seller and Transporter are strictly hidden until approved by backend API.
@@ -94,7 +99,7 @@ export const RoleSwitcherCard: React.FC<RoleSwitcherCardProps> = ({ navigation }
             <TouchableOpacity
               key={role}
               activeOpacity={0.8}
-              onPress={() => setActiveRole(role)}
+              onPress={() => handleRoleSelect(role)}
               style={[
                 styles.roleItem,
                 {

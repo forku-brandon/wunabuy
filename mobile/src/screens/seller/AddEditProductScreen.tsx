@@ -6,6 +6,7 @@ import { ProductCategory, QualityTier, Product } from '@wunabuy/types';
 import { colors, spacing, borderRadius } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
 import { formatXAF } from '@wunabuy/utils';
+import { ProductsService } from '../../services/api';
 
 export const AddEditProductScreen = ({ navigation, route }: any) => {
   const existingProduct: Product | undefined = route.params?.product;
@@ -61,7 +62,32 @@ export const AddEditProductScreen = ({ navigation, route }: any) => {
     setError('');
 
     try {
-      // In production API integration: productsApi.createProduct or updateProduct
+      if (isEditing && existingProduct) {
+        // UPDATE Product
+        await ProductsService.updateProduct(existingProduct.id, {
+          name: name.trim(),
+          description: description.trim(),
+          category,
+          price: Number(price),
+          quantity: Number(quantity),
+          quality_tier: qualityTier,
+          images,
+        });
+      } else {
+        // CREATE Product
+        await ProductsService.createProduct({
+          name: name.trim(),
+          description: description.trim(),
+          category,
+          price: Number(price),
+          currency: 'XAF',
+          quantity: Number(quantity),
+          quality_tier: qualityTier,
+          images,
+          is_active: true,
+        });
+      }
+
       setToastMessage(isEditing ? 'Product updated successfully!' : 'Product listed successfully!');
       setTimeout(() => {
         setLoading(false);
