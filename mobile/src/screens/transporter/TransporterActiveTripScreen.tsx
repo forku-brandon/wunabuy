@@ -38,7 +38,19 @@ export const TransporterActiveTripScreen = ({ route, navigation }: any) => {
   return (
     <ScreenContainer>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+        <TouchableOpacity
+          onPress={() => {
+            if (navigation.canGoBack()) {
+              navigation.goBack();
+            } else {
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'TransporterApp' }],
+              });
+            }
+          }}
+          style={styles.backBtn}
+        >
           <Text variant="h2">←</Text>
         </TouchableOpacity>
         <Text variant="h1" bold color={colors.role.transporter}>

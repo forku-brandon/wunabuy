@@ -65,7 +65,14 @@ export const AddEditProductScreen = ({ navigation, route }: any) => {
       setToastMessage(isEditing ? 'Product updated successfully!' : 'Product listed successfully!');
       setTimeout(() => {
         setLoading(false);
-        navigation.goBack();
+        if (navigation.canGoBack()) {
+          navigation.goBack();
+        } else {
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'SellerApp' }],
+          });
+        }
       }, 1000);
     } catch (err: any) {
       setLoading(false);
@@ -76,7 +83,19 @@ export const AddEditProductScreen = ({ navigation, route }: any) => {
   return (
     <ScreenContainer>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+        <TouchableOpacity
+          onPress={() => {
+            if (navigation.canGoBack()) {
+              navigation.goBack();
+            } else {
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'SellerApp' }],
+              });
+            }
+          }}
+          style={styles.backBtn}
+        >
           <Text variant="h2">←</Text>
         </TouchableOpacity>
         <Text variant="h1" bold style={styles.title}>

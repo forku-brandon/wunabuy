@@ -120,7 +120,16 @@ export const ProductDetailScreen = ({ route, navigation }: any) => {
         <TouchableOpacity
           activeOpacity={0.8}
           style={[styles.headerIconBtn, { backgroundColor: theme.card }]}
-          onPress={() => navigation.goBack()}
+          onPress={() => {
+            if (navigation.canGoBack()) {
+              navigation.goBack();
+            } else {
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'BuyerApp' }],
+              });
+            }
+          }}
         >
           <Ionicons name="arrow-back" size={20} color={theme.text} />
         </TouchableOpacity>

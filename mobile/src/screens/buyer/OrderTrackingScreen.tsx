@@ -48,7 +48,16 @@ export const OrderTrackingScreen = ({ route, navigation }: any) => {
       <View style={[styles.headerBar, { paddingTop: Math.max(insets.top + spacing.xs, spacing.md) }]}>
         <TouchableOpacity
           activeOpacity={0.8}
-          onPress={() => navigation.goBack()}
+          onPress={() => {
+            if (navigation.canGoBack()) {
+              navigation.goBack();
+            } else {
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'BuyerApp' }],
+              });
+            }
+          }}
           style={[styles.backBtn, { backgroundColor: theme.card }]}
         >
           <Ionicons name="arrow-back" size={20} color={theme.text} />

@@ -352,7 +352,16 @@ export const WalletScreen = ({ navigation }: any) => {
       >
         <TouchableOpacity
           activeOpacity={0.8}
-          onPress={() => navigation.goBack()}
+          onPress={() => {
+            if (navigation.canGoBack()) {
+              navigation.goBack();
+            } else {
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'BuyerApp' }],
+              });
+            }
+          }}
           style={[styles.headerIconBtn, { backgroundColor: theme.card }]}
         >
           <Ionicons name="arrow-back" size={20} color={theme.text} />

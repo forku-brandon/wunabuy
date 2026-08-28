@@ -84,7 +84,16 @@ export const CheckoutPaymentScreen = ({ route, navigation }: any) => {
     <ScreenContainer>
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => navigation.goBack()}
+          onPress={() => {
+            if (navigation.canGoBack()) {
+              navigation.goBack();
+            } else {
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'BuyerApp' }],
+              });
+            }
+          }}
           style={[styles.backBtn, { backgroundColor: theme.card }]}
         >
           <Ionicons name="arrow-back" size={20} color={theme.text} />
