@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Modal,
@@ -32,6 +32,7 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({
   const insets = useSafeAreaInsets();
   const { user, logout } = useAuthStore();
   const { theme, isDark, toggleTheme } = useThemeStore();
+  const [isBalanceVisible, setIsBalanceVisible] = useState(true);
 
   if (!isOpen) return null;
 
@@ -99,10 +100,10 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-            {/* User Profile Summary Card */}
+            {/* User Profile & Wallet Summary Card */}
             <TouchableOpacity
               activeOpacity={0.88}
-              onPress={() => handleNavigate('BuyerProfile')}
+              onPress={() => handleNavigate('BuyerWallet')}
               style={[
                 styles.userProfileCard,
                 { backgroundColor: isDark ? '#1E293B' : colors.primary[50] },
@@ -110,7 +111,7 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({
               ]}
             >
               <View style={styles.avatarWrapper}>
-                <Avatar url={user?.avatar_url} name={user?.full_name || 'Jean Dupont'} size={50} />
+                <Avatar url={user?.avatar_url} name={user?.full_name || 'Jean Dupont'} size={48} />
                 <View style={styles.onlinePulseDot} />
               </View>
 
@@ -121,8 +122,28 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({
                 <Text variant="caption" secondary numberOfLines={1} style={{ marginTop: 1 }}>
                   {user?.phone || '+237 670 123 456'}
                 </Text>
-                <View style={styles.roleBadgeWrapper}>
-                  <Badge label="BUYER ACCOUNT" variant="primary" size="small" />
+
+                {/* Wallet Balance Display with Eye Privacy Toggle */}
+                <View style={[styles.walletBalanceBadge, { backgroundColor: isDark ? 'rgba(13,148,136,0.25)' : '#CCFBF1' }]}>
+                  <Ionicons name="wallet-outline" size={13} color={colors.primary[600]} style={{ marginRight: 4 }} />
+                  <Text variant="caption" bold color={colors.primary[600]} style={styles.walletBalanceText}>
+                    {isBalanceVisible ? '47,500 XAF' : '••••••• XAF'}
+                  </Text>
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      setIsBalanceVisible(!isBalanceVisible);
+                    }}
+                    style={styles.eyeToggleBtn}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <Ionicons
+                      name={isBalanceVisible ? 'eye-outline' : 'eye-off-outline'}
+                      size={14}
+                      color={colors.primary[600]}
+                    />
+                  </TouchableOpacity>
                 </View>
               </View>
 
@@ -411,9 +432,22 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: spacing.md,
   },
-  roleBadgeWrapper: {
-    marginTop: 4,
+  walletBalanceBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
     alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: borderRadius.full,
+    marginTop: 4,
+  },
+  walletBalanceText: {
+    fontSize: 11,
+    letterSpacing: 0.2,
+    marginRight: 6,
+  },
+  eyeToggleBtn: {
+    padding: 2,
   },
   dividerLine: {
     height: 1,
