@@ -15,8 +15,16 @@ export const RoleSwitcherCard: React.FC<RoleSwitcherCardProps> = ({ navigation }
   const { user, activeRole, setActiveRole } = useAuthStore();
   const { theme, isDark } = useThemeStore();
 
-  // ONLY display roles that have been approved by Wunabuy Staff and present in available_roles
-  const availableRoles = [...new Set(user?.available_roles ?? [UserRole.BUYER])] as UserRole[];
+  // Enforce Buyer as the only default active role.
+  // Seller and Transporter are strictly hidden until approved by backend API.
+  const availableRoles: UserRole[] = [UserRole.BUYER];
+
+  if ((user as any)?.is_seller_approved || (user?.role === UserRole.SELLER && user?.available_roles?.includes(UserRole.SELLER))) {
+    availableRoles.push(UserRole.SELLER);
+  }
+  if ((user as any)?.is_transporter_approved || (user?.role === UserRole.TRANSPORTER && user?.available_roles?.includes(UserRole.TRANSPORTER))) {
+    availableRoles.push(UserRole.TRANSPORTER);
+  }
 
   const isSellerApproved = availableRoles.includes(UserRole.SELLER);
   const isTransporterApproved = availableRoles.includes(UserRole.TRANSPORTER);
@@ -72,11 +80,11 @@ export const RoleSwitcherCard: React.FC<RoleSwitcherCardProps> = ({ navigation }
         <Text variant="caption" secondary style={styles.subtitle}>
           {availableRoles.length > 1
             ? 'Tap an authorized role below to switch your workspace navigation.'
-            : 'Your account is currently active in Buyer workspace mode.'}
+            : 'Your account is currently active in default Buyer workspace mode.'}
         </Text>
       </View>
 
-      {/* Approved Roles List (Transporter and Seller hidden until approved by Staff API) */}
+      {/* Active Approved Roles (Seller & Transporter hidden until backend approval) */}
       <View style={styles.rolesList}>
         {availableRoles.map((role) => {
           const config = getRoleConfig(role);
@@ -95,7 +103,18 @@ export const RoleSwitcherCard: React.FC<RoleSwitcherCardProps> = ({ navigation }
                 },
               ]}
             >
-              <View style={[styles.iconCircle, { backgroundColor: isActive ? config.color : isDark ? colors.neutral[800] : colors.neutral[100] }]}>
+              <View
+                style={[
+                  styles.iconCircle,
+                  {
+                    backgroundColor: isActive
+                      ? config.color
+                      : isDark
+                      ? colors.neutral[800]
+                      : colors.neutral[100],
+                  },
+                ]}
+              >
                 <Ionicons
                   name={config.iconName}
                   size={18}
@@ -126,47 +145,67 @@ export const RoleSwitcherCard: React.FC<RoleSwitcherCardProps> = ({ navigation }
         })}
       </View>
 
-      {/* Staff Verification & Unlock Notice (shown if Seller or Transporter are not yet unlocked) */}
+      {/* Staff Verification & Apply for Additional Roles Section */}
       {(!isSellerApproved || !isTransporterApproved) && (
         <View
           style={[
             styles.verificationBanner,
-            { backgroundColor: isDark ? colors.neutral[800] : colors.neutral[50], borderColor: theme.border },
+            { backgroundColor: isDark ? '#1E293B' : '#F8FAFC', borderColor: theme.border },
           ]}
         >
           <View style={styles.verificationHeaderRow}>
-            <Ionicons name="shield-checkmark" size={15} color={colors.primary[500]} style={{ marginRight: 6 }} />
-            <Text variant="caption" bold color={colors.primary[600]}>
+            <Ionicons name="shield-checkmark" size={16} color={colors.primary[500]} style={{ marginRight: 6 }} />
+            <Text variant="bodyMedium" bold color={colors.primary[600]}>
               Staff Approval Required for Additional Roles
             </Text>
           </View>
           <Text variant="caption" secondary style={styles.verificationText}>
-            Seller and Transporter workspace roles are restricted to verified accounts. Once approved by Wunabuy Staff, their workspace switchers will automatically unlock above.
+            Seller and Transporter workspace roles are restricted to verified accounts. Apply below to submit your documents. Once approved by Wunabuy Staff via API, the role switch button will automatically appear in your active roles above.
           </Text>
 
           {navigation && (
-            <View style={styles.actionButtonsRow}>
+            <View style={styles.actionButtonsCol}>
+              {/* Apply to Sell Button */}
               {!isSellerApproved && (
                 <TouchableOpacity
-                  activeOpacity={0.8}
+                  activeOpacity={0.82}
                   onPress={() => navigation.navigate('SellerWelcome')}
-                  style={[styles.miniApplyBtn, { borderColor: colors.role.seller }]}
+                  style={[styles.applyCardBtn, { borderColor: colors.role.seller }]}
                 >
-                  <Text variant="caption" bold color={colors.role.seller}>
-                    + Apply to Sell
-                  </Text>
+                  <View style={[styles.applyIconCircle, { backgroundColor: '#EFF6FF' }]}>
+                    <Ionicons name="storefront" size={18} color={colors.role.seller} />
+                  </View>
+                  <View style={styles.applyTextCol}>
+                    <Text variant="bodyMedium" bold color={colors.role.seller}>
+                      Apply to Sell (Store Owner)
+                    </Text>
+                    <Text variant="caption" secondary>
+                      Register your merchant store &amp; list products
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={16} color={colors.role.seller} />
                 </TouchableOpacity>
               )}
 
+              {/* Apply to Transport Button */}
               {!isTransporterApproved && (
                 <TouchableOpacity
-                  activeOpacity={0.8}
+                  activeOpacity={0.82}
                   onPress={() => navigation.navigate('TransporterWelcome')}
-                  style={[styles.miniApplyBtn, { borderColor: colors.role.transporter, marginLeft: 8 }]}
+                  style={[styles.applyCardBtn, { borderColor: colors.role.transporter, marginTop: spacing.xs }]}
                 >
-                  <Text variant="caption" bold color={colors.role.transporter}>
-                    + Apply as Driver
-                  </Text>
+                  <View style={[styles.applyIconCircle, { backgroundColor: '#FFFBEB' }]}>
+                    <Ionicons name="car-sport" size={18} color={colors.role.transporter} />
+                  </View>
+                  <View style={styles.applyTextCol}>
+                    <Text variant="bodyMedium" bold color={colors.role.transporter}>
+                      Apply to Transport (Driver)
+                    </Text>
+                    <Text variant="caption" secondary>
+                      Register your vehicle &amp; accept delivery dispatches
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={16} color={colors.role.transporter} />
                 </TouchableOpacity>
               )}
             </View>
@@ -231,7 +270,7 @@ const styles = StyleSheet.create({
   verificationBanner: {
     marginTop: spacing.md,
     padding: spacing.md,
-    borderRadius: borderRadius.md,
+    borderRadius: borderRadius.xl,
     borderWidth: 1,
   },
   verificationHeaderRow: {
@@ -242,15 +281,28 @@ const styles = StyleSheet.create({
   verificationText: {
     fontSize: 11,
     lineHeight: 16,
+    marginBottom: spacing.sm,
   },
-  actionButtonsRow: {
+  actionButtonsCol: {
+    gap: spacing.xs,
+  },
+  applyCardBtn: {
     flexDirection: 'row',
-    marginTop: spacing.sm,
-  },
-  miniApplyBtn: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 4,
-    borderRadius: borderRadius.full,
+    alignItems: 'center',
+    padding: spacing.sm,
+    borderRadius: borderRadius.lg,
     borderWidth: 1,
+    backgroundColor: 'transparent',
+  },
+  applyIconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.sm,
+  },
+  applyTextCol: {
+    flex: 1,
   },
 });

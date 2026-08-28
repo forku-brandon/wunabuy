@@ -27,7 +27,6 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
 
       setAuth: (user, accessToken, refreshToken) => {
-        // Enforce default buyer role and ensure available_roles contains only approved roles from backend
         const approvedRoles = user.available_roles && user.available_roles.length > 0
           ? user.available_roles
           : [UserRole.BUYER];
@@ -36,9 +35,7 @@ export const useAuthStore = create<AuthState>()(
           user: { ...user, available_roles: approvedRoles },
           accessToken,
           refreshToken,
-          activeRole: approvedRoles.includes(user.role ?? UserRole.BUYER)
-            ? (user.role ?? UserRole.BUYER)
-            : UserRole.BUYER,
+          activeRole: UserRole.BUYER,
           isAuthenticated: true,
         });
       },
@@ -47,11 +44,9 @@ export const useAuthStore = create<AuthState>()(
         const { user } = get();
         const approvedRoles = user?.available_roles ?? [UserRole.BUYER];
 
-        // Only allow switching to a role that has been approved by backend
         if (approvedRoles.includes(role)) {
           set({ activeRole: role });
         } else {
-          // Default fallback to Buyer
           set({ activeRole: UserRole.BUYER });
         }
       },
@@ -75,7 +70,25 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: '@wunabuy_auth_store',
+      version: 2,
       storage: createJSONStorage(() => AsyncStorage),
+      migrate: (persistedState: any, version: number) => {
+        // Reset any stale persisted roles to default Buyer
+        if (version < 2 || !persistedState) {
+          return {
+            ...persistedState,
+            activeRole: UserRole.BUYER,
+            user: persistedState?.user
+              ? {
+                  ...persistedState.user,
+                  role: UserRole.BUYER,
+                  available_roles: [UserRole.BUYER],
+                }
+              : null,
+          };
+        }
+        return persistedState as AuthState;
+      },
     }
   )
 );
