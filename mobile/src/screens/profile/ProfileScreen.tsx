@@ -35,21 +35,34 @@ export const ProfileScreen = ({ navigation }: any) => {
     <>
       {/* Top Header Row with Settings Gear Icon (Matching media_1787828841561.png) */}
       <View style={[styles.headerRow, { paddingTop: Math.max(insets.top + spacing.xs, spacing.md) }]}>
-        <View style={styles.userHeaderLeft}>
-          <Avatar
-            url={user?.avatar_url}
-            name={user?.full_name ?? 'Jean Dupont'}
-            size={42}
-          />
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={() => navigation.navigate('Settings')}
+          style={styles.userHeaderLeft}
+        >
+          <View style={styles.avatarWrapper}>
+            <Avatar
+              url={user?.avatar_url}
+              name={user?.full_name ?? 'Jean Dupont'}
+              size={52}
+              showBorder
+            />
+            <View style={styles.avatarCameraBadge}>
+              <Ionicons name="camera" size={10} color={colors.neutral[0]} />
+            </View>
+          </View>
           <View style={styles.userHeaderTextCol}>
             <Text variant="h2" bold numberOfLines={1}>
-              {user?.full_name ?? 'tb2700557643'}
+              {user?.full_name ?? 'Jean Dupont'}
             </Text>
-            <Text variant="caption" secondary numberOfLines={1}>
-              {formatPhone(user?.phone ?? '+237670123456')}
-            </Text>
+            <View style={styles.userPhoneRow}>
+              <Ionicons name="call-outline" size={12} color={theme.textSecondary} style={{ marginRight: 4 }} />
+              <Text variant="caption" secondary numberOfLines={1}>
+                {formatPhone(user?.phone ?? '+237670123456')}
+              </Text>
+            </View>
           </View>
-        </View>
+        </TouchableOpacity>
 
         {/* Settings Gear Icon Button (Navigates to Settings page) */}
         <TouchableOpacity
@@ -388,9 +401,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
   },
+  avatarWrapper: {
+    position: 'relative',
+  },
+  avatarCameraBadge: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: colors.primary[500],
+    borderWidth: 2,
+    borderColor: colors.neutral[0],
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...shadows.sm,
+  },
   userHeaderTextCol: {
     marginLeft: spacing.md,
     flex: 1,
+  },
+  userPhoneRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 2,
   },
   settingsBtn: {
     width: 42,
