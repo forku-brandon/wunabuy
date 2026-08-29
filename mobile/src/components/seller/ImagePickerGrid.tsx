@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Image, TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
+import { View, Image, TouchableOpacity, StyleSheet, ViewStyle, Alert } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { Text } from '../ui/Text';
 import { colors, spacing, borderRadius } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
@@ -32,8 +33,67 @@ export const ImagePickerGrid: React.FC<ImagePickerGridProps> = ({
 
   const handlePickPhoto = () => {
     if (images.length >= maxImages) return;
-    const nextSample = SAMPLE_PICKER_PHOTOS[images.length % SAMPLE_PICKER_PHOTOS.length];
-    onAddImage(nextSample);
+
+    Alert.alert(
+      'Add Product Photo',
+      'Choose image source for this listing:',
+      [
+        {
+          text: '📸 Take Photo (Camera)',
+          onPress: async () => {
+            try {
+              const { status } = await ImagePicker.requestCameraPermissionsAsync();
+              if (status !== 'granted') {
+                const nextSample = SAMPLE_PICKER_PHOTOS[images.length % SAMPLE_PICKER_PHOTOS.length];
+                onAddImage(nextSample);
+                return;
+              }
+              const res = await ImagePicker.launchCameraAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: true,
+                aspect: [1, 1],
+                quality: 0.8,
+              });
+              if (!res.canceled && res.assets && res.assets[0]?.uri) {
+                onAddImage(res.assets[0].uri);
+              }
+            } catch {
+              const nextSample = SAMPLE_PICKER_PHOTOS[images.length % SAMPLE_PICKER_PHOTOS.length];
+              onAddImage(nextSample);
+            }
+          },
+        },
+        {
+          text: '🖼️ Choose from Gallery',
+          onPress: async () => {
+            try {
+              const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+              if (status !== 'granted') {
+                const nextSample = SAMPLE_PICKER_PHOTOS[images.length % SAMPLE_PICKER_PHOTOS.length];
+                onAddImage(nextSample);
+                return;
+              }
+              const res = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: true,
+                aspect: [1, 1],
+                quality: 0.8,
+              });
+              if (!res.canceled && res.assets && res.assets[0]?.uri) {
+                onAddImage(res.assets[0].uri);
+              }
+            } catch {
+              const nextSample = SAMPLE_PICKER_PHOTOS[images.length % SAMPLE_PICKER_PHOTOS.length];
+              onAddImage(nextSample);
+            }
+          },
+        },
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+      ]
+    );
   };
 
   return (

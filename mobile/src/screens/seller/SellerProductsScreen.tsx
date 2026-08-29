@@ -1,35 +1,31 @@
 import React, { useState, useCallback } from 'react';
 import { View, Image, FlatList, StyleSheet, TouchableOpacity, Switch, RefreshControl } from 'react-native';
-import { ScreenContainer, Text, Card, Input, Button, Badge, Toast } from '../../components/ui';
-import { MOCK_PRODUCTS } from '../../services/mockProducts';
+import { Ionicons } from '@expo/vector-icons';
+import { ScreenContainer, Text, Card, Input, Button, Badge, Toast, EmptyState } from '../../components/ui';
+import { useSellerStore } from '../../stores/seller.store';
 import { Product, QualityTier } from '@wunabuy/types';
 import { formatXAF } from '@wunabuy/utils';
 import { colors, spacing, borderRadius } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
-import { ProductsService } from '../../services/api';
+import { SellerService } from '../../services/api';
 
 export const SellerProductsScreen = ({ navigation }: any) => {
-  const { theme } = useThemeStore();
-  const [products, setProducts] = useState<Product[]>(MOCK_PRODUCTS);
+  const { theme, isDark } = useThemeStore();
+  const { products, toggleProductActive, updateStock, deleteProduct } = useSellerStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  const loadProducts = useCallback(async () => {
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
     try {
-      const data = await ProductsService.getProducts();
-      setProducts(data);
+      await SellerService.getStoreProducts();
     } catch {
-      // Safe fallback
+      // Handled
     } finally {
       setRefreshing(false);
     }
   }, []);
-
-  const handleRefresh = useCallback(() => {
-    setRefreshing(true);
-    loadProducts();
-  }, [loadProducts]);
 
   const filteredProducts = products.filter((p) => {
     if (searchQuery.trim()) {
@@ -38,16 +34,21 @@ export const SellerProductsScreen = ({ navigation }: any) => {
     return true;
   });
 
-  const handleToggleActive = (productId: string) => {
-    setProducts((prev) =>
-      prev.map((p) => (p.id === productId ? { ...p, is_active: !p.is_active } : p))
-    );
-    setToastMessage('Product listing visibility updated!');
+  const handleToggleActive = (product: Product) => {
+    toggleProductActive(product.id);
+    SellerService.toggleProductActive(product.id, !product.is_active);
+    setToastMessage(`Product "${product.name}" is now ${!product.is_active ? 'Active' : 'Paused'}.`);
+  };
+
+  const handleStockChange = (product: Product, delta: number) => {
+    updateStock(product.id, delta);
+    const newQty = Math.max(0, product.quantity + delta);
+    SellerService.updateStock(product.id, newQty);
   };
 
   const handleDeleteProduct = (productId: string) => {
-    setProducts((prev) => prev.filter((p) => p.id !== productId));
-    setToastMessage('Product listing deleted.');
+    deleteProduct(productId);
+    setToastMessage('Product removed from catalog.');
   };
 
   return (
@@ -55,101 +56,155 @@ export const SellerProductsScreen = ({ navigation }: any) => {
       {/* Header */}
       <View style={[styles.header, { backgroundColor: theme.card, borderBottomColor: theme.border }]}>
         <View style={styles.headerRow}>
-          <Text variant="h1" bold>
-            Store Inventory
-          </Text>
+          <View>
+            <Text variant="caption" secondary bold>
+              CATALOG & INVENTORY
+            </Text>
+            <Text variant="h1" bold color={colors.role.seller}>
+              Store Products ({products.length})
+            </Text>
+          </View>
           <Button
             title="+ List Item"
             variant="primary"
             size="small"
             fullWidth={false}
             onPress={() => navigation.navigate('AddEditProduct')}
+            style={{ backgroundColor: colors.role.seller }}
           />
         </View>
 
         <Input
-          placeholder="Filter inventory by product title..."
+          placeholder="Search inventory items..."
           value={searchQuery}
           onChangeText={setSearchQuery}
           containerStyle={styles.searchInput}
-          leftIcon={<Text>🔍</Text>}
+          leftIcon={<Ionicons name="search-outline" size={18} color={theme.textSecondary} />}
         />
       </View>
 
       {/* Product List */}
-      <FlatList
-        data={filteredProducts}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            tintColor={colors.primary[500]}
-            colors={[colors.primary[500]]}
+      {filteredProducts.length === 0 ? (
+        <View style={styles.emptyWrapper}>
+          <EmptyState
+            title="No Products Found"
+            description="Add products to your store catalog with high-quality photos to start receiving orders."
+            actionLabel="+ Add First Product"
+            onAction={() => navigation.navigate('AddEditProduct')}
           />
-        }
-        renderItem={({ item }) => (
-          <Card style={styles.productCard}>
-            <View style={styles.cardRow}>
-              <Image source={{ uri: item.images[0] }} style={styles.thumbnail} />
+        </View>
+      ) : (
+        <FlatList
+          data={filteredProducts}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor={colors.role.seller}
+              colors={[colors.role.seller]}
+            />
+          }
+          renderItem={({ item }) => {
+            const isOutOfStock = item.quantity === 0;
+            const isLowStock = item.quantity > 0 && item.quantity <= 5;
 
-              <View style={styles.info}>
-                <View style={styles.titleRow}>
-                  <Text variant="bodyLarge" bold numberOfLines={1} style={{ flex: 1 }}>
-                    {item.name}
-                  </Text>
-                  <Switch
-                    value={item.is_active}
-                    onValueChange={() => handleToggleActive(item.id)}
-                    trackColor={{ false: theme.border, true: colors.primary[500] }}
-                  />
-                </View>
+            return (
+              <Card style={[styles.productCard, !item.is_active && { opacity: 0.75 }]}>
+                <View style={styles.cardRow}>
+                  <Image source={{ uri: item.images[0] }} style={styles.thumbnail} />
 
-                <View style={styles.badgeRow}>
-                  <Badge
-                    label={item.quality_tier.replace('_', ' ').toUpperCase()}
-                    variant={item.quality_tier === QualityTier.NEW ? 'success' : 'primary'}
-                    size="small"
-                  />
-                  <Badge
-                    label={`Stock: ${item.quantity}`}
-                    variant={item.quantity > 0 ? 'info' : 'error'}
-                    size="small"
-                  />
-                </View>
-
-                <View style={styles.priceRow}>
-                  <Text variant="h3" bold color={colors.primary[500]}>
-                    {formatXAF(item.price)}
-                  </Text>
-
-                  <View style={styles.actions}>
-                    <TouchableOpacity
-                      onPress={() => navigation.navigate('AddEditProduct', { product: item })}
-                      style={styles.actionBtn}
-                    >
-                      <Text variant="caption" bold color={colors.role.seller}>
-                        Edit
+                  <View style={styles.info}>
+                    <View style={styles.titleRow}>
+                      <Text variant="bodyLarge" bold numberOfLines={1} style={{ flex: 1 }}>
+                        {item.name}
                       </Text>
-                    </TouchableOpacity>
+                      <Switch
+                        value={item.is_active}
+                        onValueChange={() => handleToggleActive(item)}
+                        trackColor={{ false: theme.border, true: colors.role.seller }}
+                      />
+                    </View>
 
-                    <TouchableOpacity
-                      onPress={() => handleDeleteProduct(item.id)}
-                      style={styles.actionBtn}
-                    >
-                      <Text variant="caption" bold color={colors.semantic.error[500]}>
-                        Delete
+                    <View style={styles.badgeRow}>
+                      <Badge
+                        label={item.quality_tier.replace('_', ' ').toUpperCase()}
+                        variant={item.quality_tier === QualityTier.NEW ? 'success' : 'primary'}
+                        size="small"
+                      />
+                      {isOutOfStock ? (
+                        <Badge label="Out of Stock" variant="danger" size="small" />
+                      ) : isLowStock ? (
+                        <Badge label={`Low Stock: ${item.quantity}`} variant="warning" size="small" />
+                      ) : (
+                        <Badge label={`In Stock: ${item.quantity}`} variant="info" size="small" />
+                      )}
+                    </View>
+
+                    {/* Price and Stock Steppers Row */}
+                    <View style={styles.priceRow}>
+                      <Text variant="h3" bold color={colors.role.seller}>
+                        {formatXAF(item.price)}
                       </Text>
-                    </TouchableOpacity>
+
+                      {/* Stock Stepper Controls */}
+                      <View style={[styles.stockStepperBox, { backgroundColor: isDark ? colors.neutral[800] : colors.neutral[100] }]}>
+                        <TouchableOpacity
+                          activeOpacity={0.7}
+                          onPress={() => handleStockChange(item, -1)}
+                          disabled={item.quantity <= 0}
+                          style={[styles.stepperBtn, item.quantity <= 0 && { opacity: 0.4 }]}
+                        >
+                          <Ionicons name="remove" size={14} color={theme.text} />
+                        </TouchableOpacity>
+
+                        <Text variant="caption" bold style={styles.stepperText}>
+                          {item.quantity}
+                        </Text>
+
+                        <TouchableOpacity
+                          activeOpacity={0.7}
+                          onPress={() => handleStockChange(item, 1)}
+                          style={styles.stepperBtn}
+                        >
+                          <Ionicons name="add" size={14} color={theme.text} />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+
+                    {/* Bottom Actions Row */}
+                    <View style={styles.bottomActionsRow}>
+                      <TouchableOpacity
+                        activeOpacity={0.7}
+                        onPress={() => navigation.navigate('AddEditProduct', { product: item })}
+                        style={[styles.actionBtn, { borderColor: theme.border }]}
+                      >
+                        <Ionicons name="create-outline" size={14} color={colors.role.seller} />
+                        <Text variant="caption" bold color={colors.role.seller} style={{ marginLeft: 4 }}>
+                          Edit
+                        </Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        activeOpacity={0.7}
+                        onPress={() => handleDeleteProduct(item.id)}
+                        style={[styles.actionBtn, { borderColor: theme.border, marginLeft: spacing.sm }]}
+                      >
+                        <Ionicons name="trash-outline" size={14} color={colors.semantic.error[500]} />
+                        <Text variant="caption" bold color={colors.semantic.error[500]} style={{ marginLeft: 4 }}>
+                          Delete
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
                 </View>
-              </View>
-            </View>
-          </Card>
-        )}
-      />
+              </Card>
+            );
+          }}
+        />
+      )}
 
       {toastMessage && <Toast message={toastMessage} type="info" />}
     </ScreenContainer>
@@ -205,19 +260,49 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     marginBottom: spacing.xs,
   },
+  emptyWrapper: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.base,
+  },
   priceRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginTop: spacing.xs,
   },
-  actions: {
+  stockStepperBox: {
     flexDirection: 'row',
-    gap: spacing.md,
+    alignItems: 'center',
+    borderRadius: borderRadius.full,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+  },
+  stepperBtn: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepperText: {
+    paddingHorizontal: 8,
+  },
+  bottomActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.sm,
+    paddingTop: spacing.xs,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#E2E8F0',
   },
   actionBtn: {
-    paddingHorizontal: spacing.xs,
-    paddingVertical: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
   },
 });
 

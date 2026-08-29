@@ -273,6 +273,7 @@ KYC State Machine: `Registration → Pending → Under Review → Approved (Acti
 | ID | Requirement | Priority |
 |---|---|---|
 | FR-021 | Add product: name, description, category, price, quantity, quality tier (New/Like New/Good/Fair), up to 5 photos | High |
+| FR-021A | Inventory Stock Stepper: Real-time [ - 1 + ] stock increment/decrement steppers and low-stock indicators (≤ 5 units) | High |
 | FR-022 | Categories: Electronics, Fashion, Food & Groceries, Home & Garden, Health & Beauty, Automotive, Services, Other | High |
 | FR-023 | Auto inventory: decrement on sale; alert at ≤5 units | High |
 | FR-024 | Hide/unhide product (pause sales) | Medium |
@@ -320,8 +321,11 @@ PENDING_PAYMENT → PAID_ESCROW → PREPARING → READY_FOR_PICKUP → IN_TRANSI
 | FR-049 | Full audit trail of order state transitions SHALL capture before/after state, actor, timestamp, and related metadata | High |
 | FR-050 | Customer order history with status | High |
 | FR-051 | Store order dashboard with filters | High |
+| FR-051A | Visual Acceptance Timer: Display real-time 2-hour countdown timer on new orders with auto-cancel enforcement | High |
+| FR-051B | Dual Delivery Dispatch: Support selecting Wunabuy Express Transporter vs. In-House Rider upon marking orders ready | High |
 | FR-052 | Platform commission (configurable, default 5-10%) | High |
 | FR-053 | Store wallet: escrow balance, available balance, transactions, payouts | High |
+| FR-053A | Store Wallet Privacy & MoMo Payout: Eye icon toggle to mask balance + instant Mobile Money payout requests | High |
 | FR-054 | Auto-release escrow after 48 hours if no dispute is raised; if a dispute is raised, escrow remains frozen until the case is resolved | High |
 | FR-055 | Staff Portal: Finance staff can view escrow balances, approve/reject payouts, reconcile transactions | High |
 | FR-056 | Order timeout events SHALL be retried and logged to avoid silent failures in payment or acknowledgement workflows | Medium |

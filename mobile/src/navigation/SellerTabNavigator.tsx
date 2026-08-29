@@ -8,23 +8,11 @@ import { useThemeStore } from '../stores/theme.store';
 import { colors } from '@wunabuy/design-tokens';
 import { SellerDashboardScreen } from '../screens/seller/SellerDashboardScreen';
 import { SellerProductsScreen } from '../screens/seller/SellerProductsScreen';
+import { SellerOrdersScreen } from '../screens/seller/SellerOrdersScreen';
+import { SellerWalletScreen } from '../screens/seller/SellerWalletScreen';
 import { ProfileScreen } from '../screens/profile/ProfileScreen';
 
 const Tab = createBottomTabNavigator<SellerTabParamList>();
-
-const SellerOrdersScreen = () => (
-  <ScreenContainer>
-    <Text variant="h1" bold>Fulfillment Orders</Text>
-    <Text variant="bodyMedium" secondary>Accept and mark orders ready for pickup</Text>
-  </ScreenContainer>
-);
-
-const SellerWalletScreen = () => (
-  <ScreenContainer>
-    <Text variant="h1" bold>Store Wallet</Text>
-    <Text variant="bodyMedium" secondary>Available payouts and transaction ledger</Text>
-  </ScreenContainer>
-);
 
 export const SellerTabNavigator = () => {
   const { theme } = useThemeStore();

@@ -288,6 +288,12 @@ Wunabuy addresses these challenges through a **mobile-first, offline-resilient a
 - **FR-054 (High):** Standalone Android APK Compilation: Mobile project is configured with Expo Application Services (`EAS Build`) with preview distribution profiles (`buildType: "apk"`), enabling continuous cloud compilation of installable release APKs without local Android SDK or Java JDK dependencies.
 - **FR-055 (High):** Direct Tester Distribution: Cloud builds automatically output signed `.apk` binaries accessible via direct HTTPS download URLs and scannable QR codes for testing across Android devices.
 
+### EPIC 15: Seller Store Operations & Merchant Fulfillment Hub
+- **FR-056 (High):** Fulfillment Queue & 2-Hour Auto-Cancel Acceptance Timer (`SellerOrdersScreen`): Dedicated fulfillment queue with real-time countdown timer (`⏳ 01:45:00`) enforcing BR-01. Orders not accepted within 2 hours auto-cancel and refund the buyer. Includes stage tabs: `New Orders`, `Preparing`, `Ready for Pickup`, `In Transit`, `Completed`, `Disputed`.
+- **FR-057 (High):** Dual Delivery Dispatch Mode: When marking orders ready for pickup, merchants can choose between **Wunabuy Express Transporters** (automated GPS dispatch to verified riders) and **Self-Delivery / Store In-House Rider**.
+- **FR-058 (High):** Store Wallet & Instant Mobile Money Payouts (`SellerWalletScreen`): Real-time escrow ledger with interactive Privacy Eye toggle (`👁` / `👁‍🗨`), instant Mobile Money (MTN MoMo & Orange Money) payout requests with 1% telecom charge calculations, and audit history.
+- **FR-059 (High):** Merchant Inventory CRUD with Stock Steppers (`SellerProductsScreen` & `AddEditProductScreen`): 2-column inventory catalog with active/paused toggle, instant `[ − 1 + ]` stock steppers, low-stock warnings ($\le 5$ units), and 5-photo upload grid with native camera and gallery integration.
+
 ---
 
 ## 7. Critical Business Rules (Launch Requirements)

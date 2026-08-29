@@ -549,6 +549,44 @@ sequenceDiagram
 
 ---
 
+### 4.5 Accept Order (Seller — 2-Hour Timeout Rule)
+`POST /api/v1/seller/orders/:id/accept`
+
+- **Headers**: `Authorization: Bearer <token>`
+- **Description**: Stores must accept orders within 2 hours or the system auto-cancels and refunds the buyer (BR-01).
+- **Response `200 OK`**: Transitions order from `pending_payment`/`paid_escrow` to `preparing`.
+
+---
+
+### 4.6 Decline Order (Seller)
+`POST /api/v1/seller/orders/:id/decline`
+
+- **Headers**: `Authorization: Bearer <token>`
+- **Request Body**:
+```json
+{
+  "reason": "Out of Stock"
+}
+```
+- **Response `200 OK`**: Triggers immediate full escrow refund to buyer.
+
+---
+
+### 4.7 Mark Ready for Pickup & Dispatch Delivery Method (Seller)
+`POST /api/v1/seller/orders/:id/ready`
+
+- **Headers**: `Authorization: Bearer <token>`
+- **Request Body**:
+```json
+{
+  "delivery_method": "wunabuy_transporter",
+  "driver_phone": "+237670998877"
+}
+```
+- **Response `200 OK`**: Broadcasts job to nearby transport providers or records in-house rider contact.
+
+---
+
 ## 5. Wallet Ledger & Mobile Money Payouts
 
 ### 5.1 Get Wallet Summary

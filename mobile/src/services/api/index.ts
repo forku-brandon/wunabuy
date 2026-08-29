@@ -7,3 +7,4 @@ export * from './promotionsService';
 export * from './authService';
 export * from './buyerService';
 export * from './disputesService';
+export * from './sellerService';

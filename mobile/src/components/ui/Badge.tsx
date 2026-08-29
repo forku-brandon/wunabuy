@@ -3,7 +3,17 @@ import { View, StyleSheet, ViewStyle } from 'react-native';
 import { colors, spacing, borderRadius } from '@wunabuy/design-tokens';
 import { Text } from './Text';
 
-export type BadgeVariant = 'success' | 'warning' | 'error' | 'info' | 'neutral' | 'primary' | 'accent';
+export type BadgeVariant =
+  | 'success'
+  | 'warning'
+  | 'error'
+  | 'danger'
+  | 'info'
+  | 'neutral'
+  | 'primary'
+  | 'accent'
+  | 'seller'
+  | 'transporter';
 
 export interface BadgeProps {
   label: string;
@@ -25,6 +35,7 @@ export const Badge: React.FC<BadgeProps> = ({
       case 'warning':
         return { bg: colors.semantic.warning[50], text: colors.semantic.warning[700] };
       case 'error':
+      case 'danger':
         return { bg: colors.semantic.error[50], text: colors.semantic.error[700] };
       case 'info':
         return { bg: colors.semantic.info[50], text: colors.semantic.info[700] };
@@ -32,6 +43,10 @@ export const Badge: React.FC<BadgeProps> = ({
         return { bg: colors.primary[50], text: colors.primary[700] };
       case 'accent':
         return { bg: colors.accent[50], text: colors.accent[700] };
+      case 'seller':
+        return { bg: '#EFF6FF', text: colors.role.seller };
+      case 'transporter':
+        return { bg: '#FEF3C7', text: colors.role.transporter };
       case 'neutral':
       default:
         return { bg: colors.neutral[100], text: colors.neutral[700] };

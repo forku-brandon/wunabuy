@@ -1268,9 +1268,32 @@ Production deployment must be blocked if any critical quality gate fails.
 
 ---
 
-## Final Document Status
+## 28. Seller Store Operations & Merchant Fulfillment Architecture (v1.9)
 
-This version of the Wunabuy Frontend Technical Specification represents a production-ready engineering baseline for the company (v1.8). It establishes the design principles, technical architecture, operational expectations, security posture, quality gates, and governance needed for deployment and launch readiness.
+### 28.1 Fulfillment Management & 2-Hour Auto-Cancel Timer (`SellerOrdersScreen`)
+- **Visual Countdown Engine:** Renders live, per-second countdown badges (`⏳ 01:45:00`) on all incoming `pending_acceptance` orders enforcing BR-01 business rules.
+- **Fulfillment Stage Tabs:** Segmented views for `New Orders`, `Preparing`, `Ready for Pickup`, `In Transit`, `Completed`, and `All Orders`.
+- **Dual Delivery Dispatch Modal:** Interactive selector allowing merchants to choose between:
+  1. **Wunabuy Express Transporter:** Automated broadcast to verified nearby riders with live GPS route updates.
+  2. **Self-Delivery / Store In-House Rider:** Direct merchant fulfillment with driver phone contact tracking.
+- **Order Actions:** Full state-machine transitions (`acceptOrder`, `declineOrder` with reason modal, `markReadyForPickup`, `markOrderInTransit`, `markOrderCompleted`).
+
+### 28.2 Store Wallet & Instant Mobile Money Payouts (`SellerWalletScreen`)
+- **Balance Privacy Masking:** Interactive eye toggle (`👁` / `👁‍🗨`) to hide/show available store balances and locked escrow funds (`•••••• FCFA` vs `450 000 FCFA`).
+- **Instant MoMo Payout Modal:** Payout requests to MTN MoMo (`*126#`) and Orange Money (`#150*50#`) with preset fraction chips (`25%`, `50%`, `75%`, `Max`), 1% telecom charge breakdown, 0% platform fee, and instant receipt generation.
+- **Double-Entry Ledger Feed:** Comprehensive audit trail filterable by `All`, `Escrow Released`, `Payouts`, and `Platform Fees`.
+
+### 28.3 Store Catalog & Inventory Stock Steppers (`SellerProductsScreen`)
+- **Interactive Stock Controls:** Quick `[ − 1 + ]` steppers for real-time inventory adjustments directly on product cards.
+- **Stock Alert Badges:** Warning indicators for `Low Stock (≤ 5 units)` and `Out of Stock`.
+- **Active / Paused Visibility Toggle:** Immediate product listing activation/pausing via `Switch`.
+- **Native 5-Photo Upload Grid (`ImagePickerGrid`):** Multi-image uploader supporting direct camera capture (`launchCameraAsync`) and gallery selection (`launchImageLibraryAsync`).
 
 ---
-**End of Document (v1.8)**
+
+## Final Document Status
+
+This version of the Wunabuy Frontend Technical Specification represents a production-ready engineering baseline for the company (v1.9). It establishes the design principles, technical architecture, operational expectations, security posture, quality gates, and governance needed for deployment and launch readiness.
+
+---
+**End of Document (v1.9)**
