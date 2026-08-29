@@ -246,6 +246,8 @@ The platform SHALL follow a constrained launch strategy. The following policy SH
 | FR-009E | Refunds & Disputes Dashboard: Dual-tab review of in-progress escrow claims vs. completed refunds | High |
 | FR-009F | Profile Picture Camera Capture & Local Persistence: Interactive photo update modal with camera/gallery permissions and offline storage | High |
 | FR-010 | Address Manager: Full CRUD for saved delivery addresses with default selection | High |
+| FR-010A | Standalone APK Build: Support for continuous cloud compilation of testable APK binaries via EAS Build | High |
+| FR-010B | Tester Distribution: Generation of direct HTTPS download links and QR codes for QA testers | High |
 
 > **Terminology change from v1.0:** "Customer" role renamed to "Buyer" for clarity. "Store Owner" renamed to "Seller." These are the three customer-facing roles: Buyer, Seller, Transport Provider.
 

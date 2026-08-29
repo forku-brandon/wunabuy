@@ -284,6 +284,10 @@ Wunabuy addresses these challenges through a **mobile-first, offline-resilient a
 - **FR-052 (High):** Address Manager (`AddressManagerScreen`): Delivery addresses management with Default address badge, Add/Edit BottomSheet modal, instant default address switching, and deletion.
 - **FR-053 (High):** Interactive Profile Picture Camera Update & Device Storage: Tapping the user avatar or camera badge icon on `ProfileScreen` triggers an interactive `AvatarUpdateModal`. The user can capture a new square photo with the device camera (`ImagePicker.launchCameraAsync`) or choose from the photo gallery (`ImagePicker.launchImageLibraryAsync`) after granting native device permissions. The captured image is stored immediately in local device state (`AsyncStorage` via `useAuthStore`) with background dispatch to the backend API (`AuthService.updateProfile`).
 
+### EPIC 14: Automated Build & Distribution Pipeline (EAS / Standalone APK Delivery)
+- **FR-054 (High):** Standalone Android APK Compilation: Mobile project is configured with Expo Application Services (`EAS Build`) with preview distribution profiles (`buildType: "apk"`), enabling continuous cloud compilation of installable release APKs without local Android SDK or Java JDK dependencies.
+- **FR-055 (High):** Direct Tester Distribution: Cloud builds automatically output signed `.apk` binaries accessible via direct HTTPS download URLs and scannable QR codes for testing across Android devices.
+
 ---
 
 ## 7. Critical Business Rules (Launch Requirements)

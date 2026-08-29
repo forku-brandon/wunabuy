@@ -1259,11 +1259,18 @@ Production deployment must be blocked if any critical quality gate fails.
 ### 27.4 App-Wide `canGoBack` Navigation Safety
 - **Root Reset Fallbacks:** Every `navigation.goBack()` call across all 11+ screens is guarded with `navigation.canGoBack()` and falls back to graceful root stack reset (`BuyerApp`), permanently eliminating unhandled `GO_BACK` navigation errors.
 
+### 27.5 EAS Standalone APK Build & Distribution Pipeline
+- **EAS Build Configuration (`eas.json`):**
+  - `preview` build profile configured with `buildType: "apk"` and `distribution: "internal"`.
+  - `appVersionSource: "remote"` enabling continuous cloud version auto-incrementing.
+- **Standalone APK Delivery:** Cloud compilation via `eas build --platform android --profile preview` generates installable `.apk` binaries without requiring local Android SDK or Java JDK setups.
+- **Distribution Channels:** Direct HTTPS artifact download URLs and scannable QR codes for distribution to QA testers, partners, and internal company stakeholders.
+
 ---
 
 ## Final Document Status
 
-This version of the Wunabuy Frontend Technical Specification represents a production-ready engineering baseline for the company (v1.7). It establishes the design principles, technical architecture, operational expectations, security posture, quality gates, and governance needed for deployment and launch readiness.
+This version of the Wunabuy Frontend Technical Specification represents a production-ready engineering baseline for the company (v1.8). It establishes the design principles, technical architecture, operational expectations, security posture, quality gates, and governance needed for deployment and launch readiness.
 
 ---
-**End of Document (v1.7)**
+**End of Document (v1.8)**
