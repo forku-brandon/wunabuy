@@ -44,18 +44,6 @@ export const RootNavigator = () => {
   const { isAuthenticated, activeRole } = useAuthStore();
   const { theme } = useThemeStore();
 
-  const renderRoleApp = () => {
-    switch (activeRole) {
-      case UserRole.SELLER:
-        return <Stack.Screen name="SellerApp" component={SellerTabNavigator} />;
-      case UserRole.TRANSPORTER:
-        return <Stack.Screen name="TransporterApp" component={TransporterTabNavigator} />;
-      case UserRole.BUYER:
-      default:
-        return <Stack.Screen name="BuyerApp" component={BuyerTabNavigator} />;
-    }
-  };
-
   return (
     <NavigationContainer
       linking={linkingConfig}
@@ -72,6 +60,13 @@ export const RootNavigator = () => {
       }}
     >
       <Stack.Navigator
+        initialRouteName={
+          activeRole === UserRole.SELLER
+            ? 'SellerApp'
+            : activeRole === UserRole.TRANSPORTER
+            ? 'TransporterApp'
+            : 'BuyerApp'
+        }
         screenOptions={{
           headerShown: false,
           contentStyle: { backgroundColor: theme.background },
@@ -81,7 +76,9 @@ export const RootNavigator = () => {
           <Stack.Screen name="Auth" component={AuthNavigator} />
         ) : (
           <>
-            {renderRoleApp()}
+            <Stack.Screen name="BuyerApp" component={BuyerTabNavigator} />
+            <Stack.Screen name="SellerApp" component={SellerTabNavigator} />
+            <Stack.Screen name="TransporterApp" component={TransporterTabNavigator} />
             <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
             <Stack.Screen name="OrderTracking" component={OrderTrackingScreen} />
             <Stack.Screen name="ChatConversation" component={ChatConversationScreen} />

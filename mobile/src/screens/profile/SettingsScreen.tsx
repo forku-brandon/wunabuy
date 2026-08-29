@@ -7,6 +7,7 @@ import { RoleSwitcherCard } from '../../components/profile/RoleSwitcherCard';
 import { LanguageSelectorModal } from './LanguageSelectorModal';
 import { useAuthStore } from '../../stores/auth.store';
 import { useThemeStore } from '../../stores/theme.store';
+import { UserRole } from '@wunabuy/types';
 import { spacing, colors, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useTranslation } from 'react-i18next';
 
@@ -42,8 +43,15 @@ export const SettingsScreen = ({ navigation }: any) => {
           onPress={() => {
             if (navigation.canGoBack()) {
               navigation.goBack();
-            } else if (navigation.getParent()?.canGoBack()) {
-              navigation.getParent()?.goBack();
+            } else {
+              const role = useAuthStore.getState().activeRole;
+              if (role === UserRole.SELLER) {
+                navigation.navigate('SellerApp');
+              } else if (role === UserRole.TRANSPORTER) {
+                navigation.navigate('TransporterApp');
+              } else {
+                navigation.navigate('BuyerApp');
+              }
             }
           }}
           style={[styles.backBtn, { backgroundColor: theme.card }]}
