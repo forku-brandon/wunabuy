@@ -19,15 +19,6 @@ export const RoleSwitcherCard: React.FC<RoleSwitcherCardProps> = ({ navigation }
   const handleRoleSelect = (role: UserRole) => {
     setActiveRole(role);
     AuthService.switchRole(role);
-    if (navigation) {
-      if (role === UserRole.SELLER) {
-        navigation.navigate('SellerApp');
-      } else if (role === UserRole.TRANSPORTER) {
-        navigation.navigate('TransporterApp');
-      } else {
-        navigation.navigate('BuyerApp');
-      }
-    }
   };
 
   // Always provide Buyer and Seller workspaces for testing and direct switching

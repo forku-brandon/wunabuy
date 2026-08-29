@@ -3,12 +3,13 @@ import { View, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from '
 import { Ionicons } from '@expo/vector-icons';
 import { ScreenContainer, Text, Card, Button, Badge } from '../../components/ui';
 import { KYCStatusBanner } from '../../components/seller/KYCStatusBanner';
-import { KYCStatus } from '@wunabuy/types';
+import { KYCStatus, UserRole } from '@wunabuy/types';
 import { formatXAF } from '@wunabuy/utils';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
 import { useSellerStore } from '../../stores/seller.store';
-import { SellerService, KYCService } from '../../services/api';
+import { useAuthStore } from '../../stores/auth.store';
+import { SellerService, KYCService, AuthService } from '../../services/api';
 
 export const SellerDashboardScreen = ({ navigation }: any) => {
   const { theme, isDark } = useThemeStore();
@@ -79,15 +80,31 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
           </Text>
         </View>
 
-        <TouchableOpacity
-          activeOpacity={0.8}
-          onPress={() => navigation.navigate('AddEditProduct')}
-          style={styles.addProductHeaderBtn}
-        >
-          <Text variant="bodyLarge" color={colors.neutral[0]} bold>
-            + Product
-          </Text>
-        </TouchableOpacity>
+        <View style={styles.headerRightButtons}>
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => {
+              useAuthStore.getState().setActiveRole(UserRole.BUYER);
+              AuthService.switchRole(UserRole.BUYER);
+            }}
+            style={[styles.switchRoleHeaderBtn, { backgroundColor: isDark ? colors.neutral[800] : colors.primary[50], borderColor: isDark ? 'rgba(13,148,136,0.3)' : colors.primary[200] }]}
+          >
+            <Ionicons name="cart-outline" size={14} color={colors.primary[600]} style={{ marginRight: 4 }} />
+            <Text variant="caption" bold color={colors.primary[700]}>
+              Buyer Mode
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => navigation.navigate('AddEditProduct')}
+            style={styles.addProductHeaderBtn}
+          >
+            <Text variant="bodyLarge" color={colors.neutral[0]} bold>
+              + Product
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* KYC Verification Status Banner */}
@@ -258,6 +275,19 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginTop: spacing.md,
     marginBottom: spacing.lg,
+  },
+  headerRightButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  switchRoleHeaderBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.sm + 2,
+    paddingVertical: spacing.xs + 2,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
   },
   addProductHeaderBtn: {
     backgroundColor: colors.role.seller,

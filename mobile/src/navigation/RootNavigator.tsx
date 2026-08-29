@@ -60,13 +60,7 @@ export const RootNavigator = () => {
       }}
     >
       <Stack.Navigator
-        initialRouteName={
-          activeRole === UserRole.SELLER
-            ? 'SellerApp'
-            : activeRole === UserRole.TRANSPORTER
-            ? 'TransporterApp'
-            : 'BuyerApp'
-        }
+        key={isAuthenticated ? `auth_workspace_${activeRole}` : 'unauth_root'}
         screenOptions={{
           headerShown: false,
           contentStyle: { backgroundColor: theme.background },
@@ -74,11 +68,28 @@ export const RootNavigator = () => {
       >
         {!isAuthenticated ? (
           <Stack.Screen name="Auth" component={AuthNavigator} />
+        ) : activeRole === UserRole.SELLER ? (
+          <>
+            <Stack.Screen name="SellerApp" component={SellerTabNavigator} />
+            <Stack.Screen name="Settings" component={SettingsScreen} />
+            <Stack.Screen name="AddEditProduct" component={AddEditProductScreen} />
+            <Stack.Screen name="StoreKYC" component={StoreKYCScreen} />
+            <Stack.Screen name="NotificationSettings" component={NotificationSettingsScreen} />
+            <Stack.Screen name="AddressManager" component={AddressManagerScreen} />
+            <Stack.Screen name="ChatConversation" component={ChatConversationScreen} />
+          </>
+        ) : activeRole === UserRole.TRANSPORTER ? (
+          <>
+            <Stack.Screen name="TransporterApp" component={TransporterTabNavigator} />
+            <Stack.Screen name="Settings" component={SettingsScreen} />
+            <Stack.Screen name="TransporterKYC" component={TransporterKYCScreen} />
+            <Stack.Screen name="NotificationSettings" component={NotificationSettingsScreen} />
+            <Stack.Screen name="AddressManager" component={AddressManagerScreen} />
+            <Stack.Screen name="ChatConversation" component={ChatConversationScreen} />
+          </>
         ) : (
           <>
             <Stack.Screen name="BuyerApp" component={BuyerTabNavigator} />
-            <Stack.Screen name="SellerApp" component={SellerTabNavigator} />
-            <Stack.Screen name="TransporterApp" component={TransporterTabNavigator} />
             <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
             <Stack.Screen name="OrderTracking" component={OrderTrackingScreen} />
             <Stack.Screen name="ChatConversation" component={ChatConversationScreen} />

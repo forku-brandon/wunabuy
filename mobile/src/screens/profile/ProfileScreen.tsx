@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ScreenContainer, Text, Card, Avatar, Toast, Button } from '../../components/ui';
+import { ScreenContainer, Text, Card, Avatar, Toast, Button, Badge } from '../../components/ui';
 import { ProductCard } from '../../components/product/ProductCard';
 import { MOCK_PRODUCTS } from '../../services/mockProducts';
 import { Product, UserRole } from '@wunabuy/types';
@@ -26,7 +26,7 @@ import * as ImagePicker from 'expo-image-picker';
 
 export const ProfileScreen = ({ navigation }: any) => {
   const insets = useSafeAreaInsets();
-  const { user } = useAuthStore();
+  const { user, activeRole } = useAuthStore();
   const { theme, isDark } = useThemeStore();
   const [walletBalance, setWalletBalance] = useState<number>(47500);
   const [isBalanceVisible, setIsBalanceVisible] = useState<boolean>(true);
@@ -184,9 +184,16 @@ export const ProfileScreen = ({ navigation }: any) => {
             onPress={() => navigation.navigate('Settings')}
             style={styles.userHeaderTextCol}
           >
-            <Text variant="h2" bold numberOfLines={1}>
-              {user?.full_name ?? 'Jean Dupont'}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+              <Text variant="h2" bold numberOfLines={1}>
+                {activeRole === UserRole.SELLER ? 'Douala Tech Hub' : (user?.full_name ?? 'Jean Dupont')}
+              </Text>
+              <Badge
+                label={activeRole === UserRole.SELLER ? 'SELLER' : activeRole === UserRole.TRANSPORTER ? 'TRANSPORTER' : 'BUYER'}
+                variant={activeRole === UserRole.SELLER ? 'seller' : activeRole === UserRole.TRANSPORTER ? 'warning' : 'primary'}
+                size="small"
+              />
+            </View>
             <View style={styles.userPhoneRow}>
               <Ionicons name="call-outline" size={12} color={theme.textSecondary} style={{ marginRight: 4 }} />
               <Text variant="caption" secondary numberOfLines={1}>
@@ -438,34 +445,65 @@ export const ProfileScreen = ({ navigation }: any) => {
 
       {/* Partner Opportunities Dual Banner Cards */}
       <View style={styles.partnerCardsRow}>
-        {/* Switch directly to Seller Workspace (1-Click) */}
-        <TouchableOpacity
-          activeOpacity={0.88}
-          onPress={() => {
-            useAuthStore.getState().setActiveRole(UserRole.SELLER);
-            AuthService.switchRole(UserRole.SELLER);
-          }}
-          style={[
-            styles.partnerBannerCard,
-            {
-              backgroundColor: isDark ? colors.neutral[800] : '#EFF6FF',
-              borderColor: isDark ? 'rgba(37, 99, 235, 0.3)' : '#BFDBFE',
-            },
-          ]}
-        >
-          <View style={[styles.partnerBannerIcon, { backgroundColor: colors.role.seller }]}>
-            <Ionicons name="storefront" size={18} color={colors.neutral[0]} />
-          </View>
-          <View style={styles.partnerBannerTextCol}>
-            <Text variant="bodyMedium" bold color={colors.role.seller}>
-              Seller Workspace
-            </Text>
-            <Text variant="caption" secondary numberOfLines={1}>
-              Open Store Dashboard ➔
-            </Text>
-          </View>
-          <Ionicons name="chevron-forward" size={16} color={colors.role.seller} />
-        </TouchableOpacity>
+        {activeRole === UserRole.SELLER ? (
+          /* When in Seller Mode: Show 1-Tap Switch to Buyer Workspace */
+          <TouchableOpacity
+            activeOpacity={0.88}
+            onPress={() => {
+              useAuthStore.getState().setActiveRole(UserRole.BUYER);
+              AuthService.switchRole(UserRole.BUYER);
+            }}
+            style={[
+              styles.partnerBannerCard,
+              {
+                backgroundColor: isDark ? colors.neutral[800] : colors.primary[50],
+                borderColor: isDark ? 'rgba(13, 148, 136, 0.3)' : colors.primary[200],
+              },
+            ]}
+          >
+            <View style={[styles.partnerBannerIcon, { backgroundColor: colors.primary[500] }]}>
+              <Ionicons name="cart" size={18} color={colors.neutral[0]} />
+            </View>
+            <View style={styles.partnerBannerTextCol}>
+              <Text variant="bodyMedium" bold color={colors.primary[700]}>
+                Buyer Workspace
+              </Text>
+              <Text variant="caption" secondary numberOfLines={1}>
+                Shop on Wunabuy ➔
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={colors.primary[500]} />
+          </TouchableOpacity>
+        ) : (
+          /* When in Buyer Mode: Show 1-Tap Switch to Seller Workspace */
+          <TouchableOpacity
+            activeOpacity={0.88}
+            onPress={() => {
+              useAuthStore.getState().setActiveRole(UserRole.SELLER);
+              AuthService.switchRole(UserRole.SELLER);
+            }}
+            style={[
+              styles.partnerBannerCard,
+              {
+                backgroundColor: isDark ? colors.neutral[800] : '#EFF6FF',
+                borderColor: isDark ? 'rgba(37, 99, 235, 0.3)' : '#BFDBFE',
+              },
+            ]}
+          >
+            <View style={[styles.partnerBannerIcon, { backgroundColor: colors.role.seller }]}>
+              <Ionicons name="storefront" size={18} color={colors.neutral[0]} />
+            </View>
+            <View style={styles.partnerBannerTextCol}>
+              <Text variant="bodyMedium" bold color={colors.role.seller}>
+                Seller Workspace
+              </Text>
+              <Text variant="caption" secondary numberOfLines={1}>
+                Manage Store ➔
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={colors.role.seller} />
+          </TouchableOpacity>
+        )}
 
         {/* Become a Transporter */}
         <TouchableOpacity
