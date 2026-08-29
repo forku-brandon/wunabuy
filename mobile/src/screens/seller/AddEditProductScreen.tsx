@@ -117,11 +117,8 @@ export const AddEditProductScreen = ({ navigation, route }: any) => {
         setLoading(false);
         if (navigation.canGoBack()) {
           navigation.goBack();
-        } else {
-          navigation.reset({
-            index: 0,
-            routes: [{ name: 'SellerApp' }],
-          });
+        } else if (navigation.getParent()?.canGoBack()) {
+          navigation.getParent()?.goBack();
         }
       }, 1000);
     } catch (err: any) {

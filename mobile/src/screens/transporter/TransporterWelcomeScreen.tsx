@@ -142,12 +142,8 @@ export const TransporterWelcomeScreen = ({ navigation }: any) => {
   const handleBack = () => {
     if (navigation.canGoBack()) {
       navigation.goBack();
-    } else {
-      setActiveRole(UserRole.BUYER);
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'BuyerApp' }],
-      });
+    } else if (navigation.getParent()?.canGoBack()) {
+      navigation.getParent()?.goBack();
     }
   };
 

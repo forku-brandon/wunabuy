@@ -355,11 +355,8 @@ export const WalletScreen = ({ navigation }: any) => {
           onPress={() => {
             if (navigation.canGoBack()) {
               navigation.goBack();
-            } else {
-              navigation.reset({
-                index: 0,
-                routes: [{ name: 'BuyerApp' }],
-              });
+            } else if (navigation.getParent()?.canGoBack()) {
+              navigation.getParent()?.goBack();
             }
           }}
           style={[styles.headerIconBtn, { backgroundColor: theme.card }]}

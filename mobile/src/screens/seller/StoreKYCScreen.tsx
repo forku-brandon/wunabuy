@@ -153,12 +153,8 @@ export const StoreKYCScreen = ({ navigation }: any) => {
       handlePrevStage();
     } else if (navigation.canGoBack()) {
       navigation.goBack();
-    } else {
-      setActiveRole(UserRole.BUYER);
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'BuyerApp' }],
-      });
+    } else if (navigation.getParent()?.canGoBack()) {
+      navigation.getParent()?.goBack();
     }
   };
 
@@ -605,10 +601,11 @@ export const StoreKYCScreen = ({ navigation }: any) => {
                 variant="primary"
                 onPress={() => {
                   setActiveRole(UserRole.BUYER);
-                  navigation.reset({
-                    index: 0,
-                    routes: [{ name: 'BuyerApp' }],
-                  });
+                  if (navigation.canGoBack()) {
+                    navigation.goBack();
+                  } else if (navigation.getParent()?.canGoBack()) {
+                    navigation.getParent()?.goBack();
+                  }
                 }}
                 style={[styles.homeBtn, { backgroundColor: colors.role.seller }]}
               />

@@ -115,13 +115,10 @@ export const AddressManagerScreen = ({ navigation }: any) => {
           <TouchableOpacity
             activeOpacity={0.8}
             onPress={() => {
-              if (navigation?.canGoBack && navigation.canGoBack()) {
+              if (navigation.canGoBack()) {
                 navigation.goBack();
-              } else if (navigation?.reset) {
-                navigation.reset({
-                  index: 0,
-                  routes: [{ name: 'BuyerApp' }],
-                });
+              } else if (navigation.getParent()?.canGoBack()) {
+                navigation.getParent()?.goBack();
               }
             }}
             style={[styles.backBtn, { backgroundColor: theme.card }]}
