@@ -244,6 +244,7 @@ The platform SHALL follow a constrained launch strategy. The following policy SH
 | FR-009C | Favorites & Wishlist: One-tap heart like interaction with dedicated management screen | High |
 | FR-009D | Browsing Footprint: Chronological tracking of viewed products with clearing capabilities | High |
 | FR-009E | Refunds & Disputes Dashboard: Dual-tab review of in-progress escrow claims vs. completed refunds | High |
+| FR-009F | Profile Picture Camera Capture & Local Persistence: Interactive photo update modal with camera/gallery permissions and offline storage | High |
 | FR-010 | Address Manager: Full CRUD for saved delivery addresses with default selection | High |
 
 > **Terminology change from v1.0:** "Customer" role renamed to "Buyer" for clarity. "Store Owner" renamed to "Seller." These are the three customer-facing roles: Buyer, Seller, Transport Provider.

@@ -282,6 +282,7 @@ Wunabuy addresses these challenges through a **mobile-first, offline-resilient a
 - **FR-050 (High):** Browsing Footprint Engine (`FootprintScreen`): Chronological browsing history tracking up to 50 viewed products with formatted timestamps (`formatDate`), individual removal, and Clear All action.
 - **FR-051 (High):** Refunds & Escrow Disputes Screen (`RefundsScreen`): Dedicated screen with segmented tab controls for In-Progress escrow disputes (reason, evidence photos, frozen escrow status, 48h staff arbitration timeline) vs. Completed refunds credited back to Wallet or Mobile Money.
 - **FR-052 (High):** Address Manager (`AddressManagerScreen`): Delivery addresses management with Default address badge, Add/Edit BottomSheet modal, instant default address switching, and deletion.
+- **FR-053 (High):** Interactive Profile Picture Camera Update & Device Storage: Tapping the user avatar or camera badge icon on `ProfileScreen` triggers an interactive `AvatarUpdateModal`. The user can capture a new square photo with the device camera (`ImagePicker.launchCameraAsync`) or choose from the photo gallery (`ImagePicker.launchImageLibraryAsync`) after granting native device permissions. The captured image is stored immediately in local device state (`AsyncStorage` via `useAuthStore`) with background dispatch to the backend API (`AuthService.updateProfile`).
 
 ---
 

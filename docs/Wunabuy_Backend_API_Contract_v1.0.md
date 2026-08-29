@@ -171,7 +171,7 @@ X-Idempotency-Key: <uuid-v4>                 (Required on all mutations: orders,
 ---
 
 ### 2.4 Update User Profile
-`PUT /api/v1/users/me`
+`PUT /api/v1/users/me` or `PATCH /api/v1/user/profile`
 
 - **Headers**: `Authorization: Bearer <token>`
 - **Request Body**:
@@ -183,6 +183,28 @@ X-Idempotency-Key: <uuid-v4>                 (Required on all mutations: orders,
 }
 ```
 - **Response `200 OK`**: Returns updated User entity.
+
+---
+
+### 2.4A Upload Profile Avatar Photo
+`POST /api/v1/user/avatar`
+
+- **Headers**: `Authorization: Bearer <token>`, `Content-Type: multipart/form-data`
+- **Request Form Data**: `avatar: File (image/jpeg, image/png, image/webp; max 5MB)`
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": {
+    "avatar_url": "https://api.wunabuy.com/storage/avatars/usr_99812a_17879300.jpg",
+    "user_id": "usr_99812a",
+    "updated_at": "2026-08-28T16:00:00Z"
+  }
+}
+```
+- **Error Responses**:
+  - `422 UNPROCESSABLE ENTITY`: File exceeds 5MB or invalid MIME type.
+  - `401 UNAUTHENTICATED`: Missing or expired Sanctum Bearer token.
 
 ---
 

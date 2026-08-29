@@ -565,12 +565,30 @@ All REST API endpoints are prefixed under `/api/v1`.
 ## 8. User Profile & Settings API Contracts
 
 ### 8.1 Update Profile Info
-- **Endpoint:** `PUT /api/v1/user/profile`
+- **Endpoint:** `PUT /api/v1/user/profile` or `PATCH /api/v1/user/profile`
 - **Request Body:**
 ```json
 {
   "full_name": "Jean Dupont",
-  "email": "jean.dupont@wunabuy.com"
+  "email": "jean.dupont@wunabuy.com",
+  "avatar_url": "https://cdn.wunabuy.com/avatars/user_123.jpg"
+}
+```
+
+### 8.1A Upload Profile Avatar Photo
+- **Endpoint:** `POST /api/v1/user/avatar`
+- **Content-Type:** `multipart/form-data`
+- **Headers:** `Authorization: Bearer <token>`
+- **Payload:** `avatar: File (JPEG/PNG/WebP, max 5MB)`
+- **Response (200 OK):**
+```json
+{
+  "success": true,
+  "data": {
+    "avatar_url": "https://cdn.wunabuy.com/avatars/user_9921_17879300.jpg",
+    "user_id": "usr_9921",
+    "updated_at": "2026-08-28T16:00:00Z"
+  }
 }
 ```
 

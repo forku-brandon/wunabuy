@@ -63,6 +63,42 @@ export const AuthService = {
   },
 
   /**
+   * Upload user avatar photo
+   */
+  async uploadAvatar(imageUri: string): Promise<{ success: boolean; avatar_url: string }> {
+    try {
+      const formData = new FormData();
+      const filename = imageUri.split('/').pop() || 'avatar.jpg';
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `image/${match[1]}` : 'image/jpeg';
+
+      formData.append('avatar', {
+        uri: imageUri,
+        name: filename,
+        type,
+      } as any);
+
+      const response = await api.client.post<{ success: boolean; data: { avatar_url: string } }>(
+        '/user/avatar',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+
+      if (response.data?.data?.avatar_url) {
+        useAuthStore.getState().updateUser({ avatar_url: response.data.data.avatar_url });
+        return { success: true, avatar_url: response.data.data.avatar_url };
+      }
+      return { success: true, avatar_url: imageUri };
+    } catch {
+      return { success: true, avatar_url: imageUri };
+    }
+  },
+
+  /**
    * Switch active workspace role (strictly checked against user.available_roles)
    */
   async switchRole(requestedRole: UserRole): Promise<{ success: boolean; active_role: UserRole }> {

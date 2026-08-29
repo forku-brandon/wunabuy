@@ -140,7 +140,9 @@ export const ProfileScreen = ({ navigation }: any) => {
       useAuthStore.getState().updateUser({ avatar_url: selectedAvatarUri });
 
       // 2. Dispatch background sync for awaiting backend API endpoint
-      AuthService.updateProfile({ avatar_url: selectedAvatarUri }).catch(() => {});
+      AuthService.uploadAvatar(selectedAvatarUri).catch(() => {
+        AuthService.updateProfile({ avatar_url: selectedAvatarUri }).catch(() => {});
+      });
 
       setIsAvatarModalVisible(false);
       setToastMessage('Profile photo updated successfully! 📸');
