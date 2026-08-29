@@ -20,16 +20,10 @@ export const RoleSwitcherCard: React.FC<RoleSwitcherCardProps> = ({ navigation }
     AuthService.switchRole(role);
   };
 
-  // Enforce Buyer as the only default active role.
-  // Seller and Transporter are strictly hidden until approved by backend API.
-  const availableRoles: UserRole[] = [UserRole.BUYER];
-
-  if ((user as any)?.is_seller_approved || (user?.role === UserRole.SELLER && user?.available_roles?.includes(UserRole.SELLER))) {
-    availableRoles.push(UserRole.SELLER);
-  }
-  if ((user as any)?.is_transporter_approved || (user?.role === UserRole.TRANSPORTER && user?.available_roles?.includes(UserRole.TRANSPORTER))) {
-    availableRoles.push(UserRole.TRANSPORTER);
-  }
+  // Provide Buyer and Seller workspaces
+  const availableRoles: UserRole[] = user?.available_roles?.length
+    ? user.available_roles
+    : [UserRole.BUYER, UserRole.SELLER];
 
   const isSellerApproved = availableRoles.includes(UserRole.SELLER);
   const isTransporterApproved = availableRoles.includes(UserRole.TRANSPORTER);

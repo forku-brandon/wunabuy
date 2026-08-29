@@ -29,26 +29,19 @@ export const useAuthStore = create<AuthState>()(
       setAuth: (user, accessToken, refreshToken) => {
         const approvedRoles = user.available_roles && user.available_roles.length > 0
           ? user.available_roles
-          : [UserRole.BUYER];
+          : [UserRole.BUYER, UserRole.SELLER];
 
         set({
           user: { ...user, available_roles: approvedRoles },
           accessToken,
           refreshToken,
-          activeRole: UserRole.BUYER,
+          activeRole: user.role || UserRole.BUYER,
           isAuthenticated: true,
         });
       },
 
       setActiveRole: (role) => {
-        const { user } = get();
-        const approvedRoles = user?.available_roles ?? [UserRole.BUYER];
-
-        if (approvedRoles.includes(role)) {
-          set({ activeRole: role });
-        } else {
-          set({ activeRole: UserRole.BUYER });
-        }
+        set({ activeRole: role });
       },
 
       updateUser: (userPartial) => {
