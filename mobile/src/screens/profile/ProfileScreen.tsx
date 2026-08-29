@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScreenContainer, Text, Card, Avatar, Toast, Button } from '../../components/ui';
 import { ProductCard } from '../../components/product/ProductCard';
 import { MOCK_PRODUCTS } from '../../services/mockProducts';
-import { Product } from '@wunabuy/types';
+import { Product, UserRole } from '@wunabuy/types';
 import { useAuthStore } from '../../stores/auth.store';
 import { useThemeStore } from '../../stores/theme.store';
 import { formatPhone, formatXAF } from '@wunabuy/utils';
@@ -438,10 +438,13 @@ export const ProfileScreen = ({ navigation }: any) => {
 
       {/* Partner Opportunities Dual Banner Cards */}
       <View style={styles.partnerCardsRow}>
-        {/* Become a Seller */}
+        {/* Switch directly to Seller Workspace (1-Click) */}
         <TouchableOpacity
           activeOpacity={0.88}
-          onPress={() => navigation.navigate('SellerWelcome')}
+          onPress={() => {
+            useAuthStore.getState().setActiveRole(UserRole.SELLER);
+            AuthService.switchRole(UserRole.SELLER);
+          }}
           style={[
             styles.partnerBannerCard,
             {
@@ -455,10 +458,10 @@ export const ProfileScreen = ({ navigation }: any) => {
           </View>
           <View style={styles.partnerBannerTextCol}>
             <Text variant="bodyMedium" bold color={colors.role.seller}>
-              Open a Store
+              Seller Workspace
             </Text>
             <Text variant="caption" secondary numberOfLines={1}>
-              Sell on Wunabuy
+              Open Store Dashboard ➔
             </Text>
           </View>
           <Ionicons name="chevron-forward" size={16} color={colors.role.seller} />
