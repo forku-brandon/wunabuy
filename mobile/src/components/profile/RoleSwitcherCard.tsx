@@ -37,8 +37,8 @@ export const RoleSwitcherCard: React.FC<RoleSwitcherCardProps> = ({ navigation }
           title: 'Seller (Store Owner)',
           subtitle: 'Manage products, inventory & store orders',
           iconName: 'storefront-outline' as const,
-          color: colors.role.seller,
-          bg: isDark ? 'rgba(37,99,235,0.15)' : '#EFF6FF',
+          color: colors.primary[600],
+          bg: isDark ? 'rgba(13,148,136,0.15)' : colors.primary[50],
         };
       case UserRole.TRANSPORTER:
         return {
@@ -73,7 +73,7 @@ export const RoleSwitcherCard: React.FC<RoleSwitcherCardProps> = ({ navigation }
               activeRole === UserRole.BUYER
                 ? 'primary'
                 : activeRole === UserRole.SELLER
-                ? 'info'
+                ? 'primary'
                 : 'warning'
             }
           />

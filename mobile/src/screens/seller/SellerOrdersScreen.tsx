@@ -139,11 +139,11 @@ export const SellerOrdersScreen = ({ navigation }: any) => {
           <Text variant="caption" secondary bold>
             MERCHANT FULFILLMENT
           </Text>
-          <Text variant="h1" bold color={colors.role.seller}>
+          <Text variant="h1" bold color={colors.primary[600]}>
             Store Orders 📦
           </Text>
         </View>
-        <Badge label={`${orders.length} Total`} variant="seller" size="small" />
+        <Badge label={`${orders.length} Total`} variant="primary" size="small" />
       </View>
 
       {/* Horizontal Filter Tabs */}
@@ -171,7 +171,7 @@ export const SellerOrdersScreen = ({ navigation }: any) => {
                   styles.tabPill,
                   {
                     backgroundColor: isActive
-                      ? colors.role.seller
+                      ? colors.primary[500]
                       : isDark
                       ? colors.neutral[800]
                       : colors.neutral[100],
@@ -236,8 +236,8 @@ export const SellerOrdersScreen = ({ navigation }: any) => {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={handleRefresh}
-              tintColor={colors.role.seller}
-              colors={[colors.role.seller]}
+              tintColor={colors.primary[500]}
+              colors={[colors.primary[500]]}
             />
           }
           renderItem={({ item }) => {
@@ -279,7 +279,7 @@ export const SellerOrdersScreen = ({ navigation }: any) => {
                       isPending
                         ? 'warning'
                         : isPreparing
-                        ? 'seller'
+                        ? 'primary'
                         : isReady
                         ? 'primary'
                         : isInTransit
@@ -315,7 +315,7 @@ export const SellerOrdersScreen = ({ navigation }: any) => {
                     onPress={() => setToastMessage(`Calling ${item.customer_name} (${item.customer_phone})`)}
                     style={[styles.callBtn, { borderColor: theme.border }]}
                   >
-                    <Ionicons name="call-outline" size={16} color={colors.role.seller} />
+                    <Ionicons name="call-outline" size={16} color={colors.primary[600]} />
                   </TouchableOpacity>
                 </View>
 
@@ -332,7 +332,7 @@ export const SellerOrdersScreen = ({ navigation }: any) => {
                           Qty: {prod.quantity} × {formatXAF(prod.price)}
                         </Text>
                       </View>
-                      <Text variant="bodyMedium" bold color={colors.role.seller}>
+                      <Text variant="bodyMedium" bold color={colors.primary[600]}>
                         {formatXAF(prod.price * prod.quantity)}
                       </Text>
                     </View>
@@ -361,7 +361,7 @@ export const SellerOrdersScreen = ({ navigation }: any) => {
                     <Text variant="bodyMedium" bold>
                       Your Payout (Escrow Locked 🔒)
                     </Text>
-                    <Text variant="bodyLarge" bold color={colors.role.seller}>
+                    <Text variant="bodyLarge" bold color={colors.primary[600]}>
                       {formatXAF(item.subtotal - item.commission)}
                     </Text>
                   </View>
@@ -400,7 +400,7 @@ export const SellerOrdersScreen = ({ navigation }: any) => {
                         variant="primary"
                         size="small"
                         onPress={() => handleAcceptOrder(item)}
-                        style={{ flex: 1.5, backgroundColor: colors.role.seller }}
+                        style={{ flex: 1.5, backgroundColor: colors.primary[500] }}
                       />
                     </>
                   )}
@@ -421,7 +421,7 @@ export const SellerOrdersScreen = ({ navigation }: any) => {
                       variant="primary"
                       size="small"
                       onPress={() => handleHandoverToRider(item)}
-                      style={{ flex: 1, backgroundColor: colors.role.seller }}
+                      style={{ flex: 1, backgroundColor: colors.primary[500] }}
                     />
                   )}
 
@@ -477,7 +477,7 @@ export const SellerOrdersScreen = ({ navigation }: any) => {
               style={[
                 styles.dispatchOptionCard,
                 {
-                  borderColor: deliveryOption === 'wunabuy_transporter' ? colors.role.seller : theme.border,
+                  borderColor: deliveryOption === 'wunabuy_transporter' ? colors.primary[500] : theme.border,
                   backgroundColor:
                     deliveryOption === 'wunabuy_transporter'
                       ? isDark
@@ -507,7 +507,7 @@ export const SellerOrdersScreen = ({ navigation }: any) => {
               style={[
                 styles.dispatchOptionCard,
                 {
-                  borderColor: deliveryOption === 'in_house_rider' ? colors.role.seller : theme.border,
+                  borderColor: deliveryOption === 'in_house_rider' ? colors.primary[500] : theme.border,
                   backgroundColor:
                     deliveryOption === 'in_house_rider'
                       ? isDark
@@ -558,7 +558,7 @@ export const SellerOrdersScreen = ({ navigation }: any) => {
               title="Confirm & Notify Driver"
               variant="primary"
               onPress={handleConfirmReady}
-              style={{ marginTop: spacing.lg, backgroundColor: colors.role.seller }}
+              style={{ marginTop: spacing.lg, backgroundColor: colors.primary[500] }}
             />
           </View>
         </View>
@@ -805,7 +805,7 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: colors.role.seller,
+    borderColor: colors.primary[500],
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 2,
@@ -814,7 +814,7 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: colors.role.seller,
+    backgroundColor: colors.primary[500],
   },
   inputField: {
     height: 44,

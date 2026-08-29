@@ -32,7 +32,7 @@ const SELLER_SLIDES: SellerSlide[] = [
   {
     id: 'slide_seller_1',
     badge: 'VERIFIED MERCHANT BADGE',
-    badgeColor: colors.role.seller,
+    badgeColor: colors.primary[600],
     title: 'Grow Your Store, ✨\nReach 50,000+ Buyers',
     subtitle: 'Get a verified merchant store badge & list your products directly to active local buyers with guaranteed trust.',
     iconName: 'storefront',
@@ -56,7 +56,7 @@ const SELLER_SLIDES: SellerSlide[] = [
   {
     id: 'slide_seller_4',
     badge: 'MOBILE INVENTORY & REVENUE ANALYTICS',
-    badgeColor: '#6366F1',
+    badgeColor: colors.accent[600],
     title: 'Smart Mobile ✨\nStock & Sales Tracking',
     subtitle: 'Manage products, stock alerts, order tracking & daily revenues easily right from your smartphone.',
     iconName: 'bar-chart',
@@ -136,7 +136,7 @@ export const SellerWelcomeScreen = ({ navigation }: any) => {
               <View
                 style={[
                   styles.expanded70HeroSlideCard,
-                  { backgroundColor: isDark ? '#1E293B' : colors.role.seller, height: SLIDESHOW_HEIGHT },
+                  { backgroundColor: isDark ? '#1E293B' : colors.primary[500], height: SLIDESHOW_HEIGHT },
                 ]}
               >
                 {/* Logo Ring Header */}
@@ -177,7 +177,7 @@ export const SellerWelcomeScreen = ({ navigation }: any) => {
                 style={[
                   styles.dot,
                   {
-                    backgroundColor: index === activeIndex ? colors.role.seller : theme.border,
+                    backgroundColor: index === activeIndex ? colors.primary[500] : theme.border,
                     width: index === activeIndex ? 28 : 6,
                   },
                 ]}
@@ -203,7 +203,7 @@ export const SellerWelcomeScreen = ({ navigation }: any) => {
             </View>
 
             <View style={styles.arrowIconCircle}>
-              <Ionicons name="arrow-forward" size={22} color={colors.role.seller} />
+              <Ionicons name="arrow-forward" size={22} color={colors.primary[600]} />
             </View>
           </TouchableOpacity>
         </View>
@@ -318,7 +318,7 @@ const styles = StyleSheet.create({
   advancedGetStartedCapsule: {
     width: '100%',
     height: 66,
-    backgroundColor: colors.role.seller,
+    backgroundColor: colors.primary[500],
     borderRadius: borderRadius.full,
     flexDirection: 'row',
     alignItems: 'center',

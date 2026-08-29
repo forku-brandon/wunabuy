@@ -195,7 +195,7 @@ export const StoreKYCScreen = ({ navigation }: any) => {
                   <View
                     style={[
                       styles.progressBarFill,
-                      { width: getProgressPercentage() as any, backgroundColor: colors.role.seller },
+                      { width: getProgressPercentage() as any, backgroundColor: colors.primary[500] },
                     ]}
                   />
                 </View>
@@ -204,28 +204,28 @@ export const StoreKYCScreen = ({ navigation }: any) => {
                   <Text
                     variant="caption"
                     bold={currentStage === 1}
-                    color={currentStage >= 1 ? colors.role.seller : theme.textSecondary}
+                    color={currentStage >= 1 ? colors.primary[600] : theme.textSecondary}
                   >
                     1. Basic
                   </Text>
                   <Text
                     variant="caption"
                     bold={currentStage === 2}
-                    color={currentStage >= 2 ? colors.role.seller : theme.textSecondary}
+                    color={currentStage >= 2 ? colors.primary[600] : theme.textSecondary}
                   >
                     2. Address
                   </Text>
                   <Text
                     variant="caption"
                     bold={currentStage === 3}
-                    color={currentStage >= 3 ? colors.role.seller : theme.textSecondary}
+                    color={currentStage >= 3 ? colors.primary[600] : theme.textSecondary}
                   >
                     3. Identity
                   </Text>
                   <Text
                     variant="caption"
                     bold={currentStage === 4}
-                    color={currentStage >= 4 ? colors.role.seller : theme.textSecondary}
+                    color={currentStage >= 4 ? colors.primary[600] : theme.textSecondary}
                   >
                     4. Storefront
                   </Text>
@@ -242,7 +242,7 @@ export const StoreKYCScreen = ({ navigation }: any) => {
               {currentStage === 1 && (
                 <Card style={styles.stageCard}>
                   <View style={styles.stageCardHeader}>
-                    <View style={[styles.stageBadgeCircle, { backgroundColor: colors.role.seller }]}>
+                    <View style={[styles.stageBadgeCircle, { backgroundColor: colors.primary[500] }]}>
                       <Text variant="bodyLarge" bold color={colors.neutral[0]}>
                         1
                       </Text>
@@ -302,7 +302,7 @@ export const StoreKYCScreen = ({ navigation }: any) => {
                       <Text variant="caption" bold color={theme.textSecondary}>
                         Primary Store Categories *
                       </Text>
-                      <Text variant="caption" color={colors.role.seller} bold>
+                      <Text variant="caption" color={colors.primary[600]} bold>
                         {selectedCategories.length} Selected
                       </Text>
                     </View>
@@ -323,9 +323,9 @@ export const StoreKYCScreen = ({ navigation }: any) => {
                               styles.categorySliderChip,
                               {
                                 backgroundColor: isSelected
-                                  ? colors.role.seller
+                                  ? colors.primary[500]
                                   : (isDark ? colors.neutral[800] : theme.input),
-                                borderColor: isSelected ? colors.role.seller : theme.border,
+                                borderColor: isSelected ? colors.primary[500] : theme.border,
                               },
                             ]}
                           >
@@ -356,7 +356,7 @@ export const StoreKYCScreen = ({ navigation }: any) => {
               {currentStage === 2 && (
                 <Card style={styles.stageCard}>
                   <View style={styles.stageCardHeader}>
-                    <View style={[styles.stageBadgeCircle, { backgroundColor: colors.role.seller }]}>
+                    <View style={[styles.stageBadgeCircle, { backgroundColor: colors.primary[500] }]}>
                       <Text variant="bodyLarge" bold color={colors.neutral[0]}>
                         2
                       </Text>
@@ -409,7 +409,7 @@ export const StoreKYCScreen = ({ navigation }: any) => {
               {currentStage === 3 && (
                 <Card style={styles.stageCard}>
                   <View style={styles.stageCardHeader}>
-                    <View style={[styles.stageBadgeCircle, { backgroundColor: colors.role.seller }]}>
+                    <View style={[styles.stageBadgeCircle, { backgroundColor: colors.primary[500] }]}>
                       <Text variant="bodyLarge" bold color={colors.neutral[0]}>
                         3
                       </Text>
@@ -468,7 +468,7 @@ export const StoreKYCScreen = ({ navigation }: any) => {
               {currentStage === 4 && (
                 <Card style={styles.stageCard}>
                   <View style={styles.stageCardHeader}>
-                    <View style={[styles.stageBadgeCircle, { backgroundColor: colors.role.seller }]}>
+                    <View style={[styles.stageBadgeCircle, { backgroundColor: colors.primary[500] }]}>
                       <Text variant="bodyLarge" bold color={colors.neutral[0]}>
                         4
                       </Text>
@@ -512,7 +512,7 @@ export const StoreKYCScreen = ({ navigation }: any) => {
               {currentStage === 5 && (
                 <View style={styles.celebrationContainer}>
                   {/* Thank You Celebration Card */}
-                  <View style={[styles.thankYouCard, { backgroundColor: isDark ? '#1E293B' : colors.role.seller }]}>
+                  <View style={[styles.thankYouCard, { backgroundColor: isDark ? '#1E293B' : colors.primary[500] }]}>
                     <View style={styles.celebrationLogoCircle}>
                       <Image source={WUNABUY_LOGO} style={styles.celebrationLogo} resizeMode="contain" />
                     </View>
@@ -591,7 +591,7 @@ export const StoreKYCScreen = ({ navigation }: any) => {
                     {currentStage === 4 ? 'Submit Documents' : 'Continue to Next Stage'}
                   </Text>
                   <View style={styles.continueArrowCircle}>
-                    <Ionicons name="arrow-forward-outline" size={18} color={colors.role.seller} />
+                    <Ionicons name="arrow-forward-outline" size={18} color={colors.primary[600]} />
                   </View>
                 </TouchableOpacity>
               </View>
@@ -607,7 +607,7 @@ export const StoreKYCScreen = ({ navigation }: any) => {
                     navigation.getParent()?.goBack();
                   }
                 }}
-                style={[styles.homeBtn, { backgroundColor: colors.role.seller }]}
+                style={[styles.homeBtn, { backgroundColor: colors.primary[500] }]}
               />
             )}
           </View>
@@ -849,7 +849,7 @@ const styles = StyleSheet.create({
     flex: 2,
     height: 54,
     borderRadius: borderRadius.full,
-    backgroundColor: colors.role.seller,
+    backgroundColor: colors.primary[500],
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

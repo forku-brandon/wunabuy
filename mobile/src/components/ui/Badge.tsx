@@ -44,7 +44,7 @@ export const Badge: React.FC<BadgeProps> = ({
       case 'accent':
         return { bg: colors.accent[50], text: colors.accent[700] };
       case 'seller':
-        return { bg: '#EFF6FF', text: colors.role.seller };
+        return { bg: colors.primary[50], text: colors.primary[700] };
       case 'transporter':
         return { bg: '#FEF3C7', text: colors.role.transporter };
       case 'neutral':

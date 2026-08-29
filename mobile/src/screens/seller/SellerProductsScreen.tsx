@@ -60,7 +60,7 @@ export const SellerProductsScreen = ({ navigation }: any) => {
             <Text variant="caption" secondary bold>
               CATALOG & INVENTORY
             </Text>
-            <Text variant="h1" bold color={colors.role.seller}>
+            <Text variant="h1" bold color={colors.primary[600]}>
               Store Products ({products.length})
             </Text>
           </View>
@@ -70,7 +70,7 @@ export const SellerProductsScreen = ({ navigation }: any) => {
             size="small"
             fullWidth={false}
             onPress={() => navigation.navigate('AddEditProduct')}
-            style={{ backgroundColor: colors.role.seller }}
+            style={{ backgroundColor: colors.primary[500] }}
           />
         </View>
 
@@ -103,8 +103,8 @@ export const SellerProductsScreen = ({ navigation }: any) => {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={handleRefresh}
-              tintColor={colors.role.seller}
-              colors={[colors.role.seller]}
+              tintColor={colors.primary[500]}
+              colors={[colors.primary[500]]}
             />
           }
           renderItem={({ item }) => {
@@ -124,7 +124,7 @@ export const SellerProductsScreen = ({ navigation }: any) => {
                       <Switch
                         value={item.is_active}
                         onValueChange={() => handleToggleActive(item)}
-                        trackColor={{ false: theme.border, true: colors.role.seller }}
+                        trackColor={{ false: theme.border, true: colors.primary[500] }}
                       />
                     </View>
 
@@ -139,13 +139,13 @@ export const SellerProductsScreen = ({ navigation }: any) => {
                       ) : isLowStock ? (
                         <Badge label={`Low Stock: ${item.quantity}`} variant="warning" size="small" />
                       ) : (
-                        <Badge label={`In Stock: ${item.quantity}`} variant="info" size="small" />
+                        <Badge label={`In Stock: ${item.quantity}`} variant="primary" size="small" />
                       )}
                     </View>
 
                     {/* Price and Stock Steppers Row */}
                     <View style={styles.priceRow}>
-                      <Text variant="h3" bold color={colors.role.seller}>
+                      <Text variant="h3" bold color={colors.primary[600]}>
                         {formatXAF(item.price)}
                       </Text>
 
@@ -181,8 +181,8 @@ export const SellerProductsScreen = ({ navigation }: any) => {
                         onPress={() => navigation.navigate('AddEditProduct', { product: item })}
                         style={[styles.actionBtn, { borderColor: theme.border }]}
                       >
-                        <Ionicons name="create-outline" size={14} color={colors.role.seller} />
-                        <Text variant="caption" bold color={colors.role.seller} style={{ marginLeft: 4 }}>
+                        <Ionicons name="create-outline" size={14} color={colors.primary[600]} />
+                        <Text variant="caption" bold color={colors.primary[600]} style={{ marginLeft: 4 }}>
                           Edit
                         </Text>
                       </TouchableOpacity>

@@ -87,7 +87,7 @@ export const SellerWalletScreen = ({ navigation }: any) => {
   const ListHeader = (
     <>
       {/* ─── Top Balance & Escrow Banner Card ───────────────────────────── */}
-      <View style={[styles.walletCard, { backgroundColor: isDark ? colors.neutral[900] : colors.role.seller }]}>
+      <View style={[styles.walletCard, { backgroundColor: isDark ? colors.neutral[900] : colors.primary[500] }]}>
         <View style={styles.decorativeCircle1} />
         <View style={styles.decorativeCircle2} />
 
@@ -137,8 +137,8 @@ export const SellerWalletScreen = ({ navigation }: any) => {
           ]}
           disabled={availableBalance <= 0}
         >
-          <Ionicons name="arrow-up-circle" size={20} color={colors.role.seller} />
-          <Text variant="bodyMedium" bold color={colors.role.seller} style={{ marginLeft: spacing.xs }}>
+          <Ionicons name="arrow-up-circle" size={20} color={colors.primary[600]} />
+          <Text variant="bodyMedium" bold color={colors.primary[600]} style={{ marginLeft: spacing.xs }}>
             Request Payout (Instant MoMo)
           </Text>
         </TouchableOpacity>
@@ -150,7 +150,7 @@ export const SellerWalletScreen = ({ navigation }: any) => {
           <Text variant="caption" secondary bold>
             All-Time Revenue
           </Text>
-          <Text variant="bodyLarge" bold color={colors.role.seller} style={{ marginTop: 2 }}>
+          <Text variant="bodyLarge" bold color={colors.primary[600]} style={{ marginTop: 2 }}>
             {isBalanceVisible ? formatXAF(totalRevenue) : '••••••'}
           </Text>
         </Card>
@@ -192,7 +192,7 @@ export const SellerWalletScreen = ({ navigation }: any) => {
                 styles.filterPill,
                 {
                   backgroundColor: isActive
-                    ? colors.role.seller
+                    ? colors.primary[500]
                     : isDark
                     ? colors.neutral[800]
                     : colors.neutral[100],
@@ -217,7 +217,7 @@ export const SellerWalletScreen = ({ navigation }: any) => {
     <ScreenContainer scrollable={false} padded={false}>
       {/* Top Header */}
       <View style={[styles.header, { backgroundColor: theme.card, borderBottomColor: theme.border }]}>
-        <Text variant="h1" bold color={colors.role.seller}>
+        <Text variant="h1" bold color={colors.primary[600]}>
           Store Wallet 💳
         </Text>
         <Badge label="Active Escrow" variant="primary" size="small" />
@@ -233,8 +233,8 @@ export const SellerWalletScreen = ({ navigation }: any) => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            tintColor={colors.role.seller}
-            colors={[colors.role.seller]}
+            tintColor={colors.primary[500]}
+            colors={[colors.primary[500]]}
           />
         }
         renderItem={({ item }) => {
@@ -270,7 +270,7 @@ export const SellerWalletScreen = ({ navigation }: any) => {
                       isRelease
                         ? colors.semantic.success[500]
                         : isPayout
-                        ? colors.role.seller
+                        ? colors.primary[600]
                         : '#DC2626'
                     }
                   />
@@ -294,7 +294,7 @@ export const SellerWalletScreen = ({ navigation }: any) => {
                     isRelease
                       ? colors.semantic.success[500]
                       : isPayout
-                      ? colors.role.seller
+                      ? colors.primary[600]
                       : '#DC2626'
                   }
                 >
@@ -340,7 +340,7 @@ export const SellerWalletScreen = ({ navigation }: any) => {
                 style={[
                   styles.providerBtn,
                   {
-                    borderColor: payoutProvider === 'mtn' ? colors.role.seller : theme.border,
+                    borderColor: payoutProvider === 'mtn' ? colors.primary[500] : theme.border,
                     backgroundColor:
                       payoutProvider === 'mtn'
                         ? isDark
@@ -362,7 +362,7 @@ export const SellerWalletScreen = ({ navigation }: any) => {
                 style={[
                   styles.providerBtn,
                   {
-                    borderColor: payoutProvider === 'orange' ? colors.role.seller : theme.border,
+                    borderColor: payoutProvider === 'orange' ? colors.primary[500] : theme.border,
                     backgroundColor:
                       payoutProvider === 'orange'
                         ? isDark
@@ -433,7 +433,7 @@ export const SellerWalletScreen = ({ navigation }: any) => {
                   onPress={() => handleSetAmountPreset(chip.frac)}
                   style={[styles.presetChip, { borderColor: theme.border }]}
                 >
-                  <Text variant="caption" bold color={colors.role.seller}>
+                  <Text variant="caption" bold color={colors.primary[600]}>
                     {chip.label}
                   </Text>
                 </TouchableOpacity>
@@ -471,7 +471,7 @@ export const SellerWalletScreen = ({ navigation }: any) => {
                   <Text variant="bodyMedium" bold>
                     Net Payout to Receive:
                   </Text>
-                  <Text variant="bodyLarge" bold color={colors.role.seller}>
+                  <Text variant="bodyLarge" bold color={colors.primary[600]}>
                     {formatXAF(netPayout)}
                   </Text>
                 </View>
@@ -484,7 +484,7 @@ export const SellerWalletScreen = ({ navigation }: any) => {
               onPress={handleConfirmPayout}
               loading={isSubmittingPayout}
               disabled={parsedAmount <= 0 || parsedAmount > availableBalance}
-              style={{ marginTop: spacing.lg, backgroundColor: colors.role.seller }}
+              style={{ marginTop: spacing.lg, backgroundColor: colors.primary[500] }}
             />
           </View>
         </View>

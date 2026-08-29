@@ -64,8 +64,8 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
         <RefreshControl
           refreshing={refreshing}
           onRefresh={handleRefresh}
-          tintColor={colors.role.seller}
-          colors={[colors.role.seller]}
+          tintColor={colors.primary[500]}
+          colors={[colors.primary[500]]}
         />
       }
     >
@@ -75,7 +75,7 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
           <Text variant="caption" secondary bold>
             MERCHANT DASHBOARD
           </Text>
-          <Text variant="h1" bold color={colors.role.seller}>
+          <Text variant="h1" bold color={colors.primary[600]}>
             {storeName} 🏪
           </Text>
         </View>
@@ -113,8 +113,11 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
         onStartKYC={handleStartKYC}
       />
 
-      {/* Revenue & Wallet Overview Card */}
-      <Card style={[styles.walletCard, { backgroundColor: isDark ? colors.neutral[900] : colors.role.seller }]}>
+      {/* Revenue & Wallet Overview Card (Harmonized with Buyer Wallet Aesthetic) */}
+      <View style={[styles.walletCard, { backgroundColor: isDark ? colors.neutral[900] : colors.primary[500] }]}>
+        <View style={styles.decorativeCircle1} />
+        <View style={styles.decorativeCircle2} />
+
         <View style={styles.walletHeaderRow}>
           <Text variant="caption" color="rgba(255,255,255,0.85)" bold>
             TOTAL STORE BALANCES
@@ -161,7 +164,7 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
             onPress={() => navigation.navigate('SellerWallet')}
           />
         </View>
-      </Card>
+      </View>
 
       {/* Fulfillment Orders Summary */}
       <View style={styles.sectionHeaderRow}>
@@ -169,7 +172,7 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
           ORDERS TO FULFILL
         </Text>
         <TouchableOpacity activeOpacity={0.7} onPress={() => navigation.navigate('SellerOrders')}>
-          <Text variant="caption" bold color={colors.role.seller}>
+          <Text variant="caption" bold color={colors.primary[500]}>
             View All ({orders.length}) ›
           </Text>
         </TouchableOpacity>
@@ -184,7 +187,7 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
           <Card
             style={[
               styles.statBox,
-              pendingAcceptanceCount > 0 && { borderColor: '#EF4444', borderWidth: 1 },
+              pendingAcceptanceCount > 0 && { borderColor: '#EF4444', borderWidth: 1.5 },
             ]}
           >
             <Text variant="display" bold color={pendingAcceptanceCount > 0 ? '#EF4444' : colors.semantic.warning[500]}>
@@ -202,7 +205,7 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
           style={styles.statBoxWrapper}
         >
           <Card style={styles.statBox}>
-            <Text variant="display" bold color={colors.role.seller}>
+            <Text variant="display" bold color={colors.accent[500]}>
               {preparingCount}
             </Text>
             <Text variant="caption" secondary bold style={{ textAlign: 'center', marginTop: 2 }}>
@@ -290,16 +293,36 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   addProductHeaderBtn: {
-    backgroundColor: colors.role.seller,
+    backgroundColor: colors.primary[500],
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs + 2,
     borderRadius: borderRadius.md,
   },
   walletCard: {
-    backgroundColor: colors.neutral[900],
+    position: 'relative',
+    overflow: 'hidden',
     borderRadius: borderRadius.xl,
     padding: spacing.lg,
     marginBottom: spacing.lg,
+    ...shadows.md,
+  },
+  decorativeCircle1: {
+    position: 'absolute',
+    top: -30,
+    right: -30,
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  decorativeCircle2: {
+    position: 'absolute',
+    bottom: -40,
+    left: -20,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
   },
   walletHeaderRow: {
     flexDirection: 'row',
@@ -315,7 +338,7 @@ const styles = StyleSheet.create({
   },
   escrowSubBox: {
     marginTop: spacing.sm,
-    backgroundColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: 'rgba(255,255,255,0.15)',
     padding: spacing.sm,
     borderRadius: borderRadius.md,
   },

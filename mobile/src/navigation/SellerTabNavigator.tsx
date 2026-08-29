@@ -15,7 +15,7 @@ import { ProfileScreen } from '../screens/profile/ProfileScreen';
 const Tab = createBottomTabNavigator<SellerTabParamList>();
 
 export const SellerTabNavigator = () => {
-  const { theme } = useThemeStore();
+  const { theme, isDark } = useThemeStore();
   const insets = useSafeAreaInsets();
   const bottomInset = insets.bottom > 0 ? insets.bottom : 8;
 
@@ -23,18 +23,19 @@ export const SellerTabNavigator = () => {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarActiveTintColor: colors.role.seller,
+        tabBarActiveTintColor: colors.primary[500],
         tabBarInactiveTintColor: theme.textSecondary,
         tabBarStyle: {
           backgroundColor: theme.card,
-          borderTopColor: theme.border,
-          height: 54 + bottomInset,
+          borderTopColor: isDark ? theme.border : 'transparent',
+          height: 56 + bottomInset,
           paddingBottom: bottomInset,
           paddingTop: 6,
+          elevation: 10,
         },
         tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '500',
+          fontSize: 10,
+          fontWeight: '600',
         },
         tabBarIcon: ({ focused, color }) => {
           let iconName: React.ComponentProps<typeof Ionicons>['name'];
