@@ -47,12 +47,7 @@
         }
       ]
     ],
-    "scheme": "wunabuy",
-    "extra": {
-      "eas": {
-        "projectId": "wunabuy-mobile-app-id"
-      }
-    }
+    "scheme": "wunabuy"
   }
 }
 
