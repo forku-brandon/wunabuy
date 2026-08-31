@@ -13,9 +13,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '../ui/Text';
 import { colors, spacing, borderRadius } from '@wunabuy/design-tokens';
+import { ZoomableImage } from './ZoomableImage';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-const PLACEHOLDER = require('../../../assets/placeholder_product.png');
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export interface ProductImageGalleryModalProps {
   visible: boolean;
@@ -34,6 +34,7 @@ export const ProductImageGalleryModal: React.FC<ProductImageGalleryModalProps> =
 }) => {
   const insets = useSafeAreaInsets();
   const [activeIndex, setActiveIndex] = useState(initialIndex);
+  const [isZoomed, setIsZoomed] = useState(false);
   const outerScrollViewRef = useRef<ScrollView>(null);
 
   const validImages =
@@ -44,6 +45,7 @@ export const ProductImageGalleryModal: React.FC<ProductImageGalleryModalProps> =
   useEffect(() => {
     if (visible) {
       setActiveIndex(initialIndex);
+      setIsZoomed(false);
       setTimeout(() => {
         outerScrollViewRef.current?.scrollTo({
           x: initialIndex * SCREEN_WIDTH,
@@ -82,7 +84,7 @@ export const ProductImageGalleryModal: React.FC<ProductImageGalleryModalProps> =
       <StatusBar barStyle="light-content" backgroundColor="rgba(0,0,0,0.95)" translucent />
 
       <View style={styles.container}>
-        {/* Dark Dim Backdrop */}
+        {/* Dark OLED Backdrop */}
         <View style={styles.backdrop} />
 
         {/* ─── TOP ACTION BAR ─────────────────────────────────────── */}
@@ -111,11 +113,12 @@ export const ProductImageGalleryModal: React.FC<ProductImageGalleryModalProps> =
           </TouchableOpacity>
         </View>
 
-        {/* ─── HORIZONTAL SWIPEABLE STAGE WITH 2-FINGER PINCH ZOOM ── */}
+        {/* ─── HORIZONTAL SWIPEABLE STAGE WITH ZOOMABLE IMAGES ────── */}
         <ScrollView
           ref={outerScrollViewRef}
           horizontal
           pagingEnabled
+          scrollEnabled={!isZoomed}
           showsHorizontalScrollIndicator={false}
           onMomentumScrollEnd={handleScroll}
           scrollEventThrottle={16}
@@ -123,25 +126,11 @@ export const ProductImageGalleryModal: React.FC<ProductImageGalleryModalProps> =
           style={styles.outerScrollView}
         >
           {validImages.map((imageUrl, idx) => (
-            <View key={`slide_container_${idx}`} style={styles.slideWrapper}>
-              <ScrollView
-                style={styles.zoomScrollView}
-                contentContainerStyle={styles.zoomContentContainer}
-                maximumZoomScale={4}
-                minimumZoomScale={1}
-                showsHorizontalScrollIndicator={false}
-                showsVerticalScrollIndicator={false}
-                centerContent={true}
-                bouncesZoom={true}
-              >
-                <Image
-                  source={{ uri: imageUrl }}
-                  style={styles.fullscreenImage}
-                  resizeMode="contain"
-                  defaultSource={PLACEHOLDER}
-                />
-              </ScrollView>
-            </View>
+            <ZoomableImage
+              key={`zoom_img_${idx}`}
+              uri={imageUrl}
+              onZoomChange={setIsZoomed}
+            />
           ))}
         </ScrollView>
 
@@ -246,22 +235,6 @@ const styles = StyleSheet.create({
   },
   outerScrollView: {
     flex: 1,
-  },
-  slideWrapper: {
-    width: SCREEN_WIDTH,
-    height: '100%',
-  },
-  zoomScrollView: {
-    flex: 1,
-  },
-  zoomContentContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  fullscreenImage: {
-    width: SCREEN_WIDTH,
-    height: SCREEN_HEIGHT * 0.78,
   },
   bottomBar: {
     paddingHorizontal: spacing.base,
