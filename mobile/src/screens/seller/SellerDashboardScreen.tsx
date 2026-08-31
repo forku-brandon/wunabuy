@@ -13,6 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { ScreenContainer, Text, Card, Badge, Avatar } from '../../components/ui';
 import { KYCStatusBanner } from '../../components/seller/KYCStatusBanner';
+import { SellerSidebarDrawer } from '../../components/navigation/SellerSidebarDrawer';
 import { KYCStatus, UserRole, Product } from '@wunabuy/types';
 import { formatXAF, formatRelativeTime } from '@wunabuy/utils';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
@@ -31,7 +32,6 @@ interface QuickBeneficiary {
   phone: string;
 }
 
-
 export const SellerDashboardScreen = ({ navigation }: any) => {
   const { theme, isDark } = useThemeStore();
   const { user } = useAuthStore();
@@ -44,6 +44,7 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
     updateStock,
   } = useSellerStore();
 
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [kycStatus, setKycStatus] = useState<KYCStatus>(KYCStatus.APPROVED);
   const [isBalanceVisible, setIsBalanceVisible] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -53,6 +54,7 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
   const [selectedProductForExpand, setSelectedProductForExpand] = useState<Product | null>(null);
   const [isExpandModalVisible, setIsExpandModalVisible] = useState(false);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+
 
   const handleOpenExpandProduct = (product: Product) => {
     setSelectedProductForExpand(product);
@@ -174,19 +176,34 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
         />
       }
     >
-      {/* 1. Top Header Row: User Avatar + Greetings + Right Actions */}
+      {/* 1. Top Header Row: 3-Strokes Hamburger Menu + User Avatar & Greetings + Right Actions */}
       <View style={styles.topHeaderRow}>
+        {/* 3-Strokes Hamburger Button (Opens Seller Sidebar) */}
+        <TouchableOpacity
+          activeOpacity={0.8}
+          style={[
+            styles.squareMenuBtn,
+            {
+              backgroundColor: isDark ? colors.neutral[800] : colors.neutral[0],
+              borderColor: theme.border,
+            },
+          ]}
+          onPress={() => setIsDrawerOpen(true)}
+        >
+          <Ionicons name="menu-outline" size={22} color={theme.text} />
+        </TouchableOpacity>
+
         <View style={styles.userInfoStack}>
           <Avatar
             url={user?.avatar_url}
-            size={46}
+            size={42}
             showBorder={true}
           />
           <View style={styles.greetingTextContainer}>
             <Text variant="caption" secondary bold style={styles.greetingSubtitle}>
               Hello,
             </Text>
-            <Text variant="h3" bold numberOfLines={1} style={styles.greetingName}>
+            <Text variant="bodyLarge" bold numberOfLines={1} style={styles.greetingName}>
               {user?.full_name || storeName || 'Sanusi Olamide'}
             </Text>
           </View>
@@ -246,6 +263,7 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
           </TouchableOpacity>
         </View>
       </View>
+
 
       {/* KYC Status Verification Banner */}
       <KYCStatusBanner
@@ -848,6 +866,13 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
           </View>
         </Modal>
       )}
+
+      {/* Seller Sidebar Navigation Drawer */}
+      <SellerSidebarDrawer
+        isOpen={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        navigation={navigation}
+      />
     </ScreenContainer>
   );
 };
@@ -862,11 +887,22 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
     marginBottom: spacing.md,
   },
+  squareMenuBtn: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.sm,
+    ...shadows.sm,
+  },
   userInfoStack: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
   },
+
   greetingTextContainer: {
     marginLeft: spacing.sm + 2,
     flex: 1,
