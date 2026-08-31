@@ -1,19 +1,25 @@
 # Software Requirements Specification (SRS)
 # Wunabuy — Multi-Sided Mobile E-Commerce Platform
 
-**Document Version:** 1.7 (Production Synchronized Baseline)  
-**Date:** August 28, 2026  
+**Document Version:** 1.8 (Production Synchronized Baseline)  
+**Date:** August 31, 2026  
 **Status:** Approved / In Production Use  
-**Companion Documents:** Wunabuy PRD v1.7, Wunabuy Frontend Tech Spec v1.7, Wunabuy Backend Tech Spec v1.3  
+**Companion Documents:** Wunabuy PRD v1.8, Wunabuy Frontend Tech Spec v1.8, Wunabuy Backend Tech Spec v1.4  
 
-> **Resolved Architecture & UI Specifications (August 28, 2026):**
+> **Resolved Architecture & UI Specifications (August 31, 2026):**
 > - **Backend:** Laravel 13 + Laravel Reverb WebSockets + PostgreSQL 15 (PostGIS).
+> - **Dynamic Key-Based Workspace Isolation (`RootNavigator`):** `key={isAuthenticated ? 'auth_workspace_' + activeRole : 'unauth_root'}` guarantees complete remounting of the navigation tree on role switches, eliminating route bleeding and inverted redirects between Buyer, Seller, and Transporter stacks.
+> - **Platform Visual Design & Color Harmonization:** Full alignment of Seller screens with Buyer brand identity using Emerald Teal (`colors.primary[500]` `#0D9488` / `colors.primary[600]` `#0F766E`) and Warm Amber (`colors.accent[500]` `#F59E0B`), unified tab bar metrics, and matching card geometries.
 > - **Direct OTP Auth:** `POST /api/v1/auth/otp/verify` logs user into account and redirects straight to Home.
 > - **Home Screen Top AppBar:** Hamburger menu icon (`☰`) on left; Search (`🔍`), Notifications (`🔔` badge), and Cart (`🛍️` badge) on right. Subtitle greeting stack moved below AppBar.
 > - **Partners Showcase (`PartnersCarousel`):** Replaces search bar with manual horizontal slideshow for official partners (MTN MoMo, Orange Money, Flutterwave, DHL, Ecobank).
 > - **Categories Circular Slider (`CategoryChip`):** Placed directly above Best Sellers.
 > - **Buyer Wallet Architecture (`WalletScreen`):** In-app mobile wallet supporting MTN MoMo (`*126#`) & Orange Money (`#150*50#`) funding/withdrawals with 50-70% responsive bottom sheets, USSD instructions, live validation, and transaction ledger.
 > - **Wunabuy Wallet Checkout (`CheckoutPaymentScreen`):** Integrated in-app wallet balance payment tab with real-time balance checking, instant 1-tap escrow lock, and low-balance shortcut alongside country-neutral Mobile Money providers (MTN MoMo, Orange Money).
+> - **Seller Dashboard (`SellerDashboardScreen`):** Features 1-tap `🛒 Buyer Mode` header button, Emerald Teal Store Balances Card with decorative translucent circles and privacy toggle (`👁`), 2x2 operational metrics grid, and recent order queue cards.
+> - **Order Fulfillment Queue & 2-Hour Acceptance SLA (`SellerOrdersScreen`):** Real-time countdown timer (`⏳ 01:45:00`) enforcing BR-01 auto-cancellation, Dual Delivery Dispatch Modal (Express Transporter vs Store In-House Rider), and step-by-step lifecycle actions.
+> - **Catalog & Inventory Management (`SellerProductsScreen` & `AddEditProductScreen`):** Real-time stock steppers `[ − 1 + ]`, low-stock indicators ($\le 5$ units), active/paused switches, and 5-photo upload grid with native camera & gallery picker.
+> - **Seller Store Wallet (`SellerWalletScreen`):** In-app merchant ledger, MTN MoMo (`*126#`) & Orange Money (`#150#`) instant payout modal with 1% telecom charge calculations, percentage presets (`25%`, `50%`, `75%`, `Max`), and audit ledger.
 > - **ProductCard Quick-View Expand & Swipeable Gallery (`ProductCard`):** `(+)` button expands an interactive modal with horizontal multi-image paging gallery (`FlatList horizontal pagingEnabled`), counter badge (`1 / 4`), pagination dots, 5-star ratings, full description, quantity stepper `[ − 1 + ]`, `Add to Cart`, and `View Full Product ➔`.
 > - **Strict Default Buyer Role Isolation (`RoleSwitcherCard`):** All users default strictly to Buyer (`UserRole.BUYER`). Seller and Transporter role switchers are completely hidden in Settings until approved by backend API upon Staff Portal KYC verification, accompanied by dedicated `Apply to Sell` and `Apply to Transport` action cards.
 > - **App-Wide `canGoBack` Navigation Safety:** Every back button across all 11+ screens checks `navigation.canGoBack()` and falls back to graceful root stack reset (`BuyerApp`), permanently eliminating unhandled `GO_BACK` errors.
@@ -133,6 +139,26 @@ Wunabuy consists of a **React Native monorepo** (`wunabuy-mobile`, `@wunabuy/des
 - **FR-043:** Dedicated `Apply to Sell (Store Owner)` and `Apply to Transport (Driver)` application cards SHALL be rendered underneath active roles for unapproved users.
 - **FR-044:** Every `navigation.goBack()` call across all 11+ screens SHALL check `navigation.canGoBack()` and fall back to graceful root stack reset (`BuyerApp`).
 
+### 3.14 Seller Dashboard & Real-Time Operational Telemetry
+- **FR-045:** `SellerDashboardScreen` SHALL provide a 1-tap `🛒 Buyer Mode` header button to instantly switch active workspace context to `UserRole.BUYER`.
+- **FR-046:** Store Balances Card SHALL display Available Earnings, Locked Escrow, eye toggle button (`👁`) for privacy masking, and quick `Withdraw Payout` CTA button.
+- **FR-047:** Dashboard SHALL render a 2x2 operational telemetry grid for Today's Sales, Pending Orders Queue, Active Inventory items, and Store Rating.
+
+### 3.15 Order Fulfillment Queue & 2-Hour Acceptance SLA
+- **FR-048:** `SellerOrdersScreen` SHALL enforce a real-time countdown timer (`⏳ HH:MM:SS`) for newly received orders. If not accepted within 2 hours, the order auto-cancels and triggers a buyer refund (BR-01).
+- **FR-049:** Marking an order ready for pickup SHALL trigger the Dual Delivery Dispatch Modal with selectable options: **Wunabuy Express Transporter** (automated GPS rider broadcast) or **Store In-House Rider** (with optional driver phone entry).
+
+### 3.16 Catalog & Inventory CRUD with Real-Time Stock Steppers
+- **FR-050:** `SellerProductsScreen` SHALL provide real-time `[ − 1 + ]` stock steppers for 1-tap quantity updates, active/paused catalog toggles, and low-stock warning badges ($\le 5$ units).
+- **FR-051:** `AddEditProductScreen` SHALL support 5-photo upload grid with native camera & gallery picker, category horizontal selector, and quality tier chips.
+
+### 3.17 Merchant Store Wallet & Mobile Money Payout Engine
+- **FR-052:** `SellerWalletScreen` SHALL provide instant payout requests to MTN MoMo (`*126#`) and Orange Money (`#150#`) with percentage quick presets (`25%`, `50%`, `75%`, `Max`), automated 1% telecom charge deduction calculation, and audit ledger.
+
+### 3.18 Key-Based Workspace Isolation & Brand Palette Harmonization
+- **FR-053:** `RootNavigator` SHALL dynamically assign stack key `auth_workspace_${activeRole}`, guaranteeing zero route bleeding and strict isolation between Buyer, Seller, and Transporter stacks.
+- **FR-054:** All Seller screens SHALL strictly adhere to the unified Emerald Teal (`#0D9488` / `#0F766E`) and Warm Amber (`#F59E0B`) design tokens.
+
 ---
 
 ## 4. Non-Functional Requirements
@@ -152,4 +178,4 @@ Wunabuy consists of a **React Native monorepo** (`wunabuy-mobile`, `@wunabuy/des
 **QA Lead:** _Wunabuy QA Team_  
 
 ---
-**[End of Software Requirements Specification v1.7]**
+**[End of Software Requirements Specification v1.8]**

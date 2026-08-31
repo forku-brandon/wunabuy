@@ -1,9 +1,9 @@
 # Product Requirements Document (PRD)
 # Wunabuy — Multi-Sided Mobile E-Commerce & Logistics Platform
 
-**Document Version:** 1.7  
+**Document Version:** 1.8  
 **Status:** Revised / Launch-Ready Production Baseline  
-**Date:** August 28, 2026  
+**Date:** August 31, 2026  
 **Author:** Product Management & Engineering Architecture Team  
 **Target Launch:** Q1 2027  
 **File Location:** `wunabuy/docs/Wunabuy_PRD_v1.0.md`
@@ -31,6 +31,7 @@ This PRD defines the product vision, market outcome, launch scope, UI/UX archite
 | 1.5 | August 28, 2026 | Architecture & Engineering Team | Added App-Wide Native Pull-to-Refresh (`RefreshControl`) standards across all screens (`ScreenContainer`, `Search`, `Cart`, `Orders`, `Profile`, `Wallet`, `SellerInventory`, `TransporterJobs`, `TransporterEarnings`, `Settings`), Product Detail v2.0 Redesign (expansive 92% width hero image gallery with 4% margins, Top Floating Header Bar with 3-action buttons on same line [Love, Share, Cart], 2-column Recommendation / Related Products grid replacing static features, and optimized Dual CTA bottom bar), and Store KYC Stage 1 textarea dynamic container expansion (`minHeight: 110px`) with zero text overflow and horizontal category multi-select slider chips. |
 | 1.6 | August 28, 2026 | Architecture & Engineering Team | Added "Become a Transporter" Onboarding Flow (`TransporterWelcomeScreen` with logo-free modern header, live status badge, 70% automated hero carousel with exact screen-width snapping, 4 Transport Modality Cards [Bike 🏍️, Taxi 🚕, Van 🚐, Plane ✈️], and 20% capsule CTA; `TransporterKYCScreen` with 4-stage Driver KYC and Stage 5 celebration modal), KYC Completion Redirection Rule (redirecting users back to initial Buyer Home Dashboard upon document submission while in 24-hour review queue), 3D Clay-Style Black Character Avatar System bundled in `mobile/assets/avatar.png` with 52px Profile header avatar and Camera Edit badge, and Dynamic Cart Promo Banner Architecture (hidden by default, backend-driven with 6-second auto-dismiss timeout). |
 | 1.7 | August 28, 2026 | Architecture & Engineering Team | Added Wunabuy Wallet Checkout integration in `CheckoutPaymentScreen` (dual options: Wallet Balance instant 1-tap escrow vs Mobile Money USSD push; country-neutral provider labels), ProductCard interactive Quick-View Expand Modal with horizontal swipeable multi-image gallery (`FlatList horizontal pagingEnabled`, counter badge, stepper, dual actions), Strict Default Buyer Role Isolation in Settings (`RoleSwitcherCard` hiding Seller/Transporter buttons until backend API staff approval, with dedicated Apply to Sell and Apply to Transport action cards), and App-Wide `canGoBack` Navigation Safety with root reset fallbacks across all 11+ screens. |
+| 1.8 | August 31, 2026 | Architecture & Engineering Team | Comprehensive Seller Section Architecture (`SellerApp`), Dynamic Key-Based Workspace Isolation in `RootNavigator.tsx` (`key={isAuthenticated ? 'auth_workspace_' + activeRole : 'unauth_root'}`) eliminating cross-stack bleeding, 2-Hour Auto-Cancel Fulfillment Queue (`SellerOrdersScreen`) with live countdown timers, Dual Delivery Dispatch Modal (Express Transporter vs Store In-House Rider), Seller Store Wallet & MoMo Payout Engine (`SellerWalletScreen`), and Complete Platform Visual Design & Color Harmonization across Buyer and Seller workspaces with unified Emerald Teal (`#0D9488` / `#0F766E`) and Warm Amber (`#F59E0B`) design tokens. |
 
 ---
 
@@ -187,19 +188,47 @@ Wunabuy addresses these challenges through a **mobile-first, offline-resilient a
   - ⚙️ **Settings & Preferences**: `SettingsScreen`.
 - **App Controls**: Dark Appearance toggle (`Switch`) and Logout Account pill button.
 
-### 5.8 Profile Screen (Me Tab Structure — `ProfileScreen`)
-- **Top Profile Header Row**: User Avatar, Full Name, Phone Number, and top-right **Settings Gear Icon button (`⚙️`)**.
-- **Wallet Quick-Access Card**: Teal rounded card (`#0D9488`, `20px` radius) with decorative glass circles, Available Balance (`47,500 XAF`), `48H ESCROW` badge, white wallet icon circle, and `Open Wallet ›` trigger.
-- **"My Orders" Status Grid**:
-  - 💳 **To Pay** (Pending Payment)
-  - 📦 **To Ship** (Paid Escrow / Preparing, badge `3`)
-  - 🚚 **To Receive** (En Route / In Transit, badge `15`)
-  - 💬 **To Review** (Delivered / Received, badge `1`)
-  - 💸 **Refund** (Disputed / Cancelled)
-- **Quick Services & Tools Grid**:
-  - Row 1: 🛫 `Overseas Ship`, 📍 `Shipping Address`, 🏬 `Followed Stores`, ⭐ `Favorites`, 🐾 `Footprints`
-  - Row 2: 💬 `Help Center`, 💳 `My Wallet` (direct link), 🌟 `PLUS Member`, 🎟️ `Vouchers`, 🛡️ `88 Solution` (Escrow Guarantee)
-- **"Recommended For You" Product Grid**: 2-Column purchasing grid below the tools section.
+### 5.9 Seller Workspace UI/UX Architecture (`SellerApp`)
+- **Visual Brand Harmonization**: Full alignment with Buyer aesthetic using core Emerald Teal (`colors.primary[500]` `#0D9488`, `colors.primary[600]` `#0F766E`) and Warm Amber (`colors.accent[500]` `#F59E0B`).
+- **5.9.1 Merchant Dashboard (`SellerDashboardScreen`)**:
+  - Top header: Merchant Store name, verified badge, and 1-tap **"🛒 Buyer Mode"** pill button allowing immediate transition back to customer shopping.
+  - **Store Balances Card**: Matches Buyer Wallet card geometry with Emerald Teal background, decorative translucent glass circles (`rgba(255,255,255,0.08)`), Available Earnings in XAF, Locked Escrow indicator, privacy eye toggle (`👁`), and quick `Withdraw Payout` CTA button.
+  - **Operational Stat Tiles (2x2 Grid)**: Real-time metrics for Today's Sales (XAF), Pending Orders Queue, Active Products, and Store Rating.
+  - **Quick Action Grid**: `+ Add Product`, `Fulfillment Orders`, `Store Wallet`, and `Store Settings`.
+  - **Recent Orders Queue Preview**: Quick-access preview cards with live status badges and 1-tap action buttons.
+- **5.9.2 Catalog & Stock Inventory (`SellerProductsScreen` & `AddEditProductScreen`)**:
+  - Real-time catalog feed with search bar, active/paused switch (`is_active`), stock steppers `[ − 1 + ]` for instant quantity modification, and low-stock warning badges ($\le 5$ units).
+  - Product Listing Creation/Edit: 5-photo upload grid with camera and gallery integration, category scroll selector, numeric price/stock inputs, and quality tier chips (`NEW`, `LIKE_NEW`, `GOOD`, `FAIR`).
+- **5.9.3 Order Fulfillment Queue & Dual Delivery Dispatch (`SellerOrdersScreen`)**:
+  - Horizontal segmented status filter bar (`All`, `New Orders`, `Preparing`, `Ready`, `In Transit`, `Completed`).
+  - **2-Hour Auto-Cancel Acceptance SLA**: Live ticking countdown timer (`⏳ 01:45:00`) for new orders enforcing automatic cancellation and buyer refund upon timeout (BR-01).
+  - **Dual Delivery Dispatch Modal**: When marking an order "Ready for Pickup", merchants can choose between:
+    1. **🏍️ Wunabuy Express Transporter (Recommended)**: Auto-broadcasts pickup job to nearby verified riders with live GPS route tracking.
+    2. **🚚 Store In-House Rider / Self-Delivery**: Merchant fulfills delivery directly with optional rider phone assignment.
+  - Lifecycle action buttons: `Accept Order` $\rightarrow$ `📦 Mark Ready for Pickup` $\rightarrow$ `🚚 Handover to Rider` $\rightarrow$ `✓ Confirm Buyer Received`.
+- **5.9.4 Store Wallet & MoMo Payout Engine (`SellerWalletScreen`)**:
+  - Available Store Balance & Escrow Locked banner with privacy toggle (`👁`).
+  - Instant Mobile Money Payout Modal (MTN MoMo `*126#` and Orange Money `#150#`) with percentage quick presets (`25%`, `50%`, `75%`, `Max`), automated 1% telecom fee deduction display, phone validation, and real-time ledger audit log.
+- **5.9.5 Seller Bottom Tab Navigation (`SellerTabNavigator.tsx`)**:
+  - 4 core tabs: `Dashboard` (speedometer icon), `Orders` (receipt icon with live pending count badge), `Inventory` (cube icon), and `Store Wallet` (wallet icon).
+  - Tab bar height: `56px + bottomInset`, active tint: `colors.primary[500]` (`#0D9488`), elevation: `10`.
+
+### 5.10 App-Wide Key-Based Workspace Isolation & Security Architecture (`RootNavigator.tsx`)
+- **Root Stack Remounting**: `RootNavigator` mounts the main navigation tree with dynamic key assignment:
+  ```typescript
+  <Stack.Navigator
+    key={isAuthenticated ? `auth_workspace_${activeRole}` : 'unauth_root'}
+    screenOptions={{ headerShown: false }}
+  >
+  ```
+- **Guaranteed Workspace Separation**:
+  - In `activeRole === UserRole.BUYER`: Stack root is strictly `BuyerApp`. No Seller or Transporter screens can bleed into navigation history.
+  - In `activeRole === UserRole.SELLER`: Stack root is strictly `SellerApp`.
+  - In `activeRole === UserRole.TRANSPORTER`: Stack root is strictly `TransporterApp`.
+  - In unauthenticated state: Stack root is strictly `UnauthStack` (`Welcome`, `Login`, `VerifyOTP`, `Register`).
+- **Dynamic Context Adaptation in Profile**:
+  - `ProfileScreen.tsx` adapts header badge (`BUYER` in teal, `SELLER` in emerald, `TRANSPORTER` in amber).
+  - Bottom Partner Card dynamically presents the inverse workspace switcher ("🏪 Seller Workspace (Manage Store ➔)" when in Buyer mode, vs "🛒 Buyer Workspace (Shop on Wunabuy ➔)" when in Seller mode).
 
 ---
 
@@ -293,6 +322,11 @@ Wunabuy addresses these challenges through a **mobile-first, offline-resilient a
 - **FR-057 (High):** Dual Delivery Dispatch Mode: When marking orders ready for pickup, merchants can choose between **Wunabuy Express Transporters** (automated GPS dispatch to verified riders) and **Self-Delivery / Store In-House Rider**.
 - **FR-058 (High):** Store Wallet & Instant Mobile Money Payouts (`SellerWalletScreen`): Real-time escrow ledger with interactive Privacy Eye toggle (`👁` / `👁‍🗨`), instant Mobile Money (MTN MoMo & Orange Money) payout requests with 1% telecom charge calculations, and audit history.
 - **FR-059 (High):** Merchant Inventory CRUD with Stock Steppers (`SellerProductsScreen` & `AddEditProductScreen`): 2-column inventory catalog with active/paused toggle, instant `[ − 1 + ]` stock steppers, low-stock warnings ($\le 5$ units), and 5-photo upload grid with native camera and gallery integration.
+
+### EPIC 16: Role Workspace Isolation, Remount Security & Brand Palette Harmonization
+- **FR-060 (High):** Key-Based Stack Remounting: `RootNavigator.tsx` SHALL dynamically bind stack key `auth_workspace_${activeRole}` upon active role transitions, ensuring immediate unmounting of inactive workspace screens and complete isolation between Buyer, Seller, and Transporter workflows.
+- **FR-061 (High):** 1-Tap Quick Workspace Switching: Merchant Dashboard (`SellerDashboardScreen`) SHALL feature a top-right `🛒 Buyer Mode` button, and `ProfileScreen` SHALL dynamically display inverse workspace transition cards to allow fluid, authorized role context switching.
+- **FR-062 (High):** Platform-Wide Visual Brand Harmonization: All Seller screens SHALL share the same design token palette (`@wunabuy/design-tokens`) as the Buyer app (Emerald Teal `#0D9488` / `#0F766E`, Warm Amber `#F59E0B`, crisp white `#FFFFFF`), with matching tab heights, elevation, and card geometries.
 
 ---
 

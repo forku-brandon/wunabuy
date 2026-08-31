@@ -1,9 +1,9 @@
 # Wunabuy — Backend Technical Specification & API Contracts
 
-**Document Version:** 1.4 (Production API Architecture Baseline)  
-**Date:** August 28, 2026  
+**Document Version:** 1.5 (Production API Architecture Baseline)  
+**Date:** August 31, 2026  
 **Status:** Approved / In Production Use  
-**Companion Documents:** Wunabuy SRS v1.7, Wunabuy PRD v1.7, Wunabuy Frontend Tech Spec v1.7  
+**Companion Documents:** Wunabuy SRS v1.8, Wunabuy PRD v1.8, Wunabuy Frontend Tech Spec v1.8  
 **Framework:** Laravel 13 (PHP 8.3+)  
 **Frontend Monorepo Targets:** `wunabuy-mobile` (Expo SDK 54), `@wunabuy/api-client`, `@wunabuy/types`, `@wunabuy/utils`
 
@@ -21,8 +21,9 @@
 8. [User Profile, Settings & Role Switching API Contracts](#8-user-profile-settings--role-switching-api-contracts)
 9. [Store & Transporter Onboarding & KYC API Contracts](#9-store--transporter-onboarding--kyc-api-contracts)
 10. [Dynamic Promotions & Cart Banner API Contracts](#10-dynamic-promotions--cart-banner-api-contracts)
-11. [Database Schema & PostGIS Spatial Extensions](#11-database-schema--postgis-spatial-extensions)
-12. [Error Codes & Troubleshooting Matrix](#12-error-codes--troubleshooting-matrix)
+11. [Seller Store & Fulfillment Backend Architecture](#11-seller-store--fulfillment-backend-architecture)
+12. [Database Schema & PostGIS Spatial Extensions](#12-database-schema--postgis-spatial-extensions)
+13. [Error Codes & Troubleshooting Matrix](#13-error-codes--troubleshooting-matrix)
 
 ---
 
@@ -803,7 +804,88 @@ All REST API endpoints are prefixed under `/api/v1`.
 
 ---
 
-## 11. Database Schema & PostGIS Spatial Extensions
+## 11. Seller Store & Fulfillment Backend Architecture
+
+### 11.1 Merchant Order State Machine & Fulfillment Queue
+
+Orders flow through a strict state machine with automated timeout handling:
+
+```
+[paid_escrow] ──(Seller Accept within 2h)──► [preparing]
+      │                                             │
+ (Timeout / Decline)                     (Mark Ready for Pickup)
+      ▼                                             ▼
+ [cancelled] ──(Auto-Refund)                [ready_for_pickup]
+                                                    │
+                                         (Handover to Transporter)
+                                                    ▼
+                                              [in_transit]
+                                                    │
+                                           (Buyer Confirm / Proof)
+                                                    ▼
+                                               [delivered]
+                                                    │
+                                            (48h Escrow Release)
+                                                    ▼
+                                               [completed]
+```
+
+### 11.2 2-Hour Auto-Cancel Queue Worker (`OrderTimeoutWorker`)
+
+To enforce Business Rule BR-01, a background Redis queue worker runs on a 1-minute schedule:
+
+```php
+namespace App\Jobs;
+
+use App\Models\Order;
+use App\Services\EscrowService;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+
+class CancelTimedOutOrdersJob implements ShouldQueue
+{
+    use Queueable;
+
+    public function handle(EscrowService $escrow): void
+    {
+        $expiredOrders = Order::where('status', 'paid_escrow')
+            ->where('expires_at', '<=', now())
+            ->get();
+
+        foreach ($expiredOrders as $order) {
+            $order->update([
+                'status' => 'cancelled',
+                'cancellation_reason' => 'seller_acknowledgment_timeout'
+            ]);
+
+            // Release locked escrow back to Buyer Wallet / MoMo
+            $escrow->refundBuyer($order, 'Store did not accept order within 2-hour SLA.');
+        }
+    }
+}
+```
+
+### 11.3 Dual Dispatch Routing Engine
+
+When `POST /api/v1/seller/orders/:id/ready` is called:
+1. If `delivery_option === 'wunabuy_transporter'`:
+   - System queries nearby available transporters using PostGIS `ST_DWithin` ($\le 5\text{km}$ radius).
+   - Publishes `.delivery_job_broadcast` event via Laravel Reverb WebSocket channel `logistics.nearby`.
+2. If `delivery_option === 'in_house_rider'`:
+   - System flags order as `in_house_delivery` with optional driver phone assigned for SMS notification.
+
+### 11.4 Seller Mobile Money Payout Engine & 1% Fee Deduction
+
+When processing `POST /api/v1/seller/wallet/payout`:
+- Validates available balance $\ge \text{requested amount}$.
+- Computes platform telecom fee: $\text{Fee} = \max(100, \text{round}(\text{amount} \times 0.01))$.
+- Computes Net Payout: $\text{Net} = \text{amount} - \text{Fee}$.
+- Dispatches async transfer to MTN MoMo Collection/Disbursement or Orange Money API.
+- Debits store available wallet balance atomically within a database transaction.
+
+---
+
+## 12. Database Schema & PostGIS Spatial Extensions
 
 ```sql
 -- PostgreSQL 15 + PostGIS Core Tables
@@ -925,7 +1007,7 @@ CREATE TABLE orders (
 
 ---
 
-## 12. Error Codes & Troubleshooting Matrix
+## 13. Error Codes & Troubleshooting Matrix
 
 | Error Code | HTTP Status | Description | User Message |
 |---|---|---|---|
@@ -946,4 +1028,4 @@ CREATE TABLE orders (
 **Product Manager:** _Agemo Technologies Product Lead_  
 
 ---
-**[End of Backend Technical Specification & API Contracts v1.4]**
+**[End of Backend Technical Specification & API Contracts v1.5]**

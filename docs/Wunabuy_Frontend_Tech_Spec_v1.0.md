@@ -1,14 +1,16 @@
 # Wunabuy — Frontend Technical Specification
-### Version 1.0 | July 2026
+### Version 1.8 | August 31, 2026
 
-> **Resolved Decisions (August 26, 2026):**
+> **Resolved Decisions (August 31, 2026):**
 > - Real-time: Laravel 13 + Laravel Reverb (all Supabase references removed)
-> - Navigation: React Navigation 6.x + Expo SDK 51
+> - Dynamic Key-Based Workspace Isolation (`RootNavigator`): `key={isAuthenticated ? 'auth_workspace_' + activeRole : 'unauth_root'}` ensuring complete stack remount and strict role boundary isolation
+> - Brand Palette Harmonization: Full unification across Buyer and Seller screens using Emerald Teal (`#0D9488` / `#0F766E`) and Warm Amber (`#F59E0B`)
+> - Navigation: React Navigation 6.x + Expo SDK 54
 > - Staff Portal: TanStack Router + shadcn/ui + Tailwind CSS
 > - Auth: Laravel Sanctum opaque Bearer tokens (not JWT)
 > - Currency: XAF-only for Phase 1 (Cameroon market)
-> - Commission: 3.5% platform fee
-> - Dark mode: Required in Phase 1
+> - Commission: 3.5% - 5.0% platform fee
+> - Dark mode: Full support across light and dark theme stores
 
 **Prepared for:** Agemo Technologies Frontend Engineering Team  
 **Companion Documents:**  
@@ -360,7 +362,7 @@ The mobile app incorporates three distinct role views in a single codebase with 
   - **Completed Refunds**: Resolved claims credited back to Buyer Wallet or Mobile Money with transaction reference IDs.
 - **Address Manager (`AddressManagerScreen`)**: Delivery addresses management with Default address badge, Add/Edit BottomSheet modal, instant default address switching, and deletion.
 
-#### 2. Seller (Store Owner) Flow
+#### 2. Seller (Store Owner) Flow (`SellerApp`)
 - **Seller Welcome (`SellerWelcomeScreen`)**: 70% automated hero carousel (3.5s interval across 4 benefit cards) and 20% capsule CTA button (`Get Started Now ➔`).
 - **Store KYC Form (`StoreKYCScreen`)**:
   - 4-stage wizard with 80% form card height / 20% action button split and animated progress bar (`25%` -> `100%`).
@@ -368,9 +370,16 @@ The mobile app incorporates three distinct role views in a single codebase with 
   - Stage 2: Street address, city, and GPS Auto-Pin notice.
   - Stage 3 & 4: National ID CNI number, front/back CNI photo uploads, storefront photo, and business registration certificate.
   - High-contrast Error Callout Alert Banner and Stage 5 celebration modal (redirects user back to initial Buyer Home Dashboard upon completion).
-- **Seller Dashboard (`SellerDashboardScreen`)**: Total store balances, revenue metrics, KYC verification status banner, and `ScreenContainer` with native `RefreshControl`.
-- **Store Inventory (`SellerProductsScreen`)**: Product inventory list, active stock switches, search filter, and `FlatList` with native `RefreshControl`.
-- **Add/Edit Product (`AddEditProductScreen`)**: Multi-image photo picker, category selector, quality tier, price in XAF, and stock quantity.
+- **Seller Dashboard (`SellerDashboardScreen`)**: Top merchant header with 1-tap `🛒 Buyer Mode` switch, Emerald Teal Store Balances Card (with decorative glass circles, privacy eye toggle `👁`, and quick payout trigger), 2x2 operational telemetry grid (Today's Sales, Pending Orders, Active Products, Store Rating), quick action grid, recent orders queue, and `ScreenContainer` with native `RefreshControl`.
+- **Order Fulfillment Queue (`SellerOrdersScreen`)**:
+  - Segmented status tabs (`All`, `New Orders`, `Preparing`, `Ready`, `In Transit`, `Completed`).
+  - **2-Hour Auto-Cancel Acceptance SLA Timer**: Real-time ticking countdown (`⏳ 01:45:00`) enforcing automated cancellation and buyer refund upon timeout.
+  - **Dual Delivery Dispatch Modal**: Provides choice between **Wunabuy Express Transporter** (automated GPS rider broadcast) and **Store In-House Rider** (with driver phone assignment).
+  - Lifecycle action buttons: `Accept Order`, `📦 Mark Ready for Pickup`, `🚚 Handover to Rider`, and `✓ Confirm Buyer Received`.
+- **Store Catalog & Inventory (`SellerProductsScreen`)**: Inventory search, active/paused switch (`is_active`), real-time stock steppers `[ − 1 + ]` for instant on-device stock changes, low-stock warning badges ($\le 5$ units), and `FlatList` with native `RefreshControl`.
+- **Add/Edit Product (`AddEditProductScreen`)**: 5-photo upload grid with native camera & gallery picker, category horizontal selector, quality tier chips (`NEW`, `LIKE_NEW`, `GOOD`, `FAIR`), price input in XAF with formatted live preview (`formatXAF`), and stock quantity.
+- **Store Wallet & MoMo Payouts (`SellerWalletScreen`)**: Real-time balance and locked escrow overview, privacy eye toggle (`👁`), instant Mobile Money (MTN MoMo `*126#` and Orange Money `#150#`) payout modal with 1% telecom charge calculations and quick percentage chips (`25%`, `50%`, `75%`, `Max`), and audit ledger.
+- **Seller Bottom Tab Navigator (`SellerTabNavigator.tsx`)**: 4 primary tabs (`Dashboard`, `Orders`, `Inventory`, `Store Wallet`) styled with unified Emerald Teal active tint (`#0D9488`), `56px + bottomInset` height, and elevation `10`.
 
 #### 3. Transport Provider Flow
 - **Transporter Welcome (`TransporterWelcomeScreen`)**: Logo-free modern header, live status badge (`TRANSPORTER FLEET`), 70% automated hero benefit carousel with exact screen-width snapping, 4 Transport Modality Cards (`Bike 🏍️`, `Taxi 🚕`, `Van 🚐`, `Plane ✈️`), and 20% capsule CTA button (`Start Driver Verification ➔`).
@@ -628,31 +637,78 @@ export function subscribeToDeliveryTracking(
 
 ---
 
-## 11. Navigation Architecture
+### 11.2 Key-Based Dynamic Workspace Remounting Architecture
 
-### 11.1 Mobile Deep Linking Configuration
-
-Deep links support universal opening of shared products, stores, order tracking, and chat threads (`wunabuy://` scheme and `https://wunabuy.com/app/*`).
+To achieve complete isolation between the **Buyer**, **Seller**, and **Transporter** workspaces without unexpected route bleeding or state contamination, `RootNavigator.tsx` mounts the root stack with dynamic key assignment:
 
 ```typescript
-// mobile/src/app/navigation/linking.ts
-import { LinkingOptions } from '@react-navigation/native';
+// mobile/src/navigation/RootNavigator.tsx
+export const RootNavigator = () => {
+  const { isAuthenticated, activeRole, isLoading } = useAuthStore();
 
-export const linkingConfig: LinkingOptions<any> = {
-  prefixes: ['wunabuy://', 'https://wunabuy.com/app'],
-  config: {
-    screens: {
-      BuyerApp: {
-        screens: {
-          Home: 'home',
-          ProductDetail: 'product/:id',
-          StoreProfile: 'store/:id',
-          OrderTracking: 'track/:orderId',
-          ChatConversation: 'chat/:conversationId',
-        },
-      },
-    },
-  },
+  if (isLoading) {
+    return <LoadingScreen message="Initializing Wunabuy..." />;
+  }
+
+  // Dynamic root key guarantees complete stack tree remount on role switch
+  const stackKey = isAuthenticated ? `auth_workspace_${activeRole}` : 'unauth_root';
+
+  return (
+    <Stack.Navigator
+      key={stackKey}
+      screenOptions={{
+        headerShown: false,
+        animation: 'slide_from_right',
+      }}
+    >
+      {!isAuthenticated ? (
+        // Unauthenticated Stack
+        <Stack.Screen name="UnauthRoot" component={UnauthStackNavigator} />
+      ) : activeRole === UserRole.SELLER ? (
+        // Seller Workspace Stack
+        <>
+          <Stack.Screen name="SellerApp" component={SellerTabNavigator} />
+          <Stack.Screen name="AddEditProduct" component={AddEditProductScreen} />
+          <Stack.Screen name="StoreKYC" component={StoreKYCScreen} />
+          <Stack.Screen name="Settings" component={SettingsScreen} />
+        </>
+      ) : activeRole === UserRole.TRANSPORTER ? (
+        // Transporter Workspace Stack
+        <>
+          <Stack.Screen name="TransporterApp" component={TransporterTabNavigator} />
+          <Stack.Screen name="TransporterKYC" component={TransporterKYCScreen} />
+          <Stack.Screen name="ActiveTrip" component={TransporterActiveTripScreen} />
+          <Stack.Screen name="Settings" component={SettingsScreen} />
+        </>
+      ) : (
+        // Default: Buyer Workspace Stack
+        <>
+          <Stack.Screen name="BuyerApp" component={BuyerTabNavigator} />
+          <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
+          <Stack.Screen name="CheckoutPayment" component={CheckoutPaymentScreen} />
+          <Stack.Screen name="OrderTracking" component={OrderTrackingScreen} />
+          <Stack.Screen name="BuyerWallet" component={BuyerWalletScreen} />
+          <Stack.Screen name="SellerWelcome" component={SellerWelcomeScreen} />
+          <Stack.Screen name="StoreKYC" component={StoreKYCScreen} />
+          <Stack.Screen name="Settings" component={SettingsScreen} />
+        </>
+      )}
+    </Stack.Navigator>
+  );
+};
+```
+
+### 11.3 Seller Tab Navigation Structure (`SellerTabNavigator.tsx`)
+
+The Seller workspace operates on a streamlined 4-tab bottom navigation model:
+
+```typescript
+// mobile/src/navigation/SellerTabNavigator.tsx
+export type SellerTabParamList = {
+  SellerDashboard: undefined;
+  SellerOrders: undefined;
+  SellerProducts: undefined;
+  SellerWallet: undefined;
 };
 ```
 

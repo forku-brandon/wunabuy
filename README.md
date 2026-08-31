@@ -84,7 +84,8 @@ wunabuy/
 │   ├── Wunabuy_PRD_v1.0.md
 │   ├── Wunabuy_SRS_v1.2.md
 │   ├── Wunabuy_Backend_Tech_Spec_v1.0.md
-│   └── Wunabuy_Frontend_Tech_Spec_v1.0.md
+│   ├── Wunabuy_Frontend_Tech_Spec_v1.0.md
+│   └── Wunabuy_Backend_API_Contract_v1.0.md
 │
 ├── .github/
 │   └── workflows/             # CI/CD Pipelines

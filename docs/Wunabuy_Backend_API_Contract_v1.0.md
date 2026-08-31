@@ -881,7 +881,210 @@ sequenceDiagram
 
 ---
 
-## 10. Database Schema & Migration Checklist
+## 10. Seller Store & Fulfillment API Endpoints
+
+### 10.1 Get Seller Dashboard Metrics
+`GET /api/v1/seller/dashboard`
+
+- **Headers**: `Authorization: Bearer <token>`
+- **Description**: Returns live revenue, balance, order counts, and active product metrics for the authenticated merchant store.
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": {
+    "store_id": "store_101",
+    "store_name": "Douala Tech Hub",
+    "available_balance": 185000,
+    "escrow_locked_balance": 45000,
+    "currency": "XAF",
+    "today_sales": 72500,
+    "pending_orders_count": 3,
+    "active_products_count": 18,
+    "store_rating": 4.9,
+    "kyc_status": "approved"
+  }
+}
+```
+
+---
+
+### 10.2 List Store Orders
+`GET /api/v1/seller/orders?status=all`
+
+- **Headers**: `Authorization: Bearer <token>`
+- **Query Parameters**: `status` (`all` | `new` | `preparing` | `ready_for_pickup` | `in_transit` | `completed` | `disputed`)
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "ord_88201",
+      "order_code": "WUNA-98214",
+      "customer_id": "usr_buyer_1",
+      "customer_name": "Jean Dupont",
+      "customer_phone": "+237670123456",
+      "delivery_address": "Rue Joss, Bonanjo, Douala",
+      "status": "paid_escrow",
+      "created_at": "2026-08-31T10:00:00Z",
+      "expires_at": "2026-08-31T12:00:00Z",
+      "subtotal": 45000,
+      "commission": 2250,
+      "total": 45000,
+      "items": [
+        {
+          "product_id": "prod_1",
+          "name": "Sony WH-1000XM5 Wireless Headphones",
+          "quantity": 1,
+          "price": 45000,
+          "image_url": "https://api.wunabuy.com/storage/products/sony.jpg"
+        }
+      ],
+      "transporter_name": null,
+      "transporter_phone": null
+    }
+  ]
+}
+```
+
+---
+
+### 10.3 Accept Store Order (Within 2-Hour Window)
+`POST /api/v1/seller/orders/:id/accept`
+
+- **Headers**: `Authorization: Bearer <token>`
+- **Description**: Transitions order from `paid_escrow` to `preparing`. Cancels the 2-hour auto-cancellation timer.
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": {
+    "order_id": "ord_88201",
+    "status": "preparing",
+    "accepted_at": "2026-08-31T10:15:00Z"
+  }
+}
+```
+
+---
+
+### 10.4 Decline Store Order
+`POST /api/v1/seller/orders/:id/decline`
+
+- **Headers**: `Authorization: Bearer <token>`
+- **Request Body**:
+```json
+{
+  "reason": "out_of_stock",
+  "note": "Item was sold out in physical store"
+}
+```
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": {
+    "order_id": "ord_88201",
+    "status": "cancelled",
+    "refund_initiated": true,
+    "buyer_notified": true
+  }
+}
+```
+
+---
+
+### 10.5 Mark Ready for Pickup & Choose Delivery Dispatch
+`POST /api/v1/seller/orders/:id/ready`
+
+- **Headers**: `Authorization: Bearer <token>`
+- **Request Body**:
+```json
+{
+  "delivery_option": "wunabuy_transporter",
+  "in_house_rider_phone": null
+}
+```
+*(Or with in-house delivery: `{"delivery_option": "in_house_rider", "in_house_rider_phone": "+237699112233"}`)*
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": {
+    "order_id": "ord_88201",
+    "status": "ready_for_pickup",
+    "dispatch_mode": "wunabuy_transporter",
+    "job_broadcast_id": "job_bcast_9921"
+  }
+}
+```
+
+---
+
+### 10.6 Handover Order to Rider
+`POST /api/v1/seller/orders/:id/handover`
+
+- **Headers**: `Authorization: Bearer <token>`
+- **Description**: Confirms that the store has physically handed the package to the designated transporter.
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": {
+    "order_id": "ord_88201",
+    "status": "in_transit",
+    "transporter_id": "usr_rider_44",
+    "departed_at": "2026-08-31T10:45:00Z"
+  }
+}
+```
+
+---
+
+### 10.7 Store Products CRUD & Stock Steppers
+- `GET /api/v1/seller/products`: Returns list of all store products.
+- `POST /api/v1/seller/products`: Creates a new product listing.
+- `PUT /api/v1/seller/products/:id`: Updates an existing product listing.
+- `PATCH /api/v1/seller/products/:id/stock`: Increments/decrements available stock (`{ "delta": 1 }` or `{ "delta": -1 }`).
+- `PATCH /api/v1/seller/products/:id/toggle-active`: Toggles product active/paused state (`{ "is_active": true }`).
+- `DELETE /api/v1/seller/products/:id`: Soft-deletes a product listing from the catalog feed.
+
+---
+
+### 10.8 Seller Mobile Money Payout Request
+`POST /api/v1/seller/wallet/payout`
+
+- **Headers**: `Authorization: Bearer <token>`, `X-Idempotency-Key: <uuid>`
+- **Request Body**:
+```json
+{
+  "amount": 50000,
+  "destination_type": "momo",
+  "phone": "+237670123456",
+  "provider": "mtn"
+}
+```
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": {
+    "payout_id": "payout_88219",
+    "amount_requested": 50000,
+    "fee_deducted": 500,
+    "net_payout": 49500,
+    "currency": "XAF",
+    "destination": "+237 670 123 456 (MTN MoMo)",
+    "status": "processing",
+    "estimated_arrival": "Instant (under 5 minutes)"
+  }
+}
+```
+
+---
+
+## 11. Database Schema & Migration Checklist
 
 ```sql
 -- 1. Users Table
