@@ -10,7 +10,7 @@ import { SellerDashboardScreen } from '../screens/seller/SellerDashboardScreen';
 import { SellerProductsScreen } from '../screens/seller/SellerProductsScreen';
 import { SellerOrdersScreen } from '../screens/seller/SellerOrdersScreen';
 import { SellerWalletScreen } from '../screens/seller/SellerWalletScreen';
-import { ProfileScreen } from '../screens/profile/ProfileScreen';
+import { SellerProfileScreen } from '../screens/seller/SellerProfileScreen';
 
 const Tab = createBottomTabNavigator<SellerTabParamList>();
 
@@ -68,7 +68,8 @@ export const SellerTabNavigator = () => {
       <Tab.Screen name="SellerProducts" component={SellerProductsScreen} options={{ title: 'Products' }} />
       <Tab.Screen name="SellerOrders" component={SellerOrdersScreen} options={{ title: 'Orders' }} />
       <Tab.Screen name="SellerWallet" component={SellerWalletScreen} options={{ title: 'Wallet' }} />
-      <Tab.Screen name="SellerProfile" component={ProfileScreen} options={{ title: 'Profile' }} />
+      <Tab.Screen name="SellerProfile" component={SellerProfileScreen} options={{ title: 'Profile' }} />
     </Tab.Navigator>
   );
 };
+
