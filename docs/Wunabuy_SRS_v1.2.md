@@ -130,8 +130,10 @@ Wunabuy consists of a **React Native monorepo** (`wunabuy-mobile`, `@wunabuy/des
 - **FR-038:** `CheckoutPaymentScreen` SHALL support dual payment tabs: **Wunabuy Wallet** (`PaymentMethod.WALLET`) with real-time balance checking, instant 1-tap escrow lock, and low-balance shortcut; and **Mobile Money** (`PaymentMethod.MOMO`) with MTN MoMo (`*126#`) and Orange Money (`#150*50#`).
 - **FR-039:** Labels across all checkout and authentication screens SHALL be country-neutral ("Mobile Money Provider", "Mobile Phone Number").
 
-### 3.12 ProductCard Quick-View Expand Modal & Horizontal Swipe Gallery
+### 3.12 ProductCard Quick-View Expand Modal & Fullscreen Swipeable Gallery (`ProductImageGalleryModal`)
 - **FR-040:** Tapping the circular `(+)` button on `ProductCard` SHALL expand an interactive preview modal featuring a high-performance horizontal swipe gallery (`FlatList horizontal pagingEnabled`), counter badge (`1 / 4`), pagination dots, 5-star ratings, description, quantity stepper `[ − 1 + ]`, `Add to Cart`, and `View Full Product ➔`.
+- **FR-040b:** Tapping any product image or the floating `<>` Expand button in the quick-view modal, Product Detail screen, Seller Dashboard, or Seller Products catalog SHALL open the immersive **`ProductImageGalleryModal`** featuring 100% viewport coverage, horizontal swipe gallery, top action bar with `<>` (Expand fill) vs `><` (Reduce to fit) toggle button and `(X)` Close button, and bottom thumbnail selector strip.
+
 
 ### 3.13 Strict Default Buyer Role Isolation & App-Wide Navigation Safety
 - **FR-041:** All user accounts SHALL default strictly to **Buyer** (`UserRole.BUYER`).

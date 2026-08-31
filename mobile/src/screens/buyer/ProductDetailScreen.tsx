@@ -33,6 +33,8 @@ import { useThemeStore } from '../../stores/theme.store';
 import { Product } from '@wunabuy/types';
 import { useFavoritesStore } from '../../stores/favorites.store';
 import { useFootprintStore } from '../../stores/footprint.store';
+import { ProductImageGalleryModal } from '../../components/product/ProductImageGalleryModal';
+
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -59,10 +61,12 @@ export const ProductDetailScreen = ({ route, navigation }: any) => {
 
   // Gallery and Variant state
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [isGalleryModalVisible, setIsGalleryModalVisible] = useState(false);
   const [selectedColor, setSelectedColor] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [isDescExpanded, setIsDescExpanded] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
 
   // Recommendations: Related products in the same category (or fallback items) excluding current product
   const recommendedProducts: Product[] = useMemo(() => {
@@ -203,13 +207,19 @@ export const ProductDetailScreen = ({ route, navigation }: any) => {
               },
             ]}
           >
-            <Image
-              source={{ uri: product.images[activeImageIndex] || product.images[0] }}
-              style={styles.heroImage}
-              resizeMode="cover"
-            />
+            <TouchableOpacity
+              activeOpacity={0.92}
+              onPress={() => setIsGalleryModalVisible(true)}
+              style={styles.heroImageClickable}
+            >
+              <Image
+                source={{ uri: product.images[activeImageIndex] || product.images[0] }}
+                style={styles.heroImage}
+                resizeMode="cover"
+              />
+            </TouchableOpacity>
 
-            {/* Top Overlay Badge: Quality Tier Only */}
+            {/* Top Overlay Badges: Quality Tier + (<>) Expand Button */}
             <View style={styles.heroOverlayHeader}>
               <View style={styles.qualityPill}>
                 <Ionicons name="shield-checkmark" size={13} color={colors.semantic.success[500]} />
@@ -217,7 +227,20 @@ export const ProductDetailScreen = ({ route, navigation }: any) => {
                   {product.quality_tier?.toUpperCase() ?? 'NEW'} • 100% VERIFIED
                 </Text>
               </View>
+
+              {/* (<>) Fullscreen Gallery Trigger Button */}
+              <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={() => setIsGalleryModalVisible(true)}
+                style={styles.expandGalleryHeroBtn}
+              >
+                <Ionicons name="expand-outline" size={13} color="#FFFFFF" />
+                <Text variant="caption" bold color="#FFFFFF" style={{ fontSize: 10, marginLeft: 3 }}>
+                  &lt;&gt;
+                </Text>
+              </TouchableOpacity>
             </View>
+
 
             {/* Thumbnail Strip (if multiple images) */}
             {product.images.length > 1 && (
@@ -532,9 +555,19 @@ export const ProductDetailScreen = ({ route, navigation }: any) => {
       </View>
 
       {toastMessage && <Toast message={toastMessage} type="info" />}
+
+      {/* Fullscreen Swipeable Product Image Gallery Modal */}
+      <ProductImageGalleryModal
+        visible={isGalleryModalVisible}
+        images={product.images}
+        initialIndex={activeImageIndex}
+        productName={product.name}
+        onClose={() => setIsGalleryModalVisible(false)}
+      />
     </ScreenContainer>
   );
 };
+
 
 const styles = StyleSheet.create({
   topBar: {
@@ -598,6 +631,10 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  heroImageClickable: {
+    width: '100%',
+    height: '100%',
+  },
   heroOverlayHeader: {
     position: 'absolute',
     top: spacing.md,
@@ -608,6 +645,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     zIndex: 5,
   },
+  expandGalleryHeroBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(15, 23, 42, 0.78)',
+    paddingHorizontal: spacing.sm + 2,
+    paddingVertical: 5,
+    borderRadius: borderRadius.full,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
+  },
+
   qualityPill: {
     flexDirection: 'row',
     alignItems: 'center',

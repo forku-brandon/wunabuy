@@ -111,11 +111,12 @@ export const SellerProfileScreen = ({ navigation }: any) => {
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.8,
       });
+
 
       if (!result.canceled && result.assets && result.assets[0]?.uri) {
         setSelectedAvatarUri(result.assets[0].uri);

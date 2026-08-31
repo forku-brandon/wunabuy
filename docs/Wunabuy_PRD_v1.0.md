@@ -297,8 +297,10 @@ Wunabuy addresses these challenges through a **mobile-first, offline-resilient a
 - **FR-040 (High):** Checkout payment screen (`CheckoutPaymentScreen`) supports dual payment options: **Wunabuy Wallet** (`PaymentMethod.WALLET`) with real-time balance inspection, instant 1-tap escrow lock, and low-balance shortfall warning; and **Mobile Money** (`PaymentMethod.MOMO`) with MTN MoMo (`*126#`) and Orange Money (`#150*50#`).
 - **FR-041 (High):** All payment method and provider labels SHALL be country-neutral ("Mobile Money Provider", "Mobile Phone Number").
 
-### EPIC 11: ProductCard Quick-View Expand & Swipeable Gallery
+### EPIC 11: ProductCard Quick-View Expand & Fullscreen Swipeable Gallery (`ProductImageGalleryModal`)
 - **FR-042 (High):** Tapping the circular `(+)` button on any `ProductCard` expands an interactive quick-view modal featuring a high-performance horizontal swipe gallery (`FlatList horizontal pagingEnabled`), real-time image counter (`1 / 4`), pagination dots, 5-star ratings, full description, quantity stepper `[ − 1 + ]`, and dual action buttons (`Add to Cart` + `View Full Product ➔`).
+- **FR-042b (High):** Fullscreen Product Image Gallery Modal (`ProductImageGalleryModal.tsx`): Tapping any product image or the floating `<>` Expand button in the quick-view modal, Product Detail screen, Seller Dashboard, or Seller Products catalog launches an immersive fullscreen gallery modal featuring horizontal swipe navigation, top action controls with `<>` (Expand to full fill) vs `><` (Reduce to fit) toggle and `(X)` Close button, and a bottom thumbnail selector strip.
+
 
 ### EPIC 12: Role Isolation & App-Wide Navigation Safety
 - **FR-043 (High):** All user accounts SHALL default strictly to **Buyer (Customer)** (`UserRole.BUYER`).

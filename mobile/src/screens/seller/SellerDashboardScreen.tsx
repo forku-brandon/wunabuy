@@ -15,6 +15,7 @@ import { ScreenContainer, Text, Card, Badge, Avatar } from '../../components/ui'
 import { KYCStatusBanner } from '../../components/seller/KYCStatusBanner';
 import { SellerSalesTipsCarousel } from '../../components/seller/SellerSalesTipsCarousel';
 import { SellerSidebarDrawer } from '../../components/navigation/SellerSidebarDrawer';
+import { ProductImageGalleryModal } from '../../components/product/ProductImageGalleryModal';
 import { KYCStatus, UserRole, Product } from '@wunabuy/types';
 import { formatXAF, formatRelativeTime } from '@wunabuy/utils';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
@@ -45,7 +46,9 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
   // Expandable Product Quick-View Modal State
   const [selectedProductForExpand, setSelectedProductForExpand] = useState<Product | null>(null);
   const [isExpandModalVisible, setIsExpandModalVisible] = useState(false);
+  const [isGalleryModalVisible, setIsGalleryModalVisible] = useState(false);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+
 
   const handleOpenExpandProduct = (product: Product) => {
     setSelectedProductForExpand(product);
@@ -690,12 +693,17 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
                       ? selectedProductForExpand.images
                       : ['https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=800']
                     ).map((imgUrl, idx) => (
-                      <Image
+                      <TouchableOpacity
                         key={idx}
-                        source={{ uri: imgUrl }}
-                        style={styles.modalGalleryImage}
-                        resizeMode="cover"
-                      />
+                        activeOpacity={0.92}
+                        onPress={() => setIsGalleryModalVisible(true)}
+                      >
+                        <Image
+                          source={{ uri: imgUrl }}
+                          style={styles.modalGalleryImage}
+                          resizeMode="cover"
+                        />
+                      </TouchableOpacity>
                     ))}
                   </ScrollView>
 
@@ -705,7 +713,20 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
                       {activeImageIndex + 1} / {Math.max(1, selectedProductForExpand.images?.length || 1)}
                     </Text>
                   </View>
+
+                  {/* Floating (<>) Fullscreen Gallery Trigger */}
+                  <TouchableOpacity
+                    activeOpacity={0.85}
+                    onPress={() => setIsGalleryModalVisible(true)}
+                    style={styles.modalExpandGalleryBtn}
+                  >
+                    <Ionicons name="expand-outline" size={13} color="#FFFFFF" />
+                    <Text variant="caption" bold color="#FFFFFF" style={{ fontSize: 10, marginLeft: 3 }}>
+                      &lt;&gt;
+                    </Text>
+                  </TouchableOpacity>
                 </View>
+
 
                 {/* Price, Tier, & Category */}
                 <View style={styles.modalPriceSection}>
@@ -822,9 +843,25 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
         onClose={() => setIsDrawerOpen(false)}
         navigation={navigation}
       />
+
+      {/* Fullscreen Swipeable Product Image Gallery Modal */}
+      {selectedProductForExpand && (
+        <ProductImageGalleryModal
+          visible={isGalleryModalVisible}
+          images={
+            selectedProductForExpand.images && selectedProductForExpand.images.length > 0
+              ? selectedProductForExpand.images
+              : ['https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=800']
+          }
+          initialIndex={activeImageIndex}
+          productName={selectedProductForExpand.name}
+          onClose={() => setIsGalleryModalVisible(false)}
+        />
+      )}
     </ScreenContainer>
   );
 };
+
 
 
 const styles = StyleSheet.create({
@@ -1242,12 +1279,26 @@ const styles = StyleSheet.create({
   modalImageCounterBadge: {
     position: 'absolute',
     bottom: 8,
-    right: 8,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    left: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
     paddingHorizontal: spacing.sm,
     paddingVertical: 3,
     borderRadius: borderRadius.full,
   },
+  modalExpandGalleryBtn: {
+    position: 'absolute',
+    bottom: 8,
+    right: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
+    borderRadius: borderRadius.full,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+
   modalPriceSection: {
     flexDirection: 'row',
     alignItems: 'center',

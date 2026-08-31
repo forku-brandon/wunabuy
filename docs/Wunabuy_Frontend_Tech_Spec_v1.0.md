@@ -341,14 +341,23 @@ The mobile app incorporates three distinct role views in a single codebase with 
 - **Home (`HomeScreen`)**: Top AppBar (`☰` hamburger drawer trigger on left; Search, Notifications with badge, and Shopping Cart with badge on right), auto-scrolling `HeroCarousel` (4.5s interval), official `PartnersCarousel` (MTN MoMo, Orange Money, Flutterwave, DHL, Ecobank), circular `CategoryChip` avatars, and native `RefreshControl`.
 - **Search & Discovery (`SearchScreen`)**: Full-text search with active query filtering, manual category avatar scrollbar, filter bottom sheet (price range, distance radius, rating, quality tier), and `ProductGrid` with native `RefreshControl`.
 - **Product Detail (`ProductDetailScreen` v2.0)**:
-  - Expansive hero gallery stage covering 92% screen width (4% side margins, 380px height) with rounded corners (`borderRadius: 20px`), quality tier pill badge (`NEW • 100% VERIFIED`), multi-image thumbnail selector strip, and pagination dots.
+  - Expansive hero gallery stage covering 92% screen width (4% side margins, 380px height) with rounded corners (`borderRadius: 20px`), quality tier pill badge (`NEW • 100% VERIFIED`), multi-image thumbnail selector strip, pagination dots, and floating `<>` Fullscreen Gallery Expand button triggering **`ProductImageGalleryModal`**.
   - Top Floating Header Bar aligning Back button on the left, and Favorite Love Icon (`❤️` / `🤍`), Native Share Button, and Shopping Cart Button (with live item count badge) in a clean horizontal row on the right on the same line.
   - Verified Merchant Store Card displaying store title, verification badge, and 99.4% fulfillment score.
   - 48-Hour Escrow Protection & Express GPS Delivery trust banner.
   - Color variant selector and expandable description with Read More / Show Less toggle.
   - 2-Column Recommendation / Related Products Grid ("You May Also Like ✨") querying related products from the same category with direct navigation (`navigation.push('ProductDetail')`).
   - Sticky Bottom Action Bar with compact `[ − 1 + ]` quantity stepper, 48px soft-teal `Add to Cart` button (`flex: 1.1`), and solid Emerald Teal `Buy Now ➔` button (`flex: 1.2`).
+- **Product Card & Fullscreen Gallery (`ProductCard.tsx` & `ProductImageGalleryModal.tsx`)**:
+  - Interactive Quick-View modal on `(+)` tap with product overview, ratings, steppers, and cart actions.
+  - Tapping any product image or the floating `<>` button opens the immersive **`ProductImageGalleryModal`**:
+    - Fullscreen 100% viewport coverage with OLED dark backdrop.
+    - Horizontal swipeable stage with momentum snapping and active counter badge (`1 / 4`).
+    - Top Action Bar with `<>` (Expand fill) vs `><` (Reduce to fit) toggle button and `(X)` Close button.
+    - Bottom thumbnail selector strip with active Emerald border highlight (`#0D9488`).
+    - Integrated across Buyer and Seller apps (`ProductCard`, `ProductDetailScreen`, `SellerDashboardScreen`, `SellerProductsScreen`, and `SellerProfileScreen`).
 - **Cart & Checkout (`BuyerCartScreen`, `CheckoutPaymentScreen`)**: Cart item list with quantity steppers, promo code discount box, dynamic backend-driven promotion & free shipping banner (hidden by default, auto-dismisses after 6s timeout with manual `X` close trigger), and `FlatList` with native `RefreshControl`.
+
 - **Order Tracking & Dispute (`BuyerOrdersScreen`, `OrderTrackingScreen`)**:
   - `BuyerOrdersScreen`: 48H Escrow metrics, tab filters (`All`, `Paid Escrow`, `En Route`, `Completed`, `Disputed`), digital signature confirmation modal, dispute filing modal, and `FlatList` with native `RefreshControl`.
   - `OrderTrackingScreen`: Live Google Map with real-time transporter marker, route polyline, ETA countdown, order status step timeline, and direct call/chat triggers.

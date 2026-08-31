@@ -49,7 +49,7 @@ export const ImagePickerGrid: React.FC<ImagePickerGridProps> = ({
                 return;
               }
               const res = await ImagePicker.launchCameraAsync({
-                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                mediaTypes: ['images'],
                 allowsEditing: true,
                 aspect: [1, 1],
                 quality: 0.8,
@@ -74,11 +74,12 @@ export const ImagePickerGrid: React.FC<ImagePickerGridProps> = ({
                 return;
               }
               const res = await ImagePicker.launchImageLibraryAsync({
-                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                mediaTypes: ['images'],
                 allowsEditing: true,
                 aspect: [1, 1],
                 quality: 0.8,
               });
+
               if (!res.canceled && res.assets && res.assets[0]?.uri) {
                 onAddImage(res.assets[0].uri);
               }

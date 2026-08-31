@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { View, Image, FlatList, StyleSheet, TouchableOpacity, Switch, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ScreenContainer, Text, Card, Input, Button, Badge, Toast, EmptyState } from '../../components/ui';
+import { ProductImageGalleryModal } from '../../components/product/ProductImageGalleryModal';
 import { useSellerStore } from '../../stores/seller.store';
 import { Product, QualityTier } from '@wunabuy/types';
 import { formatXAF } from '@wunabuy/utils';
@@ -15,6 +16,8 @@ export const SellerProductsScreen = ({ navigation }: any) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [galleryProduct, setGalleryProduct] = useState<Product | null>(null);
+
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -114,9 +117,22 @@ export const SellerProductsScreen = ({ navigation }: any) => {
             return (
               <Card style={[styles.productCard, !item.is_active && { opacity: 0.75 }]}>
                 <View style={styles.cardRow}>
-                  <Image source={{ uri: item.images[0] }} style={styles.thumbnail} />
+                  <TouchableOpacity
+                    activeOpacity={0.88}
+                    onPress={() => setGalleryProduct(item)}
+                    style={styles.thumbnailWrapper}
+                  >
+                    <Image source={{ uri: item.images[0] }} style={styles.thumbnail} />
+                    <View style={styles.thumbnailExpandBadge}>
+                      <Ionicons name="expand-outline" size={10} color="#FFFFFF" />
+                      <Text variant="caption" bold color="#FFFFFF" style={{ fontSize: 8, marginLeft: 1 }}>
+                        &lt;&gt;
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
 
                   <View style={styles.info}>
+
                     <View style={styles.titleRow}>
                       <Text variant="bodyLarge" bold numberOfLines={1} style={{ flex: 1 }}>
                         {item.name}
@@ -207,9 +223,21 @@ export const SellerProductsScreen = ({ navigation }: any) => {
       )}
 
       {toastMessage && <Toast message={toastMessage} type="info" />}
+
+      {/* Fullscreen Swipeable Product Image Gallery Modal */}
+      {galleryProduct && (
+        <ProductImageGalleryModal
+          visible={!!galleryProduct}
+          images={galleryProduct.images || []}
+          initialIndex={0}
+          productName={galleryProduct.name}
+          onClose={() => setGalleryProduct(null)}
+        />
+      )}
     </ScreenContainer>
   );
 };
+
 
 const styles = StyleSheet.create({
   header: {
@@ -238,14 +266,29 @@ const styles = StyleSheet.create({
   cardRow: {
     flexDirection: 'row',
   },
+  thumbnailWrapper: {
+    position: 'relative',
+    marginRight: spacing.md,
+  },
   thumbnail: {
     width: 80,
     height: 80,
     borderRadius: borderRadius.md,
     backgroundColor: colors.neutral[100],
-    marginRight: spacing.md,
+  },
+  thumbnailExpandBadge: {
+    position: 'absolute',
+    bottom: 4,
+    right: 4,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: borderRadius.full,
   },
   info: {
+
     flex: 1,
   },
   titleRow: {

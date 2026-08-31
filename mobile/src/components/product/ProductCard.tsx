@@ -22,6 +22,8 @@ import { useCartStore } from '../../stores/cart.store';
 import { useFavoritesStore } from '../../stores/favorites.store';
 import { useFootprintStore } from '../../stores/footprint.store';
 
+import { ProductImageGalleryModal } from './ProductImageGalleryModal';
+
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const PLACEHOLDER = require('../../../assets/placeholder_product.png');
 
@@ -41,9 +43,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   const { theme, isDark } = useThemeStore();
   const [imageError, setImageError] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isGalleryModalVisible, setIsGalleryModalVisible] = useState(false);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [showAddedNotice, setShowAddedNotice] = useState(false);
+
 
   const addItemToCart = useCartStore((state) => state.addItem);
   const { isFavorite: checkFavorite, toggleFavorite: storeToggleFavorite } = useFavoritesStore();
@@ -242,13 +246,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                   setActiveImageIndex(newIndex);
                 }}
                 renderItem={({ item }) => (
-                  <View style={[styles.galleryImageWrapper, { width: galleryCardWidth }]}>
+                  <TouchableOpacity
+                    activeOpacity={0.92}
+                    onPress={() => setIsGalleryModalVisible(true)}
+                    style={[styles.galleryImageWrapper, { width: galleryCardWidth }]}
+                  >
                     <Image
                       source={{ uri: item }}
                       style={styles.galleryImage}
                       resizeMode="cover"
                     />
-                  </View>
+                  </TouchableOpacity>
                 )}
               />
 
@@ -258,6 +266,18 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                   {activeImageIndex + 1} / {productImages.length}
                 </Text>
               </View>
+
+              {/* Floating Fullscreen Expand (<>) Button */}
+              <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={() => setIsGalleryModalVisible(true)}
+                style={styles.expandGalleryFloatingBtn}
+              >
+                <Ionicons name="expand-outline" size={13} color="#FFFFFF" />
+                <Text variant="caption" bold color="#FFFFFF" style={{ fontSize: 10, marginLeft: 3 }}>
+                  &lt;&gt;
+                </Text>
+              </TouchableOpacity>
 
               {/* Swipe Guidance Dots */}
               {productImages.length > 1 && (
@@ -276,6 +296,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                 </View>
               )}
             </View>
+
 
             {/* Product Details Section */}
             <ScrollView showsVerticalScrollIndicator={false} style={styles.expandScrollBody}>
@@ -377,9 +398,19 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           </View>
         </View>
       </Modal>
+
+      {/* ─── FULLSCREEN EXPANDED IMAGE GALLERY MODAL ────────────────── */}
+      <ProductImageGalleryModal
+        visible={isGalleryModalVisible}
+        images={productImages}
+        initialIndex={activeImageIndex}
+        productName={product.name}
+        onClose={() => setIsGalleryModalVisible(false)}
+      />
     </>
   );
 };
+
 
 const styles = StyleSheet.create({
   card: {
@@ -511,12 +542,28 @@ const styles = StyleSheet.create({
   imageCounterPill: {
     position: 'absolute',
     top: spacing.sm,
-    right: spacing.md,
+    left: spacing.md,
     backgroundColor: 'rgba(0, 0, 0, 0.65)',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: borderRadius.full,
+    zIndex: 10,
   },
+  expandGalleryFloatingBtn: {
+    position: 'absolute',
+    top: spacing.sm,
+    right: spacing.md,
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: borderRadius.full,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    zIndex: 10,
+  },
+
   paginationDotsRow: {
     position: 'absolute',
     bottom: spacing.xs,
