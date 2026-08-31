@@ -1,13 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
-  FlatList,
+  ScrollView,
   Dimensions,
   StyleSheet,
   Image,
   TouchableOpacity,
-  ViewToken,
 } from 'react-native';
+
 import { Ionicons } from '@expo/vector-icons';
 import { Text } from '../ui/Text';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
@@ -95,14 +95,17 @@ export const SellerSalesTipsCarousel: React.FC<SellerSalesTipsCarouselProps> = (
 }) => {
   const { theme, isDark } = useThemeStore();
   const [activeIndex, setActiveIndex] = useState(0);
-  const flatListRef = useRef<FlatList>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
 
   // Auto-slide every 4.5 seconds
   useEffect(() => {
     const timer = setInterval(() => {
       setActiveIndex((prevIndex) => {
         const nextIndex = (prevIndex + 1) % SALES_TIP_SLIDES.length;
-        flatListRef.current?.scrollToIndex({ index: nextIndex, animated: true });
+        scrollViewRef.current?.scrollTo({
+          x: nextIndex * BANNER_WIDTH,
+          animated: true,
+        });
         return nextIndex;
       });
     }, 4500);
@@ -110,32 +113,29 @@ export const SellerSalesTipsCarousel: React.FC<SellerSalesTipsCarouselProps> = (
     return () => clearInterval(timer);
   }, []);
 
-  const onViewableItemsChanged = useRef(
-    ({ viewableItems }: { viewableItems: ViewToken[] }) => {
-      if (viewableItems.length > 0 && viewableItems[0].index !== null) {
-        setActiveIndex(viewableItems[0].index);
-      }
+  const handleScroll = (event: any) => {
+    const scrollOffset = event.nativeEvent.contentOffset.x;
+    const currentIndex = Math.round(scrollOffset / BANNER_WIDTH);
+    if (currentIndex >= 0 && currentIndex < SALES_TIP_SLIDES.length && currentIndex !== activeIndex) {
+      setActiveIndex(currentIndex);
     }
-  ).current;
+  };
 
   return (
     <View style={styles.container}>
-      <FlatList
-        ref={flatListRef}
-        data={SALES_TIP_SLIDES}
-        keyExtractor={(item) => item.id}
+      <ScrollView
+        ref={scrollViewRef}
         horizontal
         pagingEnabled
+        nestedScrollEnabled
         showsHorizontalScrollIndicator={false}
-        onViewableItemsChanged={onViewableItemsChanged}
-        viewabilityConfig={{ itemVisiblePercentThreshold: 60 }}
-        getItemLayout={(_, index) => ({
-          length: BANNER_WIDTH,
-          offset: BANNER_WIDTH * index,
-          index,
-        })}
-        renderItem={({ item }) => (
+        onMomentumScrollEnd={handleScroll}
+        scrollEventThrottle={16}
+        decelerationRate="fast"
+      >
+        {SALES_TIP_SLIDES.map((item) => (
           <TouchableOpacity
+            key={item.id}
             activeOpacity={0.92}
             onPress={() => onPressTip?.(item)}
             style={[
@@ -143,6 +143,7 @@ export const SellerSalesTipsCarousel: React.FC<SellerSalesTipsCarouselProps> = (
               { backgroundColor: isDark ? '#1E293B' : colors.primary[50] },
             ]}
           >
+
             {/* Left Content Column */}
             <View style={styles.textCol}>
               <View style={styles.badgePill}>
@@ -181,8 +182,9 @@ export const SellerSalesTipsCarousel: React.FC<SellerSalesTipsCarouselProps> = (
               />
             </View>
           </TouchableOpacity>
-        )}
-      />
+        ))}
+      </ScrollView>
+
 
       {/* Slide Pagination Dots */}
       <View style={styles.paginationRow}>

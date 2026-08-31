@@ -77,6 +77,16 @@ export const RootNavigator = () => {
             <Stack.Screen name="NotificationSettings" component={NotificationSettingsScreen} />
             <Stack.Screen name="AddressManager" component={AddressManagerScreen} />
             <Stack.Screen name="ChatConversation" component={ChatConversationScreen} />
+            <Stack.Screen name="SellerWelcome" component={SellerWelcomeScreen} />
+            <Stack.Screen name="TransporterWelcome" component={TransporterWelcomeScreen} />
+            <Stack.Screen name="TransporterKYC" component={TransporterKYCScreen} />
+            <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
+            <Stack.Screen name="OrderTracking" component={OrderTrackingScreen} />
+            <Stack.Screen name="BuyerWallet" component={WalletScreen} />
+            <Stack.Screen name="FollowedStores" component={FollowedStoresScreen} />
+            <Stack.Screen name="Favorites" component={FavoritesScreen} />
+            <Stack.Screen name="Footprint" component={FootprintScreen} />
+            <Stack.Screen name="Refunds" component={RefundsScreen} />
           </>
         ) : activeRole === UserRole.TRANSPORTER ? (
           <>
@@ -86,6 +96,13 @@ export const RootNavigator = () => {
             <Stack.Screen name="NotificationSettings" component={NotificationSettingsScreen} />
             <Stack.Screen name="AddressManager" component={AddressManagerScreen} />
             <Stack.Screen name="ChatConversation" component={ChatConversationScreen} />
+            <Stack.Screen name="SellerWelcome" component={SellerWelcomeScreen} />
+            <Stack.Screen name="TransporterWelcome" component={TransporterWelcomeScreen} />
+            <Stack.Screen name="StoreKYC" component={StoreKYCScreen} />
+            <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
+            <Stack.Screen name="OrderTracking" component={OrderTrackingScreen} />
+            <Stack.Screen name="BuyerWallet" component={WalletScreen} />
+            <Stack.Screen name="Refunds" component={RefundsScreen} />
           </>
         ) : (
           <>
@@ -114,4 +131,5 @@ export const RootNavigator = () => {
     </NavigationContainer>
   );
 };
+
 
