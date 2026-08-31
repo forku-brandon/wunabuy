@@ -713,19 +713,8 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
                       {activeImageIndex + 1} / {Math.max(1, selectedProductForExpand.images?.length || 1)}
                     </Text>
                   </View>
-
-                  {/* Floating (<>) Fullscreen Gallery Trigger */}
-                  <TouchableOpacity
-                    activeOpacity={0.85}
-                    onPress={() => setIsGalleryModalVisible(true)}
-                    style={styles.modalExpandGalleryBtn}
-                  >
-                    <Ionicons name="expand-outline" size={13} color="#FFFFFF" />
-                    <Text variant="caption" bold color="#FFFFFF" style={{ fontSize: 10, marginLeft: 3 }}>
-                      &lt;&gt;
-                    </Text>
-                  </TouchableOpacity>
                 </View>
+
 
 
                 {/* Price, Tier, & Category */}
@@ -1285,21 +1274,9 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     borderRadius: borderRadius.full,
   },
-  modalExpandGalleryBtn: {
-    position: 'absolute',
-    bottom: 8,
-    right: 8,
-    backgroundColor: 'rgba(0, 0, 0, 0.65)',
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 3,
-    borderRadius: borderRadius.full,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-  },
 
   modalPriceSection: {
+
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',

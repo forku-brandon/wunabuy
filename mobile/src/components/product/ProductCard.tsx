@@ -267,18 +267,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                 </Text>
               </View>
 
-              {/* Floating Fullscreen Expand (<>) Button */}
-              <TouchableOpacity
-                activeOpacity={0.85}
-                onPress={() => setIsGalleryModalVisible(true)}
-                style={styles.expandGalleryFloatingBtn}
-              >
-                <Ionicons name="expand-outline" size={13} color="#FFFFFF" />
-                <Text variant="caption" bold color="#FFFFFF" style={{ fontSize: 10, marginLeft: 3 }}>
-                  &lt;&gt;
-                </Text>
-              </TouchableOpacity>
-
               {/* Swipe Guidance Dots */}
               {productImages.length > 1 && (
                 <View style={styles.paginationDotsRow}>
@@ -296,6 +284,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                 </View>
               )}
             </View>
+
 
 
             {/* Product Details Section */}
@@ -549,22 +538,8 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.full,
     zIndex: 10,
   },
-  expandGalleryFloatingBtn: {
-    position: 'absolute',
-    top: spacing.sm,
-    right: spacing.md,
-    backgroundColor: 'rgba(0, 0, 0, 0.65)',
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: borderRadius.full,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-    zIndex: 10,
-  },
-
   paginationDotsRow: {
+
     position: 'absolute',
     bottom: spacing.xs,
     flexDirection: 'row',

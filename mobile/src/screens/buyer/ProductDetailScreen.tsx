@@ -219,7 +219,7 @@ export const ProductDetailScreen = ({ route, navigation }: any) => {
               />
             </TouchableOpacity>
 
-            {/* Top Overlay Badges: Quality Tier + (<>) Expand Button */}
+            {/* Top Overlay Badge: Quality Tier */}
             <View style={styles.heroOverlayHeader}>
               <View style={styles.qualityPill}>
                 <Ionicons name="shield-checkmark" size={13} color={colors.semantic.success[500]} />
@@ -227,19 +227,8 @@ export const ProductDetailScreen = ({ route, navigation }: any) => {
                   {product.quality_tier?.toUpperCase() ?? 'NEW'} • 100% VERIFIED
                 </Text>
               </View>
-
-              {/* (<>) Fullscreen Gallery Trigger Button */}
-              <TouchableOpacity
-                activeOpacity={0.85}
-                onPress={() => setIsGalleryModalVisible(true)}
-                style={styles.expandGalleryHeroBtn}
-              >
-                <Ionicons name="expand-outline" size={13} color="#FFFFFF" />
-                <Text variant="caption" bold color="#FFFFFF" style={{ fontSize: 10, marginLeft: 3 }}>
-                  &lt;&gt;
-                </Text>
-              </TouchableOpacity>
             </View>
+
 
 
             {/* Thumbnail Strip (if multiple images) */}
@@ -645,18 +634,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     zIndex: 5,
   },
-  expandGalleryHeroBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(15, 23, 42, 0.78)',
-    paddingHorizontal: spacing.sm + 2,
-    paddingVertical: 5,
-    borderRadius: borderRadius.full,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.25)',
-  },
-
   qualityPill: {
+
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(15, 23, 42, 0.78)',

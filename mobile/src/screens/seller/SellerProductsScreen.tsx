@@ -123,13 +123,8 @@ export const SellerProductsScreen = ({ navigation }: any) => {
                     style={styles.thumbnailWrapper}
                   >
                     <Image source={{ uri: item.images[0] }} style={styles.thumbnail} />
-                    <View style={styles.thumbnailExpandBadge}>
-                      <Ionicons name="expand-outline" size={10} color="#FFFFFF" />
-                      <Text variant="caption" bold color="#FFFFFF" style={{ fontSize: 8, marginLeft: 1 }}>
-                        &lt;&gt;
-                      </Text>
-                    </View>
                   </TouchableOpacity>
+
 
                   <View style={styles.info}>
 
@@ -276,18 +271,8 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     backgroundColor: colors.neutral[100],
   },
-  thumbnailExpandBadge: {
-    position: 'absolute',
-    bottom: 4,
-    right: 4,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 4,
-    paddingVertical: 1,
-    borderRadius: borderRadius.full,
-  },
   info: {
+
 
     flex: 1,
   },
