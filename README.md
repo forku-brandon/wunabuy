@@ -272,10 +272,12 @@ pnpm lint
 
 | Document | Description |
 |---|---|
-| [Product Requirements Document (PRD v1.0)](docs/Wunabuy_PRD_v1.0.md) | Business vision, personas, revenue model |
-| [Software Requirements Specification (SRS v1.2)](docs/Wunabuy_SRS_v1.2.md) | Functional & non-functional requirements |
-| [Backend Technical Specification (v1.0)](docs/Wunabuy_Backend_Tech_Spec_v1.0.md) | API contracts, database schemas, WebSocket channels |
-| [Frontend Technical Specification (v1.0)](docs/Wunabuy_Frontend_Tech_Spec_v1.0.md) | Mobile & web architecture, design system, state management |
+| [Product Requirements Document (PRD v1.9)](docs/Wunabuy_PRD_v1.0.md) | Business vision, personas, revenue model, and launch requirements |
+| [Software Requirements Specification (SRS v1.9)](docs/Wunabuy_SRS_v1.2.md) | Complete functional & non-functional system requirements |
+| [Frontend Technical Specification (v1.9)](docs/Wunabuy_Frontend_Tech_Spec_v1.0.md) | Mobile & web architecture, design system, state management, screen inventory |
+| [Backend Technical Specification (v1.4)](docs/Wunabuy_Backend_Tech_Spec_v1.0.md) | Modular Laravel API, database schemas, WebSocket channels |
+| [Backend API Contract (v1.4)](docs/Wunabuy_Backend_API_Contract_v1.0.md) | REST JSON schemas, auth endpoints, and Reverb events |
+
 
 ---
 

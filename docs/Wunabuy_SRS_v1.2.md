@@ -140,24 +140,32 @@ Wunabuy consists of a **React Native monorepo** (`wunabuy-mobile`, `@wunabuy/des
 - **FR-044:** Every `navigation.goBack()` call across all 11+ screens SHALL check `navigation.canGoBack()` and fall back to graceful root stack reset (`BuyerApp`).
 
 ### 3.14 Seller Dashboard & Real-Time Operational Telemetry
-- **FR-045:** `SellerDashboardScreen` SHALL provide a 1-tap `🛒 Buyer Mode` header button to instantly switch active workspace context to `UserRole.BUYER`.
-- **FR-046:** Store Balances Card SHALL display Available Earnings, Locked Escrow, eye toggle button (`👁`) for privacy masking, and quick `Withdraw Payout` CTA button.
-- **FR-047:** Dashboard SHALL render a 2x2 operational telemetry grid for Today's Sales, Pending Orders Queue, Active Inventory items, and Store Rating.
+- **FR-045:** `SellerDashboardScreen` SHALL provide a top header AppBar with 3-strokes hamburger button (`☰`) on the far left triggering `SellerSidebarDrawer`, and Notification Bell (`🔔`), QR Scanner (`🔲`), and Buyer Mode Cart Button (`🛒`) all aligned horizontally on the **same top line**.
+- **FR-046:** Store Balances Card SHALL display formatted account identifier (`2 1 4 5 4 5 5 3 6`) with 1-tap copy, Available Earnings, Locked Escrow, eye toggle button (`👁`) for privacy masking, and quick `Withdraw Payout` CTA button.
+- **FR-047:** Dashboard SHALL render Top Services 4x2 grid (`Send money`, `+ Product`, `Orders`, `Inventory`, `Dispatch`, `Store KYC`, `Settings`, `More`).
+- **FR-048:** System SHALL render an auto-sliding Sales Tips & Merchant Growth Carousel Presenter (`SellerSalesTipsCarousel.tsx`, 4.5s timer) with lifestyle & product photography, conversion badges (`+45% CONVERSION`, `SEARCH BOOST`, etc.), and 1-tap navigation CTAs.
+- **FR-049:** Dashboard SHALL replace static transaction lists with an interactive Store Products Catalog Grid displaying product image, name, category, quality tier pill, price in XAF, stock adjustment steppers `[ − qty + ]`, and `(+)` expand button triggering an expandable modal with multi-angle photo gallery and deep product telemetry.
+- **FR-050:** KYC Status verification banner SHALL be **hidden by default** (`kycStatus === null`), dynamically rendering a celebratory dismissable "STORE VERIFIED BY STAFF" notice only upon explicit staff approval.
 
 ### 3.15 Order Fulfillment Queue & 2-Hour Acceptance SLA
-- **FR-048:** `SellerOrdersScreen` SHALL enforce a real-time countdown timer (`⏳ HH:MM:SS`) for newly received orders. If not accepted within 2 hours, the order auto-cancels and triggers a buyer refund (BR-01).
-- **FR-049:** Marking an order ready for pickup SHALL trigger the Dual Delivery Dispatch Modal with selectable options: **Wunabuy Express Transporter** (automated GPS rider broadcast) or **Store In-House Rider** (with optional driver phone entry).
+- **FR-051:** `SellerOrdersScreen` SHALL enforce a real-time countdown timer (`⏳ HH:MM:SS`) for newly received orders. If not accepted within 2 hours, the order auto-cancels and triggers a buyer refund (BR-01).
+- **FR-052:** Marking an order ready for pickup SHALL trigger the Dual Delivery Dispatch Modal with selectable options: **Wunabuy Express Transporter** (automated GPS rider broadcast) or **Store In-House Rider** (with optional driver phone entry).
 
 ### 3.16 Catalog & Inventory CRUD with Real-Time Stock Steppers
-- **FR-050:** `SellerProductsScreen` SHALL provide real-time `[ − 1 + ]` stock steppers for 1-tap quantity updates, active/paused catalog toggles, and low-stock warning badges ($\le 5$ units).
-- **FR-051:** `AddEditProductScreen` SHALL support 5-photo upload grid with native camera & gallery picker, category horizontal selector, and quality tier chips.
+- **FR-053:** `SellerProductsScreen` SHALL provide real-time `[ − 1 + ]` stock steppers for 1-tap quantity updates, active/paused catalog toggles, and low-stock warning badges ($\le 5$ units).
+- **FR-054:** `AddEditProductScreen` SHALL support 5-photo upload grid with native camera & gallery picker, category horizontal selector, and quality tier chips.
 
 ### 3.17 Merchant Store Wallet & Mobile Money Payout Engine
-- **FR-052:** `SellerWalletScreen` SHALL provide instant payout requests to MTN MoMo (`*126#`) and Orange Money (`#150#`) with percentage quick presets (`25%`, `50%`, `75%`, `Max`), automated 1% telecom charge deduction calculation, and audit ledger.
+- **FR-055:** `SellerWalletScreen` SHALL provide instant payout requests to MTN MoMo (`*126#`) and Orange Money (`#150#`) with percentage quick presets (`25%`, `50%`, `75%`, `Max`), automated 1% telecom charge deduction calculation, and audit ledger.
 
-### 3.18 Key-Based Workspace Isolation & Brand Palette Harmonization
-- **FR-053:** `RootNavigator` SHALL dynamically assign stack key `auth_workspace_${activeRole}`, guaranteeing zero route bleeding and strict isolation between Buyer, Seller, and Transporter stacks.
-- **FR-054:** All Seller screens SHALL strictly adhere to the unified Emerald Teal (`#0D9488` / `#0F766E`) and Warm Amber (`#F59E0B`) design tokens.
+### 3.18 Dedicated Merchant Profile Screen & Store Operations
+- **FR-056:** `SellerTabNavigator` Tab 5 SHALL mount a dedicated `SellerProfileScreen` providing store avatar management, Store Name & ID copy, Store Wallet overview, Store Fulfillment Queue status grid (`Accept`, `Pack`, `Handover`, `En Route`, `Settled`), Store Management Tools (`Add Product`, `Catalog`, `Store KYC`, `GPS Hub`, `Alerts`), 1-Tap Switch to Buyer Workspace card, and active store listings showcase.
+
+### 3.19 Merchant Sidebar Drawer & Navigation Isolation
+- **FR-057:** `SellerSidebarDrawer` SHALL provide slide-out merchant navigation replacing buyer recruitment cards with store workspace operations (`Shop as Buyer`, `Express Transporters`, `Store Analytics`, and store navigation).
+- **FR-058:** `RootNavigator` SHALL register all shared modal and auxiliary screens across `SELLER`, `TRANSPORTER`, and `BUYER` stacks, guaranteeing zero unhandled navigation route errors across all workspace transitions.
+- **FR-059:** `RootNavigator` SHALL dynamically assign stack key `auth_workspace_${activeRole}`, guaranteeing zero route bleeding and strict isolation between Buyer, Seller, and Transporter stacks.
+- **FR-060:** All Seller screens SHALL strictly adhere to the unified Emerald Teal (`#0D9488` / `#0F766E`) and Warm Amber (`#F59E0B`) design tokens.
 
 ---
 
@@ -178,4 +186,5 @@ Wunabuy consists of a **React Native monorepo** (`wunabuy-mobile`, `@wunabuy/des
 **QA Lead:** _Wunabuy QA Team_  
 
 ---
-**[End of Software Requirements Specification v1.8]**
+**[End of Software Requirements Specification v1.9]**
+

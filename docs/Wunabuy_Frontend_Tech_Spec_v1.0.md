@@ -370,7 +370,28 @@ The mobile app incorporates three distinct role views in a single codebase with 
   - Stage 2: Street address, city, and GPS Auto-Pin notice.
   - Stage 3 & 4: National ID CNI number, front/back CNI photo uploads, storefront photo, and business registration certificate.
   - High-contrast Error Callout Alert Banner and Stage 5 celebration modal (redirects user back to initial Buyer Home Dashboard upon completion).
-- **Seller Dashboard (`SellerDashboardScreen`)**: Top merchant header with 1-tap `🛒 Buyer Mode` switch, Emerald Teal Store Balances Card (with decorative glass circles, privacy eye toggle `👁`, and quick payout trigger), 2x2 operational telemetry grid (Today's Sales, Pending Orders, Active Products, Store Rating), quick action grid, recent orders queue, and `ScreenContainer` with native `RefreshControl`.
+- **Seller Dashboard (`SellerDashboardScreen`)**:
+  - **Top Header AppBar**: 3-strokes hamburger menu button (`☰`) on far left triggering `SellerSidebarDrawer`. Notification Bell (`🔔` with live unread badge), QR Scanner (`🔲`), and Buyer Mode Cart Button (`🛒`) all aligned horizontally on the **same top line**.
+  - **Merchant Dashboard Subtitle Stack**: Placed directly underneath the top app bar with eyebrow `MERCHANT DASHBOARD`, Store Title (clean text without emojis), and Douala fulfillment subtitle.
+  - **Emerald Teal Gradient Hero Balance Card**: Displaying store account number (`2 1 4 5 4 5 5 3 6`), 1-tap Copy action button with copy feedback toast, Available Balance in XAF, privacy eye toggle (`👁` / `👁‍🗨`), and 48-Hour Escrow protection badge.
+  - **Top Services 4x2 Grid**: 8 icon tiles (`Send money`, `+ Product`, `Orders`, `Inventory`, `Dispatch`, `Store KYC`, `Settings`, `More`).
+  - **Auto-Slide Sales Tips & Merchant Growth Carousel Presenter ([`SellerSalesTipsCarousel.tsx`](file:///c:/Users/HP/Desktop/wunabuy%20mobile%20project/wunabuy/mobile/src/components/seller/SellerSalesTipsCarousel.tsx))**: Horizontal auto-sliding carousel (every 4.5s with momentum snapping, indicator dots, and zero nesting warnings) featuring commerce photography, conversion badges (`+45% CONVERSION`, `SEARCH BOOST`, `ZERO DISPUTES`, `45-MIN DISPATCH`, `24/7 CASHOUT`), and 1-tap navigation CTAs.
+  - **Interactive Store Products Catalog Grid (Replaced static transactions)**: Shows active products with product image, name, category, quality tier pill, price in XAF, instant stock adjustment steppers `[ − qty + ]`, and `(+)` expand button triggering an expandable modal with multi-angle photo gallery and deep product telemetry.
+  - **Backend-Driven KYC Status Banner**: Hidden by default (`kycStatus === null`), dynamically renders a celebratory dismissable "STORE VERIFIED BY STAFF" notice upon staff approval.
+- **Dedicated Merchant Profile Screen ([`SellerProfileScreen.tsx`](file:///c:/Users/HP/Desktop/wunabuy%20mobile%20project/wunabuy/mobile/src/screens/seller/SellerProfileScreen.tsx))**:
+  - Mounted on Tab 5 (`SellerProfile`) of `SellerTabNavigator`.
+  - Store avatar with camera picker modal, Store name & ID, verified badge, settings gear shortcut.
+  - Store wallet quick-access banner with Available & Escrow balances.
+  - Fulfillment queue status grid (`Accept`, `Pack`, `Handover`, `En Route`, `Settled`, `All`).
+  - Merchant tools & services grid (`Add Product`, `Catalog`, `Store KYC`, `GPS Hub`, `Alerts`).
+  - 1-Tap Switch to Buyer Workspace card.
+  - Active store listings showcase with direct edit navigation.
+- **Merchant Sidebar Drawer ([`SellerSidebarDrawer.tsx`](file:///c:/Users/HP/Desktop/wunabuy%20mobile%20project/wunabuy/mobile/src/components/navigation/SellerSidebarDrawer.tsx))**:
+  - Slide-out overlay drawer replacing buyer recruitment cards with tailored merchant operations:
+    1. **`🛒 Shop as Buyer (1-Tap Switch)`**: Instant role switch to Buyer workspace.
+    2. **`🏍️ Express Transporters`**: On-demand dispatch to verified bike and taxi riders.
+    3. **`📊 Store Analytics`**: Sales telemetry, fulfillment metrics, and escrow performance.
+  - Store management navigation links (`Add Product`, `Catalog`, `Orders Queue` with live pending count badge, `Store Wallet`, `Store KYC`, `GPS Hub`, `Settings`).
 - **Order Fulfillment Queue (`SellerOrdersScreen`)**:
   - Segmented status tabs (`All`, `New Orders`, `Preparing`, `Ready`, `In Transit`, `Completed`).
   - **2-Hour Auto-Cancel Acceptance SLA Timer**: Real-time ticking countdown (`⏳ 01:45:00`) enforcing automated cancellation and buyer refund upon timeout.
@@ -379,7 +400,8 @@ The mobile app incorporates three distinct role views in a single codebase with 
 - **Store Catalog & Inventory (`SellerProductsScreen`)**: Inventory search, active/paused switch (`is_active`), real-time stock steppers `[ − 1 + ]` for instant on-device stock changes, low-stock warning badges ($\le 5$ units), and `FlatList` with native `RefreshControl`.
 - **Add/Edit Product (`AddEditProductScreen`)**: 5-photo upload grid with native camera & gallery picker, category horizontal selector, quality tier chips (`NEW`, `LIKE_NEW`, `GOOD`, `FAIR`), price input in XAF with formatted live preview (`formatXAF`), and stock quantity.
 - **Store Wallet & MoMo Payouts (`SellerWalletScreen`)**: Real-time balance and locked escrow overview, privacy eye toggle (`👁`), instant Mobile Money (MTN MoMo `*126#` and Orange Money `#150#`) payout modal with 1% telecom charge calculations and quick percentage chips (`25%`, `50%`, `75%`, `Max`), and audit ledger.
-- **Seller Bottom Tab Navigator (`SellerTabNavigator.tsx`)**: 4 primary tabs (`Dashboard`, `Orders`, `Inventory`, `Store Wallet`) styled with unified Emerald Teal active tint (`#0D9488`), `56px + bottomInset` height, and elevation `10`.
+- **Seller Bottom Tab Navigator (`SellerTabNavigator.tsx`)**: 5 primary tabs (`Dashboard`, `Products`, `Orders`, `Wallet`, `Profile`) styled with unified Emerald Teal active tint (`#0D9488`), `56px + bottomInset` height, and elevation `10`.
+
 
 #### 3. Transport Provider Flow
 - **Transporter Welcome (`TransporterWelcomeScreen`)**: Logo-free modern header, live status badge (`TRANSPORTER FLEET`), 70% automated hero benefit carousel with exact screen-width snapping, 4 Transport Modality Cards (`Bike 🏍️`, `Taxi 🚕`, `Van 🚐`, `Plane ✈️`), and 20% capsule CTA button (`Start Driver Verification ➔`).
