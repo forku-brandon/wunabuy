@@ -13,6 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { ScreenContainer, Text, Card, Badge, Avatar } from '../../components/ui';
 import { KYCStatusBanner } from '../../components/seller/KYCStatusBanner';
+import { SellerSalesTipsCarousel } from '../../components/seller/SellerSalesTipsCarousel';
 import { SellerSidebarDrawer } from '../../components/navigation/SellerSidebarDrawer';
 import { KYCStatus, UserRole, Product } from '@wunabuy/types';
 import { formatXAF, formatRelativeTime } from '@wunabuy/utils';
@@ -21,64 +22,6 @@ import { useThemeStore } from '../../stores/theme.store';
 import { useSellerStore } from '../../stores/seller.store';
 import { useAuthStore } from '../../stores/auth.store';
 import { SellerService, KYCService, AuthService } from '../../services/api';
-
-interface SalesTip {
-  id: string;
-  title: string;
-  badge: string;
-  badgeColor: string;
-  icon: React.ComponentProps<typeof Ionicons>['name'];
-  iconBg: string;
-  description: string;
-}
-
-const SALES_TIPS: SalesTip[] = [
-  {
-    id: 'tip_1',
-    title: 'Multi-Angle Photos',
-    badge: '+45% Sales',
-    badgeColor: '#10B981',
-    icon: 'camera-outline',
-    iconBg: '#FEF3C7',
-    description: 'List items with 3+ clear photos from different angles. Products with clean daylight photos sell 3.5x faster.',
-  },
-  {
-    id: 'tip_2',
-    title: '2-Hour Acceptance SLA',
-    badge: 'Search Boost',
-    badgeColor: colors.primary[500],
-    icon: 'flash-outline',
-    iconBg: '#CCFBF1',
-    description: 'Accept orders promptly within 2 hours. Fast merchants are prioritized on the Wunabuy buyer marketplace.',
-  },
-  {
-    id: 'tip_3',
-    title: 'Accurate Quality Tiers',
-    badge: 'Zero Disputes',
-    badgeColor: '#8B5CF6',
-    icon: 'shield-checkmark-outline',
-    iconBg: '#EDE9FE',
-    description: 'Clearly mark items NEW, LIKE NEW, or GOOD. Honest grading eliminates buyer returns and speeds escrow release.',
-  },
-  {
-    id: 'tip_4',
-    title: 'Prompt Driver Handover',
-    badge: 'Fast Release',
-    badgeColor: colors.accent[500],
-    icon: 'bicycle-outline',
-    iconBg: '#FEF9C3',
-    description: 'Mark orders "Ready for Pickup" as soon as packaged so verified transporters can deliver swiftly across town.',
-  },
-  {
-    id: 'tip_5',
-    title: 'Instant MoMo Payouts',
-    badge: 'Daily Cashout',
-    badgeColor: '#EC4899',
-    icon: 'wallet-outline',
-    iconBg: '#FCE7F3',
-    description: 'Withdraw available earnings instantly to MTN MoMo or Orange Money at any time with only 1% network fee.',
-  },
-];
 
 export const SellerDashboardScreen = ({ navigation }: any) => {
   const { theme, isDark } = useThemeStore();
@@ -164,36 +107,26 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
         />
       }
     >
-      {/* 1. Top Header Row: 3-Strokes Hamburger Menu + Merchant Store Header + Right Actions */}
+      {/* 1. Top Header AppBar: Three Strokes Hamburger Menu on Left, Action Icons on Same Line at Top */}
       <View style={styles.topHeaderRow}>
-        <View style={styles.headerLeftCol}>
-          {/* 3-Strokes Hamburger Button (Opens Seller Sidebar) */}
-          <TouchableOpacity
-            activeOpacity={0.8}
-            style={[
-              styles.squareMenuBtn,
-              {
-                backgroundColor: isDark ? colors.neutral[800] : colors.neutral[0],
-                borderColor: theme.border,
-              },
-            ]}
-            onPress={() => setIsDrawerOpen(true)}
-          >
-            <Ionicons name="menu-outline" size={22} color={theme.text} />
-          </TouchableOpacity>
+        {/* Left: Square Soft-Shadow 3-Strokes Hamburger Menu Button */}
+        <TouchableOpacity
+          activeOpacity={0.8}
+          style={[
+            styles.squareMenuBtn,
+            {
+              backgroundColor: isDark ? colors.neutral[800] : colors.neutral[0],
+              borderColor: theme.border,
+            },
+          ]}
+          onPress={() => setIsDrawerOpen(true)}
+        >
+          <Ionicons name="menu-outline" size={22} color={theme.text} />
+        </TouchableOpacity>
 
-          <View style={styles.brandTitleStack}>
-            <Text variant="caption" secondary bold style={styles.storeEyebrow}>
-              MERCHANT DASHBOARD
-            </Text>
-            <Text variant="h2" bold color={colors.primary[600]} numberOfLines={1}>
-              {storeName || 'My Store'} 🏪
-            </Text>
-          </View>
-        </View>
-
+        {/* Right Action Icons: Notification Bell + QR Scan + Shopping Cart (All on Same Line) */}
         <View style={styles.headerRightActionIcons}>
-          {/* Notification Bell */}
+          {/* Notification Bell Action */}
           <TouchableOpacity
             activeOpacity={0.7}
             style={[styles.iconButton, { backgroundColor: isDark ? colors.neutral[800] : colors.neutral[100] }]}
@@ -245,6 +178,19 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
         </View>
       </View>
 
+      {/* Subtitle Stack (Underneath App Bar) */}
+      <View style={styles.greetingSection}>
+        <Text variant="caption" color={colors.primary[500]} bold style={styles.greetingEyebrow}>
+          MERCHANT DASHBOARD
+        </Text>
+        <Text variant="h1" bold style={styles.greetingTitle}>
+          {storeName || 'Douala Tech Hub'}
+        </Text>
+        <Text variant="caption" secondary style={styles.greetingSubtitle}>
+          Real-time order fulfillment &amp; 48-hour escrow protection in Douala
+        </Text>
+      </View>
+
       {/* KYC Status Verification Banner (Hidden by default when APPROVED; only displays when unverified) */}
       {kycStatus !== KYCStatus.APPROVED && (
         <KYCStatusBanner
@@ -252,6 +198,7 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
           onStartKYC={handleStartKYC}
         />
       )}
+
 
 
       {/* 2. Main Feature Hero Balance Card (Emerald Teal Gradient with Image overlay & ID copy) */}
@@ -473,7 +420,7 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
         </TouchableOpacity>
       </View>
 
-      {/* 4. Sales Tips & Merchant Growth Carousel */}
+      {/* 4. Sales Tips & Merchant Growth Auto Slideshow Presenter */}
       <View style={styles.sectionHeaderRow}>
         <View style={styles.sectionTitleWithBadge}>
           <Text variant="h3" bold style={styles.sectionTitle}>
@@ -488,34 +435,14 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
         </View>
       </View>
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.salesTipsScrollList}
-      >
-        {SALES_TIPS.map((tip) => (
-          <Card key={tip.id} style={styles.salesTipCard}>
-            <View style={styles.tipCardTopRow}>
-              <View style={[styles.tipIconCircle, { backgroundColor: tip.iconBg }]}>
-                <Ionicons name={tip.icon} size={20} color={colors.primary[600]} />
-              </View>
-              <View style={[styles.tipBadgePill, { backgroundColor: `${tip.badgeColor}18` }]}>
-                <Text variant="caption" bold color={tip.badgeColor} style={{ fontSize: 10 }}>
-                  {tip.badge}
-                </Text>
-              </View>
-            </View>
+      <SellerSalesTipsCarousel
+        onPressTip={(tip) => {
+          if (tip.actionScreen) {
+            navigation.navigate(tip.actionScreen);
+          }
+        }}
+      />
 
-            <Text variant="bodyLarge" bold style={styles.tipTitle}>
-              {tip.title}
-            </Text>
-
-            <Text variant="caption" secondary style={styles.tipDescription}>
-              {tip.description}
-            </Text>
-          </Card>
-        ))}
-      </ScrollView>
 
 
       {/* 5. My Store Products Catalog Section (Replaces Transactions) */}
@@ -877,14 +804,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: spacing.sm,
-    marginBottom: spacing.md,
-  },
-  headerLeftCol: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    marginRight: spacing.sm,
+    marginTop: spacing.xs,
+    marginBottom: spacing.xs,
   },
   squareMenuBtn: {
     width: 42,
@@ -893,18 +814,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: spacing.md,
     ...shadows.sm,
-  },
-  brandTitleStack: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  storeEyebrow: {
-    fontSize: 10,
-    letterSpacing: 0.8,
-    lineHeight: 12,
-    marginBottom: 2,
   },
   headerRightActionIcons: {
     flexDirection: 'row',
@@ -918,6 +828,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
+    ...shadows.sm,
   },
   notificationDot: {
     position: 'absolute',
@@ -928,6 +839,27 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: '#EF4444',
   },
+  greetingSection: {
+    marginTop: spacing.xs,
+    marginBottom: spacing.md,
+  },
+  greetingEyebrow: {
+    fontSize: 10,
+    letterSpacing: 0.8,
+    lineHeight: 12,
+    marginBottom: 2,
+  },
+  greetingTitle: {
+    fontSize: 24,
+    lineHeight: 28,
+    letterSpacing: -0.5,
+    marginBottom: 2,
+  },
+  greetingSubtitle: {
+    fontSize: 12,
+    lineHeight: 16,
+  },
+
 
 
   // 2. Hero Balance Card
@@ -1085,42 +1017,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingVertical: 3,
     borderRadius: borderRadius.full,
-  },
-  salesTipsScrollList: {
-    paddingRight: spacing.base,
-    gap: spacing.md,
-    marginBottom: spacing.xl,
-  },
-  salesTipCard: {
-    width: 260,
-    padding: spacing.md,
-    borderRadius: borderRadius.lg,
-  },
-  tipCardTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: spacing.sm,
-  },
-  tipIconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  tipBadgePill: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 3,
-    borderRadius: borderRadius.full,
-  },
-  tipTitle: {
-    fontSize: 15,
-    marginBottom: 4,
-  },
-  tipDescription: {
-    fontSize: 12,
-    lineHeight: 16,
   },
 
 
