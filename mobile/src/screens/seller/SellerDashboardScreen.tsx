@@ -7,11 +7,13 @@ import {
   RefreshControl,
   Image,
   Alert,
+  Modal,
 } from 'react-native';
+
 import { Ionicons } from '@expo/vector-icons';
 import { ScreenContainer, Text, Card, Badge, Avatar } from '../../components/ui';
 import { KYCStatusBanner } from '../../components/seller/KYCStatusBanner';
-import { KYCStatus, UserRole } from '@wunabuy/types';
+import { KYCStatus, UserRole, Product } from '@wunabuy/types';
 import { formatXAF, formatRelativeTime } from '@wunabuy/utils';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
@@ -23,11 +25,12 @@ interface QuickBeneficiary {
   id: string;
   name: string;
   role: string;
-  badgeIcon: keyof typeof Ionicons.glyphMap;
+  badgeIcon: React.ComponentProps<typeof Ionicons>['name'];
   badgeBg: string;
   avatarUrl: string;
   phone: string;
 }
+
 
 export const SellerDashboardScreen = ({ navigation }: any) => {
   const { theme, isDark } = useThemeStore();
@@ -37,13 +40,30 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
     availableBalance,
     escrowLockedBalance,
     orders,
-    transactions,
+    products,
+    updateStock,
   } = useSellerStore();
 
   const [kycStatus, setKycStatus] = useState<KYCStatus>(KYCStatus.APPROVED);
   const [isBalanceVisible, setIsBalanceVisible] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [copiedNotification, setCopiedNotification] = useState(false);
+
+  // Expandable Product Quick-View Modal State
+  const [selectedProductForExpand, setSelectedProductForExpand] = useState<Product | null>(null);
+  const [isExpandModalVisible, setIsExpandModalVisible] = useState(false);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+
+  const handleOpenExpandProduct = (product: Product) => {
+    setSelectedProductForExpand(product);
+    setActiveImageIndex(0);
+    setIsExpandModalVisible(true);
+  };
+
+  const handleCloseExpandProduct = () => {
+    setIsExpandModalVisible(false);
+    setSelectedProductForExpand(null);
+  };
 
   // Mock Store/Account identifier formatted with spacing as in reference design
   const storeAccountNumber = '2 1 4 5 4 5 5 3 6';
@@ -487,14 +507,22 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
         ))}
       </ScrollView>
 
-      {/* 5. Recent Transactions & Fulfillment Orders Feed */}
+      {/* 5. My Store Products Catalog Section (Replaces Transactions) */}
       <View style={styles.sectionHeaderRow}>
-        <Text variant="h3" bold style={styles.sectionTitle}>
-          Recent transactions
-        </Text>
+        <View style={styles.sectionTitleWithBadge}>
+          <Text variant="h3" bold style={styles.sectionTitle}>
+            My Store Products
+          </Text>
+          <View style={[styles.productCountPill, { backgroundColor: isDark ? 'rgba(13,148,136,0.2)' : colors.primary[50] }]}>
+            <Text variant="caption" bold color={colors.primary[600]}>
+              {products.length} Items
+            </Text>
+          </View>
+        </View>
+
         <TouchableOpacity
           activeOpacity={0.7}
-          onPress={() => navigation.navigate('SellerWallet')}
+          onPress={() => navigation.navigate('SellerProducts')}
         >
           <Text variant="caption" bold color={colors.primary[500]}>
             See all ›
@@ -502,73 +530,328 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.recentTransactionsList}>
-        {transactions.slice(0, 4).map((tx) => (
-          <Card key={tx.id} style={styles.transactionCard}>
-            <View style={styles.txRow}>
-              <View
-                style={[
-                  styles.txIconCircle,
-                  {
-                    backgroundColor:
-                      tx.type === 'payout'
-                        ? 'rgba(239, 68, 68, 0.1)'
-                        : tx.type === 'escrow_release'
-                        ? 'rgba(16, 185, 129, 0.1)'
-                        : 'rgba(245, 158, 11, 0.1)',
-                  },
-                ]}
-              >
-                <Ionicons
-                  name={
-                    tx.type === 'payout'
-                      ? 'arrow-up-circle'
-                      : tx.type === 'escrow_release'
-                      ? 'checkmark-circle'
-                      : 'card'
-                  }
-                  size={22}
-                  color={
-                    tx.type === 'payout'
-                      ? colors.semantic.error[500]
-                      : tx.type === 'escrow_release'
-                      ? colors.semantic.success[500]
-                      : colors.accent[500]
-                  }
-                />
-              </View>
+      {products.length === 0 ? (
+        <Card style={styles.emptyProductsCard}>
+          <Ionicons name="cube-outline" size={40} color={theme.textSecondary} />
+          <Text variant="bodyLarge" bold style={{ marginTop: spacing.xs }}>
+            No products listed yet
+          </Text>
+          <Text variant="caption" secondary style={{ textAlign: 'center', marginTop: 4, marginBottom: spacing.md }}>
+            Start selling by adding your first product catalog listing.
+          </Text>
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => navigation.navigate('AddEditProduct')}
+            style={[styles.addFirstProductBtn, { backgroundColor: colors.primary[500] }]}
+          >
+            <Text variant="bodyMedium" bold color="#FFFFFF">
+              + Add First Product
+            </Text>
+          </TouchableOpacity>
+        </Card>
+      ) : (
+        <View style={styles.productsList}>
+          {products.slice(0, 4).map((product) => {
+            const isLowStock = product.quantity > 0 && product.quantity <= 5;
+            const isOutOfStock = product.quantity === 0;
+            const mainImg = product.images && product.images.length > 0 ? product.images[0] : null;
 
-              <View style={styles.txInfoStack}>
-                <Text variant="bodyLarge" bold numberOfLines={1}>
-                  {tx.description}
-                </Text>
-                <Text variant="caption" secondary>
-                  {formatRelativeTime(tx.created_at)} • {tx.reference}
-                </Text>
-              </View>
-
-              <View style={styles.txAmountStack}>
-                <Text
-                  variant="bodyLarge"
-                  bold
-                  color={tx.type === 'payout' ? colors.semantic.error[500] : colors.semantic.success[500]}
+            return (
+              <Card key={product.id} style={styles.productDashboardCard}>
+                <TouchableOpacity
+                  activeOpacity={0.85}
+                  onPress={() => handleOpenExpandProduct(product)}
+                  style={styles.productCardInnerRow}
                 >
-                  {tx.type === 'payout' ? '-' : '+'}
-                  {formatXAF(tx.amount)}
-                </Text>
-                <Badge
-                  label={tx.status.toUpperCase()}
-                  variant={tx.status === 'completed' ? 'success' : 'warning'}
-                  size="small"
-                />
+                  {/* Product Thumbnail with Stock Badge */}
+                  <View style={styles.productImageWrapper}>
+                    {mainImg ? (
+                      <Image
+                        source={{ uri: mainImg }}
+                        style={styles.productThumbnail}
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <View style={[styles.productPlaceholder, { backgroundColor: isDark ? colors.neutral[800] : colors.neutral[200] }]}>
+                        <Ionicons name="image-outline" size={24} color={theme.textSecondary} />
+                      </View>
+                    )}
+
+                    {/* Stock status badge overlay */}
+                    {isOutOfStock ? (
+                      <View style={[styles.productImageBadge, { backgroundColor: '#EF4444' }]}>
+                        <Text variant="caption" color="#FFFFFF" bold style={{ fontSize: 9 }}>
+                          Out
+                        </Text>
+                      </View>
+                    ) : isLowStock ? (
+                      <View style={[styles.productImageBadge, { backgroundColor: '#F59E0B' }]}>
+                        <Text variant="caption" color="#FFFFFF" bold style={{ fontSize: 9 }}>
+                          Low
+                        </Text>
+                      </View>
+                    ) : null}
+                  </View>
+
+                  {/* Product Details Info Stack */}
+                  <View style={styles.productInfoStack}>
+                    <Text variant="bodyLarge" bold numberOfLines={1} style={styles.productTitle}>
+                      {product.name}
+                    </Text>
+
+                    <View style={styles.productCategoryTierRow}>
+                      <Text variant="caption" secondary numberOfLines={1}>
+                        {product.category} • <Text variant="caption" bold color={colors.primary[600]}>{product.quality_tier.toUpperCase()}</Text>
+                      </Text>
+                    </View>
+
+                    <View style={styles.priceAndStockRow}>
+                      <Text variant="bodyLarge" bold color={colors.primary[500]}>
+                        {formatXAF(product.price)}
+                      </Text>
+
+                      {/* Stock counter & Quick Steppers */}
+                      <View style={styles.stockStepperContainer}>
+                        <TouchableOpacity
+                          activeOpacity={0.7}
+                          onPress={(e) => {
+                            e.stopPropagation?.();
+                            updateStock(product.id, -1);
+                          }}
+                          style={[styles.stepperMiniBtn, { borderColor: theme.border }]}
+                        >
+                          <Ionicons name="remove" size={12} color={theme.text} />
+                        </TouchableOpacity>
+
+                        <Text variant="caption" bold style={styles.stockNumberText}>
+                          {product.quantity}
+                        </Text>
+
+                        <TouchableOpacity
+                          activeOpacity={0.7}
+                          onPress={(e) => {
+                            e.stopPropagation?.();
+                            updateStock(product.id, 1);
+                          }}
+                          style={[styles.stepperMiniBtn, { borderColor: theme.border }]}
+                        >
+                          <Ionicons name="add" size={12} color={theme.text} />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </View>
+
+                  {/* Right: Circular (+) Expand Trigger Button */}
+                  <TouchableOpacity
+                    activeOpacity={0.75}
+                    onPress={(e) => {
+                      e.stopPropagation?.();
+                      handleOpenExpandProduct(product);
+                    }}
+                    style={[
+                      styles.expandPlusButton,
+                      {
+                        backgroundColor: isDark ? 'rgba(13,148,136,0.2)' : colors.primary[50],
+                        borderColor: isDark ? 'rgba(13,148,136,0.35)' : colors.primary[200],
+                      },
+                    ]}
+                  >
+                    <Ionicons name="add" size={20} color={colors.primary[500]} />
+                  </TouchableOpacity>
+                </TouchableOpacity>
+              </Card>
+            );
+          })}
+        </View>
+      )}
+
+      {/* Interactive Expanded Product Quick-View Modal */}
+      {selectedProductForExpand && (
+        <Modal
+          visible={isExpandModalVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={handleCloseExpandProduct}
+        >
+          <View style={styles.modalBackdrop}>
+            <View
+              style={[
+                styles.expandedModalSheet,
+                {
+                  backgroundColor: theme.card,
+                  borderColor: theme.border,
+                },
+              ]}
+            >
+              {/* Modal Drag Handle & Header */}
+              <View style={styles.modalHeaderRow}>
+                <View style={styles.modalHeaderTitleStack}>
+                  <Text variant="caption" bold color={colors.primary[500]}>
+                    QUICK OVERVIEW & STOCK
+                  </Text>
+                  <Text variant="h3" bold numberOfLines={1} style={{ maxWidth: 260 }}>
+                    {selectedProductForExpand.name}
+                  </Text>
+                </View>
+
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={handleCloseExpandProduct}
+                  style={[styles.modalCloseBtn, { backgroundColor: isDark ? colors.neutral[800] : colors.neutral[100] }]}
+                >
+                  <Ionicons name="close" size={20} color={theme.text} />
+                </TouchableOpacity>
               </View>
+
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.expandedModalScrollContent}
+              >
+                {/* Horizontal Swipeable Multi-Image Gallery */}
+                <View style={styles.modalGalleryContainer}>
+                  <ScrollView
+                    horizontal
+                    pagingEnabled
+                    showsHorizontalScrollIndicator={false}
+                    onMomentumScrollEnd={(e) => {
+                      const idx = Math.round(e.nativeEvent.contentOffset.x / 280);
+                      setActiveImageIndex(idx);
+                    }}
+                    style={styles.modalGalleryScrollView}
+                  >
+                    {(selectedProductForExpand.images?.length > 0
+                      ? selectedProductForExpand.images
+                      : ['https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=800']
+                    ).map((imgUrl, idx) => (
+                      <Image
+                        key={idx}
+                        source={{ uri: imgUrl }}
+                        style={styles.modalGalleryImage}
+                        resizeMode="cover"
+                      />
+                    ))}
+                  </ScrollView>
+
+                  {/* Image Counter Badge */}
+                  <View style={styles.modalImageCounterBadge}>
+                    <Text variant="caption" color="#FFFFFF" bold style={{ fontSize: 10 }}>
+                      {activeImageIndex + 1} / {Math.max(1, selectedProductForExpand.images?.length || 1)}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Price, Tier, & Category */}
+                <View style={styles.modalPriceSection}>
+                  <View>
+                    <Text variant="caption" secondary bold>
+                      LISTING PRICE
+                    </Text>
+                    <Text variant="h1" bold color={colors.primary[500]}>
+                      {formatXAF(selectedProductForExpand.price)}
+                    </Text>
+                  </View>
+
+                  <View style={styles.modalTierPillsStack}>
+                    <Badge
+                      label={selectedProductForExpand.quality_tier.toUpperCase()}
+                      variant="primary"
+                      size="small"
+                    />
+                    <Badge
+                      label={selectedProductForExpand.is_active ? 'ACTIVE' : 'PAUSED'}
+                      variant={selectedProductForExpand.is_active ? 'success' : 'neutral'}
+                      size="small"
+                    />
+                  </View>
+                </View>
+
+                {/* Live Stock Level Adjuster */}
+                <Card style={styles.modalStockAdjustCard}>
+                  <View style={styles.modalStockRow}>
+                    <View>
+                      <Text variant="bodyLarge" bold>
+                        Inventory Quantity
+                      </Text>
+                      <Text variant="caption" secondary>
+                        {selectedProductForExpand.quantity > 0
+                          ? `${selectedProductForExpand.quantity} units available in store`
+                          : 'Currently Out of Stock'}
+                      </Text>
+                    </View>
+
+                    <View style={styles.modalStepperRow}>
+                      <TouchableOpacity
+                        activeOpacity={0.7}
+                        onPress={() => updateStock(selectedProductForExpand.id, -1)}
+                        style={[styles.modalStepperButton, { borderColor: theme.border }]}
+                      >
+                        <Ionicons name="remove" size={18} color={theme.text} />
+                      </TouchableOpacity>
+
+                      <Text variant="h2" bold style={styles.modalStockValueText}>
+                        {selectedProductForExpand.quantity}
+                      </Text>
+
+                      <TouchableOpacity
+                        activeOpacity={0.7}
+                        onPress={() => updateStock(selectedProductForExpand.id, 1)}
+                        style={[styles.modalStepperButton, { borderColor: theme.border }]}
+                      >
+                        <Ionicons name="add" size={18} color={theme.text} />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </Card>
+
+                {/* Product Description */}
+                <View style={styles.modalDescriptionSection}>
+                  <Text variant="bodyLarge" bold style={{ marginBottom: 4 }}>
+                    Product Description
+                  </Text>
+                  <Text variant="bodyMedium" secondary style={{ lineHeight: 20 }}>
+                    {selectedProductForExpand.description || 'No description provided for this listing.'}
+                  </Text>
+                </View>
+
+                {/* Action Buttons */}
+                <View style={styles.modalActionButtonsStack}>
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    onPress={() => {
+                      handleCloseExpandProduct();
+                      navigation.navigate('AddEditProduct', { product: selectedProductForExpand });
+                    }}
+                    style={[styles.modalEditBtn, { backgroundColor: colors.primary[500] }]}
+                  >
+                    <Ionicons name="create-outline" size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
+                    <Text variant="bodyLarge" bold color="#FFFFFF">
+                      Edit Listing Details
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    onPress={() => {
+                      handleCloseExpandProduct();
+                      navigation.navigate('SellerProducts');
+                    }}
+                    style={[styles.modalFullCatalogBtn, { borderColor: theme.border }]}
+                  >
+                    <Ionicons name="pricetags-outline" size={16} color={theme.text} style={{ marginRight: 6 }} />
+                    <Text variant="bodyMedium" bold color={theme.text}>
+                      Manage in Full Catalog
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </ScrollView>
             </View>
-          </Card>
-        ))}
-      </View>
+          </View>
+        </Modal>
+      )}
     </ScreenContainer>
   );
 };
+
 
 const styles = StyleSheet.create({
   // 1. Top Header
@@ -817,34 +1100,234 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  // 5. Recent Transactions Feed
-  recentTransactionsList: {
+  // 5. My Store Products List & Expanded Modal Styles
+  sectionTitleWithBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: spacing.sm,
+  },
+  productCountPill: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
+    borderRadius: borderRadius.full,
+  },
+  emptyProductsCard: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.xl,
+    paddingHorizontal: spacing.lg,
     marginBottom: spacing['2xl'],
   },
-  transactionCard: {
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.base,
+  addFirstProductBtn: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm + 2,
+    borderRadius: borderRadius.md,
   },
-  txRow: {
+  productsList: {
+    gap: spacing.md,
+    marginBottom: spacing['2xl'],
+  },
+  productDashboardCard: {
+    padding: spacing.sm + 2,
+    borderRadius: borderRadius.lg,
+  },
+  productCardInnerRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  txIconCircle: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+  productImageWrapper: {
+    width: 72,
+    height: 72,
+    borderRadius: 14,
+    overflow: 'hidden',
+    position: 'relative',
+    backgroundColor: '#E2E8F0',
+  },
+  productThumbnail: {
+    width: '100%',
+    height: '100%',
+  },
+  productPlaceholder: {
+    width: '100%',
+    height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: spacing.md,
   },
-  txInfoStack: {
+  productImageBadge: {
+    position: 'absolute',
+    top: 4,
+    left: 4,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    borderRadius: borderRadius.xs,
+  },
+  productInfoStack: {
     flex: 1,
-    marginRight: spacing.sm,
+    marginLeft: spacing.md,
+    marginRight: spacing.xs,
   },
-  txAmountStack: {
-    alignItems: 'flex-end',
+  productTitle: {
+    fontSize: 15,
+    lineHeight: 18,
+  },
+  productCategoryTierRow: {
+    marginVertical: 2,
+  },
+  priceAndStockRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 4,
+  },
+  stockStepperContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 4,
   },
+  stepperMiniBtn: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stockNumberText: {
+    fontSize: 12,
+    minWidth: 16,
+    textAlign: 'center',
+  },
+  expandPlusButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: spacing.xs,
+  },
+
+  // Modal Styles
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    justifyContent: 'flex-end',
+  },
+  expandedModalSheet: {
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    borderTopWidth: 1,
+    maxHeight: '85%',
+    paddingTop: spacing.base,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.xl,
+    ...shadows.xl,
+  },
+  modalHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingBottom: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(150, 150, 150, 0.15)',
+    marginBottom: spacing.md,
+  },
+  modalHeaderTitleStack: {
+    flex: 1,
+  },
+  modalCloseBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  expandedModalScrollContent: {
+    paddingBottom: spacing.xl,
+  },
+  modalGalleryContainer: {
+    position: 'relative',
+    height: 200,
+    borderRadius: 18,
+    overflow: 'hidden',
+    marginBottom: spacing.md,
+    backgroundColor: '#000000',
+  },
+  modalGalleryScrollView: {
+    width: '100%',
+    height: '100%',
+  },
+  modalGalleryImage: {
+    width: 320,
+    height: 200,
+  },
+  modalImageCounterBadge: {
+    position: 'absolute',
+    bottom: 8,
+    right: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
+    borderRadius: borderRadius.full,
+  },
+  modalPriceSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.md,
+  },
+  modalTierPillsStack: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+  },
+  modalStockAdjustCard: {
+    marginBottom: spacing.md,
+    padding: spacing.md,
+  },
+  modalStockRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  modalStepperRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  modalStepperButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalStockValueText: {
+    minWidth: 28,
+    textAlign: 'center',
+  },
+  modalDescriptionSection: {
+    marginBottom: spacing.lg,
+  },
+  modalActionButtonsStack: {
+    gap: spacing.sm,
+  },
+  modalEditBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.lg,
+    ...shadows.sm,
+  },
+  modalFullCatalogBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+  },
 });
+
 
