@@ -22,19 +22,66 @@ import { useSellerStore } from '../../stores/seller.store';
 import { useAuthStore } from '../../stores/auth.store';
 import { SellerService, KYCService, AuthService } from '../../services/api';
 
-interface QuickBeneficiary {
+interface SalesTip {
   id: string;
-  name: string;
-  role: string;
-  badgeIcon: React.ComponentProps<typeof Ionicons>['name'];
-  badgeBg: string;
-  avatarUrl: string;
-  phone: string;
+  title: string;
+  badge: string;
+  badgeColor: string;
+  icon: React.ComponentProps<typeof Ionicons>['name'];
+  iconBg: string;
+  description: string;
 }
+
+const SALES_TIPS: SalesTip[] = [
+  {
+    id: 'tip_1',
+    title: 'Multi-Angle Photos',
+    badge: '+45% Sales',
+    badgeColor: '#10B981',
+    icon: 'camera-outline',
+    iconBg: '#FEF3C7',
+    description: 'List items with 3+ clear photos from different angles. Products with clean daylight photos sell 3.5x faster.',
+  },
+  {
+    id: 'tip_2',
+    title: '2-Hour Acceptance SLA',
+    badge: 'Search Boost',
+    badgeColor: colors.primary[500],
+    icon: 'flash-outline',
+    iconBg: '#CCFBF1',
+    description: 'Accept orders promptly within 2 hours. Fast merchants are prioritized on the Wunabuy buyer marketplace.',
+  },
+  {
+    id: 'tip_3',
+    title: 'Accurate Quality Tiers',
+    badge: 'Zero Disputes',
+    badgeColor: '#8B5CF6',
+    icon: 'shield-checkmark-outline',
+    iconBg: '#EDE9FE',
+    description: 'Clearly mark items NEW, LIKE NEW, or GOOD. Honest grading eliminates buyer returns and speeds escrow release.',
+  },
+  {
+    id: 'tip_4',
+    title: 'Prompt Driver Handover',
+    badge: 'Fast Release',
+    badgeColor: colors.accent[500],
+    icon: 'bicycle-outline',
+    iconBg: '#FEF9C3',
+    description: 'Mark orders "Ready for Pickup" as soon as packaged so verified transporters can deliver swiftly across town.',
+  },
+  {
+    id: 'tip_5',
+    title: 'Instant MoMo Payouts',
+    badge: 'Daily Cashout',
+    badgeColor: '#EC4899',
+    icon: 'wallet-outline',
+    iconBg: '#FCE7F3',
+    description: 'Withdraw available earnings instantly to MTN MoMo or Orange Money at any time with only 1% network fee.',
+  },
+];
 
 export const SellerDashboardScreen = ({ navigation }: any) => {
   const { theme, isDark } = useThemeStore();
-  const { user } = useAuthStore();
   const {
     storeName,
     availableBalance,
@@ -54,7 +101,6 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
   const [selectedProductForExpand, setSelectedProductForExpand] = useState<Product | null>(null);
   const [isExpandModalVisible, setIsExpandModalVisible] = useState(false);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
-
 
   const handleOpenExpandProduct = (product: Product) => {
     setSelectedProductForExpand(product);
@@ -105,65 +151,7 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
     setTimeout(() => setCopiedNotification(false), 2500);
   };
 
-  const handleBeneficiaryPress = (beneficiary: QuickBeneficiary) => {
-    Alert.alert(
-      beneficiary.name,
-      `Direct action with ${beneficiary.role} (${beneficiary.phone}):`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Fulfill Order',
-          onPress: () => navigation.navigate('SellerOrders'),
-        },
-        {
-          text: 'Send Payout',
-          onPress: () => navigation.navigate('SellerWallet'),
-        },
-      ]
-    );
-  };
-
   const pendingAcceptanceCount = orders.filter((o) => o.status === 'pending_acceptance').length;
-
-  // Recent Beneficiaries / Transporters / Key Buyers matching reference avatar carousel
-  const QUICK_BENEFICIARIES: QuickBeneficiary[] = [
-    {
-      id: 'b1',
-      name: 'Shulamite N.',
-      role: 'Regular Buyer',
-      badgeIcon: 'cart',
-      badgeBg: '#F97316',
-      avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400',
-      phone: '+237 671 234 567',
-    },
-    {
-      id: 'b2',
-      name: 'Jean-Pierre K.',
-      role: 'Bike Transporter',
-      badgeIcon: 'bicycle',
-      badgeBg: '#10B981',
-      avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400',
-      phone: '+237 670 998 877',
-    },
-    {
-      id: 'b3',
-      name: 'Moussa B.',
-      role: 'Taxi Transporter',
-      badgeIcon: 'car',
-      badgeBg: '#F59E0B',
-      avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400',
-      phone: '+237 694 556 677',
-    },
-    {
-      id: 'b4',
-      name: 'Mama Chantal',
-      role: 'VIP Customer',
-      badgeIcon: 'star',
-      badgeBg: '#8B5CF6',
-      avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400',
-      phone: '+237 677 345 678',
-    },
-  ];
 
   return (
     <ScreenContainer
@@ -176,35 +164,30 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
         />
       }
     >
-      {/* 1. Top Header Row: 3-Strokes Hamburger Menu + User Avatar & Greetings + Right Actions */}
+      {/* 1. Top Header Row: 3-Strokes Hamburger Menu + Merchant Store Header + Right Actions */}
       <View style={styles.topHeaderRow}>
-        {/* 3-Strokes Hamburger Button (Opens Seller Sidebar) */}
-        <TouchableOpacity
-          activeOpacity={0.8}
-          style={[
-            styles.squareMenuBtn,
-            {
-              backgroundColor: isDark ? colors.neutral[800] : colors.neutral[0],
-              borderColor: theme.border,
-            },
-          ]}
-          onPress={() => setIsDrawerOpen(true)}
-        >
-          <Ionicons name="menu-outline" size={22} color={theme.text} />
-        </TouchableOpacity>
+        <View style={styles.headerLeftCol}>
+          {/* 3-Strokes Hamburger Button (Opens Seller Sidebar) */}
+          <TouchableOpacity
+            activeOpacity={0.8}
+            style={[
+              styles.squareMenuBtn,
+              {
+                backgroundColor: isDark ? colors.neutral[800] : colors.neutral[0],
+                borderColor: theme.border,
+              },
+            ]}
+            onPress={() => setIsDrawerOpen(true)}
+          >
+            <Ionicons name="menu-outline" size={22} color={theme.text} />
+          </TouchableOpacity>
 
-        <View style={styles.userInfoStack}>
-          <Avatar
-            url={user?.avatar_url}
-            size={42}
-            showBorder={true}
-          />
-          <View style={styles.greetingTextContainer}>
-            <Text variant="caption" secondary bold style={styles.greetingSubtitle}>
-              Hello,
+          <View style={styles.brandTitleStack}>
+            <Text variant="caption" secondary bold style={styles.storeEyebrow}>
+              MERCHANT DASHBOARD
             </Text>
-            <Text variant="bodyLarge" bold numberOfLines={1} style={styles.greetingName}>
-              {user?.full_name || storeName || 'Sanusi Olamide'}
+            <Text variant="h2" bold color={colors.primary[600]} numberOfLines={1}>
+              {storeName || 'My Store'} 🏪
             </Text>
           </View>
         </View>
@@ -241,7 +224,7 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
             />
           </TouchableOpacity>
 
-          {/* 1-Tap Buyer Mode Switcher Pill */}
+          {/* 1-Tap Buyer Mode Switcher (Icon Only) */}
           <TouchableOpacity
             activeOpacity={0.8}
             onPress={() => {
@@ -249,27 +232,27 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
               AuthService.switchRole(UserRole.BUYER);
             }}
             style={[
-              styles.buyerModeBadge,
+              styles.iconButton,
               {
-                backgroundColor: isDark ? 'rgba(13,148,136,0.15)' : colors.primary[50],
-                borderColor: isDark ? 'rgba(13,148,136,0.3)' : colors.primary[200],
+                backgroundColor: isDark ? 'rgba(13,148,136,0.2)' : colors.primary[50],
+                borderColor: isDark ? 'rgba(13,148,136,0.35)' : colors.primary[200],
+                borderWidth: 1,
               },
             ]}
           >
-            <Ionicons name="cart" size={14} color={colors.primary[500]} />
-            <Text variant="caption" bold color={colors.primary[600]} style={{ marginLeft: 3 }}>
-              Buyer
-            </Text>
+            <Ionicons name="cart-outline" size={20} color={colors.primary[500]} />
           </TouchableOpacity>
         </View>
       </View>
 
+      {/* KYC Status Verification Banner (Hidden by default when APPROVED; only displays when unverified) */}
+      {kycStatus !== KYCStatus.APPROVED && (
+        <KYCStatusBanner
+          status={kycStatus}
+          onStartKYC={handleStartKYC}
+        />
+      )}
 
-      {/* KYC Status Verification Banner */}
-      <KYCStatusBanner
-        status={kycStatus}
-        onStartKYC={handleStartKYC}
-      />
 
       {/* 2. Main Feature Hero Balance Card (Emerald Teal Gradient with Image overlay & ID copy) */}
       <View
@@ -490,40 +473,50 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
         </TouchableOpacity>
       </View>
 
-      {/* 4. Quick transfer - Beneficiary (Horizontal Avatar List) */}
+      {/* 4. Sales Tips & Merchant Growth Carousel */}
       <View style={styles.sectionHeaderRow}>
-        <Text variant="h3" bold style={styles.sectionTitle}>
-          Quick transfer <Text variant="bodyMedium" secondary bold>- Beneficiary</Text>
-        </Text>
+        <View style={styles.sectionTitleWithBadge}>
+          <Text variant="h3" bold style={styles.sectionTitle}>
+            Sales Tips &amp; Growth
+          </Text>
+          <View style={[styles.tipsPillBadge, { backgroundColor: isDark ? 'rgba(245,158,11,0.18)' : '#FEF3C7' }]}>
+            <Ionicons name="bulb-outline" size={12} color={colors.accent[500]} style={{ marginRight: 3 }} />
+            <Text variant="caption" bold color={colors.accent[500]} style={{ fontSize: 10 }}>
+              BEST PRACTICES
+            </Text>
+          </View>
+        </View>
       </View>
 
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.beneficiaryScrollList}
+        contentContainerStyle={styles.salesTipsScrollList}
       >
-        {QUICK_BENEFICIARIES.map((item) => (
-          <TouchableOpacity
-            key={item.id}
-            activeOpacity={0.8}
-            onPress={() => handleBeneficiaryPress(item)}
-            style={styles.beneficiaryCard}
-          >
-            <View style={styles.beneficiaryAvatarWrapper}>
-              <Image
-                source={{ uri: item.avatarUrl }}
-                style={styles.beneficiaryAvatarImage}
-              />
-              <View style={[styles.beneficiaryBadge, { backgroundColor: item.badgeBg }]}>
-                <Ionicons name={item.badgeIcon} size={11} color="#FFFFFF" />
+        {SALES_TIPS.map((tip) => (
+          <Card key={tip.id} style={styles.salesTipCard}>
+            <View style={styles.tipCardTopRow}>
+              <View style={[styles.tipIconCircle, { backgroundColor: tip.iconBg }]}>
+                <Ionicons name={tip.icon} size={20} color={colors.primary[600]} />
+              </View>
+              <View style={[styles.tipBadgePill, { backgroundColor: `${tip.badgeColor}18` }]}>
+                <Text variant="caption" bold color={tip.badgeColor} style={{ fontSize: 10 }}>
+                  {tip.badge}
+                </Text>
               </View>
             </View>
-            <Text variant="caption" bold numberOfLines={1} style={styles.beneficiaryName}>
-              {item.name}
+
+            <Text variant="bodyLarge" bold style={styles.tipTitle}>
+              {tip.title}
             </Text>
-          </TouchableOpacity>
+
+            <Text variant="caption" secondary style={styles.tipDescription}>
+              {tip.description}
+            </Text>
+          </Card>
         ))}
       </ScrollView>
+
 
       {/* 5. My Store Products Catalog Section (Replaces Transactions) */}
       <View style={styles.sectionHeaderRow}>
@@ -887,6 +880,12 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
     marginBottom: spacing.md,
   },
+  headerLeftCol: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    marginRight: spacing.sm,
+  },
   squareMenuBtn: {
     width: 42,
     height: 42,
@@ -894,28 +893,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: spacing.sm,
+    marginRight: spacing.md,
     ...shadows.sm,
   },
-  userInfoStack: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  brandTitleStack: {
     flex: 1,
+    justifyContent: 'center',
   },
-
-  greetingTextContainer: {
-    marginLeft: spacing.sm + 2,
-    flex: 1,
-  },
-  greetingSubtitle: {
-    fontSize: 12,
-    lineHeight: 14,
-    opacity: 0.7,
-  },
-  greetingName: {
-    fontSize: 16,
-    lineHeight: 20,
-    marginTop: 1,
+  storeEyebrow: {
+    fontSize: 10,
+    letterSpacing: 0.8,
+    lineHeight: 12,
+    marginBottom: 2,
   },
   headerRightActionIcons: {
     flexDirection: 'row',
@@ -923,9 +912,9 @@ const styles = StyleSheet.create({
     gap: spacing.xs + 2,
   },
   iconButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -939,14 +928,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: '#EF4444',
   },
-  buyerModeBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 6,
-    borderRadius: borderRadius.full,
-    borderWidth: 1,
-  },
+
 
   // 2. Hero Balance Card
   heroBalanceCard: {
@@ -1096,45 +1078,51 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  // 4. Beneficiaries / Quick Handover List
-  beneficiaryScrollList: {
+  // 4. Sales Tips & Merchant Growth Styles
+  tipsPillBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
+    borderRadius: borderRadius.full,
+  },
+  salesTipsScrollList: {
     paddingRight: spacing.base,
     gap: spacing.md,
     marginBottom: spacing.xl,
   },
-  beneficiaryCard: {
+  salesTipCard: {
+    width: 260,
+    padding: spacing.md,
+    borderRadius: borderRadius.lg,
+  },
+  tipCardTopRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    width: 68,
+    justifyContent: 'space-between',
+    marginBottom: spacing.sm,
   },
-  beneficiaryAvatarWrapper: {
-    width: 58,
-    height: 58,
-    borderRadius: 18,
-    overflow: 'hidden',
-    position: 'relative',
-    backgroundColor: '#E2E8F0',
-  },
-  beneficiaryAvatarImage: {
-    width: '100%',
-    height: '100%',
-  },
-  beneficiaryBadge: {
-    position: 'absolute',
-    bottom: 2,
-    right: 2,
-    width: 18,
-    height: 18,
-    borderRadius: 9,
+  tipIconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: '#FFFFFF',
   },
-  beneficiaryName: {
-    marginTop: 6,
-    fontSize: 11,
-    textAlign: 'center',
+  tipBadgePill: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
+    borderRadius: borderRadius.full,
   },
+  tipTitle: {
+    fontSize: 15,
+    marginBottom: 4,
+  },
+  tipDescription: {
+    fontSize: 12,
+    lineHeight: 16,
+  },
+
 
   // 5. My Store Products List & Expanded Modal Styles
   sectionTitleWithBadge: {
