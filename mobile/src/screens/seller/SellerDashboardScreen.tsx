@@ -35,7 +35,9 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
   } = useSellerStore();
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [kycStatus, setKycStatus] = useState<KYCStatus>(KYCStatus.APPROVED);
+  // Hidden by default (null); only displays when staff explicitly approves verification
+  const [kycStatus, setKycStatus] = useState<KYCStatus | null>(null);
+  const [isKycApprovedNoticeDismissed, setIsKycApprovedNoticeDismissed] = useState(false);
   const [isBalanceVisible, setIsBalanceVisible] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [copiedNotification, setCopiedNotification] = useState(false);
@@ -70,7 +72,7 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
         setKycStatus(kycData.status as any);
       }
     } catch {
-      // Handled gracefully with offline fallback
+      // Handled gracefully with offline fallback - keeps hidden
     } finally {
       setRefreshing(false);
     }
@@ -191,13 +193,40 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
         </Text>
       </View>
 
-      {/* KYC Status Verification Banner (Hidden by default when APPROVED; only displays when unverified) */}
-      {kycStatus !== KYCStatus.APPROVED && (
-        <KYCStatusBanner
-          status={kycStatus}
-          onStartKYC={handleStartKYC}
-        />
+      {/* KYC Status Verification: Hidden by default (null); only displays when staff has APPROVED verification */}
+      {kycStatus === KYCStatus.APPROVED && !isKycApprovedNoticeDismissed && (
+        <View
+          style={[
+            styles.kycApprovedBanner,
+            {
+              backgroundColor: isDark ? 'rgba(16,185,129,0.15)' : '#ECFDF5',
+              borderColor: isDark ? 'rgba(16,185,129,0.3)' : '#A7F3D0',
+            },
+          ]}
+        >
+          <View style={styles.kycApprovedLeft}>
+            <View style={styles.kycVerifiedIconCircle}>
+              <Ionicons name="shield-checkmark" size={18} color="#10B981" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text variant="caption" bold color="#10B981" style={{ letterSpacing: 0.5 }}>
+                STORE VERIFIED BY STAFF
+              </Text>
+              <Text variant="caption" secondary numberOfLines={1} style={{ marginTop: 1 }}>
+                Verification approved • 48H Escrow &amp; MoMo Payouts active
+              </Text>
+            </View>
+          </View>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => setIsKycApprovedNoticeDismissed(true)}
+            style={styles.kycDismissBtn}
+          >
+            <Ionicons name="close" size={16} color={theme.textSecondary} />
+          </TouchableOpacity>
+        </View>
       )}
+
 
 
 
@@ -859,6 +888,35 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
   },
+  kycApprovedBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm + 2,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    marginBottom: spacing.md,
+  },
+  kycApprovedLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    marginRight: spacing.sm,
+  },
+  kycVerifiedIconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(16,185,129,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.sm,
+  },
+  kycDismissBtn: {
+    padding: 4,
+  },
+
 
 
 
