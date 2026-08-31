@@ -1,5 +1,5 @@
 /**
- * Format a numeric amount as XAF (FCFA) currency.
+ * Format a numeric amount as XAF (FCFA) currency without Intl dependency.
  * Uses French locale formatting (space thousand separator, no decimals for XAF).
  * 
  * @example
@@ -10,28 +10,28 @@
 export function formatXAF(amount: number): string {
   if (typeof amount !== 'number' || isNaN(amount)) return '0 FCFA';
   const rounded = Math.round(amount);
-  const formatted = new Intl.NumberFormat('fr-FR', {
-    style: 'decimal',
-    maximumFractionDigits: 0,
-  }).format(rounded);
-  // French locale uses narrow no-break space (U+202F) or regular non-breaking space (U+00A0)
-  // Let's replace any spaces with regular space just in case, or leave as is.
-  return `${formatted.replace(/\s+/g, ' ')} FCFA`;
+  const formatted = rounded.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  return `${formatted} FCFA`;
 }
 
 /**
- * Format a compact short form for large amounts.
+ * Format a compact short form for large amounts without Intl dependency.
  * @example
  * formatXAFCompact(1500000) // '1.5M FCFA'
  * formatXAFCompact(25000) // '25K FCFA'
  */
 export function formatXAFCompact(amount: number): string {
   if (typeof amount !== 'number' || isNaN(amount)) return '0 FCFA';
-  const formatter = new Intl.NumberFormat('en-US', {
-    notation: 'compact',
-    maximumFractionDigits: 1,
-  });
-  return `${formatter.format(amount)} FCFA`;
+  const abs = Math.abs(amount);
+  if (abs >= 1_000_000) {
+    const formatted = (amount / 1_000_000).toFixed(1).replace(/\.0$/, '');
+    return `${formatted}M FCFA`;
+  }
+  if (abs >= 1_000) {
+    const formatted = (amount / 1_000).toFixed(1).replace(/\.0$/, '');
+    return `${formatted}K FCFA`;
+  }
+  return `${Math.round(amount)} FCFA`;
 }
 
 /**
@@ -45,3 +45,4 @@ export function parseXAF(formatted: string): number {
   const parsed = parseFloat(numStr);
   return isNaN(parsed) ? 0 : parsed;
 }
+
