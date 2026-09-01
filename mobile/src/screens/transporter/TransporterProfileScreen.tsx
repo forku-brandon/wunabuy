@@ -159,7 +159,7 @@ export const TransporterProfileScreen = ({ navigation }: any) => {
         {/* 1. Header Bar */}
         <View style={styles.topHeaderBar}>
           <View>
-            <Text variant="caption" bold color={colors.accent[500]}>
+            <Text variant="caption" bold color={colors.primary[600]}>
               TRANSPORTER PROFILE
             </Text>
             <Text variant="h1" bold style={styles.screenTitle}>
@@ -176,7 +176,7 @@ export const TransporterProfileScreen = ({ navigation }: any) => {
         </View>
 
         {/* 2. Driver Profile Header Card */}
-        <Card style={[styles.profileHeaderCard, { borderColor: colors.role.transporter }]}>
+        <Card style={[styles.profileHeaderCard, { borderColor: colors.primary[500] }]}>
           <View style={styles.avatarContainer}>
             <TouchableOpacity activeOpacity={0.85} onPress={handleOpenAvatarModal}>
               <View style={styles.avatarWrapper}>
@@ -185,7 +185,7 @@ export const TransporterProfileScreen = ({ navigation }: any) => {
                   name={driverName}
                   size={76}
                 />
-                <View style={[styles.cameraBadge, { backgroundColor: colors.accent[500] }]}>
+                <View style={[styles.cameraBadge, { backgroundColor: colors.primary[500] }]}>
                   <Ionicons name="camera" size={13} color="#FFFFFF" />
                 </View>
               </View>
@@ -196,7 +196,7 @@ export const TransporterProfileScreen = ({ navigation }: any) => {
                 <Text variant="h2" bold numberOfLines={1} style={{ flex: 1 }}>
                   {driverName}
                 </Text>
-                <Badge label="VERIFIED RIDER" variant="warning" size="small" />
+                <Badge label="VERIFIED RIDER" variant="primary" size="small" />
               </View>
 
               <TouchableOpacity activeOpacity={0.7} onPress={handleCopyDriverId} style={styles.driverIdRow}>
@@ -208,7 +208,7 @@ export const TransporterProfileScreen = ({ navigation }: any) => {
 
               <View style={styles.ratingRow}>
                 <Ionicons name="star" size={14} color="#F59E0B" />
-                <Text variant="bodyMedium" bold color={colors.accent[500]} style={{ marginLeft: 4 }}>
+                <Text variant="bodyMedium" bold color={colors.primary[600]} style={{ marginLeft: 4 }}>
                   4.95 ★
                 </Text>
                 <Text variant="caption" secondary style={{ marginLeft: 6 }}>
@@ -228,11 +228,11 @@ export const TransporterProfileScreen = ({ navigation }: any) => {
         </Card>
 
         {/* 3. Driver Earnings Wallet Quick Banner Card */}
-        <Card style={[styles.walletBannerCard, { backgroundColor: isDark ? '#1E293B' : '#FEF3C7', borderColor: isDark ? 'rgba(245,158,11,0.3)' : '#FDE68A' }]}>
+        <Card style={[styles.walletBannerCard, { backgroundColor: isDark ? '#1E293B' : colors.primary[50], borderColor: isDark ? 'rgba(13,148,136,0.3)' : colors.primary[200] }]}>
           <View style={styles.walletBannerHeader}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <Ionicons name="wallet-outline" size={18} color={colors.accent[500]} />
-              <Text variant="caption" bold color={colors.accent[500]}>
+              <Ionicons name="wallet-outline" size={18} color={colors.primary[600]} />
+              <Text variant="caption" bold color={colors.primary[600]}>
                 DRIVER EARNINGS &amp; ESCROW
               </Text>
             </View>
@@ -240,7 +240,7 @@ export const TransporterProfileScreen = ({ navigation }: any) => {
               <Ionicons
                 name={isBalanceVisible ? 'eye-outline' : 'eye-off-outline'}
                 size={18}
-                color={colors.accent[500]}
+                color={colors.primary[600]}
               />
             </TouchableOpacity>
           </View>
@@ -250,7 +250,7 @@ export const TransporterProfileScreen = ({ navigation }: any) => {
               <Text variant="caption" secondary style={{ fontSize: 11 }}>
                 Available Cashout
               </Text>
-              <Text variant="h1" bold color={colors.accent[500]}>
+              <Text variant="h1" bold color={colors.primary[600]}>
                 {isBalanceVisible ? formatXAF(availableEarnings) : '•••••• FCFA'}
               </Text>
             </View>
@@ -261,7 +261,7 @@ export const TransporterProfileScreen = ({ navigation }: any) => {
               size="small"
               fullWidth={false}
               onPress={() => navigation.navigate('TransporterEarnings')}
-              style={{ backgroundColor: colors.accent[500] }}
+              style={{ backgroundColor: colors.primary[500] }}
             />
           </View>
 
@@ -271,6 +271,7 @@ export const TransporterProfileScreen = ({ navigation }: any) => {
             </Text>
           </View>
         </Card>
+
 
         {/* 4. Dispatch Queue & Fulfillment Status Grid */}
         <View style={styles.sectionHeaderRow}>
@@ -286,8 +287,8 @@ export const TransporterProfileScreen = ({ navigation }: any) => {
               onPress={() => navigation.navigate('TransporterJobs')}
               style={styles.statusGridItem}
             >
-              <View style={[styles.statusIconBox, { backgroundColor: isDark ? 'rgba(245,158,11,0.2)' : '#FEF3C7' }]}>
-                <Ionicons name="briefcase-outline" size={22} color={colors.accent[500]} />
+              <View style={[styles.statusIconBox, { backgroundColor: isDark ? 'rgba(13,148,136,0.2)' : colors.primary[50] }]}>
+                <Ionicons name="briefcase-outline" size={22} color={colors.primary[500]} />
               </View>
               <Text variant="caption" bold style={styles.statusGridLabel}>
                 Offers
@@ -299,8 +300,8 @@ export const TransporterProfileScreen = ({ navigation }: any) => {
               onPress={() => navigation.navigate('TransporterActiveTrip', { stage: 1 })}
               style={styles.statusGridItem}
             >
-              <View style={[styles.statusIconBox, { backgroundColor: isDark ? 'rgba(37,99,235,0.2)' : '#EFF6FF' }]}>
-                <Ionicons name="storefront-outline" size={22} color="#2563EB" />
+              <View style={[styles.statusIconBox, { backgroundColor: isDark ? 'rgba(13,148,136,0.2)' : colors.primary[50] }]}>
+                <Ionicons name="storefront-outline" size={22} color={colors.primary[600]} />
               </View>
               <Text variant="caption" bold style={styles.statusGridLabel}>
                 Pickup
@@ -312,8 +313,8 @@ export const TransporterProfileScreen = ({ navigation }: any) => {
               onPress={() => navigation.navigate('TransporterActiveTrip', { stage: 3 })}
               style={styles.statusGridItem}
             >
-              <View style={[styles.statusIconBox, { backgroundColor: isDark ? 'rgba(16,185,129,0.2)' : '#D1FAE5' }]}>
-                <Ionicons name="car-outline" size={22} color="#10B981" />
+              <View style={[styles.statusIconBox, { backgroundColor: isDark ? 'rgba(13,148,136,0.2)' : colors.primary[50] }]}>
+                <Ionicons name="car-outline" size={22} color={colors.primary[500]} />
               </View>
               <Text variant="caption" bold style={styles.statusGridLabel}>
                 En Route
@@ -325,8 +326,8 @@ export const TransporterProfileScreen = ({ navigation }: any) => {
               onPress={() => navigation.navigate('TransporterEarnings')}
               style={styles.statusGridItem}
             >
-              <View style={[styles.statusIconBox, { backgroundColor: isDark ? 'rgba(99,102,241,0.2)' : '#EEF2FF' }]}>
-                <Ionicons name="checkmark-circle-outline" size={22} color="#6366F1" />
+              <View style={[styles.statusIconBox, { backgroundColor: isDark ? 'rgba(13,148,136,0.2)' : colors.primary[50] }]}>
+                <Ionicons name="checkmark-circle-outline" size={22} color={colors.primary[600]} />
               </View>
               <Text variant="caption" bold style={styles.statusGridLabel}>
                 Delivered
@@ -349,7 +350,7 @@ export const TransporterProfileScreen = ({ navigation }: any) => {
               onPress={() => navigation.navigate('TransporterKYC')}
               style={styles.toolItem}
             >
-              <Ionicons name="shield-checkmark-outline" size={22} color={colors.accent[500]} />
+              <Ionicons name="shield-checkmark-outline" size={22} color={colors.primary[500]} />
               <Text variant="caption" style={styles.toolText}>
                 Driver KYC
               </Text>
@@ -360,7 +361,7 @@ export const TransporterProfileScreen = ({ navigation }: any) => {
               onPress={() => navigation.navigate('AddressManager')}
               style={styles.toolItem}
             >
-              <Ionicons name="navigate-outline" size={22} color={colors.accent[500]} />
+              <Ionicons name="navigate-outline" size={22} color={colors.primary[500]} />
               <Text variant="caption" style={styles.toolText}>
                 GPS Hub
               </Text>
@@ -371,7 +372,7 @@ export const TransporterProfileScreen = ({ navigation }: any) => {
               onPress={() => navigation.navigate('NotificationSettings')}
               style={styles.toolItem}
             >
-              <Ionicons name="notifications-outline" size={22} color={colors.accent[500]} />
+              <Ionicons name="notifications-outline" size={22} color={colors.primary[500]} />
               <Text variant="caption" style={styles.toolText}>
                 Alerts
               </Text>
@@ -401,15 +402,15 @@ export const TransporterProfileScreen = ({ navigation }: any) => {
 
         <Card style={styles.vehicleCard}>
           <View style={styles.vehicleRow}>
-            <View style={[styles.vehicleIconCircle, { backgroundColor: isDark ? 'rgba(245,158,11,0.2)' : '#FEF3C7' }]}>
-              <Ionicons name="bicycle" size={26} color={colors.accent[500]} />
+            <View style={[styles.vehicleIconCircle, { backgroundColor: isDark ? 'rgba(13,148,136,0.2)' : colors.primary[50] }]}>
+              <Ionicons name="bicycle" size={26} color={colors.primary[500]} />
             </View>
             <View style={{ flex: 1 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <Text variant="bodyLarge" bold numberOfLines={1}>
                   {vehicleType}
                 </Text>
-                <Badge label="INSPECTED" variant="success" size="small" />
+                <Badge label="INSPECTED" variant="primary" size="small" />
               </View>
               <Text variant="caption" secondary style={{ marginTop: 2 }}>
                 License Plate: <Text variant="caption" bold color={theme.text}>{vehiclePlate}</Text> • Sector: <Text variant="caption" bold color={theme.text}>{baseQuarter}</Text>
@@ -417,6 +418,7 @@ export const TransporterProfileScreen = ({ navigation }: any) => {
             </View>
           </View>
         </Card>
+
 
         {/* 7. 1-Tap Switch to Buyer Workspace Banner Card */}
         <TouchableOpacity

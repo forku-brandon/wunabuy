@@ -107,7 +107,7 @@ export const TransporterEarningsScreen = () => {
     <ScreenContainer scrollable={false} padded={false}>
       {/* Top Header */}
       <View style={[styles.header, { backgroundColor: theme.card, borderBottomColor: theme.border, paddingTop: Math.max(insets.top + spacing.xs, spacing.md) }]}>
-        <Text variant="caption" bold color={colors.accent[500]}>
+        <Text variant="caption" bold color={colors.primary[600]}>
           FLEET EARNINGS &amp; WALLET
         </Text>
         <Text variant="h1" bold style={styles.screenTitleText}>
@@ -122,13 +122,13 @@ export const TransporterEarningsScreen = () => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            tintColor={colors.accent[500]}
-            colors={[colors.accent[500]]}
+            tintColor={colors.primary[500]}
+            colors={[colors.primary[500]]}
           />
         }
       >
         {/* Wallet Overview Hero Card */}
-        <Card style={[styles.walletCard, { backgroundColor: colors.role.transporter }]}>
+        <Card style={[styles.walletCard, { backgroundColor: colors.primary[500] }]}>
           <View style={styles.walletHeaderRow}>
             <Text variant="caption" color="rgba(255,255,255,0.85)" bold>
               AVAILABLE DRIVER CASHOUT BALANCE
@@ -151,7 +151,7 @@ export const TransporterEarningsScreen = () => {
               <Text variant="caption" color="rgba(255,255,255,0.8)">
                 Total Lifetime Earned
               </Text>
-              <Text variant="bodyLarge" bold color={colors.accent[300]}>
+              <Text variant="bodyLarge" bold color={colors.primary[100]}>
                 {isBalanceVisible ? formatXAF(totalEarned) : '••••••'}
               </Text>
             </View>
@@ -178,7 +178,7 @@ export const TransporterEarningsScreen = () => {
         {/* Driver Shift Telemetry Cards Grid */}
         <View style={styles.telemetryGridRow}>
           <View style={[styles.telemetryCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
-            <Ionicons name="checkmark-circle-outline" size={20} color="#10B981" />
+            <Ionicons name="checkmark-circle-outline" size={20} color={colors.primary[500]} />
             <Text variant="h2" bold style={{ marginTop: 2 }}>
               248
             </Text>
@@ -224,11 +224,11 @@ export const TransporterEarningsScreen = () => {
             return (
               <Card key={item.id} style={styles.tripCard}>
                 <View style={styles.tripRow}>
-                  <View style={[styles.iconCircle, { backgroundColor: isCashout ? '#FEE2E2' : '#ECFDF5' }]}>
+                  <View style={[styles.iconCircle, { backgroundColor: isCashout ? '#FEE2E2' : colors.primary[50] }]}>
                     <Ionicons
                       name={isCashout ? 'arrow-up-circle-outline' : 'arrow-down-circle-outline'}
                       size={22}
-                      color={isCashout ? '#EF4444' : '#10B981'}
+                      color={isCashout ? '#EF4444' : colors.primary[500]}
                     />
                   </View>
 
@@ -242,10 +242,10 @@ export const TransporterEarningsScreen = () => {
                   </View>
 
                   <View style={{ alignItems: 'flex-end' }}>
-                    <Text variant="bodyLarge" bold color={isCashout ? '#EF4444' : colors.role.transporter}>
+                    <Text variant="bodyLarge" bold color={isCashout ? '#EF4444' : colors.primary[600]}>
                       {isCashout ? formatXAF(item.fee) : `+${formatXAF(item.fee)}`}
                     </Text>
-                    <Badge label={isCashout ? 'CASHOUT' : 'CREDITED'} variant={isCashout ? 'error' : 'success'} size="small" />
+                    <Badge label={isCashout ? 'CASHOUT' : 'CREDITED'} variant={isCashout ? 'error' : 'primary'} size="small" />
                   </View>
                 </View>
               </Card>
@@ -253,6 +253,7 @@ export const TransporterEarningsScreen = () => {
           })}
         </View>
       </ScrollView>
+
 
       {/* Payout Bottom Sheet Modal */}
       <BottomSheet
@@ -356,8 +357,9 @@ export const TransporterEarningsScreen = () => {
           size="large"
           loading={isProcessing}
           onPress={handleWithdraw}
-          style={[styles.withdrawActionBtn, { backgroundColor: colors.accent[500] }]}
+          style={[styles.withdrawActionBtn, { backgroundColor: colors.primary[500] }]}
         />
+
       </BottomSheet>
 
       {toastMessage && (

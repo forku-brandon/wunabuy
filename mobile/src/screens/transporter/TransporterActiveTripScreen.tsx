@@ -93,7 +93,7 @@ export const TransporterActiveTripScreen = ({ route, navigation }: any) => {
           </TouchableOpacity>
 
           <View style={{ flex: 1, marginHorizontal: spacing.sm }}>
-            <Text variant="caption" bold color={colors.role.transporter}>
+            <Text variant="caption" bold color={colors.primary[600]}>
               ACTIVE TRIP • #{orderCode}
             </Text>
             <Text variant="h2" bold numberOfLines={1}>
@@ -114,7 +114,7 @@ export const TransporterActiveTripScreen = ({ route, navigation }: any) => {
               style={[
                 styles.stepProgressBar,
                 stepNum <= currentStage
-                  ? { backgroundColor: colors.role.transporter }
+                  ? { backgroundColor: colors.primary[500] }
                   : { backgroundColor: isDark ? colors.neutral[700] : colors.neutral[200] },
               ]}
             />
@@ -141,7 +141,7 @@ export const TransporterActiveTripScreen = ({ route, navigation }: any) => {
               <Text variant="caption" secondary bold>
                 PAYOUT
               </Text>
-              <Text variant="h2" bold color={colors.role.transporter}>
+              <Text variant="h2" bold color={colors.primary[600]}>
                 {formatXAF(deliveryFee)}
               </Text>
             </View>
@@ -149,12 +149,12 @@ export const TransporterActiveTripScreen = ({ route, navigation }: any) => {
 
           {/* Location Focus Info */}
           {currentStage <= 2 ? (
-            <View style={[styles.locationBox, { backgroundColor: isDark ? colors.neutral[800] : '#FFFBEB', borderColor: colors.role.transporter }]}>
+            <View style={[styles.locationBox, { backgroundColor: isDark ? colors.neutral[800] : colors.primary[50], borderColor: colors.primary[500] }]}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Text variant="caption" bold color={colors.accent[500]}>
+                <Text variant="caption" bold color={colors.primary[600]}>
                   🏬 PICKUP MERCHANT STORE
                 </Text>
-                <Badge label="STAGE 1 & 2" variant="warning" size="small" />
+                <Badge label="STAGE 1 & 2" variant="primary" size="small" />
               </View>
               <Text variant="bodyLarge" bold style={{ marginTop: 2 }}>
                 {storeName}
@@ -167,10 +167,10 @@ export const TransporterActiveTripScreen = ({ route, navigation }: any) => {
                 <TouchableOpacity
                   activeOpacity={0.8}
                   onPress={() => Alert.alert('Calling Store', `Dialing merchant store: ${storePhone}`)}
-                  style={[styles.callBtn, { backgroundColor: isDark ? colors.neutral[700] : '#FEF3C7' }]}
+                  style={[styles.callBtn, { backgroundColor: isDark ? colors.neutral[700] : 'rgba(13,148,136,0.12)' }]}
                 >
-                  <Ionicons name="call-outline" size={16} color={colors.accent[500]} />
-                  <Text variant="caption" bold color={colors.accent[500]}>
+                  <Ionicons name="call-outline" size={16} color={colors.primary[600]} />
+                  <Text variant="caption" bold color={colors.primary[600]}>
                     Call Store ({storePhone})
                   </Text>
                 </TouchableOpacity>
@@ -235,9 +235,10 @@ export const TransporterActiveTripScreen = ({ route, navigation }: any) => {
             variant="primary"
             size="large"
             onPress={currentStage === 4 ? () => setIsSignModalOpen(true) : handleNextStage}
-            style={[styles.stageActionBtn, { backgroundColor: colors.role.transporter }]}
+            style={[styles.stageActionBtn, { backgroundColor: colors.primary[500] }]}
           />
         </Card>
+
       </ScrollView>
 
       {/* Digital Signature Pad Modal */}

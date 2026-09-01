@@ -21,8 +21,9 @@ export const TransporterTabNavigator = () => {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarActiveTintColor: colors.role.transporter,
+        tabBarActiveTintColor: colors.primary[500],
         tabBarInactiveTintColor: theme.textSecondary,
+
         tabBarStyle: {
           backgroundColor: theme.card,
           borderTopColor: theme.border,

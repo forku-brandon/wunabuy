@@ -198,7 +198,7 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
 
         {/* Subtitle Stack */}
         <View style={styles.subtitleStack}>
-          <Text variant="caption" bold color={colors.role.transporter}>
+          <Text variant="caption" bold color={colors.primary[600]}>
             FLEET DISPATCH • DOUALA SECTOR
           </Text>
           <Text variant="h1" bold style={styles.screenTitleText}>
@@ -214,7 +214,7 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
             style={[
               styles.chipItem,
               activeFilter === 'all'
-                ? { backgroundColor: colors.role.transporter, borderColor: colors.role.transporter }
+                ? { backgroundColor: colors.primary[500], borderColor: colors.primary[500] }
                 : { backgroundColor: isDark ? colors.neutral[800] : colors.neutral[100], borderColor: theme.border },
             ]}
           >
@@ -229,7 +229,7 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
             style={[
               styles.chipItem,
               activeFilter === 'near'
-                ? { backgroundColor: colors.role.transporter, borderColor: colors.role.transporter }
+                ? { backgroundColor: colors.primary[500], borderColor: colors.primary[500] }
                 : { backgroundColor: isDark ? colors.neutral[800] : colors.neutral[100], borderColor: theme.border },
             ]}
           >
@@ -244,7 +244,7 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
             style={[
               styles.chipItem,
               activeFilter === 'high_pay'
-                ? { backgroundColor: colors.role.transporter, borderColor: colors.role.transporter }
+                ? { backgroundColor: colors.primary[500], borderColor: colors.primary[500] }
                 : { backgroundColor: isDark ? colors.neutral[800] : colors.neutral[100], borderColor: theme.border },
             ]}
           >
@@ -265,8 +265,8 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            tintColor={colors.role.transporter}
-            colors={[colors.role.transporter]}
+            tintColor={colors.primary[500]}
+            colors={[colors.primary[500]]}
           />
         }
         renderItem={({ item }) => (
@@ -276,7 +276,7 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
                 <Text variant="bodyLarge" bold color={colors.primary[500]}>
                   {item.order_code}
                 </Text>
-                <Badge label="EXPRESS" variant="success" size="small" />
+                <Badge label="EXPRESS" variant="primary" size="small" />
               </View>
               <Badge label={`${formatDistance(item.distance_km)} AWAY`} variant="info" size="small" />
             </View>
@@ -312,7 +312,7 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
                 <Text variant="caption" secondary bold style={{ fontSize: 10 }}>
                   DRIVER PAYOUT
                 </Text>
-                <Text variant="h2" bold color={colors.role.transporter}>
+                <Text variant="h2" bold color={colors.primary[600]}>
                   {formatXAF(item.delivery_fee)}
                 </Text>
               </View>
@@ -329,6 +329,7 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
           </Card>
         )}
       />
+
 
       {/* Slide-out Navigation Drawer */}
       <TransporterSidebarDrawer
@@ -442,7 +443,8 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   acceptBtn: {
-    backgroundColor: colors.role.transporter,
+    backgroundColor: colors.primary[500],
     minWidth: 125,
   },
+
 });

@@ -99,7 +99,7 @@ export const TransporterSidebarDrawer: React.FC<TransporterSidebarDrawerProps> =
               <View style={styles.brandBadgeRow}>
                 <Image source={WUNABUY_LOGO} style={styles.brandLogo} resizeMode="contain" />
                 <View>
-                  <Text variant="bodyLarge" bold color={colors.role.transporter}>
+                  <Text variant="bodyLarge" bold color={colors.primary[600]}>
                     WUNABUY EXPRESS
                   </Text>
                   <Text variant="caption" secondary style={{ fontSize: 10 }}>
@@ -114,7 +114,7 @@ export const TransporterSidebarDrawer: React.FC<TransporterSidebarDrawerProps> =
             </View>
 
             {/* Driver Profile Card */}
-            <View style={[styles.driverProfileCard, { backgroundColor: isDark ? colors.neutral[800] : '#FFFBEB', borderColor: colors.role.transporter }]}>
+            <View style={[styles.driverProfileCard, { backgroundColor: isDark ? colors.neutral[800] : colors.primary[50], borderColor: colors.primary[500] }]}>
               <View style={styles.driverAvatarRow}>
                 <Avatar
                   url={user?.avatar_url}
@@ -126,14 +126,14 @@ export const TransporterSidebarDrawer: React.FC<TransporterSidebarDrawerProps> =
                     <Text variant="bodyLarge" bold numberOfLines={1} style={{ maxWidth: 140 }}>
                       {driverName}
                     </Text>
-                    <Badge label="VERIFIED" variant="warning" size="small" />
+                    <Badge label="VERIFIED" variant="primary" size="small" />
                   </View>
                   <Text variant="caption" secondary style={{ marginTop: 1 }}>
                     ID: {driverId} • {vehiclePlate}
                   </Text>
                   <View style={styles.ratingBadgeRow}>
                     <Ionicons name="star" size={12} color="#F59E0B" />
-                    <Text variant="caption" bold color={colors.accent[500]} style={{ marginLeft: 3 }}>
+                    <Text variant="caption" bold color={colors.primary[600]} style={{ marginLeft: 3 }}>
                       4.95 ★ (248 Trips)
                     </Text>
                   </View>
@@ -141,28 +141,28 @@ export const TransporterSidebarDrawer: React.FC<TransporterSidebarDrawerProps> =
               </View>
 
               {/* Duty Toggle Switch */}
-              <View style={[styles.dutyToggleRow, { borderTopColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(245,158,11,0.2)' }]}>
+              <View style={[styles.dutyToggleRow, { borderTopColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(13,148,136,0.15)' }]}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <View style={[styles.dutyDot, { backgroundColor: isOnDuty ? '#10B981' : colors.neutral[400] }]} />
-                  <Text variant="caption" bold color={isOnDuty ? '#10B981' : theme.textSecondary}>
+                  <View style={[styles.dutyDot, { backgroundColor: isOnDuty ? colors.primary[500] : colors.neutral[400] }]} />
+                  <Text variant="caption" bold color={isOnDuty ? colors.primary[600] : theme.textSecondary}>
                     {isOnDuty ? 'ONLINE • RECEIVING JOBS' : 'OFFLINE • SHIFT PAUSED'}
                   </Text>
                 </View>
                 <Switch
                   value={isOnDuty}
                   onValueChange={setIsOnDuty}
-                  trackColor={{ false: theme.border, true: '#10B981' }}
+                  trackColor={{ false: theme.border, true: colors.primary[500] }}
                   thumbColor="#FFFFFF"
                 />
               </View>
             </View>
 
             {/* Driver Wallet Overview Banner */}
-            <View style={[styles.walletOverviewCard, { backgroundColor: isDark ? '#1E293B' : '#FEF3C7', borderColor: isDark ? 'rgba(245,158,11,0.3)' : '#FDE68A' }]}>
+            <View style={[styles.walletOverviewCard, { backgroundColor: isDark ? '#1E293B' : colors.primary[50], borderColor: isDark ? 'rgba(13,148,136,0.3)' : colors.primary[200] }]}>
               <View style={styles.walletHeaderRow}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <Ionicons name="wallet-outline" size={16} color={colors.accent[500]} />
-                  <Text variant="caption" bold color={colors.accent[500]}>
+                  <Ionicons name="wallet-outline" size={16} color={colors.primary[600]} />
+                  <Text variant="caption" bold color={colors.primary[600]}>
                     DRIVER EARNINGS
                   </Text>
                 </View>
@@ -170,7 +170,7 @@ export const TransporterSidebarDrawer: React.FC<TransporterSidebarDrawerProps> =
                   <Ionicons
                     name={isBalanceVisible ? 'eye-outline' : 'eye-off-outline'}
                     size={16}
-                    color={colors.accent[500]}
+                    color={colors.primary[600]}
                   />
                 </TouchableOpacity>
               </View>
@@ -180,7 +180,7 @@ export const TransporterSidebarDrawer: React.FC<TransporterSidebarDrawerProps> =
                   <Text variant="caption" secondary style={{ fontSize: 10 }}>
                     Available Cashout
                   </Text>
-                  <Text variant="h2" bold color={colors.accent[500]}>
+                  <Text variant="h2" bold color={colors.primary[600]}>
                     {isBalanceVisible ? formatXAF(availableEarnings) : '•••••• FCFA'}
                   </Text>
                 </View>
@@ -195,6 +195,7 @@ export const TransporterSidebarDrawer: React.FC<TransporterSidebarDrawerProps> =
                 </View>
               </View>
             </View>
+
 
             {/* Workspace Switcher Cards */}
             <Text variant="caption" bold secondary style={styles.sectionEyebrow}>
@@ -251,8 +252,8 @@ export const TransporterSidebarDrawer: React.FC<TransporterSidebarDrawerProps> =
                 style={[styles.linkRow, { borderBottomColor: theme.border }]}
               >
                 <View style={styles.linkLeftGroup}>
-                  <View style={[styles.linkIconBox, { backgroundColor: isDark ? 'rgba(245,158,11,0.2)' : '#FEF3C7' }]}>
-                    <Ionicons name="briefcase-outline" size={18} color={colors.accent[500]} />
+                  <View style={[styles.linkIconBox, { backgroundColor: isDark ? 'rgba(13,148,136,0.2)' : colors.primary[50] }]}>
+                    <Ionicons name="briefcase-outline" size={18} color={colors.primary[600]} />
                   </View>
                   <Text variant="bodyMedium" bold style={styles.linkLabel}>
                     Available Job Offers
@@ -267,14 +268,14 @@ export const TransporterSidebarDrawer: React.FC<TransporterSidebarDrawerProps> =
                 style={[styles.linkRow, { borderBottomColor: theme.border }]}
               >
                 <View style={styles.linkLeftGroup}>
-                  <View style={[styles.linkIconBox, { backgroundColor: isDark ? 'rgba(16,185,129,0.2)' : '#D1FAE5' }]}>
-                    <Ionicons name="navigate-outline" size={18} color="#10B981" />
+                  <View style={[styles.linkIconBox, { backgroundColor: isDark ? 'rgba(13,148,136,0.2)' : colors.primary[50] }]}>
+                    <Ionicons name="navigate-outline" size={18} color={colors.primary[600]} />
                   </View>
                   <Text variant="bodyMedium" bold style={styles.linkLabel}>
                     Active Dispatch Trip
                   </Text>
                 </View>
-                <Badge label="LIVE" variant="success" size="small" />
+                <Badge label="LIVE" variant="primary" size="small" />
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -283,9 +284,10 @@ export const TransporterSidebarDrawer: React.FC<TransporterSidebarDrawerProps> =
                 style={[styles.linkRow, { borderBottomColor: theme.border }]}
               >
                 <View style={styles.linkLeftGroup}>
-                  <View style={[styles.linkIconBox, { backgroundColor: isDark ? 'rgba(245,158,11,0.2)' : '#FEF3C7' }]}>
-                    <Ionicons name="cash-outline" size={18} color={colors.accent[500]} />
+                  <View style={[styles.linkIconBox, { backgroundColor: isDark ? 'rgba(13,148,136,0.2)' : colors.primary[50] }]}>
+                    <Ionicons name="cash-outline" size={18} color={colors.primary[600]} />
                   </View>
+
                   <Text variant="bodyMedium" bold style={styles.linkLabel}>
                     Earnings &amp; MoMo Cashout
                   </Text>
