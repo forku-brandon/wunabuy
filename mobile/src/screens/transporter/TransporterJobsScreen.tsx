@@ -323,40 +323,43 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
               </Text>
             </TouchableOpacity>
 
-            {/* Footer Action Buttons: Payout, Not Interested & Accept */}
-            <View style={styles.footerRow}>
-              <View>
-                <Text variant="caption" secondary bold style={{ fontSize: 10 }}>
-                  DRIVER PAYOUT
-                </Text>
-                <Text variant="h2" bold color={colors.primary[600]}>
-                  {formatXAF(item.delivery_fee)}
+            {/* Driver Payout Dedicated Banner */}
+            <View style={[styles.payoutHighlightBanner, { backgroundColor: isDark ? colors.neutral[800] : colors.primary[50], borderColor: isDark ? 'rgba(13,148,136,0.3)' : colors.primary[200] }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Ionicons name="cash-outline" size={18} color={colors.primary[600]} />
+                <Text variant="caption" bold color={colors.primary[600]}>
+                  ESTIMATED DRIVER PAYOUT
                 </Text>
               </View>
+              <Text variant="h2" bold color={colors.primary[600]}>
+                {formatXAF(item.delivery_fee)}
+              </Text>
+            </View>
 
-              <View style={styles.cardActionGroup}>
-                <TouchableOpacity
-                  activeOpacity={0.8}
-                  onPress={() => handleRejectJob(item)}
-                  style={[styles.rejectBtn, { borderColor: theme.border }]}
-                >
-                  <Ionicons name="close-circle-outline" size={18} color="#EF4444" />
-                  <Text variant="caption" bold color="#EF4444">
-                    Not Interested
-                  </Text>
-                </TouchableOpacity>
+            {/* Action Buttons Row (Moved Down for High Flexibility & Spacing) */}
+            <View style={styles.cardActionGroup}>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => handleRejectJob(item)}
+                style={[styles.rejectBtn, { borderColor: theme.border }]}
+              >
+                <Ionicons name="close-circle-outline" size={18} color="#EF4444" />
+                <Text variant="caption" bold color="#EF4444">
+                  Not Interested
+                </Text>
+              </TouchableOpacity>
 
-                <Button
-                  title="Accept Job ➔"
-                  variant="primary"
-                  size="medium"
-                  fullWidth={false}
-                  onPress={() => handleAcceptJob(item)}
-                  style={styles.acceptBtn}
-                />
-              </View>
+              <Button
+                title="Accept Job ➔"
+                variant="primary"
+                size="medium"
+                fullWidth={false}
+                onPress={() => handleAcceptJob(item)}
+                style={styles.acceptBtn}
+              />
             </View>
           </Card>
+
         )}
       />
 
@@ -551,41 +554,49 @@ const styles = StyleSheet.create({
   summaryText: {
     fontSize: 12,
   },
-  footerRow: {
+  payoutHighlightBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm + 2,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    marginTop: spacing.xs + 2,
+    marginBottom: spacing.sm,
   },
   cardActionGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.sm,
+    marginTop: spacing.xs,
   },
   mapRouteBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    paddingVertical: 8,
+    paddingVertical: 10,
     paddingHorizontal: 12,
     borderRadius: borderRadius.md,
     borderWidth: 1,
     marginVertical: spacing.xs,
   },
   rejectBtn: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: spacing.sm + 2,
     borderRadius: borderRadius.md,
     borderWidth: 1,
   },
   acceptBtn: {
+    flex: 1.2,
     backgroundColor: colors.primary[500],
-    minWidth: 115,
   },
+
   mapModalContainer: {
     flex: 1,
   },
