@@ -151,10 +151,11 @@ export const TransporterProfileScreen = ({ navigation }: any) => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            tintColor={colors.accent[500]}
-            colors={[colors.accent[500]]}
+            tintColor={colors.primary[500]}
+            colors={[colors.primary[500]]}
           />
         }
+
       >
         {/* 1. Header Bar */}
         <View style={styles.topHeaderBar}>
