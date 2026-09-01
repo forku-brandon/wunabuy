@@ -129,23 +129,24 @@ export const TransporterActiveTripScreen = ({ route, navigation }: any) => {
         {/* Dispatch Order Specs Card */}
         <Card style={styles.dispatchCard}>
           <View style={styles.dispatchHeaderRow}>
-            <View>
+            <View style={{ flex: 1, marginRight: spacing.xs }}>
               <Text variant="caption" secondary bold>
                 ITEMS TO TRANSPORT
               </Text>
-              <Text variant="bodyLarge" bold color={colors.primary[500]}>
+              <Text variant="bodyLarge" bold color={colors.primary[500]} style={{ marginTop: 2 }}>
                 📦 {itemsSummary}
               </Text>
             </View>
-            <View style={{ alignItems: 'flex-end' }}>
+            <View style={{ alignItems: 'flex-end', minWidth: 90 }}>
               <Text variant="caption" secondary bold>
-                PAYOUT
+                DRIVER PAYOUT
               </Text>
               <Text variant="h2" bold color={colors.primary[600]}>
                 {formatXAF(deliveryFee)}
               </Text>
             </View>
           </View>
+
 
           {/* Location Focus Info */}
           {currentStage <= 2 ? (

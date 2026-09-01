@@ -394,7 +394,7 @@ export const TransporterProfileScreen = ({ navigation }: any) => {
           </View>
         </Card>
 
-        {/* 6. Vehicle Details Showcase Card */}
+        {/* 6. Vehicle Details Showcase Card (Structured Specs Grid) */}
         <View style={styles.sectionHeaderRow}>
           <Text variant="h2" bold style={styles.sectionTitleText}>
             Active Registered Vehicle
@@ -407,18 +407,64 @@ export const TransporterProfileScreen = ({ navigation }: any) => {
               <Ionicons name="bicycle" size={26} color={colors.primary[500]} />
             </View>
             <View style={{ flex: 1 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Text variant="bodyLarge" bold numberOfLines={1}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Text variant="bodyLarge" bold numberOfLines={1} style={{ flex: 1, marginRight: 6 }}>
                   {vehicleType}
                 </Text>
                 <Badge label="INSPECTED" variant="primary" size="small" />
               </View>
               <Text variant="caption" secondary style={{ marginTop: 2 }}>
-                License Plate: <Text variant="caption" bold color={theme.text}>{vehiclePlate}</Text> • Sector: <Text variant="caption" bold color={theme.text}>{baseQuarter}</Text>
+                Commercial Delivery Motorcycle • 125cc
               </Text>
             </View>
           </View>
+
+          {/* 2-Column Specs Grid */}
+          <View style={[styles.vehicleSpecsGrid, { borderTopColor: theme.border }]}>
+            <View style={styles.specGridItem}>
+              <Text variant="caption" secondary bold style={{ fontSize: 10 }}>
+                LICENSE PLATE
+              </Text>
+              <Text variant="bodyMedium" bold color={colors.primary[600]}>
+                {vehiclePlate}
+              </Text>
+            </View>
+
+            <View style={styles.specGridItem}>
+              <Text variant="caption" secondary bold style={{ fontSize: 10 }}>
+                DISPATCH SECTOR
+              </Text>
+              <Text variant="bodyMedium" bold style={{ marginTop: 1 }}>
+                {baseQuarter}
+              </Text>
+            </View>
+
+            <View style={styles.specGridItem}>
+              <Text variant="caption" secondary bold style={{ fontSize: 10 }}>
+                INSURANCE STATUS
+              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 1 }}>
+                <Ionicons name="checkmark-circle" size={14} color="#10B981" />
+                <Text variant="caption" bold color="#10B981">
+                  Active (Dec 2026)
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.specGridItem}>
+              <Text variant="caption" secondary bold style={{ fontSize: 10 }}>
+                FLEET PERMIT
+              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 1 }}>
+                <Ionicons name="shield-checkmark" size={14} color={colors.primary[500]} />
+                <Text variant="caption" bold color={colors.primary[600]}>
+                  Douala Council
+                </Text>
+              </View>
+            </View>
+          </View>
         </Card>
+
 
 
         {/* 7. 1-Tap Switch to Buyer Workspace Banner Card */}
@@ -705,6 +751,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  vehicleSpecsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    borderTopWidth: 1,
+    marginTop: spacing.md,
+    paddingTop: spacing.md,
+    rowGap: spacing.md,
+  },
+  specGridItem: {
+    width: '50%',
+    paddingRight: spacing.xs,
+  },
+
   switchBuyerCard: {
     flexDirection: 'row',
     alignItems: 'center',

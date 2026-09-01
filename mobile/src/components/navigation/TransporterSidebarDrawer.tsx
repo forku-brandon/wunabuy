@@ -77,12 +77,7 @@ export const TransporterSidebarDrawer: React.FC<TransporterSidebarDrawerProps> =
       onRequestClose={onClose}
     >
       <View style={styles.overlayContainer}>
-        {/* Backdrop overlay */}
-        <TouchableWithoutFeedback onPress={onClose}>
-          <View style={styles.backdrop} />
-        </TouchableWithoutFeedback>
-
-        {/* Slide-out Drawer Panel */}
+        {/* Slide-out Drawer Panel (Anchored to Left Side) */}
         <View
           style={[
             styles.drawerPanel,
@@ -367,7 +362,7 @@ export const TransporterSidebarDrawer: React.FC<TransporterSidebarDrawerProps> =
               {/* Dark Mode Toggle */}
               <View style={[styles.themeRow, { backgroundColor: isDark ? colors.neutral[800] : colors.neutral[100] }]}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <Ionicons name={isDark ? 'moon' : 'sunny'} size={18} color={colors.accent[500]} />
+                  <Ionicons name={isDark ? 'moon' : 'sunny'} size={18} color={colors.primary[600]} />
                   <Text variant="bodyMedium" bold>
                     {isDark ? 'Dark Theme' : 'Light Theme'}
                   </Text>
@@ -375,7 +370,7 @@ export const TransporterSidebarDrawer: React.FC<TransporterSidebarDrawerProps> =
                 <Switch
                   value={isDark}
                   onValueChange={toggleTheme}
-                  trackColor={{ false: theme.border, true: colors.accent[500] }}
+                  trackColor={{ false: theme.border, true: colors.primary[500] }}
                   thumbColor="#FFFFFF"
                 />
               </View>
@@ -395,6 +390,11 @@ export const TransporterSidebarDrawer: React.FC<TransporterSidebarDrawerProps> =
             </View>
           </ScrollView>
         </View>
+
+        {/* Backdrop overlay (Right Side) */}
+        <TouchableWithoutFeedback onPress={onClose}>
+          <View style={styles.backdrop} />
+        </TouchableWithoutFeedback>
       </View>
     </Modal>
   );

@@ -1,15 +1,18 @@
 import React, { useState, useCallback } from 'react';
-import { View, FlatList, StyleSheet, TouchableOpacity, RefreshControl, ScrollView } from 'react-native';
+import { View, FlatList, StyleSheet, TouchableOpacity, RefreshControl, ScrollView, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScreenContainer, Text, Card, Button, Badge, Toast } from '../../components/ui';
 import { TransporterSidebarDrawer } from '../../components/navigation/TransporterSidebarDrawer';
+import { LiveTrackingMap } from '../../components/order/LiveTrackingMap';
+
 import { DeliveryJob, UserRole } from '@wunabuy/types';
 import { formatXAF, formatDistance } from '@wunabuy/utils';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
 import { useAuthStore } from '../../stores/auth.store';
 import { AuthService } from '../../services/api';
+
 
 const MOCK_DELIVERY_JOBS: DeliveryJob[] = [
   {
@@ -125,6 +128,7 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
   const [jobs, setJobs] = useState<DeliveryJob[]>(MOCK_DELIVERY_JOBS);
   const [activeFilter, setActiveFilter] = useState('all');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [selectedMapJob, setSelectedMapJob] = useState<DeliveryJob | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -142,11 +146,18 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
   };
 
   const handleAcceptJob = (job: DeliveryJob) => {
+    setSelectedMapJob(null);
     setJobs((prev) => prev.filter((j) => j.id !== job.id));
     setToastMessage(`Job #${job.order_code} accepted! Navigating to active trip.`);
     setTimeout(() => {
       navigation.navigate('TransporterActiveTrip', { jobId: job.id, stage: 1 });
     }, 600);
+  };
+
+  const handleRejectJob = (job: DeliveryJob) => {
+    setSelectedMapJob(null);
+    setJobs((prev) => prev.filter((j) => j.id !== job.id));
+    setToastMessage(`Offer #${job.order_code} rejected. Surface next available job offer.`);
   };
 
   const filteredJobs = jobs.filter((job) => {
@@ -169,15 +180,8 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
             <Ionicons name="menu" size={24} color={theme.text} />
           </TouchableOpacity>
 
-          {/* Right Action Icons: Notification, Duty Badge, Buyer Mode */}
+          {/* Right Action Icons: Notification, Buyer Mode */}
           <View style={styles.headerRightActionIcons}>
-            <View style={styles.dutyBadgePill}>
-              <View style={styles.dutyDot} />
-              <Text variant="caption" bold color="#10B981" style={{ fontSize: 10 }}>
-                ONLINE
-              </Text>
-            </View>
-
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={() => navigation.navigate('NotificationSettings')}
@@ -307,6 +311,19 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
               </Text>
             </View>
 
+            {/* Map Route Trigger Button */}
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => setSelectedMapJob(item)}
+              style={[styles.mapRouteBtn, { backgroundColor: isDark ? 'rgba(13,148,136,0.15)' : colors.primary[50], borderColor: colors.primary[200] }]}
+            >
+              <Ionicons name="map-outline" size={16} color={colors.primary[600]} />
+              <Text variant="caption" bold color={colors.primary[600]}>
+                Inspect GPS Map &amp; Shortest Route 🗺️
+              </Text>
+            </TouchableOpacity>
+
+            {/* Footer Action Buttons: Payout, Not Interested & Accept */}
             <View style={styles.footerRow}>
               <View>
                 <Text variant="caption" secondary bold style={{ fontSize: 10 }}>
@@ -317,18 +334,116 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
                 </Text>
               </View>
 
-              <Button
-                title="Accept Job ➔"
-                variant="primary"
-                size="medium"
-                fullWidth={false}
-                onPress={() => handleAcceptJob(item)}
-                style={styles.acceptBtn}
-              />
+              <View style={styles.cardActionGroup}>
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => handleRejectJob(item)}
+                  style={[styles.rejectBtn, { borderColor: theme.border }]}
+                >
+                  <Ionicons name="close-circle-outline" size={18} color="#EF4444" />
+                  <Text variant="caption" bold color="#EF4444">
+                    Not Interested
+                  </Text>
+                </TouchableOpacity>
+
+                <Button
+                  title="Accept Job ➔"
+                  variant="primary"
+                  size="medium"
+                  fullWidth={false}
+                  onPress={() => handleAcceptJob(item)}
+                  style={styles.acceptBtn}
+                />
+              </View>
             </View>
           </Card>
         )}
       />
+
+      {/* Google Map GPS Route Modal */}
+      <Modal
+        visible={!!selectedMapJob}
+        animationType="slide"
+        transparent={false}
+        onRequestClose={() => setSelectedMapJob(null)}
+      >
+        {selectedMapJob && (
+          <View style={[styles.mapModalContainer, { backgroundColor: theme.background }]}>
+            <View style={[styles.mapModalHeader, { backgroundColor: theme.card, borderBottomColor: theme.border, paddingTop: Math.max(insets.top + spacing.xs, spacing.md) }]}>
+              <TouchableOpacity activeOpacity={0.8} onPress={() => setSelectedMapJob(null)} style={styles.closeMapBtn}>
+                <Ionicons name="close" size={22} color={theme.text} />
+              </TouchableOpacity>
+              <View style={{ flex: 1, marginHorizontal: spacing.sm }}>
+                <Text variant="caption" bold color={colors.primary[600]}>
+                  GPS ROUTE MAP • {selectedMapJob.order_code}
+                </Text>
+                <Text variant="h2" bold numberOfLines={1}>
+                  Shortest Dispatch Route
+                </Text>
+              </View>
+              <Badge label={`${formatDistance(selectedMapJob.distance_km)}`} variant="primary" size="small" />
+            </View>
+
+            {/* Live Tracking Map Component */}
+            <View style={{ flex: 1 }}>
+              <LiveTrackingMap
+                driverName="You (Rider)"
+                driverPhone="+237 670 000 000"
+                estimatedArrivalMin={Math.ceil((selectedMapJob.distance_km ?? 2) * 3)}
+              />
+            </View>
+
+            {/* Bottom Modal Route Info Card */}
+            <View style={[styles.mapModalBottomCard, { backgroundColor: theme.card, borderTopColor: theme.border, paddingBottom: Math.max(insets.bottom + spacing.xs, spacing.md) }]}>
+              <View style={styles.routeDetailRow}>
+                <Ionicons name="location" size={20} color={colors.primary[500]} />
+                <View style={{ flex: 1 }}>
+                  <Text variant="caption" secondary bold>
+                    STORE PICKUP
+                  </Text>
+                  <Text variant="bodyMedium" bold numberOfLines={1}>
+                    {selectedMapJob.store.store_name} ({selectedMapJob.pickup_address.address_text})
+                  </Text>
+                </View>
+              </View>
+
+              <View style={[styles.routeDetailRow, { marginTop: spacing.xs }]}>
+                <Ionicons name="flag" size={20} color="#10B981" />
+                <View style={{ flex: 1 }}>
+                  <Text variant="caption" secondary bold>
+                    BUYER DOORSTEP
+                  </Text>
+                  <Text variant="bodyMedium" bold numberOfLines={1}>
+                    {selectedMapJob.delivery_address.address_text}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.modalActionRow}>
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => handleRejectJob(selectedMapJob)}
+                  style={[styles.modalRejectBtn, { borderColor: theme.border }]}
+                >
+                  <Ionicons name="close-circle-outline" size={20} color="#EF4444" />
+                  <Text variant="bodyMedium" bold color="#EF4444">
+                    Not Interested ✖
+                  </Text>
+                </TouchableOpacity>
+
+                <Button
+                  title={`Accept & Start Ride (${formatXAF(selectedMapJob.delivery_fee)}) ➔`}
+                  variant="primary"
+                  size="large"
+                  onPress={() => handleAcceptJob(selectedMapJob)}
+                  style={styles.modalAcceptBtn}
+                />
+              </View>
+            </View>
+          </View>
+        )}
+      </Modal>
+
 
 
       {/* Slide-out Navigation Drawer */}
@@ -442,9 +557,79 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginTop: spacing.xs,
   },
+  cardActionGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  mapRouteBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    marginVertical: spacing.xs,
+  },
+  rejectBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+  },
   acceptBtn: {
     backgroundColor: colors.primary[500],
-    minWidth: 125,
+    minWidth: 115,
   },
-
+  mapModalContainer: {
+    flex: 1,
+  },
+  mapModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.base,
+    paddingBottom: spacing.sm,
+    borderBottomWidth: 1,
+  },
+  closeMapBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  mapModalBottomCard: {
+    padding: spacing.base,
+    borderTopWidth: 1,
+    ...shadows.lg,
+  },
+  routeDetailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  modalActionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: spacing.md,
+  },
+  modalRejectBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+  },
+  modalAcceptBtn: {
+    flex: 1,
+  },
 });
+
