@@ -8,7 +8,7 @@ import { colors } from '@wunabuy/design-tokens';
 import { TransporterJobsScreen } from '../screens/transporter/TransporterJobsScreen';
 import { TransporterActiveTripScreen } from '../screens/transporter/TransporterActiveTripScreen';
 import { TransporterEarningsScreen } from '../screens/transporter/TransporterEarningsScreen';
-import { ProfileScreen } from '../screens/profile/ProfileScreen';
+import { TransporterProfileScreen } from '../screens/transporter/TransporterProfileScreen';
 
 const Tab = createBottomTabNavigator<TransporterTabParamList>();
 
@@ -61,7 +61,8 @@ export const TransporterTabNavigator = () => {
       <Tab.Screen name="TransporterJobs" component={TransporterJobsScreen} options={{ title: 'Job Feed' }} />
       <Tab.Screen name="TransporterActiveTrip" component={TransporterActiveTripScreen} options={{ title: 'Active Trip' }} />
       <Tab.Screen name="TransporterEarnings" component={TransporterEarningsScreen} options={{ title: 'Earnings' }} />
-      <Tab.Screen name="TransporterProfile" component={ProfileScreen} options={{ title: 'Profile' }} />
+      <Tab.Screen name="TransporterProfile" component={TransporterProfileScreen} options={{ title: 'Profile' }} />
     </Tab.Navigator>
   );
 };
+

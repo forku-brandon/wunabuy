@@ -421,9 +421,30 @@ The mobile app incorporates three distinct role views in a single codebase with 
   - Stage 3: National ID CNI number, driver's license number, front/back CNI photos, and driver's license photo upload.
   - Stage 4: Vehicle Carte Grise registration photo, insurance certificate photo, and exterior vehicle photo with license plate visible.
   - Stage 5: 24-hour compliance queue celebration modal (redirects smoothly back to Buyer Home Dashboard on completion).
-- **Available Delivery Jobs (`TransporterJobsScreen`)**: Nearby transport offers sorted by distance, pickup/drop-off cards, and `FlatList` with native `RefreshControl`.
-- **Driver Earnings (`TransporterEarningsScreen`)**: Available driver balance card, payout to MoMo trigger, completed trip history, and `FlatList` with native `RefreshControl`.
-- **Active Delivery Workflow (`TransporterActiveTripScreen`)**: GPS navigation to pickup store, store pickup confirmation, live GPS route broadcasting to buyer, and delivery completion signature capture.
+- **Available Delivery Jobs Feed (`TransporterJobsScreen`)**:
+  - **Top Header AppBar**: 3-strokes hamburger drawer trigger (`☰`) opening `TransporterSidebarDrawer`. Notification Bell (`🔔`), Duty Status Badge (`🟢 ONLINE`), and Buyer Mode Cart Shortcut (`🛒`) all aligned on the same top line.
+  - **Fleet Telemetry Subtitle Stack**: Eyebrow `FLEET DISPATCH • DOUALA SECTOR` and screen title.
+  - **Modality & Radius Filter Chips Bar**: `All Offers`, `< 2km Nearby 📍`, and `High Pay 💰`.
+  - **Interactive Job Cards**: Store pickup address, buyer drop-off location, delivery fee in XAF, distance away in km, item package summary, and 1-tap `Accept Job ➔` modal trigger.
+- **Active 4-Stage Dispatch Navigation (`TransporterActiveTripScreen`)**:
+  - **Stage 1: Store Pickup Navigation**: Interactive map, store address, direct call store trigger (`+237 670 111 222`), and `Arrived at Store` action button.
+  - **Stage 2: Merchant Package Verification**: Renders merchant handover verification PIN (`7842`), package inspection check, and `Confirm Package Picked Up & Start Ride` button.
+  - **Stage 3: Buyer Doorstep Navigation**: Buyer address, live ETA countdown, direct call customer trigger (`+237 690 333 444`), and `Arrived at Doorstep` button.
+  - **Stage 4: Customer Digital Signature & POD**: Digital signature capture pad (`DigitalSignatureModal`), photo proof, and instant 1,500 FCFA escrow release to driver wallet.
+  - **Driver Emergency SOS**: 1-tap emergency safety trigger contacting 24/7 dispatch hotline (`800-WUNABUY-SOS`).
+- **Driver Wallet & MoMo Cashout (`TransporterEarningsScreen`)**: Available cashout balance card with privacy eye toggle (`👁`), locked escrow pending delivery indicator, MTN MoMo (`*126#`) and Orange Money (`#150#`) instant cashout modal with 1% telecom fee calculator and quick percentage chips (`25%`, `50%`, `75%`, `Max`), driver shift telemetry cards (248 completed trips, 4.95 ★ rating, 3,500 FCFA tips), and categorized transaction ledger.
+- **Dedicated Driver Profile Screen ([`TransporterProfileScreen.tsx`](file:///c:/Users/HP/Desktop/wunabuy%20mobile%20project/wunabuy/mobile/src/screens/transporter/TransporterProfileScreen.tsx))**:
+  - Mounted on Tab 4 (`TransporterProfile`) of `TransporterTabNavigator`.
+  - Driver photo with camera picker modal, Driver name & ID (`DRV-2026-884`), vehicle plate (`LT-214-AA`), verified rider badge (`✓ VERIFIED RIDER`), settings gear shortcut.
+  - Driver wallet quick-access banner with Available & Escrow pending balances.
+  - Dispatch queue status grid (`Offers`, `Pickup`, `En Route`, `Delivered`).
+  - Fleet management tools grid (`Driver KYC`, `GPS Hub`, `Alerts`, `Driver SOS`).
+  - Active registered vehicle details card (`Yamaha YBR 125 🏍️ • Akwa Hub, Douala`).
+  - 1-Tap Switch to Buyer Workspace card.
+- **Transporter Sidebar Drawer ([`TransporterSidebarDrawer.tsx`](file:///c:/Users/HP/Desktop/wunabuy%20mobile%20project/wunabuy/mobile/src/components/navigation/TransporterSidebarDrawer.tsx))**:
+  - Slide-out navigation drawer featuring top driver profile header, `🟢 ONLINE • RECEIVING JOBS` toggle switch, fleet driver rating (`4.95 ★`), vehicle plate, 1-tap workspace switchers (`🛒 Shop as Buyer`, `🏪 Store Owner (Sell)`), driver wallet overview, fleet operation links, dark mode toggle, and logout.
+- **Transporter Bottom Tab Navigator (`TransporterTabNavigator.tsx`)**: 4 primary tabs (`Job Feed`, `Active Trip`, `Earnings`, `Profile`) styled with Warm Amber / Slate active tint (`#F59E0B`), `54px + bottomInset` height, and elevation `10`.
+
 
 ---
 

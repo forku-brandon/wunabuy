@@ -1,10 +1,15 @@
 import React, { useState, useCallback } from 'react';
-import { View, FlatList, StyleSheet, TouchableOpacity, RefreshControl } from 'react-native';
+import { View, FlatList, StyleSheet, TouchableOpacity, RefreshControl, ScrollView } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScreenContainer, Text, Card, Button, Badge, Toast } from '../../components/ui';
-import { DeliveryJob } from '@wunabuy/types';
+import { TransporterSidebarDrawer } from '../../components/navigation/TransporterSidebarDrawer';
+import { DeliveryJob, UserRole } from '@wunabuy/types';
 import { formatXAF, formatDistance } from '@wunabuy/utils';
-import { colors, spacing, borderRadius } from '@wunabuy/design-tokens';
+import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
+import { useAuthStore } from '../../stores/auth.store';
+import { AuthService } from '../../services/api';
 
 const MOCK_DELIVERY_JOBS: DeliveryJob[] = [
   {
@@ -77,11 +82,49 @@ const MOCK_DELIVERY_JOBS: DeliveryJob[] = [
     status: 'pending',
     created_at: new Date().toISOString(),
   },
+  {
+    id: 'job_3',
+    order_id: 'ord_103',
+    order_code: 'WB-2026-3390',
+    store: {
+      id: 'store_104',
+      store_name: 'Kribi Fresh Organic Produce',
+      rating_avg: 4.8,
+      is_verified: true,
+    },
+    pickup_address: {
+      id: 'p_3',
+      label: 'Store Pickup',
+      latitude: 4.0530,
+      longitude: 9.7710,
+      address_text: 'Avenue King Akwa, Douala',
+      city: 'Douala',
+      is_default: false,
+    },
+    delivery_address: {
+      id: 'd_3',
+      label: 'Buyer Residence',
+      latitude: 4.0680,
+      longitude: 9.7920,
+      address_text: 'Camp Yabassi, Douala',
+      city: 'Douala',
+      is_default: true,
+    },
+    items_summary: '1x Organic Fruit Basket & Fresh Juice Crate',
+    delivery_fee: 1800,
+    currency: 'XAF',
+    distance_km: 3.5,
+    status: 'pending',
+    created_at: new Date().toISOString(),
+  },
 ];
 
 export const TransporterJobsScreen = ({ navigation }: any) => {
-  const { theme } = useThemeStore();
+  const { theme, isDark } = useThemeStore();
+  const insets = useSafeAreaInsets();
   const [jobs, setJobs] = useState<DeliveryJob[]>(MOCK_DELIVERY_JOBS);
+  const [activeFilter, setActiveFilter] = useState('all');
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -93,33 +136,128 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
     }, 800);
   }, []);
 
+  const handleSwitchToBuyer = () => {
+    useAuthStore.getState().setActiveRole(UserRole.BUYER);
+    AuthService.switchRole(UserRole.BUYER);
+  };
+
   const handleAcceptJob = (job: DeliveryJob) => {
     setJobs((prev) => prev.filter((j) => j.id !== job.id));
     setToastMessage(`Job #${job.order_code} accepted! Navigating to active trip.`);
     setTimeout(() => {
-      navigation.navigate('TransporterActiveTrip', { jobId: job.id });
-    }, 800);
+      navigation.navigate('TransporterActiveTrip', { jobId: job.id, stage: 1 });
+    }, 600);
   };
+
+  const filteredJobs = jobs.filter((job) => {
+    if (activeFilter === 'near') return (job.distance_km ?? 0) <= 2.0;
+    if (activeFilter === 'high_pay') return job.delivery_fee >= 2000;
+    return true;
+  });
 
   return (
     <ScreenContainer scrollable={false} padded={false}>
-      {/* Header */}
-      <View style={[styles.header, { backgroundColor: theme.card, borderBottomColor: theme.border }]}>
-        <View style={styles.headerRow}>
-          <Text variant="h1" bold color={colors.role.transporter}>
-            Available Delivery Jobs 🛵
-          </Text>
-          <Badge label="ONLINE" variant="success" size="small" />
+      {/* Top Header AppBar */}
+      <View style={[styles.headerContainer, { backgroundColor: theme.card, borderBottomColor: theme.border, paddingTop: Math.max(insets.top + spacing.xs, spacing.md) }]}>
+        <View style={styles.topHeaderRow}>
+          {/* Left: 3-Strokes Hamburger Drawer Button */}
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => setIsDrawerOpen(true)}
+            style={[styles.squareMenuBtn, { backgroundColor: isDark ? colors.neutral[800] : colors.neutral[0], borderColor: theme.border }]}
+          >
+            <Ionicons name="menu" size={24} color={theme.text} />
+          </TouchableOpacity>
+
+          {/* Right Action Icons: Notification, Duty Badge, Buyer Mode */}
+          <View style={styles.headerRightActionIcons}>
+            <View style={styles.dutyBadgePill}>
+              <View style={styles.dutyDot} />
+              <Text variant="caption" bold color="#10B981" style={{ fontSize: 10 }}>
+                ONLINE
+              </Text>
+            </View>
+
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => navigation.navigate('NotificationSettings')}
+              style={[styles.iconButton, { backgroundColor: isDark ? colors.neutral[800] : colors.neutral[100] }]}
+            >
+              <Ionicons name="notifications-outline" size={20} color={theme.text} />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={handleSwitchToBuyer}
+              style={[styles.iconButton, { backgroundColor: isDark ? colors.neutral[800] : colors.neutral[100] }]}
+            >
+              <Ionicons name="cart-outline" size={20} color={theme.text} />
+            </TouchableOpacity>
+          </View>
         </View>
 
-        <Text variant="caption" secondary>
-          Nearby transport offers in Douala sorted by distance
-        </Text>
+        {/* Subtitle Stack */}
+        <View style={styles.subtitleStack}>
+          <Text variant="caption" bold color={colors.role.transporter}>
+            FLEET DISPATCH • DOUALA SECTOR
+          </Text>
+          <Text variant="h1" bold style={styles.screenTitleText}>
+            Available Delivery Jobs
+          </Text>
+        </View>
+
+        {/* Filter Chips Bar */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterChipRow}>
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => setActiveFilter('all')}
+            style={[
+              styles.chipItem,
+              activeFilter === 'all'
+                ? { backgroundColor: colors.role.transporter, borderColor: colors.role.transporter }
+                : { backgroundColor: isDark ? colors.neutral[800] : colors.neutral[100], borderColor: theme.border },
+            ]}
+          >
+            <Text variant="caption" bold color={activeFilter === 'all' ? '#FFFFFF' : theme.text}>
+              All Offers ({jobs.length})
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => setActiveFilter('near')}
+            style={[
+              styles.chipItem,
+              activeFilter === 'near'
+                ? { backgroundColor: colors.role.transporter, borderColor: colors.role.transporter }
+                : { backgroundColor: isDark ? colors.neutral[800] : colors.neutral[100], borderColor: theme.border },
+            ]}
+          >
+            <Text variant="caption" bold color={activeFilter === 'near' ? '#FFFFFF' : theme.text}>
+              &lt; 2km Nearby 📍
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => setActiveFilter('high_pay')}
+            style={[
+              styles.chipItem,
+              activeFilter === 'high_pay'
+                ? { backgroundColor: colors.role.transporter, borderColor: colors.role.transporter }
+                : { backgroundColor: isDark ? colors.neutral[800] : colors.neutral[100], borderColor: theme.border },
+            ]}
+          >
+            <Text variant="caption" bold color={activeFilter === 'high_pay' ? '#FFFFFF' : theme.text}>
+              High Pay 💰
+            </Text>
+          </TouchableOpacity>
+        </ScrollView>
       </View>
 
       {/* Jobs Feed */}
       <FlatList
-        data={jobs}
+        data={filteredJobs}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
@@ -134,40 +272,45 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
         renderItem={({ item }) => (
           <Card style={styles.jobCard}>
             <View style={styles.jobHeader}>
-              <Text variant="bodyLarge" bold color={colors.primary[500]}>
-                {item.order_code}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Text variant="bodyLarge" bold color={colors.primary[500]}>
+                  {item.order_code}
+                </Text>
+                <Badge label="EXPRESS" variant="success" size="small" />
+              </View>
               <Badge label={`${formatDistance(item.distance_km)} AWAY`} variant="info" size="small" />
             </View>
 
             {/* Pickup */}
             <View style={styles.addressBox}>
-              <Text variant="caption" secondary>
-                PICKUP STORE
+              <Text variant="caption" secondary bold>
+                STORE PICKUP
               </Text>
-              <Text variant="bodyMedium" bold>
+              <Text variant="bodyMedium" bold style={{ marginTop: 1 }}>
                 🏬 {item.store.store_name} ({item.pickup_address.address_text})
               </Text>
             </View>
 
             {/* Drop-off */}
             <View style={styles.addressBox}>
-              <Text variant="caption" secondary>
-                DELIVERY DESTINATION
+              <Text variant="caption" secondary bold>
+                BUYER DELIVERY DESTINATION
               </Text>
-              <Text variant="bodyMedium" bold>
+              <Text variant="bodyMedium" bold style={{ marginTop: 1 }}>
                 🏠 {item.delivery_address.address_text}
               </Text>
             </View>
 
-            <Text variant="caption" secondary style={styles.summaryText}>
-              📦 {item.items_summary}
-            </Text>
+            <View style={[styles.summaryBox, { backgroundColor: isDark ? colors.neutral[800] : colors.neutral[100] }]}>
+              <Text variant="caption" secondary style={styles.summaryText}>
+                📦 {item.items_summary}
+              </Text>
+            </View>
 
             <View style={styles.footerRow}>
               <View>
-                <Text variant="caption" secondary>
-                  YOUR DRIVER EARNINGS
+                <Text variant="caption" secondary bold style={{ fontSize: 10 }}>
+                  DRIVER PAYOUT
                 </Text>
                 <Text variant="h2" bold color={colors.role.transporter}>
                   {formatXAF(item.delivery_fee)}
@@ -175,7 +318,7 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
               </View>
 
               <Button
-                title="Accept Job"
+                title="Accept Job ➔"
                 variant="primary"
                 size="medium"
                 fullWidth={false}
@@ -187,23 +330,85 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
         )}
       />
 
+      {/* Slide-out Navigation Drawer */}
+      <TransporterSidebarDrawer
+        isOpen={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        navigation={navigation}
+      />
+
       {toastMessage && <Toast message={toastMessage} type="success" />}
     </ScreenContainer>
   );
 };
 
 const styles = StyleSheet.create({
-  header: {
+  headerContainer: {
     paddingHorizontal: spacing.base,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.xs,
+    paddingBottom: spacing.sm,
     borderBottomWidth: 1,
   },
-  headerRow: {
+  topHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 2,
+    marginBottom: spacing.xs,
+  },
+  squareMenuBtn: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...shadows.sm,
+  },
+  headerRightActionIcons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs + 2,
+  },
+  dutyBadgePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ECFDF5',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: borderRadius.full,
+    marginRight: 2,
+  },
+  dutyDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#10B981',
+    marginRight: 4,
+  },
+  iconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  subtitleStack: {
+    marginBottom: spacing.xs + 2,
+  },
+  screenTitleText: {
+    fontSize: 22,
+    marginTop: 2,
+  },
+  filterChipRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs + 2,
+    paddingVertical: spacing.xs,
+  },
+  chipItem: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: borderRadius.full,
+    borderWidth: 1,
   },
   listContent: {
     padding: spacing.base,
@@ -222,8 +427,13 @@ const styles = StyleSheet.create({
   addressBox: {
     marginBottom: spacing.xs,
   },
-  summaryText: {
+  summaryBox: {
+    padding: spacing.xs + 2,
+    borderRadius: borderRadius.md,
     marginVertical: spacing.xs,
+  },
+  summaryText: {
+    fontSize: 12,
   },
   footerRow: {
     flexDirection: 'row',
@@ -233,7 +443,6 @@ const styles = StyleSheet.create({
   },
   acceptBtn: {
     backgroundColor: colors.role.transporter,
-    minWidth: 120,
+    minWidth: 125,
   },
 });
-

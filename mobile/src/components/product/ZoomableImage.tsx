@@ -210,3 +210,4 @@ const styles = StyleSheet.create({
     height: SCREEN_HEIGHT * 0.78,
   },
 });
+
