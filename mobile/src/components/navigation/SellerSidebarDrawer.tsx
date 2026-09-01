@@ -53,7 +53,14 @@ export const SellerSidebarDrawer: React.FC<SellerSidebarDrawerProps> = ({
     AuthService.switchRole(UserRole.BUYER);
   };
 
+  const handleSwitchToTransporter = () => {
+    onClose();
+    useAuthStore.getState().setActiveRole(UserRole.TRANSPORTER);
+    AuthService.switchRole(UserRole.TRANSPORTER);
+  };
+
   const handleLogout = () => {
+
     onClose();
     logout();
   };
@@ -199,10 +206,10 @@ export const SellerSidebarDrawer: React.FC<SellerSidebarDrawerProps> = ({
               <Ionicons name="chevron-forward" size={18} color={theme.placeholder} />
             </TouchableOpacity>
 
-            {/* 2. On-Demand Logistics & Transporters */}
+            {/* 2. On-Demand Logistics & Transporters (1-Tap Switch) */}
             <TouchableOpacity
               activeOpacity={0.82}
-              onPress={() => handleNavigate('SellerOrders')}
+              onPress={handleSwitchToTransporter}
               style={[
                 styles.partnerMenuCard,
                 { backgroundColor: isDark ? colors.neutral[800] : '#F8FAFC' },
@@ -212,15 +219,23 @@ export const SellerSidebarDrawer: React.FC<SellerSidebarDrawerProps> = ({
                 <Ionicons name="bicycle" size={20} color={colors.neutral[0]} />
               </View>
               <View style={styles.menuTextCol}>
-                <Text variant="bodyLarge" bold>
-                  Express Transporters
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Text variant="bodyLarge" bold>
+                    Driver Workspace 🛵
+                  </Text>
+                  <View style={[styles.activePillTag, { backgroundColor: 'rgba(245,158,11,0.15)' }]}>
+                    <Text variant="caption" bold color={colors.accent[600]} style={{ fontSize: 9 }}>
+                      1-TAP SWITCH
+                    </Text>
+                  </View>
+                </View>
                 <Text variant="caption" secondary numberOfLines={1}>
-                  Dispatch orders to verified bike &amp; taxi riders
+                  Switch to Transport Driver mode &amp; active dispatch
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color={theme.placeholder} />
             </TouchableOpacity>
+
 
             {/* 3. Business Telemetry & Analytics */}
             <TouchableOpacity

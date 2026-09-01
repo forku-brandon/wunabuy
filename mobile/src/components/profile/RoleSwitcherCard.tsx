@@ -21,11 +21,9 @@ export const RoleSwitcherCard: React.FC<RoleSwitcherCardProps> = ({ navigation }
     AuthService.switchRole(role);
   };
 
-  // Always provide Buyer and Seller workspaces for testing and direct switching
-  const availableRoles: UserRole[] = [UserRole.BUYER, UserRole.SELLER];
-  if ((user as any)?.is_transporter_approved || (user?.role === UserRole.TRANSPORTER && user?.available_roles?.includes(UserRole.TRANSPORTER))) {
-    availableRoles.push(UserRole.TRANSPORTER);
-  }
+  // Provide Buyer, Seller, and Transporter workspaces for direct switching
+  const availableRoles: UserRole[] = [UserRole.BUYER, UserRole.SELLER, UserRole.TRANSPORTER];
+
 
   const isSellerApproved = true;
   const isTransporterApproved = availableRoles.includes(UserRole.TRANSPORTER);
