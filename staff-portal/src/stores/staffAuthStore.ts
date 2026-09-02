@@ -1,67 +1,323 @@
+import React, { useState, useEffect } from 'react';
 import { User, UserRole, UserStatus } from '@wunabuy/types';
 
-interface StaffAuthState {
-  user: User | null;
-  accessToken: string | null;
-  isAuthenticated: boolean;
-  login: (email: string, pass: string) => Promise<boolean>;
-  logout: () => void;
+export enum StaffDepartmentRole {
+  SUPER_ADMIN = 'SUPER_ADMIN',
+  FINANCE_OFFICER = 'FINANCE_OFFICER',
+  COMPLIANCE_OFFICER = 'COMPLIANCE_OFFICER',
+  OPS_MANAGER = 'OPS_MANAGER',
+  SUPPORT_AGENT = 'SUPPORT_AGENT',
+  MARKETING_LEAD = 'MARKETING_LEAD',
 }
 
-const MOCK_STAFF_USER: User = {
-  id: 'staff_901',
-  phone: '+237670000099',
-  email: 'admin@wunabuy.com',
-  full_name: 'Pauline Mbarga (Admin)',
-  role: UserRole.STAFF,
-  status: UserStatus.ACTIVE,
-  avatar_url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=300&q=80',
-  is_phone_verified: true,
-  default_address: null,
-  available_roles: [UserRole.STAFF],
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString(),
+export interface StaffUser extends User {
+  staff_department_role: StaffDepartmentRole;
+  department_name: string;
+  employee_id: string;
+  security_clearance_level: number; // 1 to 5
+}
+
+export type StaffPermission =
+  | 'view_dashboard'
+  | 'view_kyc'
+  | 'approve_kyc'
+  | 'view_disputes'
+  | 'resolve_disputes'
+  | 'view_financials'
+  | 'approve_payouts'
+  | 'view_logistics'
+  | 'override_logistics'
+  | 'manage_users'
+  | 'manage_marketing'
+  | 'manage_settings'
+  | 'view_audit_logs';
+
+export interface AuditLogEntry {
+  id: string;
+  timestamp: string;
+  staff_name: string;
+  staff_role: string;
+  action_code: string;
+  action_description: string;
+  ip_address: string;
+  target_id?: string;
+  security_level: 'INFO' | 'WARNING' | 'CRITICAL';
+}
+
+const PERMISSIONS_MAP: Record<StaffDepartmentRole, StaffPermission[]> = {
+  [StaffDepartmentRole.SUPER_ADMIN]: [
+    'view_dashboard',
+    'view_kyc',
+    'approve_kyc',
+    'view_disputes',
+    'resolve_disputes',
+    'view_financials',
+    'approve_payouts',
+    'view_logistics',
+    'override_logistics',
+    'manage_users',
+    'manage_marketing',
+    'manage_settings',
+    'view_audit_logs',
+  ],
+  [StaffDepartmentRole.FINANCE_OFFICER]: [
+    'view_dashboard',
+    'view_financials',
+    'approve_payouts',
+    'view_disputes',
+    'resolve_disputes',
+    'view_audit_logs',
+  ],
+  [StaffDepartmentRole.COMPLIANCE_OFFICER]: [
+    'view_dashboard',
+    'view_kyc',
+    'approve_kyc',
+    'manage_users',
+    'view_audit_logs',
+  ],
+  [StaffDepartmentRole.OPS_MANAGER]: [
+    'view_dashboard',
+    'view_logistics',
+    'override_logistics',
+    'view_kyc',
+    'view_audit_logs',
+  ],
+  [StaffDepartmentRole.SUPPORT_AGENT]: [
+    'view_dashboard',
+    'view_disputes',
+    'resolve_disputes',
+    'manage_users',
+  ],
+  [StaffDepartmentRole.MARKETING_LEAD]: [
+    'view_dashboard',
+    'manage_marketing',
+  ],
 };
 
-// Simple React state store hook for Staff Auth
-import { useState, useEffect } from 'react';
+export const DEMO_STAFF_PERSONAS: StaffUser[] = [
+  {
+    id: 'staff_901',
+    phone: '+237670000099',
+    email: 'pauline.admin@wunabuy.com',
+    full_name: 'Pauline Mbarga',
+    role: UserRole.STAFF,
+    staff_department_role: StaffDepartmentRole.SUPER_ADMIN,
+    department_name: 'Executive Management',
+    employee_id: 'WNB-EMP-001',
+    security_clearance_level: 5,
+    status: UserStatus.ACTIVE,
+    avatar_url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=300&q=80',
+    is_phone_verified: true,
+    default_address: null,
+    available_roles: [UserRole.STAFF],
+    created_at: '2026-01-15T08:00:00Z',
+    updated_at: '2026-09-02T10:00:00Z',
+  },
+  {
+    id: 'staff_902',
+    phone: '+237699112233',
+    email: 'christian.finance@wunabuy.com',
+    full_name: 'Christian Atangana',
+    role: UserRole.STAFF,
+    staff_department_role: StaffDepartmentRole.FINANCE_OFFICER,
+    department_name: 'Finance & Treasury',
+    employee_id: 'WNB-EMP-014',
+    security_clearance_level: 4,
+    status: UserStatus.ACTIVE,
+    avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80',
+    is_phone_verified: true,
+    default_address: null,
+    available_roles: [UserRole.STAFF],
+    created_at: '2026-02-01T09:30:00Z',
+    updated_at: '2026-09-02T11:00:00Z',
+  },
+  {
+    id: 'staff_903',
+    phone: '+237675889900',
+    email: 'marie.compliance@wunabuy.com',
+    full_name: 'Marie-Noelle Bikoe',
+    role: UserRole.STAFF,
+    staff_department_role: StaffDepartmentRole.COMPLIANCE_OFFICER,
+    department_name: 'Legal & Risk Verification',
+    employee_id: 'WNB-EMP-022',
+    security_clearance_level: 4,
+    status: UserStatus.ACTIVE,
+    avatar_url: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=300&q=80',
+    is_phone_verified: true,
+    default_address: null,
+    available_roles: [UserRole.STAFF],
+    created_at: '2026-03-10T11:15:00Z',
+    updated_at: '2026-09-02T09:45:00Z',
+  },
+  {
+    id: 'staff_904',
+    phone: '+237690445566',
+    email: 'jeanluc.ops@wunabuy.com',
+    full_name: 'Jean-Luc Fotso',
+    role: UserRole.STAFF,
+    staff_department_role: StaffDepartmentRole.OPS_MANAGER,
+    department_name: 'Logistics & Fleet Ops',
+    employee_id: 'WNB-EMP-038',
+    security_clearance_level: 3,
+    status: UserStatus.ACTIVE,
+    avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=300&q=80',
+    is_phone_verified: true,
+    default_address: null,
+    available_roles: [UserRole.STAFF],
+    created_at: '2026-04-05T14:20:00Z',
+    updated_at: '2026-09-02T12:00:00Z',
+  },
+  {
+    id: 'staff_905',
+    phone: '+237677332211',
+    email: 'therese.support@wunabuy.com',
+    full_name: 'Therese Abena',
+    role: UserRole.STAFF,
+    staff_department_role: StaffDepartmentRole.SUPPORT_AGENT,
+    department_name: 'Customer Escrow Support',
+    employee_id: 'WNB-EMP-051',
+    security_clearance_level: 2,
+    status: UserStatus.ACTIVE,
+    avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80',
+    is_phone_verified: true,
+    default_address: null,
+    available_roles: [UserRole.STAFF],
+    created_at: '2026-05-12T10:00:00Z',
+    updated_at: '2026-09-02T10:30:00Z',
+  },
+];
+
+const INITIAL_AUDIT_LOGS: AuditLogEntry[] = [
+  {
+    id: 'aud_9001',
+    timestamp: '2026-09-02 12:45:10',
+    staff_name: 'Pauline Mbarga',
+    staff_role: 'SUPER_ADMIN',
+    action_code: 'SYS_POLICY_UPDATE',
+    action_description: 'Updated Platform MFA enforcement rule to mandatory level 4.',
+    ip_address: '197.234.221.14 (Douala HQ)',
+    target_id: 'SYS_CONFIG',
+    security_level: 'WARNING',
+  },
+  {
+    id: 'aud_9002',
+    timestamp: '2026-09-02 11:30:44',
+    staff_name: 'Marie-Noelle Bikoe',
+    staff_role: 'COMPLIANCE_OFFICER',
+    action_code: 'KYC_MERCHANT_APPROVE',
+    action_description: 'Approved merchant store KYC for Douala Tech Hub (CNI #109283741).',
+    ip_address: '197.234.221.18 (Douala HQ)',
+    target_id: 'kyc_101',
+    security_level: 'INFO',
+  },
+  {
+    id: 'aud_9003',
+    timestamp: '2026-09-02 10:15:22',
+    staff_name: 'Christian Atangana',
+    staff_role: 'FINANCE_OFFICER',
+    action_code: 'PAYOUT_DUAL_APPROVE',
+    action_description: 'Authorized merchant bulk payout of 850,000 FCFA to MTN MoMo.',
+    ip_address: '197.234.221.12 (Douala HQ)',
+    target_id: 'po_99120',
+    security_level: 'CRITICAL',
+  },
+];
+
+// In-Memory Shared State Store for Staff Auth
+let currentUser: StaffUser | null = DEMO_STAFF_PERSONAS[0];
+let currentToken: string | null = '1|mock_sanctum_staff_token';
+let currentAuditLogs: AuditLogEntry[] = INITIAL_AUDIT_LOGS;
+
+const listeners = new Set<() => void>();
+
+function notify() {
+  listeners.forEach((l) => l());
+}
 
 export function useStaffAuth() {
-  const [user, setUser] = useState<User | null>(() => {
-    const saved = localStorage.getItem('@wunabuy_staff_user');
-    return saved ? JSON.parse(saved) : MOCK_STAFF_USER; // Default logged in for development
-  });
+  const [, tick] = useState(0);
 
-  const [accessToken, setAccessToken] = useState<string | null>(() => {
-    return localStorage.getItem('@wunabuy_staff_token') || '1|mock_sanctum_staff_token';
-  });
-
-  const isAuthenticated = Boolean(user && accessToken);
+  useEffect(() => {
+    const listener = () => tick((t) => t + 1);
+    listeners.add(listener);
+    return () => {
+      listeners.delete(listener);
+    };
+  }, []);
 
   const login = async (email: string, pass: string): Promise<boolean> => {
-    if (email.includes('@wunabuy.com') && pass.length >= 6) {
-      setUser(MOCK_STAFF_USER);
-      setAccessToken('1|mock_sanctum_staff_token');
-      localStorage.setItem('@wunabuy_staff_user', JSON.stringify(MOCK_STAFF_USER));
-      localStorage.setItem('@wunabuy_staff_token', '1|mock_sanctum_staff_token');
+    const matched = DEMO_STAFF_PERSONAS.find(
+      (p) => p.email && p.email.toLowerCase() === email.toLowerCase()
+    );
+    if (matched && pass.length >= 6) {
+      currentUser = matched;
+      currentToken = '1|mock_sanctum_staff_token_' + matched.employee_id;
+      notify();
       return true;
     }
     return false;
   };
 
   const logout = () => {
-    setUser(null);
-    setAccessToken(null);
-    localStorage.removeItem('@wunabuy_staff_user');
-    localStorage.removeItem('@wunabuy_staff_token');
+    currentUser = null;
+    currentToken = null;
+    notify();
+  };
+
+  const switchPersona = (staffId: string) => {
+    const target = DEMO_STAFF_PERSONAS.find((p) => p.id === staffId);
+    if (target) {
+      currentUser = target;
+      currentToken = '1|mock_sanctum_staff_token_' + target.employee_id;
+      const newLog: AuditLogEntry = {
+        id: 'aud_' + Date.now().toString().slice(-5),
+        timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19),
+        staff_name: target.full_name,
+        staff_role: target.staff_department_role,
+        action_code: 'STAFF_PERSONA_SWITCH',
+        action_description: `Switched active staff session to ${target.full_name} (${target.department_name}).`,
+        ip_address: '197.234.221.14 (Douala HQ)',
+        security_level: 'INFO',
+      };
+      currentAuditLogs = [newLog, ...currentAuditLogs];
+      notify();
+    }
+  };
+
+  const hasPermission = (permission: StaffPermission): boolean => {
+    if (!currentUser) return false;
+    const permissions = PERMISSIONS_MAP[currentUser.staff_department_role] || [];
+    return permissions.includes(permission);
+  };
+
+  const addAuditLog = (
+    entry: Omit<AuditLogEntry, 'id' | 'timestamp' | 'staff_name' | 'staff_role' | 'ip_address'>
+  ) => {
+    if (!currentUser) return;
+    const newLog: AuditLogEntry = {
+      id: 'aud_' + Date.now().toString().slice(-5),
+      timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19),
+      staff_name: currentUser.full_name,
+      staff_role: currentUser.staff_department_role,
+      action_code: entry.action_code,
+      action_description: entry.action_description,
+      ip_address: '197.234.221.14 (Douala HQ)',
+      target_id: entry.target_id,
+      security_level: entry.security_level,
+    };
+    currentAuditLogs = [newLog, ...currentAuditLogs];
+    notify();
   };
 
   return {
-    user,
-    accessToken,
-    isAuthenticated,
+    user: currentUser,
+    accessToken: currentToken,
+    isAuthenticated: Boolean(currentUser && currentToken),
+    auditLogs: currentAuditLogs,
     login,
     logout,
+    switchPersona,
+    hasPermission,
+    addAuditLog,
   };
 }
-

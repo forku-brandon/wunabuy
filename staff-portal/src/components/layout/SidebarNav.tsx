@@ -7,18 +7,34 @@ import {
   Users,
   Wallet,
   Settings,
-  Shield,
+  Truck,
+  Megaphone,
+  ShieldCheck,
+  Lock,
 } from 'lucide-react';
 import { clsx } from 'clsx';
+import { useStaffAuth, StaffPermission } from '../../stores/staffAuthStore';
+
+interface NavItemConfig {
+  label: string;
+  path: string;
+  icon: any;
+  permission: StaffPermission;
+  badge?: number;
+}
 
 export const SidebarNav: React.FC = () => {
-  const navItems = [
-    { label: 'Dashboard', path: '/', icon: LayoutDashboard },
-    { label: 'Store KYC Queue', path: '/kyc', icon: FileCheck, badge: 3 },
-    { label: 'Escrow Disputes', path: '/disputes', icon: ShieldAlert, badge: 1 },
-    { label: 'User & Fleet Directory', path: '/users', icon: Users },
-    { label: 'Financials & Payouts', path: '/financials', icon: Wallet },
-    { label: 'Settings', path: '/settings', icon: Settings },
+  const { user, hasPermission } = useStaffAuth();
+
+  const allNavItems: NavItemConfig[] = [
+    { label: 'Executive Dashboard', path: '/', icon: LayoutDashboard, permission: 'view_dashboard' },
+    { label: 'KYC & Verification', path: '/kyc', icon: FileCheck, permission: 'view_kyc', badge: 4 },
+    { label: 'Escrow Disputes', path: '/disputes', icon: ShieldAlert, permission: 'view_disputes', badge: 2 },
+    { label: 'Logistics & Dispatch', path: '/logistics', icon: Truck, permission: 'view_logistics', badge: 12 },
+    { label: 'Financials & Payouts', path: '/financials', icon: Wallet, permission: 'view_financials' },
+    { label: 'Users & Fleet Directory', path: '/users', icon: Users, permission: 'manage_users' },
+    { label: 'Marketing & Promos', path: '/marketing', icon: Megaphone, permission: 'manage_marketing' },
+    { label: 'Security & Audit Logs', path: '/settings', icon: Settings, permission: 'view_audit_logs' },
   ];
 
   return (
@@ -30,25 +46,56 @@ export const SidebarNav: React.FC = () => {
         </div>
         <div>
           <h1 className="text-base font-extrabold text-white tracking-tight font-heading">Wunabuy</h1>
-          <span className="text-[10px] font-bold uppercase tracking-wider text-teal-400">Staff Portal v1.0</span>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-teal-400">Staff Portal v2.0</span>
         </div>
       </div>
 
+      {/* Staff Department Pill */}
+      {user && (
+        <div className="px-6 py-3 bg-slate-950/60 border-b border-slate-800/60 flex items-center justify-between">
+          <div>
+            <p className="text-[11px] font-semibold text-slate-300">{user.full_name}</p>
+            <p className="text-[9px] font-bold text-teal-400 uppercase tracking-wide">{user.department_name}</p>
+          </div>
+          <div className="px-2 py-0.5 rounded text-[9px] font-bold bg-teal-500/20 text-teal-300 border border-teal-500/30">
+            L{user.security_clearance_level} CLEARANCE
+          </div>
+        </div>
+      )}
+
       {/* Navigation Links */}
-      <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+      <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
         <div className="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
-          MAIN MANAGEMENT
+          DEPARTMENTAL MODULES
         </div>
 
-        {navItems.map((item) => {
+        {allNavItems.map((item) => {
           const Icon = item.icon;
+          const isAllowed = hasPermission(item.permission);
+
+          if (!isAllowed) {
+            return (
+              <div
+                key={item.path}
+                className="flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-medium text-slate-600 cursor-not-allowed opacity-60"
+                title={`Access Restricted (${user?.staff_department_role})`}
+              >
+                <div className="flex items-center space-x-3">
+                  <Icon className="w-4 h-4 text-slate-600" />
+                  <span>{item.label}</span>
+                </div>
+                <Lock className="w-3 h-3 text-slate-600" />
+              </div>
+            );
+          }
+
           return (
             <NavLink
               key={item.path}
               to={item.path}
               className={({ isActive }) =>
                 clsx(
-                  'flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                  'flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-medium transition-colors',
                   isActive
                     ? 'bg-teal-600/10 text-teal-400 font-semibold border-l-2 border-teal-500'
                     : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
@@ -56,11 +103,11 @@ export const SidebarNav: React.FC = () => {
               }
             >
               <div className="flex items-center space-x-3">
-                <Icon className="w-5 h-5" />
+                <Icon className="w-4.5 h-4.5" />
                 <span>{item.label}</span>
               </div>
               {item.badge !== undefined && (
-                <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">
                   {item.badge}
                 </span>
               )}
@@ -70,14 +117,13 @@ export const SidebarNav: React.FC = () => {
       </nav>
 
       {/* System Operational Status */}
-      <div className="p-4 m-4 rounded-xl bg-slate-800/60 border border-slate-700/50">
+      <div className="p-3.5 m-4 rounded-xl bg-slate-800/60 border border-slate-700/50">
         <div className="flex items-center space-x-2 text-emerald-400 text-xs font-semibold">
-          <Shield className="w-4 h-4" />
-          <span>Reverb WebSocket Connected</span>
+          <ShieldCheck className="w-4 h-4" />
+          <span>RBAC & Reverb Secured</span>
         </div>
-        <p className="text-[11px] text-slate-400 mt-1">Douala Node • Port 443 WSS</p>
+        <p className="text-[10px] text-slate-400 mt-1">Douala Node • TLS 1.3 Strict</p>
       </div>
     </aside>
   );
 };
-

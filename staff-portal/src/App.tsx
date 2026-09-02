@@ -8,8 +8,10 @@ import { AuthPage } from './pages/AuthPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { KYCPage } from './pages/KYCPage';
 import { DisputesPage } from './pages/DisputesPage';
+import { LogisticsOpsPage } from './pages/LogisticsOpsPage';
 import { UsersPage } from './pages/UsersPage';
 import { FinancialsPage } from './pages/FinancialsPage';
+import { MarketingPage } from './pages/MarketingPage';
 import { SettingsPage } from './pages/SettingsPage';
 
 const queryClient = new QueryClient({
@@ -37,8 +39,10 @@ const ProtectedLayout: React.FC = () => {
           <Route path="/" element={<DashboardPage />} />
           <Route path="/kyc" element={<KYCPage />} />
           <Route path="/disputes" element={<DisputesPage />} />
-          <Route path="/users" element={<UsersPage />} />
+          <Route path="/logistics" element={<LogisticsOpsPage />} />
           <Route path="/financials" element={<FinancialsPage />} />
+          <Route path="/users" element={<UsersPage />} />
+          <Route path="/marketing" element={<MarketingPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
@@ -61,4 +65,3 @@ export const App: React.FC = () => {
 };
 
 export default App;
-
