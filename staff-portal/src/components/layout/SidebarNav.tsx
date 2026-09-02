@@ -47,41 +47,41 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
     { label: 'Security & Audit Logs', path: '/settings', icon: Settings, permission: 'view_audit_logs' },
   ];
 
-
   // STRICT SECURITY FILTER: Completely hide unauthorized navigation items
   const authorizedNavItems = allNavItems.filter((item) => hasPermission(item.permission));
 
   const sidebarContent = (
-    <div className="h-full flex flex-col justify-between">
-      <div>
-        {/* Brand Header */}
-        <div className="h-20 px-6 flex items-center justify-between border-b border-slate-100/80">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-2xl bg-teal-600 flex items-center justify-center text-white font-extrabold text-xl shadow-md font-heading border-2 border-teal-400">
-              W
-            </div>
-            <div>
-              <h1 className="text-lg font-extrabold text-slate-900 tracking-tight font-heading">Wunabuy</h1>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-teal-600 block -mt-0.5">
-                Staff Portal v2.0
-              </span>
-            </div>
+    <div className="h-full flex flex-col justify-between overflow-hidden">
+      {/* 1. Fixed Brand Header */}
+      <div className="h-20 px-6 flex items-center justify-between border-b border-slate-100/80 flex-shrink-0">
+        <div className="flex items-center space-x-3">
+          <div className="w-10 h-10 rounded-2xl bg-teal-600 flex items-center justify-center text-white font-extrabold text-xl shadow-md font-heading border-2 border-teal-400">
+            W
           </div>
-
-          {/* Mobile Close Button */}
-          {onCloseMobile && (
-            <button
-              onClick={onCloseMobile}
-              className="lg:hidden p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          )}
+          <div>
+            <h1 className="text-lg font-extrabold text-slate-900 tracking-tight font-heading">Wunabuy</h1>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-teal-600 block -mt-0.5">
+              Staff Portal v2.0
+            </span>
+          </div>
         </div>
 
+        {/* Mobile Close Button */}
+        {onCloseMobile && (
+          <button
+            onClick={onCloseMobile}
+            className="lg:hidden p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
+      </div>
+
+      {/* 2. Scrollable Container: User Profile Card & Navigation Items */}
+      <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4 space-y-4">
         {/* Top User Avatar Profile Card */}
         {user && (
-          <div className="p-4 mx-4 my-4 rounded-2xl bg-slate-50 border border-slate-100 flex items-center space-x-3">
+          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex items-center space-x-3">
             <img
               src={user.avatar_url || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=150&q=80'}
               alt={user.full_name}
@@ -98,7 +98,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
         )}
 
         {/* Navigation Links */}
-        <nav className="px-4 py-2 space-y-1.5">
+        <nav className="space-y-1.5">
           <div className="px-3 mb-2 text-[10px] font-extrabold uppercase tracking-widest text-slate-400">
             MAIN MANAGEMENT ({authorizedNavItems.length})
           </div>
@@ -137,8 +137,8 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
         </nav>
       </div>
 
-      {/* Footer System Operational Status */}
-      <div className="p-3.5 m-4 rounded-2xl bg-teal-50/60 border border-teal-100">
+      {/* 3. Fixed Footer System Operational Status */}
+      <div className="p-3.5 m-4 rounded-2xl bg-teal-50/60 border border-teal-100 flex-shrink-0">
         <div className="flex items-center space-x-2 text-teal-700 text-xs font-bold">
           <ShieldCheck className="w-4 h-4 text-teal-600" />
           <span>WSS Node Secured</span>
@@ -150,12 +150,12 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
 
   return (
     <>
-      {/* Desktop Fixed Sidebar (visible on lg: screen size > 1024px) */}
-      <aside className="hidden lg:flex w-64 bg-white text-slate-700 flex-col border-r border-slate-100 shadow-sm flex-shrink-0 z-20">
+      {/* Desktop Fixed Sidebar */}
+      <aside className="hidden lg:flex w-64 h-screen bg-white text-slate-700 flex-col border-r border-slate-100 shadow-sm flex-shrink-0 z-20">
         {sidebarContent}
       </aside>
 
-      {/* Mobile Slide-out Overlay Drawer (visible on screens < 1024px) */}
+      {/* Mobile Slide-out Overlay Drawer */}
       {mobileOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           {/* Dark Backdrop Overlay */}
@@ -164,7 +164,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
             onClick={onCloseMobile}
           />
           {/* Slide-out Drawer Panel */}
-          <aside className="fixed inset-y-0 left-0 w-72 bg-white text-slate-700 flex flex-col shadow-2xl z-50">
+          <aside className="fixed inset-y-0 left-0 w-72 h-screen bg-white text-slate-700 flex flex-col shadow-2xl z-50">
             {sidebarContent}
           </aside>
         </div>
