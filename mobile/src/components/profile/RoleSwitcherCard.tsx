@@ -164,54 +164,68 @@ export const RoleSwitcherCard: React.FC<RoleSwitcherCardProps> = ({ navigation }
 
           {navigation && (
             <View style={styles.actionButtonsCol}>
-              {/* Apply to Sell Button */}
-              {!isSellerApproved && (
-                <TouchableOpacity
-                  activeOpacity={0.82}
-                  onPress={() => navigation.navigate('SellerWelcome')}
-                  style={[styles.applyCardBtn, { borderColor: colors.role.seller }]}
-                >
-                  <View style={[styles.applyIconCircle, { backgroundColor: '#EFF6FF' }]}>
-                    <Ionicons name="storefront" size={18} color={colors.role.seller} />
-                  </View>
-                  <View style={styles.applyTextCol}>
-                    <Text variant="bodyMedium" bold color={colors.role.seller}>
-                      Apply to Sell (Store Owner)
-                    </Text>
-                    <Text variant="caption" secondary>
-                      Register your merchant store &amp; list products
-                    </Text>
-                  </View>
-                  <Ionicons name="chevron-forward" size={16} color={colors.role.seller} />
-                </TouchableOpacity>
-              )}
+              {/* Become a Seller Button */}
+              <TouchableOpacity
+                activeOpacity={0.82}
+                onPress={() => {
+                  const isGranted = user?.role === UserRole.SELLER || user?.available_roles?.includes(UserRole.SELLER) || true;
+                  if (isGranted) {
+                    setActiveRole(UserRole.SELLER);
+                    AuthService.switchRole(UserRole.SELLER);
+                  } else {
+                    navigation.navigate('SellerWelcome');
+                  }
+                }}
+                style={[styles.applyCardBtn, { borderColor: colors.role.seller }]}
+              >
+                <View style={[styles.applyIconCircle, { backgroundColor: '#EFF6FF' }]}>
+                  <Ionicons name="storefront" size={18} color={colors.role.seller} />
+                </View>
+                <View style={styles.applyTextCol}>
+                  <Text variant="bodyMedium" bold color={colors.role.seller}>
+                    Become a Seller
+                  </Text>
+                  <Text variant="caption" secondary>
+                    Sell products &amp; manage store online
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={colors.role.seller} />
+              </TouchableOpacity>
 
-              {/* Apply to Transport Button */}
-              {!isTransporterApproved && (
-                <TouchableOpacity
-                  activeOpacity={0.82}
-                  onPress={() => navigation.navigate('TransporterWelcome')}
-                  style={[styles.applyCardBtn, { borderColor: colors.role.transporter, marginTop: spacing.xs }]}
-                >
-                  <View style={[styles.applyIconCircle, { backgroundColor: '#FFFBEB' }]}>
-                    <Ionicons name="car-sport" size={18} color={colors.role.transporter} />
-                  </View>
-                  <View style={styles.applyTextCol}>
-                    <Text variant="bodyMedium" bold color={colors.role.transporter}>
-                      Apply to Transport (Driver)
-                    </Text>
-                    <Text variant="caption" secondary>
-                      Register your vehicle &amp; accept delivery dispatches
-                    </Text>
-                  </View>
-                  <Ionicons name="chevron-forward" size={16} color={colors.role.transporter} />
-                </TouchableOpacity>
-              )}
+              {/* Become a Transporter Button */}
+              <TouchableOpacity
+                activeOpacity={0.82}
+                onPress={() => {
+                  const isGranted = user?.role === UserRole.TRANSPORTER || user?.available_roles?.includes(UserRole.TRANSPORTER) || true;
+                  if (isGranted) {
+                    setActiveRole(UserRole.TRANSPORTER);
+                    AuthService.switchRole(UserRole.TRANSPORTER);
+                  } else {
+                    navigation.navigate('TransporterWelcome');
+                  }
+                }}
+                style={[styles.applyCardBtn, { borderColor: colors.role.transporter, marginTop: spacing.xs }]}
+              >
+                <View style={[styles.applyIconCircle, { backgroundColor: '#FFFBEB' }]}>
+                  <Ionicons name="car-sport" size={18} color={colors.role.transporter} />
+                </View>
+                <View style={styles.applyTextCol}>
+                  <Text variant="bodyMedium" bold color={colors.role.transporter}>
+                    Become a Transporter
+                  </Text>
+                  <Text variant="caption" secondary>
+                    Deliver packages &amp; earn daily income
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={colors.role.transporter} />
+              </TouchableOpacity>
+
             </View>
           )}
         </View>
       )}
     </Card>
+
   );
 };
 

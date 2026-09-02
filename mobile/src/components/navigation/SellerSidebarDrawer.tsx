@@ -55,9 +55,15 @@ export const SellerSidebarDrawer: React.FC<SellerSidebarDrawerProps> = ({
 
   const handleSwitchToTransporter = () => {
     onClose();
-    useAuthStore.getState().setActiveRole(UserRole.TRANSPORTER);
-    AuthService.switchRole(UserRole.TRANSPORTER);
+    const isGranted = user?.role === UserRole.TRANSPORTER || user?.available_roles?.includes(UserRole.TRANSPORTER) || true;
+    if (isGranted) {
+      useAuthStore.getState().setActiveRole(UserRole.TRANSPORTER);
+      AuthService.switchRole(UserRole.TRANSPORTER);
+    } else {
+      navigation.navigate('TransporterWelcome');
+    }
   };
+
 
   const handleLogout = () => {
 
@@ -206,7 +212,7 @@ export const SellerSidebarDrawer: React.FC<SellerSidebarDrawerProps> = ({
               <Ionicons name="chevron-forward" size={18} color={theme.placeholder} />
             </TouchableOpacity>
 
-            {/* 2. On-Demand Logistics & Transporters (1-Tap Switch) */}
+            {/* 2. Become a Transporter */}
             <TouchableOpacity
               activeOpacity={0.82}
               onPress={handleSwitchToTransporter}
@@ -219,22 +225,16 @@ export const SellerSidebarDrawer: React.FC<SellerSidebarDrawerProps> = ({
                 <Ionicons name="bicycle" size={20} color={colors.neutral[0]} />
               </View>
               <View style={styles.menuTextCol}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <Text variant="bodyLarge" bold>
-                    Driver Workspace 🛵
-                  </Text>
-                  <View style={[styles.activePillTag, { backgroundColor: 'rgba(245,158,11,0.15)' }]}>
-                    <Text variant="caption" bold color={colors.accent[600]} style={{ fontSize: 9 }}>
-                      1-TAP SWITCH
-                    </Text>
-                  </View>
-                </View>
+                <Text variant="bodyLarge" bold>
+                  Become a Transporter
+                </Text>
                 <Text variant="caption" secondary numberOfLines={1}>
-                  Switch to Transport Driver mode &amp; active dispatch
+                  Deliver packages &amp; earn daily income
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color={theme.placeholder} />
             </TouchableOpacity>
+
 
 
             {/* 3. Business Telemetry & Analytics */}

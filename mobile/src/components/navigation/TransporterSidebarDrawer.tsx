@@ -239,14 +239,15 @@ export const TransporterSidebarDrawer: React.FC<TransporterSidebarDrawerProps> =
               </View>
               <View style={{ flex: 1 }}>
                 <Text variant="bodyMedium" bold color="#1E40AF">
-                  Store Owner (Sell) 🏪
+                  Become a Seller
                 </Text>
                 <Text variant="caption" secondary numberOfLines={1}>
-                  Manage merchant store catalog, orders &amp; payouts
+                  Sell products &amp; manage store online
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={16} color="#2563EB" />
             </TouchableOpacity>
+
 
             {/* Fleet Operations Links */}
             <Text variant="caption" bold secondary style={styles.sectionEyebrow}>
