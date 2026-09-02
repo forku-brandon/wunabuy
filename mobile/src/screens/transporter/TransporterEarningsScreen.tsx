@@ -105,8 +105,9 @@ export const TransporterEarningsScreen = () => {
           FLEET EARNINGS &amp; WALLET
         </Text>
         <Text variant="h1" bold style={styles.screenTitleText}>
-          Driver Payout Ledger 💳
+          Driver Payout Ledger
         </Text>
+
       </View>
 
       <ScrollView
