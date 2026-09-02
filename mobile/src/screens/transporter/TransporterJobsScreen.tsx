@@ -618,7 +618,8 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
         navigation={navigation}
       />
 
-      {toastMessage && <Toast message={toastMessage} type="success" />}
+      {toastMessage && <Toast message={toastMessage} type="success" onDismiss={() => setToastMessage(null)} />}
+
     </ScreenContainer>
   );
 };

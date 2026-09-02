@@ -360,8 +360,10 @@ export const TransporterEarningsScreen = () => {
         <Toast
           message={toastMessage}
           type="success"
+          onDismiss={() => setToastMessage(null)}
         />
       )}
+
     </ScreenContainer>
   );
 };

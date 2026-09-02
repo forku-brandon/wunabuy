@@ -597,8 +597,10 @@ export const TransporterProfileScreen = ({ navigation }: any) => {
           message={toastMessage}
           type="info"
           visible={!!toastMessage}
+          onDismiss={() => setToastMessage(null)}
         />
       )}
+
     </View>
   );
 };

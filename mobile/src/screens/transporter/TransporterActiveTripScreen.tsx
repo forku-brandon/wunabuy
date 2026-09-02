@@ -276,7 +276,8 @@ export const TransporterActiveTripScreen = ({ route, navigation }: any) => {
         onConfirmSignature={handleCompleteDelivery}
       />
 
-      {toastMessage && <Toast message={toastMessage} type="success" />}
+      {toastMessage && <Toast message={toastMessage} type="success" onDismiss={() => setToastMessage(null)} />}
+
     </ScreenContainer>
   );
 };

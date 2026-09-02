@@ -635,7 +635,8 @@ export const SellerOrdersScreen = ({ navigation }: any) => {
         </View>
       </Modal>
 
-      {toastMessage && <Toast message={toastMessage} type="info" />}
+      {toastMessage && <Toast message={toastMessage} type="info" onDismiss={() => setToastMessage(null)} />}
+
     </ScreenContainer>
   );
 };

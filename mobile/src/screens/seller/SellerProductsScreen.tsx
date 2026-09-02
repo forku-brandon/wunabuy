@@ -217,7 +217,8 @@ export const SellerProductsScreen = ({ navigation }: any) => {
         />
       )}
 
-      {toastMessage && <Toast message={toastMessage} type="info" />}
+      {toastMessage && <Toast message={toastMessage} type="info" onDismiss={() => setToastMessage(null)} />}
+
 
       {/* Fullscreen Swipeable Product Image Gallery Modal */}
       {galleryProduct && (

@@ -292,7 +292,8 @@ export const AddEditProductScreen = ({ navigation, route }: any) => {
         style={styles.submitBtn}
       />
 
-      {toastMessage && <Toast message={toastMessage} type="success" />}
+      {toastMessage && <Toast message={toastMessage} type="success" onDismiss={() => setToastMessage(null)} />}
+
     </ScreenContainer>
   );
 };

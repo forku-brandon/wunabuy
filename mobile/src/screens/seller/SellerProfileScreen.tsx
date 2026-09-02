@@ -587,8 +587,10 @@ export const SellerProfileScreen = ({ navigation }: any) => {
           message={toastMessage}
           type="info"
           visible={!!toastMessage}
+          onDismiss={() => setToastMessage(null)}
         />
       )}
+
 
     </View>
   );
