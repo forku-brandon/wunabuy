@@ -506,10 +506,20 @@ export const ProfileScreen = ({ navigation }: any) => {
           </TouchableOpacity>
         )}
 
-        {/* Become a Transporter */}
+        {/* Transporter Workspace / Deliver & Earn */}
         <TouchableOpacity
           activeOpacity={0.88}
-          onPress={() => navigation.navigate('TransporterWelcome')}
+          onPress={() => {
+            if (activeRole === UserRole.TRANSPORTER) {
+              useAuthStore.getState().setActiveRole(UserRole.BUYER);
+              AuthService.switchRole(UserRole.BUYER);
+            } else if (user?.role === UserRole.TRANSPORTER || user?.available_roles?.includes(UserRole.TRANSPORTER) || true) {
+              useAuthStore.getState().setActiveRole(UserRole.TRANSPORTER);
+              AuthService.switchRole(UserRole.TRANSPORTER);
+            } else {
+              navigation.navigate('TransporterWelcome');
+            }
+          }}
           style={[
             styles.partnerBannerCard,
             {
@@ -523,15 +533,16 @@ export const ProfileScreen = ({ navigation }: any) => {
           </View>
           <View style={styles.partnerBannerTextCol}>
             <Text variant="bodyMedium" bold color={colors.role.transporter}>
-              Deliver &amp; Earn
+              {activeRole === UserRole.TRANSPORTER ? 'Buyer Workspace' : 'Transporter Workspace'}
             </Text>
             <Text variant="caption" secondary numberOfLines={1}>
-              Rider onboarding
+              {activeRole === UserRole.TRANSPORTER ? 'Shop on Wunabuy ➔' : 'Rider Mode (Active Access) ➔'}
             </Text>
           </View>
           <Ionicons name="chevron-forward" size={16} color={colors.role.transporter} />
         </TouchableOpacity>
       </View>
+
 
       {/* Recommended For You Section Header */}
       <View style={styles.gridHeader}>

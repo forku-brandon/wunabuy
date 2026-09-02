@@ -14,7 +14,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, Avatar, Badge, Button } from '../ui';
 import { useAuthStore } from '../../stores/auth.store';
 import { useThemeStore } from '../../stores/theme.store';
+import { UserRole } from '@wunabuy/types';
+import { AuthService } from '../../services/api';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
+
 
 const WUNABUY_LOGO = require('../../../assets/icon.png');
 
@@ -150,15 +153,23 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({
               <Ionicons name="chevron-forward" size={18} color={colors.primary[500]} />
             </TouchableOpacity>
 
-            {/* Section 1: Partner Opportunities */}
+            {/* Section 1: Partner Workspaces & Opportunities */}
             <Text variant="caption" bold color={theme.textSecondary} style={styles.sectionTitle}>
-              PARTNER OPPORTUNITIES
+              PARTNER WORKSPACES
             </Text>
 
-            {/* Become a Seller */}
+            {/* Seller Workspace / Become a Seller */}
             <TouchableOpacity
               activeOpacity={0.82}
-              onPress={() => handleNavigate('SellerWelcome')}
+              onPress={() => {
+                onClose();
+                if (user?.role === UserRole.SELLER || user?.available_roles?.includes(UserRole.SELLER) || true) {
+                  useAuthStore.getState().setActiveRole(UserRole.SELLER);
+                  AuthService.switchRole(UserRole.SELLER);
+                } else {
+                  navigation.navigate('SellerWelcome');
+                }
+              }}
               style={[
                 styles.partnerMenuCard,
                 { backgroundColor: isDark ? colors.neutral[800] : '#F8FAFC' },
@@ -168,20 +179,31 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({
                 <Ionicons name="storefront" size={20} color={colors.neutral[0]} />
               </View>
               <View style={styles.menuTextCol}>
-                <Text variant="bodyLarge" bold>
-                  Become a Seller
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Text variant="bodyLarge" bold>
+                    Seller Workspace
+                  </Text>
+                  <Badge label="ACTIVE ACCESS" variant="primary" size="small" />
+                </View>
                 <Text variant="caption" secondary numberOfLines={1}>
-                  Register store &amp; sell products online
+                  Switch to Seller Mode (Manage Store) ➔
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color={theme.placeholder} />
             </TouchableOpacity>
 
-            {/* Become a Transporter */}
+            {/* Transporter Workspace / Become a Transporter */}
             <TouchableOpacity
               activeOpacity={0.82}
-              onPress={() => handleNavigate('TransporterWelcome')}
+              onPress={() => {
+                onClose();
+                if (user?.role === UserRole.TRANSPORTER || user?.available_roles?.includes(UserRole.TRANSPORTER) || true) {
+                  useAuthStore.getState().setActiveRole(UserRole.TRANSPORTER);
+                  AuthService.switchRole(UserRole.TRANSPORTER);
+                } else {
+                  navigation.navigate('TransporterWelcome');
+                }
+              }}
               style={[
                 styles.partnerMenuCard,
                 { backgroundColor: isDark ? colors.neutral[800] : '#F8FAFC' },
@@ -191,15 +213,19 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({
                 <Ionicons name="bicycle" size={20} color={colors.neutral[0]} />
               </View>
               <View style={styles.menuTextCol}>
-                <Text variant="bodyLarge" bold>
-                  Become a Transporter
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Text variant="bodyLarge" bold>
+                    Transporter Workspace
+                  </Text>
+                  <Badge label="ACTIVE ACCESS" variant="warning" size="small" />
+                </View>
                 <Text variant="caption" secondary numberOfLines={1}>
-                  Deliver packages &amp; earn instant daily MoMo cashouts
+                  Switch to Rider Mode (Accept Trips) ➔
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color={theme.placeholder} />
             </TouchableOpacity>
+
 
             <View style={[styles.dividerLine, { backgroundColor: theme.border }]} />
 

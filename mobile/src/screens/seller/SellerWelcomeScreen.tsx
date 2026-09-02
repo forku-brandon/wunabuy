@@ -14,10 +14,15 @@ import { ScreenContainer, Text } from '../../components/ui';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
 
+import { useAuthStore } from '../../stores/auth.store';
+import { UserRole } from '@wunabuy/types';
+import { AuthService } from '../../services/api';
+
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const BANNER_WIDTH = SCREEN_WIDTH - spacing.base * 2;
 const SLIDESHOW_HEIGHT = Math.max(SCREEN_HEIGHT * 0.62, 420); // Takes 70% of main screen body
 const WUNABUY_LOGO = require('../../../assets/icon.png');
+
 
 export interface SellerSlide {
   id: string;
@@ -190,15 +195,18 @@ export const SellerWelcomeScreen = ({ navigation }: any) => {
         <View style={styles.actionSection20}>
           <TouchableOpacity
             activeOpacity={0.88}
-            onPress={() => navigation.navigate('StoreKYC')}
+            onPress={() => {
+              useAuthStore.getState().setActiveRole(UserRole.SELLER);
+              AuthService.switchRole(UserRole.SELLER);
+            }}
             style={styles.advancedGetStartedCapsule}
           >
             <View style={styles.capsuleLeftGroup}>
               <Text variant="bodyLarge" bold color={colors.neutral[0]} style={styles.capsuleBtnText}>
-                Get Started Now
+                Open Seller Dashboard ➔
               </Text>
               <Text variant="caption" color="rgba(255,255,255,0.85)" style={styles.capsuleSubText}>
-                4-Stage Quick Verification
+                Active Approved Store Account
               </Text>
             </View>
 
@@ -207,6 +215,7 @@ export const SellerWelcomeScreen = ({ navigation }: any) => {
             </View>
           </TouchableOpacity>
         </View>
+
       </View>
     </ScreenContainer>
   );

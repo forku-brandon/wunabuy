@@ -29,6 +29,8 @@ import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
 import { useAuthStore } from '../../stores/auth.store';
 import { UserRole } from '@wunabuy/types';
+import { AuthService } from '../../services/api';
+
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const SLIDESHOW_HEIGHT = Math.max(SCREEN_HEIGHT * 0.52, 360);
@@ -391,16 +393,20 @@ export const TransporterWelcomeScreen = ({ navigation }: any) => {
           {/* Main Capsule CTA Button */}
           <TouchableOpacity
             activeOpacity={0.88}
-            onPress={() => navigation.navigate('TransporterKYC')}
+            onPress={() => {
+              useAuthStore.getState().setActiveRole(UserRole.TRANSPORTER);
+              AuthService.switchRole(UserRole.TRANSPORTER);
+            }}
             style={[styles.capsuleBtn, { backgroundColor: colors.role.transporter }]}
           >
             <Text variant="bodyLarge" bold color={colors.neutral[0]} style={styles.capsuleBtnText}>
-              Start Driver Verification
+              Open Transporter Dashboard ➔
             </Text>
             <View style={styles.arrowCircle}>
               <Ionicons name="arrow-forward" size={18} color={colors.role.transporter} />
             </View>
           </TouchableOpacity>
+
         </View>
       </View>
     </ScreenContainer>
