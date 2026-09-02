@@ -8,6 +8,7 @@ export interface StatCardProps {
   change?: string;
   changeType?: 'positive' | 'negative' | 'neutral' | 'warning';
   icon: React.ReactNode;
+  iconBg?: string;
   description?: string;
 }
 
@@ -17,19 +18,22 @@ export const StatCard: React.FC<StatCardProps> = ({
   change,
   changeType = 'positive',
   icon,
+  iconBg = 'bg-teal-50 text-teal-600',
   description,
 }) => {
   return (
     <Card className="flex flex-col justify-between">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{title}</span>
-        <div className="w-10 h-10 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center">
-          {icon}
+        <div className="flex items-center space-x-3">
+          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm ${iconBg}`}>
+            {icon}
+          </div>
+          <div>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">{title}</span>
+            <span className="text-xl font-extrabold text-slate-900 font-heading block mt-0.5">{value}</span>
+          </div>
         </div>
-      </div>
 
-      <div className="mt-4 flex items-baseline justify-between">
-        <span className="text-2xl font-extrabold text-slate-900 font-heading">{value}</span>
         {change && (
           <Badge
             variant={
@@ -48,7 +52,7 @@ export const StatCard: React.FC<StatCardProps> = ({
         )}
       </div>
 
-      {description && <p className="mt-2 text-xs text-slate-500">{description}</p>}
+      {description && <p className="mt-3 pt-3 border-t border-slate-100 text-[11px] font-medium text-slate-400">{description}</p>}
     </Card>
   );
 };
