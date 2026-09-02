@@ -7,6 +7,7 @@ import { formatXAF, formatPhone } from '@wunabuy/utils';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
 import { WalletService, TransporterService } from '../../services/api';
+import { RecentTransactionsWidget } from '../../components/wallet/RecentTransactionsWidget';
 
 const MOCK_TRIP_HISTORY = [
   { id: 't1', code: 'WB-2026-9842', distance: '2.4 km', fee: 1500, date: 'Today, 14:20', type: 'TRIP_PAYOUT' },
@@ -16,7 +17,8 @@ const MOCK_TRIP_HISTORY = [
   { id: 't5', code: 'CASHOUT-881', distance: 'MTN MoMo (*126#)', fee: -10000, date: '2 days ago', type: 'CASHOUT' },
 ];
 
-export const TransporterEarningsScreen = () => {
+export const TransporterEarningsScreen = ({ navigation }: any) => {
+
   const { theme, isDark } = useThemeStore();
   const insets = useSafeAreaInsets();
 
@@ -203,50 +205,11 @@ export const TransporterEarningsScreen = () => {
           </View>
         </View>
 
-        {/* Transaction History Header */}
-        <View style={styles.sectionHeaderRow}>
-          <Text variant="h2" bold style={styles.sectionTitleText}>
-            Driver Transaction History
-          </Text>
-          <Text variant="caption" secondary>
-            Last {trips.length} Entries
-          </Text>
-        </View>
+        {/* Recent Transactions Section (Image 2 style) */}
+        <RecentTransactionsWidget
+          onViewAll={() => navigation?.navigate('TransactionHistory')}
+        />
 
-        <View style={styles.historyList}>
-          {trips.map((item) => {
-            const isCashout = item.fee < 0;
-            return (
-              <Card key={item.id} style={styles.tripCard}>
-                <View style={styles.tripRow}>
-                  <View style={[styles.iconCircle, { backgroundColor: isCashout ? '#FEE2E2' : colors.primary[50] }]}>
-                    <Ionicons
-                      name={isCashout ? 'arrow-up-circle-outline' : 'arrow-down-circle-outline'}
-                      size={22}
-                      color={isCashout ? '#EF4444' : colors.primary[500]}
-                    />
-                  </View>
-
-                  <View style={{ flex: 1, marginHorizontal: spacing.sm }}>
-                    <Text variant="bodyLarge" bold color={isCashout ? theme.text : colors.primary[500]}>
-                      {item.code}
-                    </Text>
-                    <Text variant="caption" secondary>
-                      {item.distance} • {item.date}
-                    </Text>
-                  </View>
-
-                  <View style={{ alignItems: 'flex-end' }}>
-                    <Text variant="bodyLarge" bold color={isCashout ? '#EF4444' : colors.primary[600]}>
-                      {isCashout ? formatXAF(item.fee) : `+${formatXAF(item.fee)}`}
-                    </Text>
-                    <Badge label={isCashout ? 'CASHOUT' : 'CREDITED'} variant={isCashout ? 'error' : 'primary'} size="small" />
-                  </View>
-                </View>
-              </Card>
-            );
-          })}
-        </View>
       </ScrollView>
 
 

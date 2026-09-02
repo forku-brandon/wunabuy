@@ -53,5 +53,7 @@ export type RootStackParamList = {
   Favorites: undefined;
   Footprint: undefined;
   Refunds: undefined;
+  TransactionHistory: undefined;
 };
+
 

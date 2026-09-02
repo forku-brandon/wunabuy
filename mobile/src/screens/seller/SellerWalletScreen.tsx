@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
-  FlatList,
+  ScrollView,
   StyleSheet,
   TouchableOpacity,
   RefreshControl,
@@ -10,6 +10,8 @@ import {
   TouchableWithoutFeedback,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { RecentTransactionsWidget } from '../../components/wallet/RecentTransactionsWidget';
+
 import { ScreenContainer, Text, Card, Button, Badge, Toast } from '../../components/ui';
 import { useSellerStore, SellerTransaction } from '../../stores/seller.store';
 import { useThemeStore } from '../../stores/theme.store';
@@ -243,10 +245,7 @@ export const SellerWalletScreen = ({ navigation }: any) => {
         <Badge label="Active Escrow" variant="primary" size="small" />
       </View>
 
-      <FlatList
-        data={filteredTransactions}
-        keyExtractor={(item) => item.id}
-        ListHeaderComponent={ListHeader}
+      <ScrollView
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -257,74 +256,14 @@ export const SellerWalletScreen = ({ navigation }: any) => {
             colors={[colors.primary[500]]}
           />
         }
-        renderItem={({ item }) => {
-          const isRelease = item.type === 'escrow_release';
-          const isPayout = item.type === 'payout';
+      >
+        {ListHeader}
+        <RecentTransactionsWidget
+          onViewAll={() => navigation.navigate('TransactionHistory')}
+        />
+      </ScrollView>
 
-          return (
-            <Card style={styles.txCard}>
-              <View style={styles.txRow}>
-                {/* Transaction Icon */}
-                <View
-                  style={[
-                    styles.txIconCircle,
-                    {
-                      backgroundColor: isRelease
-                        ? '#DCFCE7'
-                        : isPayout
-                        ? '#EFF6FF'
-                        : '#FEE2E2',
-                    },
-                  ]}
-                >
-                  <Ionicons
-                    name={
-                      isRelease
-                        ? 'arrow-down-circle'
-                        : isPayout
-                        ? 'arrow-up-circle'
-                        : 'receipt-outline'
-                    }
-                    size={22}
-                    color={
-                      isRelease
-                        ? colors.semantic.success[500]
-                        : isPayout
-                        ? colors.primary[600]
-                        : '#DC2626'
-                    }
-                  />
-                </View>
 
-                {/* Description & Reference */}
-                <View style={styles.txMeta}>
-                  <Text variant="bodyMedium" bold numberOfLines={1}>
-                    {item.description}
-                  </Text>
-                  <Text variant="caption" secondary style={{ marginTop: 2 }}>
-                    Ref: {item.reference} • {formatDate(item.created_at)}
-                  </Text>
-                </View>
-
-                {/* Amount */}
-                <Text
-                  variant="bodyLarge"
-                  bold
-                  color={
-                    isRelease
-                      ? colors.semantic.success[500]
-                      : isPayout
-                      ? colors.primary[600]
-                      : '#DC2626'
-                  }
-                >
-                  {isRelease ? '+' : '-'} {formatXAF(item.amount)}
-                </Text>
-              </View>
-            </Card>
-          );
-        }}
-      />
 
       {/* ─── Payout Request Modal ────────────────────────────────────────── */}
       <Modal

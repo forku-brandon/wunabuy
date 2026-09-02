@@ -23,6 +23,8 @@ import {
   RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { RecentTransactionsWidget } from '../../components/wallet/RecentTransactionsWidget';
+
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScreenContainer, Text, Card, Input, Toast } from '../../components/ui';
 import { useThemeStore } from '../../stores/theme.store';
@@ -529,21 +531,11 @@ export const WalletScreen = ({ navigation }: any) => {
           </View>
         </View>
 
-        {/* ── Transaction history ────────────────────────────────────────── */}
-        <View style={styles.sectionHeader}>
-          <Text variant="h2" bold>
-            Transaction History
-          </Text>
-          <TouchableOpacity activeOpacity={0.8}>
-            <Text variant="bodyMedium" color={colors.primary[500]}>
-              See All ›
-            </Text>
-          </TouchableOpacity>
-        </View>
+        {/* ── Recent Transactions Section (Image 2 style) ────────────────── */}
+        <RecentTransactionsWidget
+          onViewAll={() => navigation.navigate('TransactionHistory')}
+        />
 
-        {MOCK_TRANSACTIONS.map((tx) => (
-          <TransactionRow key={tx.id} tx={tx} theme={theme} isDark={isDark} />
-        ))}
 
       </ScrollView>
 
