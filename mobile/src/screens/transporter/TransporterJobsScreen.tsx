@@ -325,16 +325,17 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
 
             {/* Driver Payout Dedicated Banner */}
             <View style={[styles.payoutHighlightBanner, { backgroundColor: isDark ? colors.neutral[800] : colors.primary[50], borderColor: isDark ? 'rgba(13,148,136,0.3)' : colors.primary[200] }]}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1, marginRight: spacing.xs }}>
                 <Ionicons name="cash-outline" size={18} color={colors.primary[600]} />
-                <Text variant="caption" bold color={colors.primary[600]}>
-                  ESTIMATED DRIVER PAYOUT
+                <Text variant="caption" bold color={colors.primary[600]} numberOfLines={1} style={{ flexShrink: 1 }}>
+                  DRIVER PAYOUT
                 </Text>
               </View>
               <Text variant="h2" bold color={colors.primary[600]}>
                 {formatXAF(item.delivery_fee)}
               </Text>
             </View>
+
 
             {/* Action Buttons Row (Moved Down below Driver Payout for Maximum Spacing & Flexibility) */}
             <View style={styles.cardActionGroup}>
