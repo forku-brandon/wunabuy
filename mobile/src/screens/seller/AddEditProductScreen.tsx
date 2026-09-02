@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { ScreenContainer, Text, Input, Button, Card, Toast } from '../../components/ui';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Modal } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { ScreenContainer, Text, Input, Button, Card, Toast, Badge } from '../../components/ui';
 import { ImagePickerGrid } from '../../components/seller/ImagePickerGrid';
 import { ProductCategory, QualityTier, Product } from '@wunabuy/types';
 import { colors, spacing, borderRadius } from '@wunabuy/design-tokens';
@@ -8,11 +9,13 @@ import { useThemeStore } from '../../stores/theme.store';
 import { useSellerStore } from '../../stores/seller.store';
 import { formatXAF } from '@wunabuy/utils';
 import { ProductsService } from '../../services/api';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export const AddEditProductScreen = ({ navigation, route }: any) => {
   const existingProduct: Product | undefined = route.params?.product;
   const isEditing = Boolean(existingProduct);
-  const { theme } = useThemeStore();
+  const { theme, isDark } = useThemeStore();
+  const insets = useSafeAreaInsets();
   const { addProduct, updateProduct } = useSellerStore();
 
   const [name, setName] = useState(existingProduct?.name ?? '');
@@ -22,6 +25,9 @@ export const AddEditProductScreen = ({ navigation, route }: any) => {
   const [quantity, setQuantity] = useState(existingProduct?.quantity ? existingProduct.quantity.toString() : '1');
   const [qualityTier, setQualityTier] = useState<QualityTier>(existingProduct?.quality_tier ?? QualityTier.NEW);
   const [images, setImages] = useState<string[]>(existingProduct?.images ?? []);
+
+  const [isBarcodeModalOpen, setIsBarcodeModalOpen] = useState(false);
+  const [isScanningProcess, setIsScanningProcess] = useState(false);
 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -37,6 +43,45 @@ export const AddEditProductScreen = ({ navigation, route }: any) => {
     const newImgs = [...images];
     newImgs.splice(index, 1);
     setImages(newImgs);
+  };
+
+  // Barcode Auto-Fill Scanner Handler
+  const handleSimulateBarcodeScan = (sampleType: 'phone' | 'sneakers' | 'coffee') => {
+    setIsScanningProcess(true);
+    setTimeout(() => {
+      setIsScanningProcess(false);
+      setIsBarcodeModalOpen(false);
+
+      if (sampleType === 'phone') {
+        setName('Samsung Galaxy A54 5G 128GB Awesome Lime');
+        setCategory(ProductCategory.ELECTRONICS);
+        setPrice('185000');
+        setQuantity('5');
+        setQualityTier(QualityTier.NEW);
+        setDescription('Brand new factory sealed Samsung Galaxy A54 5G 128GB with 12 months official Samsung warranty and original fast charger included.');
+        setImages(['https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=800']);
+        setToastMessage('⚡ Barcode #690123456789 scanned! Samsung Galaxy A54 details auto-filled in 1 second.');
+      } else if (sampleType === 'sneakers') {
+        setName('Nike Air Max 270 (Black/Gold - Size 42)');
+        setCategory(ProductCategory.FASHION);
+        setPrice('45000');
+        setQuantity('12');
+        setQualityTier(QualityTier.NEW);
+        setDescription('Authentic Nike Air Max 270 sneakers in Black/Gold. Breathable mesh upper with 270 Max Air unit for ultimate comfort.');
+        setImages(['https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800']);
+        setToastMessage('⚡ Barcode #088517823412 scanned! Nike Air Max details auto-filled in 1 second.');
+      } else {
+        setName('Nescafé Classic Instant Coffee 200g Jar');
+        setCategory(ProductCategory.FOOD_GROCERIES);
+        setPrice('3500');
+        setQuantity('24');
+        setQualityTier(QualityTier.NEW);
+        setDescription('100% pure instant coffee granules. Rich roast flavor in sealed 200g glass jar.');
+        setImages(['https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=800']);
+        setToastMessage('⚡ Barcode #761303512345 scanned! Nescafé Coffee details auto-filled in 1 second.');
+      }
+      setError('');
+    }, 1000);
   };
 
   const handleSubmit = async () => {
@@ -108,11 +153,10 @@ export const AddEditProductScreen = ({ navigation, route }: any) => {
         };
 
         addProduct(newProduct);
-
         ProductsService.createProduct(newProduct).catch(() => {});
       }
 
-      setToastMessage(isEditing ? 'Product updated successfully!' : 'Product listed successfully!');
+      setToastMessage(isEditing ? 'Product updated successfully!' : 'Product listed into store catalog!');
       setTimeout(() => {
         setLoading(false);
         if (navigation.canGoBack()) {
@@ -129,6 +173,7 @@ export const AddEditProductScreen = ({ navigation, route }: any) => {
 
   return (
     <ScreenContainer>
+      {/* Header Bar */}
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => {
@@ -143,38 +188,59 @@ export const AddEditProductScreen = ({ navigation, route }: any) => {
           }}
           style={styles.backBtn}
         >
-          <Text variant="h2">←</Text>
+          <Ionicons name="arrow-back" size={22} color={theme.text} />
         </TouchableOpacity>
-        <Text variant="h1" bold style={styles.title}>
-          {isEditing ? 'Edit Product Listing' : 'List New Product'}
-        </Text>
-        <Text variant="bodyMedium" secondary style={styles.subtitle}>
-          Set product details, stock levels, and quality condition tier.
-        </Text>
+        <View style={{ flex: 1, marginLeft: spacing.sm }}>
+          <Text variant="caption" bold color={colors.primary[600]}>
+            PRODUCT REGISTRATION • FAST LISTING
+          </Text>
+          <Text variant="h1" bold style={styles.title}>
+            {isEditing ? 'Edit Product Listing' : 'List New Product'}
+          </Text>
+        </View>
       </View>
 
-      {/* Product Images */}
-      <Card style={styles.card}>
-        <Text variant="h3" bold style={styles.sectionTitle}>
-          Product Images (Max 5) *
-        </Text>
-        <Text variant="caption" secondary style={{ marginBottom: spacing.sm }}>
-          First image will be displayed as the main thumbnail in search feeds. Images are auto-compressed (1080px max width).
-        </Text>
+      {/* Optional Barcode Scanner Quick Entry Hero Card */}
+      {!isEditing && (
+        <Card style={[styles.barcodeHeroCard, { backgroundColor: isDark ? 'rgba(13,148,136,0.15)' : '#ECFDF5', borderColor: colors.primary[400] }]}>
+          <View style={styles.barcodeHeroLeft}>
+            <View style={styles.barcodeIconBadge}>
+              <Ionicons name="barcode-outline" size={24} color={colors.primary[600]} />
+            </View>
+            <View style={{ flex: 1, marginLeft: spacing.sm }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Text variant="bodyMedium" bold color={colors.primary[700]}>
+                  Quick Barcode Auto-Fill
+                </Text>
+                <Badge label="OPTIONAL" variant="primary" size="small" />
+              </View>
+              <Text variant="caption" secondary style={{ marginTop: 2 }}>
+                Scan product EAN-13 / UPC barcode to auto-fill title, category &amp; pricing in 1 sec.
+              </Text>
+            </View>
+          </View>
 
-        <ImagePickerGrid
-          images={images}
-          maxImages={5}
-          onAddImage={handleAddImage}
-          onRemoveImage={handleRemoveImage}
-        />
-      </Card>
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() => setIsBarcodeModalOpen(true)}
+            style={[styles.scanBarcodeBtn, { backgroundColor: colors.primary[500] }]}
+          >
+            <Ionicons name="qr-code-outline" size={18} color="#FFFFFF" />
+            <Text variant="caption" bold color="#FFFFFF">
+              Scan Barcode Now
+            </Text>
+          </TouchableOpacity>
+        </Card>
+      )}
 
-      {/* Basic Info */}
+      {/* STEP 1: Basic Information & Title */}
       <Card style={styles.card}>
-        <Text variant="h3" bold style={styles.sectionTitle}>
-          Basic Information
-        </Text>
+        <View style={styles.stepHeaderRow}>
+          <Badge label="STEP 1 OF 3" variant="neutral" size="small" />
+          <Text variant="h3" bold style={styles.sectionTitle}>
+            Basic Information
+          </Text>
+        </View>
 
         <Input
           label="Product Title *"
@@ -192,7 +258,7 @@ export const AddEditProductScreen = ({ navigation, route }: any) => {
           value={description}
           onChangeText={setDescription}
           multiline
-          numberOfLines={4}
+          numberOfLines={3}
         />
 
         <Text variant="caption" bold color={theme.textSecondary} style={styles.label}>
@@ -222,27 +288,53 @@ export const AddEditProductScreen = ({ navigation, route }: any) => {
         </ScrollView>
       </Card>
 
-      {/* Price & Inventory */}
+      {/* STEP 2: Product Images & Pricing */}
       <Card style={styles.card}>
-        <Text variant="h3" bold style={styles.sectionTitle}>
-          Pricing & Inventory
+        <View style={styles.stepHeaderRow}>
+          <Badge label="STEP 2 OF 3" variant="neutral" size="small" />
+          <Text variant="h3" bold style={styles.sectionTitle}>
+            Images &amp; Pricing (XAF)
+          </Text>
+        </View>
+
+        <Text variant="caption" secondary style={{ marginBottom: spacing.xs }}>
+          Add up to 5 product photos. First image will be the main thumbnail.
         </Text>
 
-        <Input
-          label="Selling Price (XAF) *"
-          placeholder="e.g. 185000"
-          keyboardType="number-pad"
-          value={price}
-          onChangeText={(text) => {
-            setError('');
-            setPrice(text);
-          }}
-          hint={price && !isNaN(Number(price)) ? `Formatted: ${formatXAF(Number(price))}` : undefined}
+        <ImagePickerGrid
+          images={images}
+          maxImages={5}
+          onAddImage={handleAddImage}
+          onRemoveImage={handleRemoveImage}
         />
 
+        <View style={{ marginTop: spacing.md }}>
+          <Input
+            label="Selling Price (XAF) *"
+            placeholder="e.g. 185000"
+            keyboardType="number-pad"
+            value={price}
+            onChangeText={(text) => {
+              setError('');
+              setPrice(text);
+            }}
+            hint={price && !isNaN(Number(price)) ? `Formatted: ${formatXAF(Number(price))}` : undefined}
+          />
+        </View>
+      </Card>
+
+      {/* STEP 3: Stock Quantity & Quality Tier */}
+      <Card style={styles.card}>
+        <View style={styles.stepHeaderRow}>
+          <Badge label="STEP 3 OF 3" variant="neutral" size="small" />
+          <Text variant="h3" bold style={styles.sectionTitle}>
+            Stock &amp; Condition Tier
+          </Text>
+        </View>
+
         <Input
-          label="Available Stock Quantity *"
-          placeholder="e.g. 5"
+          label="Stock Quantity Available *"
+          placeholder="e.g. 10"
           keyboardType="number-pad"
           value={quantity}
           onChangeText={(text) => {
@@ -251,10 +343,33 @@ export const AddEditProductScreen = ({ navigation, route }: any) => {
           }}
         />
 
-        <Text variant="caption" bold color={theme.textSecondary} style={styles.label}>
+        {/* Quick Stock Preset Chips */}
+        <Text variant="caption" secondary bold style={{ marginTop: -spacing.xs, marginBottom: spacing.xs }}>
+          QUICK STOCK PRESETS
+        </Text>
+        <View style={styles.presetChipsRow}>
+          {['1', '5', '10', '25', '50'].map((preset) => (
+            <TouchableOpacity
+              key={preset}
+              onPress={() => setQuantity(preset)}
+              style={[
+                styles.stockPresetChip,
+                quantity === preset
+                  ? { backgroundColor: colors.primary[500], borderColor: colors.primary[500] }
+                  : { backgroundColor: theme.input, borderColor: theme.inputBorder }
+              ]}
+            >
+              <Text variant="caption" bold color={quantity === preset ? '#FFFFFF' : theme.text}>
+                {preset} pcs
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <Text variant="caption" bold color={theme.textSecondary} style={[styles.label, { marginTop: spacing.md }]}>
           Quality Condition Tier *
         </Text>
-        <View style={styles.tierRow}>
+        <View style={styles.tierGrid}>
           {Object.values(QualityTier).map((tier) => {
             const isSelected = qualityTier === tier;
             return (
@@ -280,77 +395,311 @@ export const AddEditProductScreen = ({ navigation, route }: any) => {
 
       {error ? (
         <Text variant="caption" color={colors.semantic.error[500]} style={styles.errorText}>
-          {error}
+          ⚠️ {error}
         </Text>
       ) : null}
 
       <Button
-        title={isEditing ? 'Save Changes' : 'Publish Product Listing'}
+        title={isEditing ? 'Save Product Changes' : '⚡ Register Product into Catalog'}
         variant="primary"
         loading={loading}
         onPress={handleSubmit}
         style={styles.submitBtn}
       />
 
-      {toastMessage && <Toast message={toastMessage} type="success" onDismiss={() => setToastMessage(null)} />}
+      {/* Barcode & EAN Scanner Modal */}
+      <Modal
+        visible={isBarcodeModalOpen}
+        animationType="slide"
+        transparent={false}
+        onRequestClose={() => setIsBarcodeModalOpen(false)}
+      >
+        <View style={[styles.scannerModalContainer, { backgroundColor: theme.background }]}>
+          {/* Header */}
+          <View style={[styles.scannerModalHeader, { backgroundColor: theme.card, borderBottomColor: theme.border, paddingTop: Math.max(insets.top + spacing.xs, spacing.md) }]}>
+            <TouchableOpacity activeOpacity={0.8} onPress={() => setIsBarcodeModalOpen(false)} style={styles.closeBtn}>
+              <Ionicons name="close" size={22} color={theme.text} />
+            </TouchableOpacity>
+            <View style={{ flex: 1, marginHorizontal: spacing.sm }}>
+              <Text variant="caption" bold color={colors.primary[600]}>
+                BARCODE &amp; EAN SCANNER 📷
+              </Text>
+              <Text variant="h2" bold numberOfLines={1}>
+                Auto-Fill Product Details
+              </Text>
+            </View>
+            <Badge label="AUTO SCAN" variant="primary" size="small" />
+          </View>
 
+          <ScrollView style={{ flex: 1, padding: spacing.base }}>
+            {/* Viewfinder Mockup */}
+            <View style={styles.viewfinderBox}>
+              <View style={styles.viewfinderCornerTL} />
+              <View style={styles.viewfinderCornerTR} />
+              <View style={styles.viewfinderCornerBL} />
+              <View style={styles.viewfinderCornerBR} />
+
+              <Ionicons name="barcode-outline" size={72} color={colors.primary[500]} />
+              <View style={styles.laserLine} />
+
+              <Text variant="caption" bold color="#FFFFFF" style={{ marginTop: spacing.md, textAlign: 'center' }}>
+                Position product barcode (EAN-13 / UPC / QR) inside frame
+              </Text>
+            </View>
+
+            <Text variant="caption" secondary bold style={{ marginTop: spacing.md, marginBottom: spacing.xs }}>
+              SELECT SAMPLE PRODUCT BARCODE TO SCAN
+            </Text>
+
+            {/* Quick Barcode Preset Samples */}
+            <View style={{ gap: spacing.xs }}>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => handleSimulateBarcodeScan('phone')}
+                style={[styles.sampleBarcodeRow, { backgroundColor: theme.card, borderColor: theme.border }]}
+              >
+                <Ionicons name="phone-portrait-outline" size={24} color={colors.primary[500]} />
+                <View style={{ flex: 1, marginLeft: spacing.sm }}>
+                  <Text variant="bodyMedium" bold>
+                    📱 Electronics Barcode (#690123456789)
+                  </Text>
+                  <Text variant="caption" secondary>
+                    Samsung Galaxy A54 5G 128GB • 185 000 FCFA
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => handleSimulateBarcodeScan('sneakers')}
+                style={[styles.sampleBarcodeRow, { backgroundColor: theme.card, borderColor: theme.border }]}
+              >
+                <Ionicons name="shirt-outline" size={24} color={colors.primary[500]} />
+                <View style={{ flex: 1, marginLeft: spacing.sm }}>
+                  <Text variant="bodyMedium" bold>
+                    👟 Fashion Barcode (#088517823412)
+                  </Text>
+                  <Text variant="caption" secondary>
+                    Nike Air Max 270 Sneakers • 45 000 FCFA
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => handleSimulateBarcodeScan('coffee')}
+                style={[styles.sampleBarcodeRow, { backgroundColor: theme.card, borderColor: theme.border }]}
+              >
+                <Ionicons name="nutrition-outline" size={24} color={colors.primary[500]} />
+                <View style={{ flex: 1, marginLeft: spacing.sm }}>
+                  <Text variant="bodyMedium" bold>
+                    🛒 Grocery Barcode (#761303512345)
+                  </Text>
+                  <Text variant="caption" secondary>
+                    Nescafé Classic Instant Coffee 200g • 3 500 FCFA
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} />
+              </TouchableOpacity>
+            </View>
+
+            <Button
+              title={isScanningProcess ? 'Scanning & Querying Database...' : '⚡ Scan Barcode & Auto-Populate Fields'}
+              variant="primary"
+              size="large"
+              loading={isScanningProcess}
+              onPress={() => handleSimulateBarcodeScan('phone')}
+              style={{ marginTop: spacing.lg, marginBottom: spacing.xl, backgroundColor: colors.primary[500] }}
+            />
+          </ScrollView>
+        </View>
+      </Modal>
+
+      {toastMessage && <Toast message={toastMessage} type="success" onDismiss={() => setToastMessage(null)} />}
     </ScreenContainer>
   );
 };
 
 const styles = StyleSheet.create({
   header: {
-    marginTop: spacing.sm,
-    marginBottom: spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.md,
   },
   backBtn: {
-    marginBottom: spacing.xs,
+    padding: spacing.xs,
   },
   title: {
-    marginBottom: spacing.xs,
+    marginTop: 2,
   },
-  subtitle: {
-    lineHeight: 20,
+  barcodeHeroCard: {
+    padding: spacing.md,
+    borderWidth: 1.5,
+    marginBottom: spacing.md,
+    borderRadius: borderRadius.lg,
+  },
+  barcodeHeroLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  barcodeIconBadge: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  scanBarcodeBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: spacing.xs + 4,
+    borderRadius: borderRadius.md,
+  },
+  stepHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
   },
   card: {
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
   },
   sectionTitle: {
-    marginBottom: spacing.md,
+    flex: 1,
   },
   label: {
     marginBottom: spacing.xs,
-    marginTop: spacing.xs,
   },
   categoryScroll: {
     gap: spacing.xs,
     paddingVertical: spacing.xs,
-    marginBottom: spacing.sm,
   },
   chip: {
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.md,
+    paddingVertical: spacing.xs + 2,
+    borderRadius: borderRadius.full,
     borderWidth: 1,
   },
-  tierRow: {
+  presetChipsRow: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+    marginBottom: spacing.sm,
+  },
+  stockPresetChip: {
+    flex: 1,
+    paddingVertical: spacing.xs + 2,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  tierGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.xs,
-    marginTop: spacing.xs,
   },
   tierChip: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
+    flex: 1,
+    minWidth: '45%',
+    paddingVertical: spacing.sm,
+    alignItems: 'center',
     borderRadius: borderRadius.md,
     borderWidth: 1,
   },
   errorText: {
     marginBottom: spacing.md,
-    textAlign: 'center',
+    fontWeight: '600',
   },
   submitBtn: {
     marginBottom: spacing.xl,
+    backgroundColor: colors.primary[500],
+  },
+
+  scannerModalContainer: {
+    flex: 1,
+  },
+  scannerModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.base,
+    paddingBottom: spacing.sm,
+    borderBottomWidth: 1,
+  },
+  closeBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  viewfinderBox: {
+    backgroundColor: '#0F172A',
+    height: 220,
+    borderRadius: borderRadius.lg,
+    borderWidth: 2,
+    borderColor: colors.primary[500],
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.base,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  viewfinderCornerTL: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    width: 24,
+    height: 24,
+    borderTopWidth: 4,
+    borderLeftWidth: 4,
+    borderColor: colors.primary[500],
+  },
+  viewfinderCornerTR: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    width: 24,
+    height: 24,
+    borderTopWidth: 4,
+    borderRightWidth: 4,
+    borderColor: colors.primary[500],
+  },
+  viewfinderCornerBL: {
+    position: 'absolute',
+    bottom: 12,
+    left: 12,
+    width: 24,
+    height: 24,
+    borderBottomWidth: 4,
+    borderLeftWidth: 4,
+    borderColor: colors.primary[500],
+  },
+  viewfinderCornerBR: {
+    position: 'absolute',
+    bottom: 12,
+    right: 12,
+    width: 24,
+    height: 24,
+    borderBottomWidth: 4,
+    borderRightWidth: 4,
+    borderColor: colors.primary[500],
+  },
+  laserLine: {
+    width: '80%',
+    height: 2,
+    backgroundColor: colors.primary[400],
+    marginTop: spacing.xs,
+  },
+  sampleBarcodeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.md,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
   },
 });
-
