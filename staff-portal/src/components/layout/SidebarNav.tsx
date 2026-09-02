@@ -37,6 +37,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
 
   const allNavItems: NavItemConfig[] = [
     { label: 'Dashboard', path: '/', icon: LayoutDashboard, permission: 'view_dashboard' },
+    { label: 'Internal Chat & Broadcasts', path: '/communications', icon: Megaphone, permission: 'view_dashboard', badge: 3 },
     { label: 'Store KYC Queue', path: '/kyc', icon: FileCheck, permission: 'view_kyc', badge: 4 },
     { label: 'Escrow Disputes', path: '/disputes', icon: ShieldAlert, permission: 'view_disputes', badge: 2 },
     { label: 'Logistics & Fleet Ops', path: '/logistics', icon: Truck, permission: 'view_logistics', badge: 12 },
@@ -45,6 +46,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
     { label: 'Marketing & Promos', path: '/marketing', icon: Megaphone, permission: 'manage_marketing' },
     { label: 'Security & Audit Logs', path: '/settings', icon: Settings, permission: 'view_audit_logs' },
   ];
+
 
   // STRICT SECURITY FILTER: Completely hide unauthorized navigation items
   const authorizedNavItems = allNavItems.filter((item) => hasPermission(item.permission));
