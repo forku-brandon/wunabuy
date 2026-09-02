@@ -11,7 +11,7 @@ export enum StaffDepartmentRole {
 }
 
 export interface StaffUser extends User {
-  staff_department_role: StaffDepartmentRole;
+  staff_department_role: string;
   department_name: string;
   employee_id: string;
   security_clearance_level: number; // 1 to 5
@@ -32,6 +32,31 @@ export type StaffPermission =
   | 'manage_settings'
   | 'view_audit_logs';
 
+export interface StaffRoleDefinition {
+  code: string;
+  name: string;
+  department: string;
+  clearance_level: number;
+  permissions: StaffPermission[];
+  is_custom?: boolean;
+}
+
+export const ALL_STAFF_PERMISSIONS: { code: StaffPermission; label: string; description: string }[] = [
+  { code: 'view_dashboard', label: 'View Executive Dashboard', description: 'Access platform overview KPIs and GMV charts' },
+  { code: 'view_kyc', label: 'View KYC Queue', description: 'Inspect merchant storefront and driver CNI documents' },
+  { code: 'approve_kyc', label: 'Approve/Reject KYC', description: 'Approve or reject merchant & driver compliance submissions' },
+  { code: 'view_disputes', label: 'View Escrow Disputes', description: 'Inspect 3-way buyer/merchant dispute claims' },
+  { code: 'resolve_disputes', label: 'Resolve Disputes', description: 'Execute escrow refund, release, or split settlements' },
+  { code: 'view_financials', label: 'View Financial Ledger', description: 'Access MTN MoMo & Orange Money reconciliation statements' },
+  { code: 'approve_payouts', label: 'Authorize Payouts', description: 'Approve high-value Mobile Money merchant payouts' },
+  { code: 'view_logistics', label: 'View Logistics Telemetry', description: 'Monitor active driver GPS trips and dispatch status' },
+  { code: 'override_logistics', label: 'Logistics Manual Override', description: 'Intervene and manually override delivery trip stages' },
+  { code: 'manage_users', label: 'Manage Users & Directory', description: 'Suspend or reactivate platform user & driver accounts' },
+  { code: 'manage_marketing', label: 'Manage Marketing & Banners', description: 'Publish and toggle mobile promo banners & tips' },
+  { code: 'manage_settings', label: 'Manage System Settings', description: 'Configure platform security rules & MFA' },
+  { code: 'view_audit_logs', label: 'View Security Audit Logs', description: 'Access immutable system administrative action ledger' },
+];
+
 export interface AuditLogEntry {
   id: string;
   timestamp: string;
@@ -44,55 +69,91 @@ export interface AuditLogEntry {
   security_level: 'INFO' | 'WARNING' | 'CRITICAL';
 }
 
-const PERMISSIONS_MAP: Record<StaffDepartmentRole, StaffPermission[]> = {
-  [StaffDepartmentRole.SUPER_ADMIN]: [
-    'view_dashboard',
-    'view_kyc',
-    'approve_kyc',
-    'view_disputes',
-    'resolve_disputes',
-    'view_financials',
-    'approve_payouts',
-    'view_logistics',
-    'override_logistics',
-    'manage_users',
-    'manage_marketing',
-    'manage_settings',
-    'view_audit_logs',
-  ],
-  [StaffDepartmentRole.FINANCE_OFFICER]: [
-    'view_dashboard',
-    'view_financials',
-    'approve_payouts',
-    'view_disputes',
-    'resolve_disputes',
-    'view_audit_logs',
-  ],
-  [StaffDepartmentRole.COMPLIANCE_OFFICER]: [
-    'view_dashboard',
-    'view_kyc',
-    'approve_kyc',
-    'manage_users',
-    'view_audit_logs',
-  ],
-  [StaffDepartmentRole.OPS_MANAGER]: [
-    'view_dashboard',
-    'view_logistics',
-    'override_logistics',
-    'view_kyc',
-    'view_audit_logs',
-  ],
-  [StaffDepartmentRole.SUPPORT_AGENT]: [
-    'view_dashboard',
-    'view_disputes',
-    'resolve_disputes',
-    'manage_users',
-  ],
-  [StaffDepartmentRole.MARKETING_LEAD]: [
-    'view_dashboard',
-    'manage_marketing',
-  ],
-};
+const INITIAL_ROLES_MATRIX: StaffRoleDefinition[] = [
+  {
+    code: StaffDepartmentRole.SUPER_ADMIN,
+    name: 'Super Admin / Executive',
+    department: 'Executive Management',
+    clearance_level: 5,
+    permissions: [
+      'view_dashboard',
+      'view_kyc',
+      'approve_kyc',
+      'view_disputes',
+      'resolve_disputes',
+      'view_financials',
+      'approve_payouts',
+      'view_logistics',
+      'override_logistics',
+      'manage_users',
+      'manage_marketing',
+      'manage_settings',
+      'view_audit_logs',
+    ],
+  },
+  {
+    code: StaffDepartmentRole.FINANCE_OFFICER,
+    name: 'Finance & Treasury Officer',
+    department: 'Finance & Treasury',
+    clearance_level: 4,
+    permissions: [
+      'view_dashboard',
+      'view_financials',
+      'approve_payouts',
+      'view_disputes',
+      'resolve_disputes',
+      'view_audit_logs',
+    ],
+  },
+  {
+    code: StaffDepartmentRole.COMPLIANCE_OFFICER,
+    name: 'Compliance & Verification Specialist',
+    department: 'Legal & Risk Verification',
+    clearance_level: 4,
+    permissions: [
+      'view_dashboard',
+      'view_kyc',
+      'approve_kyc',
+      'manage_users',
+      'view_audit_logs',
+    ],
+  },
+  {
+    code: StaffDepartmentRole.OPS_MANAGER,
+    name: 'Logistics Operations Manager',
+    department: 'Logistics & Fleet Ops',
+    clearance_level: 3,
+    permissions: [
+      'view_dashboard',
+      'view_logistics',
+      'override_logistics',
+      'view_kyc',
+      'view_audit_logs',
+    ],
+  },
+  {
+    code: StaffDepartmentRole.SUPPORT_AGENT,
+    name: 'Customer Support Representative',
+    department: 'Customer Escrow Support',
+    clearance_level: 2,
+    permissions: [
+      'view_dashboard',
+      'view_disputes',
+      'resolve_disputes',
+      'manage_users',
+    ],
+  },
+  {
+    code: StaffDepartmentRole.MARKETING_LEAD,
+    name: 'Marketing & Merchant Growth Lead',
+    department: 'Marketing & Merchant Growth',
+    clearance_level: 2,
+    permissions: [
+      'view_dashboard',
+      'manage_marketing',
+    ],
+  },
+];
 
 export const DEMO_STAFF_PERSONAS: StaffUser[] = [
   {
@@ -223,10 +284,11 @@ const INITIAL_AUDIT_LOGS: AuditLogEntry[] = [
   },
 ];
 
-// In-Memory Shared State Store for Staff Auth
+// In-Memory Shared State Store for Staff Auth & Dynamic Roles Matrix
 let currentUser: StaffUser | null = DEMO_STAFF_PERSONAS[0];
 let currentToken: string | null = '1|mock_sanctum_staff_token';
 let currentAuditLogs: AuditLogEntry[] = INITIAL_AUDIT_LOGS;
+let rolesMatrix: StaffRoleDefinition[] = INITIAL_ROLES_MATRIX;
 
 const listeners = new Set<() => void>();
 
@@ -306,7 +368,6 @@ export function useStaffAuth() {
     notify();
   };
 
-
   const switchPersona = (staffId: string) => {
     const target = DEMO_STAFF_PERSONAS.find((p) => p.id === staffId);
     if (target) {
@@ -329,8 +390,9 @@ export function useStaffAuth() {
 
   const hasPermission = (permission: StaffPermission): boolean => {
     if (!currentUser) return false;
-    const permissions = PERMISSIONS_MAP[currentUser.staff_department_role] || [];
-    return permissions.includes(permission);
+    const roleDef = rolesMatrix.find((r) => r.code === currentUser?.staff_department_role);
+    if (!roleDef) return false;
+    return roleDef.permissions.includes(permission);
   };
 
   const addAuditLog = (
@@ -352,11 +414,48 @@ export function useStaffAuth() {
     notify();
   };
 
+  // DYNAMIC ROLES & PERMISSIONS CRUD ENGINE
+  const createRole = (newRole: StaffRoleDefinition) => {
+    rolesMatrix = [...rolesMatrix, { ...newRole, is_custom: true }];
+    addAuditLog({
+      action_code: 'ROLE_CREATE_CUSTOM',
+      action_description: `Super Admin created custom staff role "${newRole.name}" (${newRole.code}) with ${newRole.permissions.length} permissions.`,
+      target_id: newRole.code,
+      security_level: 'CRITICAL',
+    });
+    notify();
+  };
+
+  const updateRolePermissions = (roleCode: string, newPermissions: StaffPermission[]) => {
+    rolesMatrix = rolesMatrix.map((r) =>
+      r.code === roleCode ? { ...r, permissions: newPermissions } : r
+    );
+    addAuditLog({
+      action_code: 'ROLE_UPDATE_PERMISSIONS',
+      action_description: `Updated permissions matrix for role "${roleCode}". Total active permissions: ${newPermissions.length}.`,
+      target_id: roleCode,
+      security_level: 'CRITICAL',
+    });
+    notify();
+  };
+
+  const deleteRole = (roleCode: string) => {
+    rolesMatrix = rolesMatrix.filter((r) => r.code !== roleCode);
+    addAuditLog({
+      action_code: 'ROLE_DELETE_CUSTOM',
+      action_description: `Super Admin deleted custom staff role "${roleCode}".`,
+      target_id: roleCode,
+      security_level: 'CRITICAL',
+    });
+    notify();
+  };
+
   return {
     user: currentUser,
     accessToken: currentToken,
     isAuthenticated: Boolean(currentUser && currentToken),
     auditLogs: currentAuditLogs,
+    rolesMatrix,
     requestOTP,
     verifyOTP,
     login,
@@ -364,6 +463,8 @@ export function useStaffAuth() {
     switchPersona,
     hasPermission,
     addAuditLog,
+    createRole,
+    updateRolePermissions,
+    deleteRole,
   };
-
 }

@@ -10,7 +10,6 @@ import {
   Truck,
   Megaphone,
   ShieldCheck,
-  Lock,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useStaffAuth, StaffPermission } from '../../stores/staffAuthStore';
@@ -36,6 +35,9 @@ export const SidebarNav: React.FC = () => {
     { label: 'Marketing & Promos', path: '/marketing', icon: Megaphone, permission: 'manage_marketing' },
     { label: 'Security & Audit Logs', path: '/settings', icon: Settings, permission: 'view_audit_logs' },
   ];
+
+  // STRICT SECURITY FILTER: Completely hide unauthorized navigation items
+  const authorizedNavItems = allNavItems.filter((item) => hasPermission(item.permission));
 
   return (
     <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col border-r border-slate-800 flex-shrink-0">
@@ -66,28 +68,11 @@ export const SidebarNav: React.FC = () => {
       {/* Navigation Links */}
       <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
         <div className="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
-          DEPARTMENTAL MODULES
+          AUTHORIZED MODULES ({authorizedNavItems.length})
         </div>
 
-        {allNavItems.map((item) => {
+        {authorizedNavItems.map((item) => {
           const Icon = item.icon;
-          const isAllowed = hasPermission(item.permission);
-
-          if (!isAllowed) {
-            return (
-              <div
-                key={item.path}
-                className="flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-medium text-slate-600 cursor-not-allowed opacity-60"
-                title={`Access Restricted (${user?.staff_department_role})`}
-              >
-                <div className="flex items-center space-x-3">
-                  <Icon className="w-4 h-4 text-slate-600" />
-                  <span>{item.label}</span>
-                </div>
-                <Lock className="w-3 h-3 text-slate-600" />
-              </div>
-            );
-          }
 
           return (
             <NavLink
@@ -120,7 +105,7 @@ export const SidebarNav: React.FC = () => {
       <div className="p-3.5 m-4 rounded-xl bg-slate-800/60 border border-slate-700/50">
         <div className="flex items-center space-x-2 text-emerald-400 text-xs font-semibold">
           <ShieldCheck className="w-4 h-4" />
-          <span>RBAC & Reverb Secured</span>
+          <span>RBAC Strict Secured</span>
         </div>
         <p className="text-[10px] text-slate-400 mt-1">Douala Node • TLS 1.3 Strict</p>
       </div>
