@@ -1,9 +1,9 @@
 # Product Requirements Document (PRD)
 # Wunabuy — Multi-Sided Mobile E-Commerce & Logistics Platform
 
-**Document Version:** 1.9  
+**Document Version:** 2.0  
 **Status:** Revised / Launch-Ready Production Baseline  
-**Date:** August 31, 2026  
+**Date:** September 2, 2026  
 **Author:** Product Management & Engineering Architecture Team  
 **Target Launch:** Q1 2027  
 **File Location:** `wunabuy/docs/Wunabuy_PRD_v1.0.md`
@@ -33,6 +33,8 @@ This PRD defines the product vision, market outcome, launch scope, UI/UX archite
 | 1.7 | August 28, 2026 | Architecture & Engineering Team | Added Wunabuy Wallet Checkout integration in `CheckoutPaymentScreen` (dual options: Wallet Balance instant 1-tap escrow vs Mobile Money USSD push; country-neutral provider labels), ProductCard interactive Quick-View Expand Modal with horizontal swipeable multi-image gallery (`FlatList horizontal pagingEnabled`, counter badge, stepper, dual actions), Strict Default Buyer Role Isolation in Settings (`RoleSwitcherCard` hiding Seller/Transporter buttons until backend API staff approval, with dedicated Apply to Sell and Apply to Transport action cards), and App-Wide `canGoBack` Navigation Safety with root reset fallbacks across all 11+ screens. |
 | 1.8 | August 31, 2026 | Architecture & Engineering Team | Comprehensive Seller Section Architecture (`SellerApp`), Dynamic Key-Based Workspace Isolation in `RootNavigator.tsx` (`key={isAuthenticated ? 'auth_workspace_' + activeRole : 'unauth_root'}`) eliminating cross-stack bleeding, 2-Hour Auto-Cancel Fulfillment Queue (`SellerOrdersScreen`) with live countdown timers, Dual Delivery Dispatch Modal (Express Transporter vs Store In-House Rider), Seller Store Wallet & MoMo Payout Engine (`SellerWalletScreen`), and Complete Platform Visual Design & Color Harmonization across Buyer and Seller workspaces with unified Emerald Teal (`#0D9488` / `#0F766E`) and Warm Amber (`#F59E0B`) design tokens. |
 | 1.9 | August 31, 2026 | Architecture & Engineering Team | Complete Seller Dashboard & Profile Architecture Overhaul: Top AppBar with same-line action bar (`☰`, `🔔`, `🔲`, `🛒`), Merchant Dashboard Subtitle Stack, Auto-Slide Sales Tips & Merchant Growth Carousel Presenter (`SellerSalesTipsCarousel.tsx`), Store Products Catalog Grid with quick-view modal replacing static transactions, Hidden-by-default KYC with staff verification approval celebration banner, Dedicated `SellerProfileScreen.tsx` on Tab 5, `SellerSidebarDrawer.tsx` replacing recruitment cards with store operations, and App-Wide Shared Stack Route registration in `RootNavigator.tsx`. |
+| 2.0 | September 2, 2026 | Architecture & Engineering Team | Major Platform Feature & UI Redesign Release: (1) Redesigned Recent Transactions Widget (`RecentTransactionsWidget.tsx`) & Dedicated `TransactionHistoryScreen.tsx` with live search, date range filters (`7 Days`, `15 Days`, `1 Month`, `Custom Date`), date grouping, and PDF statement exports unified across Buyer, Seller, Transporter apps. (2) Smart Role Access Guard & Workspace Redirection Logic: "Become a Seller" / "Become a Transporter" options automatically check role access and open Home/Dashboard directly if granted, or onboarding page if not granted, featuring clean, minimal UI. (3) Dedicated `StoreAnalyticsScreen.tsx` replacing simple alert in Seller sidebar with revenue metrics, available vs escrow split, weekly Sales Velocity graph, key store KPIs, and top products table. (4) Transporter Job Feed QR Scanner Modal (`QRScannerModal`) with 3 scanning modes. (5) Seller Product Registration Barcode Auto-Fill (`AddEditProductScreen.tsx` & `BarcodeScannerModal`) with EAN-13 presets. (6) Universal 3-Second (3000ms) Animated Toast Auto-Dismiss System (`Toast.tsx`). |
+
 
 
 ---

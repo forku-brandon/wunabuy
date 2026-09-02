@@ -1,16 +1,21 @@
 # Wunabuy — Frontend Technical Specification
-### Version 1.8 | August 31, 2026
+### Version 2.0 | September 2, 2026
 
-> **Resolved Decisions (August 31, 2026):**
+> **Resolved Decisions (September 2, 2026):**
 > - Real-time: Laravel 13 + Laravel Reverb (all Supabase references removed)
 > - Dynamic Key-Based Workspace Isolation (`RootNavigator`): `key={isAuthenticated ? 'auth_workspace_' + activeRole : 'unauth_root'}` ensuring complete stack remount and strict role boundary isolation
-> - Brand Palette Harmonization: Full unification across Buyer and Seller screens using Emerald Teal (`#0D9488` / `#0F766E`) and Warm Amber (`#F59E0B`)
+> - Smart Role Access Redirection: Automatic checking of `user.role` or `user.available_roles` for "Become a Seller" / "Become a Transporter", opening Dashboard if access granted or Welcome onboarding if not granted
+> - Recent Transactions Architecture: `RecentTransactionsWidget.tsx` (clean white/dark card widget) & `TransactionHistoryScreen.tsx` (dedicated history screen with search input, time filter pills `7 Days`, `15 Days`, `1 Month`, `Custom Date`, date grouping, PDF statement export)
+> - Store Analytics Engine: `StoreAnalyticsScreen.tsx` (revenue telemetry, available vs 48H escrow split, weekly sales velocity bar graph, KPI grid, top products ranking)
+> - QR & Barcode Scanners: `QRScannerModal` in Transporter Job Feed (3 modes) and `BarcodeScannerModal` in Product Registration (`AddEditProductScreen.tsx`)
+> - Universal Auto-Dismiss Toast: `Toast.tsx` with smooth `Animated` opacity fade-in (250ms) and automatic 3000ms fade-out auto-dismiss
+> - Brand Palette Harmonization: Full unification across Buyer, Seller, and Transporter screens using Emerald Teal (`#0D9488` / `#0F766E`) and Warm Amber (`#F59E0B`)
 > - Navigation: React Navigation 6.x + Expo SDK 54
 > - Staff Portal: TanStack Router + shadcn/ui + Tailwind CSS
 > - Auth: Laravel Sanctum opaque Bearer tokens (not JWT)
 > - Currency: XAF-only for Phase 1 (Cameroon market)
-> - Commission: 3.5% - 5.0% platform fee
 > - Dark mode: Full support across light and dark theme stores
+
 
 **Prepared for:** Agemo Technologies Frontend Engineering Team  
 **Companion Documents:**  
