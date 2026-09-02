@@ -3,232 +3,277 @@ import { PageContainer } from '../components/layout/PageContainer';
 import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
+import { StatCard } from '../components/ui/StatCard';
 import { Modal } from '../components/ui/Modal';
+import { DataTable, Column } from '../components/ui/DataTable';
 import { UserRole, UserStatus } from '@wunabuy/types';
 import { useStaffAuth } from '../stores/staffAuthStore';
-import { Search, ShieldAlert, UserCheck, UserX, AlertTriangle, ShieldCheck } from 'lucide-react';
+import {
+  Users,
+  UserCheck,
+  UserX,
+  ShieldCheck,
+  Search,
+  CheckCircle2,
+  AlertTriangle,
+  Building2,
+  Bike,
+  Shield,
+} from 'lucide-react';
 
-interface ManagedUser {
+interface DirectoryUserItem {
   id: string;
   full_name: string;
   phone: string;
   email: string | null;
   role: UserRole;
   status: UserStatus;
-  joined_date: string;
+  is_phone_verified: boolean;
+  kyc_status?: string;
+  city: string;
+  registered_at: string;
+  risk_level: 'LOW' | 'MEDIUM' | 'HIGH';
 }
 
-const MOCK_USERS: ManagedUser[] = [
-  { id: 'u1', full_name: 'Jean Dupont', phone: '+237 670 111 222', email: 'jean@gmail.com', role: UserRole.BUYER, status: UserStatus.ACTIVE, joined_date: 'Aug 10, 2026' },
-  { id: 'u2', full_name: 'Emmanuel Nsangou (Douala Tech)', phone: '+237 670 123 456', email: 'info@doualatech.cm', role: UserRole.SELLER, status: UserStatus.ACTIVE, joined_date: 'Jul 15, 2026' },
-  { id: 'u3', full_name: 'Samuel Mbida', phone: '+237 675 112 233', email: 'samuel@transporter.cm', role: UserRole.TRANSPORTER, status: UserStatus.ACTIVE, joined_date: 'Aug 01, 2026' },
-  { id: 'u4', full_name: 'Pauline Mbarga', phone: '+237 670 000 099', email: 'pauline.admin@wunabuy.com', role: UserRole.STAFF, status: UserStatus.ACTIVE, joined_date: 'May 01, 2026' },
-  { id: 'u5', full_name: 'Christian Atangana', phone: '+237 699 112 233', email: 'christian.finance@wunabuy.com', role: UserRole.STAFF, status: UserStatus.ACTIVE, joined_date: 'Jun 10, 2026' },
+const MOCK_USERS_DIRECTORY: DirectoryUserItem[] = [
+  {
+    id: 'usr_101',
+    full_name: 'Emmanuel Nsangou',
+    phone: '+237 670 123 456',
+    email: 'emmanuel.nsangou@doualatech.cm',
+    role: UserRole.SELLER,
+    status: UserStatus.ACTIVE,
+    is_phone_verified: true,
+    kyc_status: 'APPROVED',
+    city: 'Douala',
+    registered_at: '2026-01-15',
+    risk_level: 'LOW',
+  },
+  {
+    id: 'usr_102',
+    full_name: 'Jean-Paul Nkoum',
+    phone: '+237 670 112 233',
+    email: 'jeanpaul.nkoum@wunabuy.cm',
+    role: UserRole.TRANSPORTER,
+    status: UserStatus.ACTIVE,
+    is_phone_verified: true,
+    kyc_status: 'APPROVED',
+    city: 'Douala',
+    registered_at: '2026-02-10',
+    risk_level: 'LOW',
+  },
+  {
+    id: 'usr_103',
+    full_name: 'Amadou Bello',
+    phone: '+237 699 554 433',
+    email: 'amadou.bello@gmail.com',
+    role: UserRole.BUYER,
+    status: UserStatus.ACTIVE,
+    is_phone_verified: true,
+    city: 'Yaoundé',
+    registered_at: '2026-03-04',
+    risk_level: 'LOW',
+  },
+  {
+    id: 'usr_104',
+    full_name: 'Josephine Tchakounte',
+    phone: '+237 675 443 322',
+    email: 'josephine@couture.cm',
+    role: UserRole.SELLER,
+    status: UserStatus.SUSPENDED,
+    is_phone_verified: true,
+    kyc_status: 'UNDER_REVIEW',
+    city: 'Douala',
+    registered_at: '2026-04-12',
+    risk_level: 'HIGH',
+  },
 ];
 
 export const UsersPage: React.FC = () => {
   const { addAuditLog, hasPermission } = useStaffAuth();
-  const [users, setUsers] = useState<ManagedUser[]>(MOCK_USERS);
-  const [activeRoleFilter, setActiveRoleFilter] = useState<'ALL' | UserRole>('ALL');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedUser, setSelectedUser] = useState<ManagedUser | null>(null);
-  const [suspendModalOpen, setSuspendModalOpen] = useState(false);
-  const [suspendReason, setSuspendReason] = useState('');
+  const [users, setUsers] = useState<DirectoryUserItem[]>(MOCK_USERS_DIRECTORY);
+  
+  // Interactive Modals
+  const [restrictTarget, setRestrictTarget] = useState<DirectoryUserItem | null>(null);
+  const [restrictionReason, setRestrictionReason] = useState('');
 
   const canManageUsers = hasPermission('manage_users');
 
-  const filteredUsers = users.filter((u) => {
-    if (activeRoleFilter !== 'ALL' && u.role !== activeRoleFilter) return false;
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      return u.full_name.toLowerCase().includes(q) || u.phone.includes(q) || (u.email && u.email.toLowerCase().includes(q));
-    }
-    return true;
-  });
+  const handleToggleRestriction = () => {
+    if (!restrictTarget || !restrictionReason.trim()) return;
 
-  const handleToggleStatusInitiate = (user: ManagedUser) => {
-    setSelectedUser(user);
-    if (user.status === UserStatus.ACTIVE) {
-      setSuspendModalOpen(true);
-    } else {
-      // Re-activate immediately
-      setUsers((prev) =>
-        prev.map((u) => (u.id === user.id ? { ...u, status: UserStatus.ACTIVE } : u))
-      );
-      addAuditLog({
-        action_code: 'USER_ACCOUNT_REACTIVATE',
-        action_description: `Re-activated account for ${user.full_name} (${user.role})`,
-        target_id: user.id,
-        security_level: 'INFO',
-      });
-      setSelectedUser(null);
-    }
-  };
-
-  const handleConfirmSuspension = () => {
-    if (!selectedUser || !suspendReason.trim()) return;
-
-    setUsers((prev) =>
-      prev.map((u) => (u.id === selectedUser.id ? { ...u, status: UserStatus.SUSPENDED } : u))
-    );
+    const newStatus = restrictTarget.status === UserStatus.ACTIVE ? UserStatus.SUSPENDED : UserStatus.ACTIVE;
 
     addAuditLog({
-      action_code: 'USER_ACCOUNT_SUSPEND',
-      action_description: `Suspended account for ${selectedUser.full_name} (${selectedUser.role}). Reason: ${suspendReason}`,
-      target_id: selectedUser.id,
+      action_code: newStatus === UserStatus.SUSPENDED ? 'USER_ACCOUNT_SUSPEND' : 'USER_ACCOUNT_ACTIVATE',
+      action_description: `${newStatus === UserStatus.SUSPENDED ? 'Suspended' : 'Re-activated'} user account ${restrictTarget.full_name} (${restrictTarget.phone}). Reason: ${restrictionReason}`,
+      target_id: restrictTarget.id,
       security_level: 'WARNING',
     });
 
-    setSuspendModalOpen(false);
-    setSelectedUser(null);
-    setSuspendReason('');
+    setUsers((prev) =>
+      prev.map((u) => (u.id === restrictTarget.id ? { ...u, status: newStatus } : u))
+    );
+
+    setRestrictTarget(null);
+    setRestrictionReason('');
   };
+
+  const columns: Column<DirectoryUserItem>[] = [
+    {
+      key: 'full_name',
+      header: 'Full Name / Phone',
+      render: (item) => (
+        <div>
+          <span className="font-bold text-slate-900 block">{item.full_name}</span>
+          <span className="text-[11px] text-slate-500 font-medium">{item.phone}</span>
+        </div>
+      ),
+    },
+    {
+      key: 'email',
+      header: 'Email / City',
+      render: (item) => (
+        <div>
+          <span className="font-bold text-slate-800 block">{item.email || 'No email attached'}</span>
+          <span className="text-[11px] text-slate-400 font-medium">City: {item.city}</span>
+        </div>
+      ),
+    },
+    {
+      key: 'role',
+      header: 'Account Role',
+      render: (item) => <Badge variant="teal">{item.role}</Badge>,
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (item) => (
+        <Badge variant={item.status === UserStatus.ACTIVE ? 'success' : 'error'}>
+          {item.status}
+        </Badge>
+      ),
+    },
+    {
+      key: 'registered_at',
+      header: 'Registered Date',
+      render: (item) => <span className="font-mono text-slate-900 font-semibold">{item.registered_at}</span>,
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      align: 'right',
+      render: (item) => (
+        <div className="flex items-center justify-end space-x-2">
+          {canManageUsers && (
+            <Button
+              size="sm"
+              variant={item.status === UserStatus.ACTIVE ? 'secondary' : 'primary'}
+              onClick={() => setRestrictTarget(item)}
+            >
+              {item.status === UserStatus.ACTIVE ? 'Suspend' : 'Re-activate'}
+            </Button>
+          )}
+        </div>
+      ),
+    },
+  ];
 
   return (
     <PageContainer
-      title="User & Fleet RBAC Security Directory"
-      subtitle="Manage Accounts, Suspend High-Risk Accounts & Control Staff System Permissions"
+      title="Platform Users &amp; Global Directory Engine"
+      subtitle="Manage Multi-Sided Marketplace Accounts: Buyers, Store Merchants, Transporter Drivers &amp; System Personnel"
     >
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={() => setActiveRoleFilter('ALL')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
-              activeRoleFilter === 'ALL' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-            }`}
-          >
-            All Accounts ({users.length})
-          </button>
-          <button
-            onClick={() => setActiveRoleFilter(UserRole.BUYER)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
-              activeRoleFilter === UserRole.BUYER ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-            }`}
-          >
-            Buyers
-          </button>
-          <button
-            onClick={() => setActiveRoleFilter(UserRole.SELLER)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
-              activeRoleFilter === UserRole.SELLER ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-            }`}
-          >
-            Sellers
-          </button>
-          <button
-            onClick={() => setActiveRoleFilter(UserRole.TRANSPORTER)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
-              activeRoleFilter === UserRole.TRANSPORTER ? 'bg-amber-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-            }`}
-          >
-            Transporters
-          </button>
-          <button
-            onClick={() => setActiveRoleFilter(UserRole.STAFF)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
-              activeRoleFilter === UserRole.STAFF ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-            }`}
-          >
-            Staff Personnel
-          </button>
-        </div>
+      {/* Top Stat Cards Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <StatCard
+          title="TOTAL REGISTERED USERS"
+          value="14,250 Accounts"
+          change="Douala & Yaoundé"
+          changeType="positive"
+          icon={<Users className="w-5 h-5 text-teal-600" />}
+          iconBg="bg-teal-50"
+          description="E.164 phone verified accounts"
+        />
 
-        <div className="w-full md:w-72 relative">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Search by full name, phone, or email..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-          />
-        </div>
+        <StatCard
+          title="ACTIVE VERIFIED MERCHANTS"
+          value="1,840 Stores"
+          change="KYC Approved"
+          changeType="positive"
+          icon={<Building2 className="w-5 h-5 text-emerald-600" />}
+          iconBg="bg-emerald-50"
+          description="Active seller storefronts"
+        />
+
+        <StatCard
+          title="ON-DUTY TRANSPORTERS"
+          value="420 Drivers"
+          change="Permit Verified"
+          changeType="positive"
+          icon={<Bike className="w-5 h-5 text-blue-600" />}
+          iconBg="bg-blue-50"
+          description="Riders with active GPS telemetry"
+        />
+
+        <StatCard
+          title="FLAGGED RESTRICTED ACCOUNTS"
+          value="4 Suspended"
+          change="Under Investigation"
+          changeType="negative"
+          icon={<UserX className="w-5 h-5 text-red-600" />}
+          iconBg="bg-red-50"
+          description="Access suspended by staff"
+        />
       </div>
 
-      <Card className="p-0 overflow-hidden">
-        <table className="w-full text-left border-collapse text-xs">
-          <thead>
-            <tr className="bg-slate-50 border-b border-slate-200 font-bold text-slate-500 uppercase tracking-wider">
-              <th className="py-3.5 px-6">User / Employee</th>
-              <th className="py-3.5 px-6">Phone Number</th>
-              <th className="py-3.5 px-6">Email Address</th>
-              <th className="py-3.5 px-6">Assigned Role</th>
-              <th className="py-3.5 px-6">Account Status</th>
-              <th className="py-3.5 px-6">Joined Date</th>
-              <th className="py-3.5 px-6 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
-            {filteredUsers.map((user) => (
-              <tr key={user.id} className="hover:bg-slate-50/80 transition-colors">
-                <td className="py-4 px-6 font-bold text-slate-900">{user.full_name}</td>
-                <td className="py-4 px-6 font-mono">{user.phone}</td>
-                <td className="py-4 px-6 text-slate-500">{user.email || 'N/A'}</td>
-                <td className="py-4 px-6">
-                  <Badge variant={user.role === UserRole.STAFF ? 'info' : user.role === UserRole.SELLER ? 'teal' : 'amber'}>
+      {/* Advanced Reusable DataTable */}
+      <DataTable
+        data={users}
+        columns={columns}
+        searchPlaceholder="Search by name, phone, email, or city..."
+        pageSize={5}
+        emptyMessage="No matching user accounts found."
+      />
 
-                    {user.role}
-                  </Badge>
-                </td>
-                <td className="py-4 px-6">
-                  <Badge variant={user.status === UserStatus.ACTIVE ? 'success' : 'error'}>
-                    {user.status}
-                  </Badge>
-                </td>
-                <td className="py-4 px-6 text-slate-400">{user.joined_date}</td>
-                <td className="py-4 px-6 text-right">
-                  {canManageUsers && user.role !== UserRole.STAFF && (
-                    <Button
-                      size="sm"
-                      variant={user.status === UserStatus.ACTIVE ? 'danger' : 'outline'}
-                      onClick={() => handleToggleStatusInitiate(user)}
-                    >
-                      {user.status === UserStatus.ACTIVE ? 'Suspend Account' : 'Re-activate'}
-                    </Button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </Card>
+      {/* ACCOUNT RESTRICTION CONFIRMATION MODAL */}
+      {restrictTarget && (
+        <Modal
+          isOpen={Boolean(restrictTarget)}
+          onClose={() => setRestrictTarget(null)}
+          title={`Account Restriction — ${restrictTarget.full_name}`}
+        >
+          <div className="space-y-4 text-xs">
+            <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+              <span className="text-[10px] font-bold text-slate-500 uppercase block">TARGET USER ACCOUNT</span>
+              <h4 className="text-base font-bold text-slate-900 mt-1">{restrictTarget.full_name}</h4>
+              <p className="text-[11px] text-slate-500 font-medium">Phone: {restrictTarget.phone} • Role: {restrictTarget.role}</p>
+            </div>
 
-      {/* Account Suspension Confirmation Modal */}
-      <Modal isOpen={suspendModalOpen} onClose={() => setSuspendModalOpen(false)} title="Suspend User Account">
-        <div className="space-y-4 text-xs">
-          <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-start space-x-3">
-            <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-            <div className="text-red-900">
-              <p className="font-bold">Security Account Restriction</p>
-              <p className="mt-0.5 text-[11px]">
-                Suspending <strong className="font-extrabold">{selectedUser?.full_name}</strong> will revoke all active Sanctum tokens and block app access.
-              </p>
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">
+                Mandatory Staff Operational Reason *
+              </label>
+              <textarea
+                rows={3}
+                value={restrictionReason}
+                onChange={(e) => setRestrictionReason(e.target.value)}
+                placeholder="Specify reason (e.g. Fraud report, document mismatch, suspicious activity)..."
+                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-slate-400"
+              />
+            </div>
+
+            <div className="flex justify-end space-x-3 pt-3 border-t border-slate-100">
+              <Button variant="outline" onClick={() => setRestrictTarget(null)}>
+                Cancel
+              </Button>
+              <Button variant="primary" disabled={!restrictionReason.trim()} onClick={handleToggleRestriction}>
+                Confirm Status Update &amp; Log Audit
+              </Button>
             </div>
           </div>
-
-          <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">
-              Mandatory Suspension Reason &amp; Risk Notes *
-            </label>
-            <textarea
-              rows={3}
-              value={suspendReason}
-              onChange={(e) => setSuspendReason(e.target.value)}
-              placeholder="Specify compliance reason (e.g. Fraud dispute alert, invalid CNI submission)..."
-              className="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
-            />
-          </div>
-
-          <div className="flex justify-end space-x-3 pt-3 border-t border-slate-100">
-            <Button variant="outline" onClick={() => setSuspendModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button variant="danger" disabled={!suspendReason.trim()} onClick={handleConfirmSuspension}>
-              Confirm Suspension &amp; Record Audit
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        </Modal>
+      )}
     </PageContainer>
   );
 };

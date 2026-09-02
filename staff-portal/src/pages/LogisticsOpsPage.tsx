@@ -5,20 +5,16 @@ import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { StatCard } from '../components/ui/StatCard';
 import { Modal } from '../components/ui/Modal';
+import { DataTable, Column } from '../components/ui/DataTable';
 import { useStaffAuth } from '../stores/staffAuthStore';
 import {
   Truck,
-  MapPin,
-  Clock,
   ShieldAlert,
-  Search,
   CheckCircle2,
   Navigation,
   Radio,
-  UserCheck,
   AlertTriangle,
   PhoneCall,
-  Package,
 } from 'lucide-react';
 import { formatXAF } from '@wunabuy/utils';
 
@@ -93,7 +89,7 @@ const MOCK_ACTIVE_TRIPS: ActiveTripItem[] = [
     delivery_quarter: 'Bastos (Yaoundé Hub)',
     delivery_fee: 8500,
     stage: 4,
-    stage_name: 'Arrived at Destination (Awaiting Signature)',
+    stage_name: 'Arrived at Destination',
     distance_km: 18.5,
     elapsed_mins: 45,
     status: 'delivered',
@@ -105,7 +101,6 @@ const MOCK_ACTIVE_TRIPS: ActiveTripItem[] = [
 export const LogisticsOpsPage: React.FC = () => {
   const { user, addAuditLog, hasPermission } = useStaffAuth();
   const [trips, setTrips] = useState<ActiveTripItem[]>(MOCK_ACTIVE_TRIPS);
-  const [searchQuery, setSearchQuery] = useState('');
   
   // Interactive Modals
   const [detailsTrip, setDetailsTrip] = useState<ActiveTripItem | null>(null);
@@ -114,13 +109,6 @@ export const LogisticsOpsPage: React.FC = () => {
   const [overrideReason, setOverrideReason] = useState('');
 
   const canOverride = hasPermission('override_logistics');
-
-  const filteredTrips = trips.filter(
-    (t) =>
-      t.trip_code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.driver_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.store_name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   const handleManualOverride = () => {
     if (!overrideTarget || !overrideReason.trim()) return;
@@ -140,6 +128,93 @@ export const LogisticsOpsPage: React.FC = () => {
     setOverrideReason('');
     setOverrideTarget(null);
   };
+
+  const columns: Column<ActiveTripItem>[] = [
+    {
+      key: 'trip_code',
+      header: 'Trip Code',
+      render: (item) => <span className="font-mono font-bold text-slate-900">{item.trip_code}</span>,
+    },
+    {
+      key: 'driver_name',
+      header: 'Transporter Driver',
+      render: (item) => (
+        <div>
+          <span className="font-bold text-slate-900 block">{item.driver_name}</span>
+          <span className="text-[11px] text-slate-500 font-medium">{item.driver_vehicle}</span>
+        </div>
+      ),
+    },
+    {
+      key: 'store_name',
+      header: 'Store Pickup',
+      render: (item) => (
+        <div>
+          <span className="font-bold text-slate-800 block">{item.store_name}</span>
+          <span className="text-[11px] text-slate-400 font-medium">Hub: {item.pickup_quarter}</span>
+        </div>
+      ),
+    },
+    {
+      key: 'buyer_name',
+      header: 'Buyer Quarter',
+      render: (item) => (
+        <div>
+          <span className="font-bold text-slate-800 block">{item.buyer_name}</span>
+          <span className="text-[11px] text-slate-400 font-medium">Quarter: {item.delivery_quarter}</span>
+        </div>
+      ),
+    },
+    {
+      key: 'stage_name',
+      header: 'Current Stage',
+      render: (item) => (
+        <Badge variant={item.stage === 4 ? 'success' : item.stage === 3 ? 'teal' : 'amber'}>
+          Stage {item.stage}: {item.stage_name}
+        </Badge>
+      ),
+    },
+    {
+      key: 'distance_km',
+      header: 'Distance / Elapsed',
+      render: (item) => (
+        <div>
+          <span className="block font-bold text-slate-900">{item.distance_km} km</span>
+          <span className="text-[11px] text-slate-500 font-medium">{item.elapsed_mins} mins elapsed</span>
+        </div>
+      ),
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      align: 'right',
+      render: (item) => (
+        <div className="flex items-center justify-end space-x-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setDetailsTrip(item)}
+          >
+            <Navigation className="w-3.5 h-3.5 mr-1 text-slate-500" />
+            Details
+          </Button>
+
+          {canOverride && (
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => {
+                setOverrideTarget(item);
+                setOverrideModalOpen(true);
+              }}
+            >
+              Override
+            </Button>
+          )}
+        </div>
+      ),
+    },
+  ];
 
   return (
     <PageContainer
@@ -189,107 +264,26 @@ export const LogisticsOpsPage: React.FC = () => {
         />
       </div>
 
-      {/* Live Active Trips Telemetry Table */}
-      <Card>
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-          <div>
-            <h3 className="text-base font-extrabold text-slate-900 font-heading">
-              Live Delivery Trips Telemetry
-            </h3>
-            <p className="text-xs text-slate-500 font-medium">Real-time stage tracking &amp; spatial distance monitoring</p>
-          </div>
-
-          <div className="w-full sm:w-72 relative">
-            <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search by trip code, driver, or store..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-11 pr-4 py-2.5 text-xs bg-slate-100/80 border-none rounded-full focus:outline-none focus:ring-2 focus:ring-teal-500 font-medium"
-            />
-          </div>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-extrabold border-b border-slate-200/80">
-              <tr>
-                <th className="py-3.5 px-4">Trip Code</th>
-                <th className="py-3.5 px-4">Transporter Driver</th>
-                <th className="py-3.5 px-4">Store Pickup</th>
-                <th className="py-3.5 px-4">Buyer Quarter</th>
-                <th className="py-3.5 px-4">Current Stage</th>
-                <th className="py-3.5 px-4">Distance / Elapsed</th>
-                <th className="py-3.5 px-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
-              {filteredTrips.map((trip) => (
-                <tr key={trip.id} className="hover:bg-slate-50/80 transition-colors">
-                  <td className="py-4 px-4 font-mono font-extrabold text-teal-700">{trip.trip_code}</td>
-                  <td className="py-4 px-4">
-                    <span className="font-extrabold text-slate-900 block">{trip.driver_name}</span>
-                    <span className="text-[11px] text-slate-500">{trip.driver_vehicle}</span>
-                  </td>
-                  <td className="py-4 px-4">
-                    <span className="font-bold block">{trip.store_name}</span>
-                    <span className="text-[11px] text-slate-400">Hub: {trip.pickup_quarter}</span>
-                  </td>
-                  <td className="py-4 px-4">
-                    <span className="font-bold block">{trip.buyer_name}</span>
-                    <span className="text-[11px] text-slate-400">Quarter: {trip.delivery_quarter}</span>
-                  </td>
-                  <td className="py-4 px-4">
-                    <Badge variant={trip.stage === 4 ? 'success' : trip.stage === 3 ? 'teal' : 'amber'}>
-                      Stage {trip.stage}: {trip.stage_name}
-                    </Badge>
-                  </td>
-                  <td className="py-4 px-4">
-                    <span className="block font-extrabold">{trip.distance_km} km</span>
-                    <span className="text-[11px] text-slate-400 font-semibold">{trip.elapsed_mins} mins elapsed</span>
-                  </td>
-                  <td className="py-4 px-4 text-right space-x-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setDetailsTrip(trip)}
-                    >
-                      <Navigation className="w-3.5 h-3.5 mr-1 text-slate-600" />
-                      Details
-                    </Button>
-
-                    {canOverride && (
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => {
-                          setOverrideTarget(trip);
-                          setOverrideModalOpen(true);
-                        }}
-                      >
-                        Override
-                      </Button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
+      {/* Advanced Reusable DataTable */}
+      <DataTable
+        data={trips}
+        columns={columns}
+        searchPlaceholder="Search trip code, driver, store name, or quarter..."
+        pageSize={5}
+        emptyMessage="No active delivery trips found."
+      />
 
       {/* TRIP DETAILS & LIVE GPS TELEMETRY MODAL */}
       {detailsTrip && (
         <Modal isOpen={Boolean(detailsTrip)} onClose={() => setDetailsTrip(null)} title={`Live Trip Telemetry — ${detailsTrip.trip_code}`}>
           <div className="space-y-4 text-xs">
-            <div className="p-4 bg-teal-50 border border-teal-200 rounded-2xl flex items-center justify-between">
+            <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-between">
               <div>
-                <span className="text-[10px] font-extrabold text-teal-800 uppercase">DRIVER VEHICLE</span>
-                <h4 className="text-sm font-extrabold text-teal-950 mt-0.5">{detailsTrip.driver_name}</h4>
-                <p className="text-[11px] text-teal-700">{detailsTrip.driver_vehicle}</p>
+                <span className="text-[10px] font-bold text-slate-500 uppercase">DRIVER VEHICLE</span>
+                <h4 className="text-sm font-extrabold text-slate-900 mt-0.5">{detailsTrip.driver_name}</h4>
+                <p className="text-[11px] text-slate-600 font-medium">{detailsTrip.driver_vehicle}</p>
               </div>
-              <a href={`tel:${detailsTrip.driver_phone}`} className="px-3 py-1.5 rounded-full bg-teal-600 text-white font-bold flex items-center space-x-1 hover:bg-teal-700">
+              <a href={`tel:${detailsTrip.driver_phone}`} className="px-3.5 py-1.5 rounded-full bg-slate-900 text-white font-bold flex items-center space-x-1.5 hover:bg-slate-800 transition-colors">
                 <PhoneCall className="w-3.5 h-3.5" />
                 <span>Call Rider</span>
               </a>
@@ -299,19 +293,19 @@ export const LogisticsOpsPage: React.FC = () => {
               <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
                 <span className="text-[10px] text-slate-400 font-bold uppercase">STORE PICKUP LOCATION</span>
                 <p className="font-bold text-slate-900 mt-0.5">{detailsTrip.store_name}</p>
-                <p className="text-[11px] text-slate-500">{detailsTrip.pickup_quarter}, Douala</p>
+                <p className="text-[11px] text-slate-500 font-medium">{detailsTrip.pickup_quarter}, Douala</p>
               </div>
 
               <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
                 <span className="text-[10px] text-slate-400 font-bold uppercase">BUYER DELIVERY DESTINATION</span>
                 <p className="font-bold text-slate-900 mt-0.5">{detailsTrip.buyer_name}</p>
-                <p className="text-[11px] text-slate-500">{detailsTrip.delivery_quarter}, Douala</p>
+                <p className="text-[11px] text-slate-500 font-medium">{detailsTrip.delivery_quarter}, Douala</p>
               </div>
             </div>
 
             <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
               <span className="text-[10px] text-slate-400 font-bold uppercase">GPS SPATIAL TELEMETRY</span>
-              <p className="font-mono text-xs text-slate-800 font-bold mt-0.5">
+              <p className="font-mono text-xs text-slate-900 font-bold mt-0.5">
                 Lat: {detailsTrip.latitude.toFixed(4)}, Lng: {detailsTrip.longitude.toFixed(4)} • Speed: 32 km/h
               </p>
             </div>
@@ -331,27 +325,27 @@ export const LogisticsOpsPage: React.FC = () => {
         onClose={() => setOverrideModalOpen(false)}
         title={`Logistics Manual Override — ${overrideTarget?.trip_code}`}
       >
-        <div className="space-y-4">
-          <div className="p-3 bg-amber-50 border border-amber-200 rounded-2xl flex items-start space-x-3">
-            <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-            <div className="text-xs text-amber-800">
+        <div className="space-y-4 text-xs">
+          <div className="p-3 bg-slate-100 border border-slate-200 rounded-2xl flex items-start space-x-3">
+            <AlertTriangle className="w-5 h-5 text-slate-700 flex-shrink-0 mt-0.5" />
+            <div className="text-slate-700">
               <p className="font-bold">Staff Operational Intervention</p>
-              <p className="mt-0.5">
+              <p className="mt-0.5 text-slate-500 font-medium">
                 Overriding this delivery trip will mark the package as verified delivered in the system ledger under staff record ({user?.employee_id}).
               </p>
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">
+            <label className="block font-bold text-slate-700 mb-1">
               Mandatory Override Reason &amp; Dispatch Notes *
             </label>
             <textarea
               rows={3}
               value={overrideReason}
               onChange={(e) => setOverrideReason(e.target.value)}
-              placeholder="Specify operational reason (e.g. Phone loss confirmed by merchant, manual paper proof-of-delivery verified)..."
-              className="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500"
+              placeholder="Specify operational reason (e.g. Phone loss confirmed by merchant)..."
+              className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-slate-400"
             />
           </div>
 
