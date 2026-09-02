@@ -412,7 +412,7 @@ The mobile app incorporates three distinct role views in a single codebase with 
 - **Seller Bottom Tab Navigator (`SellerTabNavigator.tsx`)**: 5 primary tabs (`Dashboard`, `Products`, `Orders`, `Wallet`, `Profile`) styled with unified Emerald Teal active tint (`#0D9488`), `56px + bottomInset` height, and elevation `10`.
 
 
-#### 3. Transport Provider Flow
+#### 3. Transport Provider Flow — Wunabuy Express v2.0
 - **Transporter Welcome (`TransporterWelcomeScreen`)**: Logo-free modern header, live status badge (`TRANSPORTER FLEET`), 70% automated hero benefit carousel with exact screen-width snapping, 4 Transport Modality Cards (`Bike 🏍️`, `Taxi 🚕`, `Van 🚐`, `Plane ✈️`), and 20% capsule CTA button (`Start Driver Verification ➔`).
 - **Driver KYC Form (`TransporterKYCScreen`)**:
   - 4-stage driver verification form with 80% form / 20% action button split and animated progress bar (`25%` -> `100%`).
@@ -422,28 +422,32 @@ The mobile app incorporates three distinct role views in a single codebase with 
   - Stage 4: Vehicle Carte Grise registration photo, insurance certificate photo, and exterior vehicle photo with license plate visible.
   - Stage 5: 24-hour compliance queue celebration modal (redirects smoothly back to Buyer Home Dashboard on completion).
 - **Available Delivery Jobs Feed (`TransporterJobsScreen`)**:
-  - **Top Header AppBar**: 3-strokes hamburger drawer trigger (`☰`) opening `TransporterSidebarDrawer`. Notification Bell (`🔔`), Duty Status Badge (`🟢 ONLINE`), and Buyer Mode Cart Shortcut (`🛒`) all aligned on the same top line.
+  - **Clean Header AppBar**: 3-strokes hamburger drawer trigger (`☰`) anchored to the **LEFT** opening `TransporterSidebarDrawer`. Notification Bell (`🔔`) and Buyer Mode Cart Shortcut (`🛒`) aligned on top.
   - **Fleet Telemetry Subtitle Stack**: Eyebrow `FLEET DISPATCH • DOUALA SECTOR` and screen title.
   - **Modality & Radius Filter Chips Bar**: `All Offers`, `< 2km Nearby 📍`, and `High Pay 💰`.
-  - **Interactive Job Cards**: Store pickup address, buyer drop-off location, delivery fee in XAF, distance away in km, item package summary, and 1-tap `Accept Job ➔` modal trigger.
+  - **Interactive Route Inspection Modal**: `"Inspect GPS Map & Shortest Route 🗺️"` modal rendering `LiveTrackingMap` with driver position, store pickup, buyer doorstep, distance away, and route ETA.
+  - **Dedicated Driver Payout Banner**: Full-width highlight card (`DRIVER PAYOUT`) formatted in XAF (`1 500 FCFA` in `colors.primary[600]`) with `overflow: 'hidden'` and `minHeight: 44px` for optimal grid fit.
+  - **Flexible Action Buttons Row**: `"Not Interested ✖"` outline button and `"Accept Job ➔"` primary teal button positioned on a separate, spacious row below the payout banner for maximum adaptability across mobile screen sizes.
 - **Active 4-Stage Dispatch Navigation (`TransporterActiveTripScreen`)**:
+  - **Clean Header AppBar**: Minimalist order code title (`ACTIVE TRIP • #WB-2026-9842`) and back button with zero error clutter.
+  - **Items Details Grid Wrapping**: Flexible item container (`flex: 1`, `marginRight`) ensuring long text like `"1x Samsung Galaxy A54 5G (Package size: Small)"` fits within grid bounds without clipping.
   - **Stage 1: Store Pickup Navigation**: Interactive map, store address, direct call store trigger (`+237 670 111 222`), and `Arrived at Store` action button.
   - **Stage 2: Merchant Package Verification**: Renders merchant handover verification PIN (`7842`), package inspection check, and `Confirm Package Picked Up & Start Ride` button.
   - **Stage 3: Buyer Doorstep Navigation**: Buyer address, live ETA countdown, direct call customer trigger (`+237 690 333 444`), and `Arrived at Doorstep` button.
   - **Stage 4: Customer Digital Signature & POD**: Digital signature capture pad (`DigitalSignatureModal`), photo proof, and instant 1,500 FCFA escrow release to driver wallet.
-  - **Driver Emergency SOS**: 1-tap emergency safety trigger contacting 24/7 dispatch hotline (`800-WUNABUY-SOS`).
-- **Driver Wallet & MoMo Cashout (`TransporterEarningsScreen`)**: Available cashout balance card with privacy eye toggle (`👁`), locked escrow pending delivery indicator, MTN MoMo (`*126#`) and Orange Money (`#150#`) instant cashout modal with 1% telecom fee calculator and quick percentage chips (`25%`, `50%`, `75%`, `Max`), driver shift telemetry cards (248 completed trips, 4.95 ★ rating, 3,500 FCFA tips), and categorized transaction ledger.
+- **Driver Wallet & MoMo Cashout (`TransporterEarningsScreen`)**: Emerald Teal cashout balance card with privacy eye toggle (`👁`), locked escrow pending delivery indicator, MTN MoMo (`*126#`) and Orange Money (`#150#`) instant cashout modal with 1% telecom fee calculator and quick percentage chips (`25%`, `50%`, `75%`, `Max`), driver shift telemetry cards (248 completed trips, 4.95 ★ rating, 3,500 FCFA tips), and categorized transaction ledger.
 - **Dedicated Driver Profile Screen ([`TransporterProfileScreen.tsx`](file:///c:/Users/HP/Desktop/wunabuy%20mobile%20project/wunabuy/mobile/src/screens/transporter/TransporterProfileScreen.tsx))**:
   - Mounted on Tab 4 (`TransporterProfile`) of `TransporterTabNavigator`.
   - Driver photo with camera picker modal, Driver name & ID (`DRV-2026-884`), vehicle plate (`LT-214-AA`), verified rider badge (`✓ VERIFIED RIDER`), settings gear shortcut.
-  - Driver wallet quick-access banner with Available & Escrow pending balances.
+  - Driver wallet quick-access banner with Available & Escrow pending balances in Emerald Teal.
   - Dispatch queue status grid (`Offers`, `Pickup`, `En Route`, `Delivered`).
   - Fleet management tools grid (`Driver KYC`, `GPS Hub`, `Alerts`, `Driver SOS`).
-  - Active registered vehicle details card (`Yamaha YBR 125 🏍️ • Akwa Hub, Douala`).
-  - 1-Tap Switch to Buyer Workspace card.
-- **Transporter Sidebar Drawer ([`TransporterSidebarDrawer.tsx`](file:///c:/Users/HP/Desktop/wunabuy%20mobile%20project/wunabuy/mobile/src/components/navigation/TransporterSidebarDrawer.tsx))**:
-  - Slide-out navigation drawer featuring top driver profile header, `🟢 ONLINE • RECEIVING JOBS` toggle switch, fleet driver rating (`4.95 ★`), vehicle plate, 1-tap workspace switchers (`🛒 Shop as Buyer`, `🏪 Store Owner (Sell)`), driver wallet overview, fleet operation links, dark mode toggle, and logout.
-- **Transporter Bottom Tab Navigator (`TransporterTabNavigator.tsx`)**: 4 primary tabs (`Job Feed`, `Active Trip`, `Earnings`, `Profile`) styled with Warm Amber / Slate active tint (`#F59E0B`), `54px + bottomInset` height, and elevation `10`.
+  - **Structured Vehicle Specs Grid**: 2-column grid showing License Plate (`LT-214-AA`), Sector (`Akwa / Bonanjo`), Insurance Status (`Active Dec 2026`), and Fleet Permit (`Douala Council`).
+  - 1-Tap Switch to Buyer & Seller Workspace cards.
+- **Left-Anchored Transporter Sidebar Drawer ([`TransporterSidebarDrawer.tsx`](file:///c:/Users/HP/Desktop/wunabuy%20mobile%20project/wunabuy/mobile/src/components/navigation/TransporterSidebarDrawer.tsx))**:
+  - Slide-out navigation drawer anchored to the **LEFT** side of the screen featuring top driver profile header, `🟢 ONLINE • RECEIVING JOBS` toggle switch, fleet driver rating (`4.95 ★`), vehicle plate, 1-tap workspace switchers (`🛒 Shop as Buyer`, `🏪 Store Owner (Sell)`), driver wallet overview, fleet operation links, dark mode toggle, and logout.
+- **Transporter Bottom Tab Navigator (`TransporterTabNavigator.tsx`)**: 4 primary tabs (`Job Feed`, `Active Trip`, `Earnings`, `Profile`) styled with unified Emerald Teal active tint (`#0D9488`), `54px + bottomInset` height, and elevation `10`.
+
 
 
 ---
