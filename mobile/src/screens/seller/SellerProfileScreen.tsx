@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -51,10 +51,27 @@ export const SellerProfileScreen = ({ navigation }: any) => {
   const readyPickupCount = orders.filter((o) => o.status === 'ready_for_pickup').length;
   const inTransitCount = orders.filter((o) => o.status === 'in_transit').length;
 
-  const handleRefresh = useCallback(() => {
-    setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 800);
+  const loadProfileData = useCallback(async () => {
+    try {
+      await Promise.all([
+        SellerService.getStoreDashboard(),
+        KYCService.getStoreKYCStatus(),
+      ]);
+    } catch {
+      // Offline fallback
+    }
   }, []);
+
+  useEffect(() => {
+    loadProfileData();
+  }, [loadProfileData]);
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadProfileData();
+    setRefreshing(false);
+  }, [loadProfileData]);
+
 
   const handleCopyAccount = () => {
     setCopiedNotification(true);

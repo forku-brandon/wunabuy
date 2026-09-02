@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   FlatList,
@@ -15,6 +15,7 @@ import { useSellerStore, SellerTransaction } from '../../stores/seller.store';
 import { useThemeStore } from '../../stores/theme.store';
 import { formatXAF, formatDate } from '@wunabuy/utils';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
+import { SellerService } from '../../services/api';
 
 type LedgerFilter = 'all' | 'payout' | 'escrow_release' | 'commission_deduction';
 
@@ -41,12 +42,23 @@ export const SellerWalletScreen = ({ navigation }: any) => {
   const [payoutAmount, setPayoutAmount] = useState('');
   const [isSubmittingPayout, setIsSubmittingPayout] = useState(false);
 
-  const handleRefresh = useCallback(() => {
-    setRefreshing(true);
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 600);
+  const loadDashboardData = useCallback(async () => {
+    try {
+      await SellerService.getStoreDashboard();
+    } catch {
+      // Offline fallback
+    }
   }, []);
+
+  useEffect(() => {
+    loadDashboardData();
+  }, [loadDashboardData]);
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadDashboardData();
+    setRefreshing(false);
+  }, [loadDashboardData]);
 
   const filteredTransactions = transactions.filter((t) => {
     if (activeFilter === 'all') return true;
@@ -62,7 +74,7 @@ export const SellerWalletScreen = ({ navigation }: any) => {
     setPayoutAmount(String(amount));
   };
 
-  const handleConfirmPayout = () => {
+  const handleConfirmPayout = async () => {
     if (parsedAmount <= 0) {
       setToastMessage('Please enter a valid payout amount.');
       return;
@@ -73,16 +85,24 @@ export const SellerWalletScreen = ({ navigation }: any) => {
     }
 
     setIsSubmittingPayout(true);
-    setTimeout(() => {
+    try {
+      const apiRes = await SellerService.requestPayout({
+        amount: parsedAmount,
+        phone: payoutPhone,
+        provider: payoutProvider,
+      });
       const res = requestPayout(parsedAmount, payoutPhone, payoutProvider);
       setIsSubmittingPayout(false);
       setIsPayoutModalVisible(false);
       setPayoutAmount('');
-      if (res.success) {
-        setToastMessage(`Payout request submitted! Ref: ${res.reference}`);
-      }
-    }, 800);
+      const refCode = apiRes.reference || res.reference;
+      setToastMessage(`Payout request submitted! Ref: ${refCode}`);
+    } catch (err: any) {
+      setIsSubmittingPayout(false);
+      setToastMessage('Payout failed. Please check network connection.');
+    }
   };
+
 
   const ListHeader = (
     <>
