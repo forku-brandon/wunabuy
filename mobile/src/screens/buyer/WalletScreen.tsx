@@ -909,9 +909,10 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
   balanceAmount: {
-    fontSize: 28,
-    lineHeight: 34,
+    fontSize: 24,
+    lineHeight: 30,
   },
+
   eyeBtn: {
     marginTop: 2,
   },
@@ -1234,9 +1235,10 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   dialCodeText: {
-    fontSize: 30,
-    letterSpacing: 3,
+    fontSize: 24,
+    letterSpacing: 2,
   },
+
   dialHint: {
     lineHeight: 17,
     textAlign: 'center',

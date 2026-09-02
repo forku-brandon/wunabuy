@@ -905,11 +905,12 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   greetingTitle: {
-    fontSize: 24,
-    lineHeight: 28,
+    fontSize: 21,
+    lineHeight: 26,
     letterSpacing: -0.5,
     marginBottom: 2,
   },
+
   greetingSubtitle: {
     fontSize: 12,
     lineHeight: 16,
@@ -1029,11 +1030,12 @@ const styles = StyleSheet.create({
     opacity: 0.9,
   },
   balanceMainText: {
-    fontSize: 32,
-    lineHeight: 38,
+    fontSize: 25,
+    lineHeight: 30,
     fontWeight: '800',
     letterSpacing: -0.5,
   },
+
   escrowSubBadgeRow: {
     marginTop: spacing.xs,
   },

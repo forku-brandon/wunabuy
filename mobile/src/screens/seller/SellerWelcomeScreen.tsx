@@ -279,10 +279,11 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
   },
   heroTitle: {
-    fontSize: 26,
-    lineHeight: 32,
+    fontSize: 22,
+    lineHeight: 28,
     marginBottom: spacing.sm,
   },
+
   heroSubtitle: {
     fontSize: 13,
     lineHeight: 20,

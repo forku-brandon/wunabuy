@@ -362,10 +362,11 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   pinCodeText: {
-    letterSpacing: 8,
-    fontSize: 28,
+    letterSpacing: 6,
+    fontSize: 22,
     marginVertical: spacing.xs,
   },
+
   stageActionBtn: {
     marginTop: spacing.xs,
   },

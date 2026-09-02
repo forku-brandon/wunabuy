@@ -12,26 +12,27 @@ export const fontFamilies = {
 } as const;
 
 export const fontSizes = {
-  display: 32,
-  h1: 24,
-  h2: 20,
-  h3: 18,
-  bodyLarge: 16,
-  bodyMedium: 14,
-  caption: 12,
+  display: 25,
+  h1: 21,
+  h2: 18,
+  h3: 16,
+  bodyLarge: 15,
+  bodyMedium: 13.5,
+  caption: 11.5,
   overline: 10,
 } as const;
 
 export const lineHeights = {
-  display: 40,
-  h1: 32,
-  h2: 28,
-  h3: 26,
-  bodyLarge: 24,
-  bodyMedium: 20,
+  display: 32,
+  h1: 27,
+  h2: 24,
+  h3: 22,
+  bodyLarge: 20,
+  bodyMedium: 18,
   caption: 16,
   overline: 14,
 } as const;
+
 
 export const fontWeights = {
   bold: '700' as const,

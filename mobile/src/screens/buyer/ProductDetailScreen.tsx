@@ -716,8 +716,9 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   priceText: {
-    fontSize: 26,
+    fontSize: 22,
   },
+
   struckPrice: {
     textDecorationLine: 'line-through',
   },
