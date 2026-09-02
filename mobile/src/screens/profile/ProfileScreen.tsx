@@ -446,74 +446,48 @@ export const ProfileScreen = ({ navigation }: any) => {
 
       {/* Partner Opportunities Dual Banner Cards */}
       <View style={styles.partnerCardsRow}>
-        {activeRole === UserRole.SELLER ? (
-          /* When in Seller Mode: Show 1-Tap Switch to Buyer Workspace */
-          <TouchableOpacity
-            activeOpacity={0.88}
-            onPress={() => {
-              useAuthStore.getState().setActiveRole(UserRole.BUYER);
-              AuthService.switchRole(UserRole.BUYER);
-            }}
-            style={[
-              styles.partnerBannerCard,
-              {
-                backgroundColor: isDark ? colors.neutral[800] : colors.primary[50],
-                borderColor: isDark ? 'rgba(13, 148, 136, 0.3)' : colors.primary[200],
-              },
-            ]}
-          >
-            <View style={[styles.partnerBannerIcon, { backgroundColor: colors.primary[500] }]}>
-              <Ionicons name="cart" size={18} color={colors.neutral[0]} />
-            </View>
-            <View style={styles.partnerBannerTextCol}>
-              <Text variant="bodyMedium" bold color={colors.primary[700]}>
-                Buyer Workspace
-              </Text>
-              <Text variant="caption" secondary numberOfLines={1}>
-                Shop on Wunabuy ➔
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={16} color={colors.primary[500]} />
-          </TouchableOpacity>
-        ) : (
-          /* When in Buyer Mode: Show 1-Tap Switch to Seller Workspace */
-          <TouchableOpacity
-            activeOpacity={0.88}
-            onPress={() => {
+
+        {/* Become a Seller */}
+        <TouchableOpacity
+
+          activeOpacity={0.88}
+          onPress={() => {
+            const isGranted = user?.role === UserRole.SELLER || user?.available_roles?.includes(UserRole.SELLER) || true;
+            if (isGranted) {
               useAuthStore.getState().setActiveRole(UserRole.SELLER);
               AuthService.switchRole(UserRole.SELLER);
-            }}
-            style={[
-              styles.partnerBannerCard,
-              {
-                backgroundColor: isDark ? colors.neutral[800] : '#EFF6FF',
-                borderColor: isDark ? 'rgba(37, 99, 235, 0.3)' : '#BFDBFE',
-              },
-            ]}
-          >
-            <View style={[styles.partnerBannerIcon, { backgroundColor: colors.role.seller }]}>
-              <Ionicons name="storefront" size={18} color={colors.neutral[0]} />
-            </View>
-            <View style={styles.partnerBannerTextCol}>
-              <Text variant="bodyMedium" bold color={colors.role.seller}>
-                Seller Workspace
-              </Text>
-              <Text variant="caption" secondary numberOfLines={1}>
-                Manage Store ➔
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={16} color={colors.role.seller} />
-          </TouchableOpacity>
-        )}
+            } else {
+              navigation.navigate('SellerWelcome');
+            }
+          }}
+          style={[
+            styles.partnerBannerCard,
+            {
+              backgroundColor: isDark ? colors.neutral[800] : '#EFF6FF',
+              borderColor: isDark ? 'rgba(37, 99, 235, 0.3)' : '#BFDBFE',
+            },
+          ]}
+        >
+          <View style={[styles.partnerBannerIcon, { backgroundColor: colors.role.seller }]}>
+            <Ionicons name="storefront" size={18} color={colors.neutral[0]} />
+          </View>
+          <View style={styles.partnerBannerTextCol}>
+            <Text variant="bodyMedium" bold color={colors.role.seller}>
+              Become a Seller
+            </Text>
+            <Text variant="caption" secondary numberOfLines={1}>
+              Sell products online
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={16} color={colors.role.seller} />
+        </TouchableOpacity>
 
-        {/* Transporter Workspace / Deliver & Earn */}
+        {/* Become a Transporter */}
         <TouchableOpacity
           activeOpacity={0.88}
           onPress={() => {
-            if (activeRole === UserRole.TRANSPORTER) {
-              useAuthStore.getState().setActiveRole(UserRole.BUYER);
-              AuthService.switchRole(UserRole.BUYER);
-            } else if (user?.role === UserRole.TRANSPORTER || user?.available_roles?.includes(UserRole.TRANSPORTER) || true) {
+            const isGranted = user?.role === UserRole.TRANSPORTER || user?.available_roles?.includes(UserRole.TRANSPORTER) || true;
+            if (isGranted) {
               useAuthStore.getState().setActiveRole(UserRole.TRANSPORTER);
               AuthService.switchRole(UserRole.TRANSPORTER);
             } else {
@@ -533,14 +507,15 @@ export const ProfileScreen = ({ navigation }: any) => {
           </View>
           <View style={styles.partnerBannerTextCol}>
             <Text variant="bodyMedium" bold color={colors.role.transporter}>
-              {activeRole === UserRole.TRANSPORTER ? 'Buyer Workspace' : 'Transporter Workspace'}
+              Become a Transporter
             </Text>
             <Text variant="caption" secondary numberOfLines={1}>
-              {activeRole === UserRole.TRANSPORTER ? 'Shop on Wunabuy ➔' : 'Rider Mode (Active Access) ➔'}
+              Deliver &amp; earn income
             </Text>
           </View>
           <Ionicons name="chevron-forward" size={16} color={colors.role.transporter} />
         </TouchableOpacity>
+
       </View>
 
 

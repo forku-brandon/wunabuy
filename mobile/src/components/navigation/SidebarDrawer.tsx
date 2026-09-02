@@ -153,17 +153,18 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({
               <Ionicons name="chevron-forward" size={18} color={colors.primary[500]} />
             </TouchableOpacity>
 
-            {/* Section 1: Partner Workspaces & Opportunities */}
+            {/* Section 1: Partner Services */}
             <Text variant="caption" bold color={theme.textSecondary} style={styles.sectionTitle}>
-              PARTNER WORKSPACES
+              PARTNER SERVICES
             </Text>
 
-            {/* Seller Workspace / Become a Seller */}
+            {/* Become a Seller */}
             <TouchableOpacity
-              activeOpacity={0.82}
+              activeOpacity={0.8}
               onPress={() => {
                 onClose();
-                if (user?.role === UserRole.SELLER || user?.available_roles?.includes(UserRole.SELLER) || true) {
+                const isGranted = user?.role === UserRole.SELLER || user?.available_roles?.includes(UserRole.SELLER) || true;
+                if (isGranted) {
                   useAuthStore.getState().setActiveRole(UserRole.SELLER);
                   AuthService.switchRole(UserRole.SELLER);
                 } else {
@@ -179,25 +180,23 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({
                 <Ionicons name="storefront" size={20} color={colors.neutral[0]} />
               </View>
               <View style={styles.menuTextCol}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <Text variant="bodyLarge" bold>
-                    Seller Workspace
-                  </Text>
-                  <Badge label="ACTIVE ACCESS" variant="primary" size="small" />
-                </View>
+                <Text variant="bodyLarge" bold>
+                  Become a Seller
+                </Text>
                 <Text variant="caption" secondary numberOfLines={1}>
-                  Switch to Seller Mode (Manage Store) ➔
+                  Sell products &amp; manage store online
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color={theme.placeholder} />
             </TouchableOpacity>
 
-            {/* Transporter Workspace / Become a Transporter */}
+            {/* Become a Transporter */}
             <TouchableOpacity
-              activeOpacity={0.82}
+              activeOpacity={0.8}
               onPress={() => {
                 onClose();
-                if (user?.role === UserRole.TRANSPORTER || user?.available_roles?.includes(UserRole.TRANSPORTER) || true) {
+                const isGranted = user?.role === UserRole.TRANSPORTER || user?.available_roles?.includes(UserRole.TRANSPORTER) || true;
+                if (isGranted) {
                   useAuthStore.getState().setActiveRole(UserRole.TRANSPORTER);
                   AuthService.switchRole(UserRole.TRANSPORTER);
                 } else {
@@ -213,18 +212,16 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({
                 <Ionicons name="bicycle" size={20} color={colors.neutral[0]} />
               </View>
               <View style={styles.menuTextCol}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <Text variant="bodyLarge" bold>
-                    Transporter Workspace
-                  </Text>
-                  <Badge label="ACTIVE ACCESS" variant="warning" size="small" />
-                </View>
+                <Text variant="bodyLarge" bold>
+                  Become a Transporter
+                </Text>
                 <Text variant="caption" secondary numberOfLines={1}>
-                  Switch to Rider Mode (Accept Trips) ➔
+                  Deliver packages &amp; earn daily income
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color={theme.placeholder} />
             </TouchableOpacity>
+
 
 
             <View style={[styles.dividerLine, { backgroundColor: theme.border }]} />

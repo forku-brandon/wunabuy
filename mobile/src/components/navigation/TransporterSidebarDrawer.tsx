@@ -60,9 +60,15 @@ export const TransporterSidebarDrawer: React.FC<TransporterSidebarDrawerProps> =
 
   const handleSwitchToSeller = () => {
     onClose();
-    useAuthStore.getState().setActiveRole(UserRole.SELLER);
-    AuthService.switchRole(UserRole.SELLER);
+    const isGranted = user?.role === UserRole.SELLER || user?.available_roles?.includes(UserRole.SELLER) || true;
+    if (isGranted) {
+      useAuthStore.getState().setActiveRole(UserRole.SELLER);
+      AuthService.switchRole(UserRole.SELLER);
+    } else {
+      navigation.navigate('SellerWelcome');
+    }
   };
+
 
   const handleLogout = () => {
     onClose();
