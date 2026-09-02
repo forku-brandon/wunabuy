@@ -1,11 +1,45 @@
 import React, { useState } from 'react';
-import { Search, Bell, LogOut, ShieldCheck, UserCheck, ChevronDown, Calendar, MessageSquare, Gift, Settings } from 'lucide-react';
+import { Search, Bell, LogOut, ShieldCheck, UserCheck, ChevronDown, Calendar, MessageSquare, Gift, Settings, CheckCircle2, Send } from 'lucide-react';
 import { useStaffAuth, DEMO_STAFF_PERSONAS } from '../../stores/staffAuthStore';
+import { Modal } from '../ui/Modal';
+import { Button } from '../ui/Button';
 
 export const Header: React.FC = () => {
-  const { user, logout, switchPersona } = useStaffAuth();
+  const { user, logout, switchPersona, addAuditLog } = useStaffAuth();
   const [isPersonaMenuOpen, setIsPersonaMenuOpen] = useState(false);
+  
+  // Header Interactive Modals & Drawers State
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [rewardsOpen, setRewardsOpen] = useState(false);
+  const [filterPeriodOpen, setFilterPeriodOpen] = useState(false);
+
+  const [selectedPeriod, setSelectedPeriod] = useState('This Week (2026)');
+  const [notificationsCount, setNotificationsCount] = useState(12);
+  const [chatMessageInput, setChatMessageInput] = useState('');
+  const [chatMessages, setChatMessages] = useState([
+    { sender: 'Douala Tech Hub (Merchant)', text: 'Hello staff support, my payout of 850k FCFA is pending.', time: '10 mins ago' },
+    { sender: 'Jean-Paul Nkoum (Rider)', text: 'Arrived at Akwa store for pickup #WB-TRIP-9842.', time: '25 mins ago' },
+  ]);
+
+  const handleMarkAllRead = () => {
+    setNotificationsCount(0);
+    addAuditLog({
+      action_code: 'NOTIFICATIONS_MARK_READ',
+      action_description: 'Marked all system notifications as read',
+      security_level: 'INFO',
+    });
+  };
+
+  const handleSendChatMessage = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!chatMessageInput.trim()) return;
+    setChatMessages((prev) => [
+      ...prev,
+      { sender: `Staff (${user?.full_name})`, text: chatMessageInput, time: 'Just now' },
+    ]);
+    setChatMessageInput('');
+  };
 
   return (
     <header className="h-20 bg-white border-b border-slate-100 px-8 flex items-center justify-between flex-shrink-0 relative z-30 shadow-xs">
@@ -21,42 +55,53 @@ export const Header: React.FC = () => {
 
       {/* Center: Top Bar Quick Navigation Links */}
       <div className="hidden xl:flex items-center space-x-6 text-xs font-bold text-slate-500">
-        <span className="hover:text-slate-900 cursor-pointer">Socials</span>
-        <span className="flex items-center text-teal-600 font-extrabold cursor-pointer">
+        <span className="hover:text-slate-900 cursor-pointer" onClick={() => setChatOpen(true)}>Support Chat</span>
+        <span className="flex items-center text-teal-600 font-extrabold cursor-pointer" onClick={() => setFilterPeriodOpen(true)}>
           <span className="w-2 h-2 rounded-full bg-emerald-500 mr-1.5 animate-pulse" />
-          Live Node
+          Live Node ({selectedPeriod})
         </span>
-        <span className="hover:text-slate-900 cursor-pointer">Reports</span>
-        <span className="hover:text-slate-900 cursor-pointer">Escrow Ledger</span>
+        <span className="hover:text-slate-900 cursor-pointer" onClick={() => setRewardsOpen(true)}>Rewards Engine</span>
       </div>
 
-      {/* Right: Actions Group (Icons with Number Badges, Date Filter Pill, Persona Switcher) */}
+      {/* Right: Actions Group */}
       <div className="flex items-center space-x-3">
-        {/* Date Filter Pill Button (Inspired by Reference Design "Filter Periode") */}
-        <button className="hidden sm:flex items-center space-x-2 px-4 py-2 rounded-full bg-teal-600 text-white text-xs font-bold shadow-sm hover:bg-teal-700 transition-colors">
+        {/* Date Filter Pill Button */}
+        <button
+          onClick={() => setFilterPeriodOpen(true)}
+          className="hidden sm:flex items-center space-x-2 px-4 py-2 rounded-full bg-teal-600 text-white text-xs font-bold shadow-sm hover:bg-teal-700 transition-colors"
+        >
           <Calendar className="w-3.5 h-3.5" />
-          <span>Filter Period</span>
+          <span>{selectedPeriod}</span>
         </button>
 
-        {/* Action Icon 1: Bell Notifications (Badge: 12) */}
+        {/* Action Icon 1: Bell Notifications (Badge) */}
         <div className="relative">
           <button
             onClick={() => setNotificationsOpen(!notificationsOpen)}
             className="w-10 h-10 rounded-full bg-slate-100/80 hover:bg-slate-200/80 flex items-center justify-center text-slate-600 relative transition-colors"
           >
             <Bell className="w-4 h-4" />
-            <span className="absolute -top-1 -right-1 w-5 h-5 bg-teal-600 text-white font-extrabold text-[10px] rounded-full flex items-center justify-center shadow-xs">
-              12
-            </span>
+            {notificationsCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-5 h-5 bg-teal-600 text-white font-extrabold text-[10px] rounded-full flex items-center justify-center shadow-xs">
+                {notificationsCount}
+              </span>
+            )}
           </button>
 
           {notificationsOpen && (
             <div className="absolute right-0 mt-2 w-80 bg-white rounded-3xl shadow-2xl border border-slate-100 py-3 z-50">
               <div className="px-5 py-2 border-b border-slate-100 flex items-center justify-between">
                 <span className="text-xs font-extrabold text-slate-900 font-heading">Operational Alerts</span>
-                <span className="text-[10px] font-extrabold px-2.5 py-0.5 bg-red-100 text-red-700 rounded-full">
-                  3 NEW
-                </span>
+                {notificationsCount > 0 ? (
+                  <button
+                    onClick={handleMarkAllRead}
+                    className="text-[10px] font-extrabold px-2.5 py-0.5 bg-teal-100 text-teal-800 rounded-full hover:bg-teal-200 transition-colors"
+                  >
+                    Mark All Read
+                  </button>
+                ) : (
+                  <span className="text-[10px] text-slate-400 font-bold">ALL READ</span>
+                )}
               </div>
               <div className="divide-y divide-slate-100 max-h-64 overflow-y-auto">
                 <div className="p-4 text-xs hover:bg-slate-50">
@@ -75,7 +120,10 @@ export const Header: React.FC = () => {
         </div>
 
         {/* Action Icon 2: Chat Messages (Badge: 5) */}
-        <button className="w-10 h-10 rounded-full bg-slate-100/80 hover:bg-slate-200/80 flex items-center justify-center text-slate-600 relative transition-colors">
+        <button
+          onClick={() => setChatOpen(true)}
+          className="w-10 h-10 rounded-full bg-slate-100/80 hover:bg-slate-200/80 flex items-center justify-center text-slate-600 relative transition-colors"
+        >
           <MessageSquare className="w-4 h-4" />
           <span className="absolute -top-1 -right-1 w-5 h-5 bg-blue-600 text-white font-extrabold text-[10px] rounded-full flex items-center justify-center shadow-xs">
             5
@@ -83,7 +131,10 @@ export const Header: React.FC = () => {
         </button>
 
         {/* Action Icon 3: Rewards/Gifts (Badge: 2) */}
-        <button className="w-10 h-10 rounded-full bg-slate-100/80 hover:bg-slate-200/80 flex items-center justify-center text-slate-600 relative transition-colors">
+        <button
+          onClick={() => setRewardsOpen(true)}
+          className="w-10 h-10 rounded-full bg-slate-100/80 hover:bg-slate-200/80 flex items-center justify-center text-slate-600 relative transition-colors"
+        >
           <Gift className="w-4 h-4" />
           <span className="absolute -top-1 -right-1 w-5 h-5 bg-amber-500 text-white font-extrabold text-[10px] rounded-full flex items-center justify-center shadow-xs">
             2
@@ -149,6 +200,77 @@ export const Header: React.FC = () => {
           <LogOut className="w-4 h-4" />
         </button>
       </div>
+
+      {/* DATE PERIOD FILTER MODAL */}
+      <Modal isOpen={filterPeriodOpen} onClose={() => setFilterPeriodOpen(false)} title="Select Operational Telemetry Period">
+        <div className="space-y-4 text-xs">
+          <p className="text-slate-600 font-medium">Select timeframe to aggregate platform GMV, escrow ledgers, and rider dispatches:</p>
+          <div className="grid grid-cols-2 gap-3">
+            {['Today (Live 24h)', 'This Week (2026)', 'This Month (August)', 'Quarter 3 (2026)'].map((p) => (
+              <button
+                key={p}
+                onClick={() => {
+                  setSelectedPeriod(p);
+                  setFilterPeriodOpen(false);
+                }}
+                className={`p-3 rounded-2xl border text-left font-bold transition-all ${
+                  selectedPeriod === p ? 'bg-teal-50 border-teal-500 text-teal-900 shadow-xs' : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                }`}
+              >
+                {p}
+              </button>
+            ))}
+          </div>
+        </div>
+      </Modal>
+
+      {/* STAFF INTERNAL SUPPORT CHAT MODAL */}
+      <Modal isOpen={chatOpen} onClose={() => setChatOpen(false)} title="Staff Internal Support & Merchant Dispatch Chat">
+        <div className="space-y-4 text-xs">
+          <div className="h-56 overflow-y-auto p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+            {chatMessages.map((m, idx) => (
+              <div key={idx} className="p-3 bg-white rounded-xl border border-slate-100 shadow-xs">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-extrabold text-slate-900">{m.sender}</span>
+                  <span className="text-[10px] text-slate-400 font-medium">{m.time}</span>
+                </div>
+                <p className="text-slate-600">{m.text}</p>
+              </div>
+            ))}
+          </div>
+
+          <form onSubmit={handleSendChatMessage} className="flex items-center space-x-2">
+            <input
+              type="text"
+              placeholder="Type message to merchant or driver..."
+              value={chatMessageInput}
+              onChange={(e) => setChatMessageInput(e.target.value)}
+              className="flex-1 p-2.5 bg-slate-100 border-none rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-teal-500"
+            />
+            <Button type="submit" variant="primary" size="sm" disabled={!chatMessageInput.trim()}>
+              <Send className="w-3.5 h-3.5 mr-1" />
+              Reply
+            </Button>
+          </form>
+        </div>
+      </Modal>
+
+      {/* MERCHANT REWARDS & INCENTIVES MODAL */}
+      <Modal isOpen={rewardsOpen} onClose={() => setRewardsOpen(false)} title="Merchant & Transporter Reward Campaigns">
+        <div className="space-y-4 text-xs">
+          <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl">
+            <span className="px-2 py-0.5 rounded text-[9px] font-extrabold bg-amber-200 text-amber-900 uppercase">ACTIVE CAMPAIGN</span>
+            <h4 className="text-sm font-extrabold text-amber-950 mt-1">Zero Escrow Fee Promotion (Douala Merchants)</h4>
+            <p className="text-amber-800 text-[11px] mt-0.5">Top 50 merchants with 4.9★ rating receive 0% commission on orders over 100k FCFA.</p>
+          </div>
+
+          <div className="flex justify-end pt-2 border-t border-slate-100">
+            <Button variant="outline" onClick={() => setRewardsOpen(false)}>
+              Close
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </header>
   );
 };

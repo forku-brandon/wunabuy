@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { PageContainer } from '../components/layout/PageContainer';
 import { StatCard } from '../components/ui/StatCard';
 import { Card } from '../components/ui/Card';
@@ -47,6 +48,8 @@ const MOCK_DONUT_DATA = [
 ];
 
 export const DashboardPage: React.FC = () => {
+  const navigate = useNavigate();
+
   return (
     <PageContainer
       title="Executive Overview Dashboard"
@@ -95,9 +98,9 @@ export const DashboardPage: React.FC = () => {
         />
       </div>
 
-      {/* Main Analytics Grid: Left Donut Statistic & Right Smooth Curved Area Chart */}
+      {/* Main Analytics Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-        {/* Left: Donut Chart "Current Escrow Statistic" (Inspired by Reference Design) */}
+        {/* Left: Donut Chart "Current Escrow Statistic" */}
         <Card className="lg:col-span-1 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-4">
@@ -146,7 +149,7 @@ export const DashboardPage: React.FC = () => {
           </div>
         </Card>
 
-        {/* Right: Smooth Curved Line Graph "Market & Escrow Overview" */}
+        {/* Right: Smooth Curved Area Chart */}
         <Card className="lg:col-span-2">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
             <div>
@@ -191,11 +194,9 @@ export const DashboardPage: React.FC = () => {
         </Card>
       </div>
 
-      {/* Row of Vibrant Accent Cards (Inspired by Reference Design colorful wallet card row) */}
+      {/* Row of Vibrant Accent Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {/* Card 1: Emerald Green MTN MoMo Balance */}
         <div className="p-6 rounded-3xl bg-emerald-600 text-white shadow-md flex flex-col justify-between relative overflow-hidden">
-          <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full bg-white/10 blur-xl" />
           <div>
             <span className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-200 block">MTN MOMO RECONCILED</span>
             <h4 className="text-2xl font-extrabold font-heading mt-2">{formatXAF(54200000)}</h4>
@@ -206,9 +207,7 @@ export const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Card 2: Royal Blue Orange Money Balance */}
         <div className="p-6 rounded-3xl bg-blue-600 text-white shadow-md flex flex-col justify-between relative overflow-hidden">
-          <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full bg-white/10 blur-xl" />
           <div>
             <span className="text-[10px] font-extrabold uppercase tracking-widest text-blue-200 block">ORANGE MONEY RECONCILED</span>
             <h4 className="text-2xl font-extrabold font-heading mt-2">{formatXAF(32150000)}</h4>
@@ -219,9 +218,7 @@ export const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Card 3: Violet Purple Escrow Hold */}
         <div className="p-6 rounded-3xl bg-purple-600 text-white shadow-md flex flex-col justify-between relative overflow-hidden">
-          <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full bg-white/10 blur-xl" />
           <div>
             <span className="text-[10px] font-extrabold uppercase tracking-widest text-purple-200 block">ESCROW PROTECTED FUNDS</span>
             <h4 className="text-2xl font-extrabold font-heading mt-2">{formatXAF(22850000)}</h4>
@@ -232,9 +229,7 @@ export const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Card 4: Amber Orange Platform Commission */}
         <div className="p-6 rounded-3xl bg-amber-500 text-white shadow-md flex flex-col justify-between relative overflow-hidden">
-          <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full bg-white/10 blur-xl" />
           <div>
             <span className="text-[10px] font-extrabold uppercase tracking-widest text-amber-100 block">NET REVENUE (3.5% FEE)</span>
             <h4 className="text-2xl font-extrabold font-heading mt-2">{formatXAF(4820000)}</h4>
@@ -256,8 +251,11 @@ export const DashboardPage: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Task 1 */}
-          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex items-start justify-between">
+          {/* Task 1 -> Navigate to /kyc */}
+          <div
+            onClick={() => navigate('/kyc')}
+            className="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex items-start justify-between cursor-pointer hover:bg-teal-50/50 hover:border-teal-200 transition-all"
+          >
             <div>
               <span className="text-xs font-extrabold text-slate-900 block">Douala Tech Hub</span>
               <span className="text-[11px] text-slate-500 mt-0.5 block font-medium">KYC Verification • National ID Front/Back</span>
@@ -265,8 +263,11 @@ export const DashboardPage: React.FC = () => {
             <Badge variant="warning" size="sm">REVIEW</Badge>
           </div>
 
-          {/* Task 2 */}
-          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex items-start justify-between">
+          {/* Task 2 -> Navigate to /disputes */}
+          <div
+            onClick={() => navigate('/disputes')}
+            className="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex items-start justify-between cursor-pointer hover:bg-amber-50/50 hover:border-amber-200 transition-all"
+          >
             <div>
               <span className="text-xs font-extrabold text-slate-900 block">Dispute #WB-2026-9842</span>
               <span className="text-[11px] text-slate-500 mt-0.5 block font-medium">Buyer reported damaged screen</span>
@@ -274,8 +275,11 @@ export const DashboardPage: React.FC = () => {
             <Badge variant="error" size="sm">DISPUTE</Badge>
           </div>
 
-          {/* Task 3 */}
-          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex items-start justify-between">
+          {/* Task 3 -> Navigate to /financials */}
+          <div
+            onClick={() => navigate('/financials')}
+            className="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex items-start justify-between cursor-pointer hover:bg-emerald-50/50 hover:border-emerald-200 transition-all"
+          >
             <div>
               <span className="text-xs font-extrabold text-slate-900 block">Penja Organic Farm</span>
               <span className="text-[11px] text-slate-500 mt-0.5 block font-medium">MoMo Payout Request (450,000 FCFA)</span>
