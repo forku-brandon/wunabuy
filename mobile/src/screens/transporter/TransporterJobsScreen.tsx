@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { View, FlatList, StyleSheet, TouchableOpacity, RefreshControl, ScrollView, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,7 +11,8 @@ import { formatXAF, formatDistance } from '@wunabuy/utils';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
 import { useAuthStore } from '../../stores/auth.store';
-import { AuthService } from '../../services/api';
+import { AuthService, TransporterService } from '../../services/api';
+
 
 
 const MOCK_DELIVERY_JOBS: DeliveryJob[] = [
@@ -132,33 +133,47 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  const handleRefresh = useCallback(() => {
-    setRefreshing(true);
-    setTimeout(() => {
+  const loadJobs = useCallback(async () => {
+    try {
+      const data = await TransporterService.getAvailableJobs(activeFilter);
+      setJobs(data);
+    } catch {
       setJobs(MOCK_DELIVERY_JOBS);
-      setRefreshing(false);
-    }, 800);
-  }, []);
+    }
+  }, [activeFilter]);
+
+  useEffect(() => {
+    loadJobs();
+  }, [loadJobs]);
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadJobs();
+    setRefreshing(false);
+  }, [loadJobs]);
 
   const handleSwitchToBuyer = () => {
     useAuthStore.getState().setActiveRole(UserRole.BUYER);
     AuthService.switchRole(UserRole.BUYER);
   };
 
-  const handleAcceptJob = (job: DeliveryJob) => {
+  const handleAcceptJob = async (job: DeliveryJob) => {
     setSelectedMapJob(null);
     setJobs((prev) => prev.filter((j) => j.id !== job.id));
     setToastMessage(`Job #${job.order_code} accepted! Navigating to active trip.`);
+    await TransporterService.acceptJob(job.id);
     setTimeout(() => {
       navigation.navigate('TransporterActiveTrip', { jobId: job.id, stage: 1 });
     }, 600);
   };
 
-  const handleRejectJob = (job: DeliveryJob) => {
+  const handleRejectJob = async (job: DeliveryJob) => {
     setSelectedMapJob(null);
     setJobs((prev) => prev.filter((j) => j.id !== job.id));
     setToastMessage(`Offer #${job.order_code} rejected. Surface next available job offer.`);
+    await TransporterService.rejectJob(job.id);
   };
+
 
   const filteredJobs = jobs.filter((job) => {
     if (activeFilter === 'near') return (job.distance_km ?? 0) <= 2.0;

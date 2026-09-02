@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -19,7 +19,7 @@ import { formatXAF } from '@wunabuy/utils';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
 import { useAuthStore } from '../../stores/auth.store';
-import { AuthService } from '../../services/api';
+import { AuthService, TransporterService, DriverProfileData } from '../../services/api';
 
 export const TransporterProfileScreen = ({ navigation }: any) => {
   const { theme, isDark } = useThemeStore();
@@ -33,19 +33,35 @@ export const TransporterProfileScreen = ({ navigation }: any) => {
   const [selectedAvatarUri, setSelectedAvatarUri] = useState<string | null>(null);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [copiedNotification, setCopiedNotification] = useState(false);
+  const [profileData, setProfileData] = useState<DriverProfileData | null>(null);
 
-  const driverName = user?.full_name || 'Jean-Paul Kamga';
-  const driverId = 'DRV-2026-884';
-  const vehiclePlate = 'LT-214-AA';
-  const vehicleType = 'Motorcycle 🏍️ (Yamaha YBR 125)';
-  const baseQuarter = 'Akwa Hub, Douala';
-  const availableEarnings = 48500;
-  const pendingEscrow = 12500;
-
-  const handleRefresh = useCallback(() => {
-    setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 800);
+  const loadProfile = useCallback(async () => {
+    try {
+      const data = await TransporterService.getDriverProfile();
+      setProfileData(data);
+    } catch {
+      // Offline fallback
+    }
   }, []);
+
+  useEffect(() => {
+    loadProfile();
+  }, [loadProfile]);
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadProfile();
+    setRefreshing(false);
+  }, [loadProfile]);
+
+  const driverName = profileData?.full_name || user?.full_name || 'Jean-Paul Kamga';
+  const driverId = profileData?.driver_id || 'DRV-2026-884';
+  const vehiclePlate = profileData?.vehicle?.plate_number || 'LT-214-AA';
+  const vehicleType = profileData?.vehicle?.type || 'Yamaha YBR 125 🏍️';
+  const baseQuarter = profileData?.vehicle?.operating_quarter || 'Akwa / Bonanjo';
+  const availableEarnings = profileData?.earnings?.available_cashout ?? 48500;
+  const pendingEscrow = profileData?.earnings?.pending_escrow ?? 12500;
+
 
   const handleCopyDriverId = () => {
     setCopiedNotification(true);

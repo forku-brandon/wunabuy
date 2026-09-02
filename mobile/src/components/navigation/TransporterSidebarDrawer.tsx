@@ -18,7 +18,7 @@ import { useThemeStore } from '../../stores/theme.store';
 import { UserRole } from '@wunabuy/types';
 import { formatXAF } from '@wunabuy/utils';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
-import { AuthService } from '../../services/api';
+import { AuthService, TransporterService } from '../../services/api';
 
 const WUNABUY_LOGO = require('../../../assets/icon.png');
 
@@ -40,6 +40,12 @@ export const TransporterSidebarDrawer: React.FC<TransporterSidebarDrawerProps> =
   const [isBalanceVisible, setIsBalanceVisible] = useState(true);
 
   if (!isOpen) return null;
+
+  const handleToggleDuty = async (val: boolean) => {
+    setIsOnDuty(val);
+    await TransporterService.updateDutyStatus(val);
+  };
+
 
   const handleNavigate = (screenName: string, params?: any) => {
     onClose();
@@ -145,10 +151,11 @@ export const TransporterSidebarDrawer: React.FC<TransporterSidebarDrawerProps> =
                 </View>
                 <Switch
                   value={isOnDuty}
-                  onValueChange={setIsOnDuty}
+                  onValueChange={handleToggleDuty}
                   trackColor={{ false: theme.border, true: colors.primary[500] }}
                   thumbColor="#FFFFFF"
                 />
+
               </View>
             </View>
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -8,6 +8,7 @@ import { DigitalSignatureModal } from '../../components/order/DigitalSignatureMo
 import { formatXAF } from '@wunabuy/utils';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
+import { TransporterService, ActiveTripPayload } from '../../services/api';
 
 export const TransporterActiveTripScreen = ({ route, navigation }: any) => {
   const { jobId = 'job_1', stage = 1 } = route.params || {};
@@ -17,39 +18,68 @@ export const TransporterActiveTripScreen = ({ route, navigation }: any) => {
   // 1: Navigating to Store Pickup, 2: Merchant Handover Verification, 3: Navigating to Buyer, 4: Proof of Delivery Signature
   const [currentStage, setCurrentStage] = useState<number>(stage);
   const [isSignModalOpen, setIsSignModalOpen] = useState(false);
-  const [verificationCode, setVerificationCode] = useState('7842');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [tripData, setTripData] = useState<ActiveTripPayload>({
+    job_id: jobId,
+    order_code: 'WB-2026-9842',
+    current_stage: stage,
+    verification_code: '7842',
+    delivery_fee: 1500,
+    items_summary: '1x Samsung Galaxy A54 5G (Package size: Small)',
+    store_name: 'Douala Tech Hub (Akwa)',
+    store_address: 'Rue Joss, Akwa, Douala',
+    store_phone: '+237 670 111 222',
+    buyer_name: 'Sanusi Olamide',
+    buyer_address: 'Boulevard de la Liberté, Bonanjo, Douala',
+    buyer_phone: '+237 690 333 444',
+  });
 
-  const orderCode = 'WB-2026-9842';
-  const storeName = 'Douala Tech Hub (Akwa)';
-  const storeAddress = 'Rue Joss, Akwa, Douala';
-  const storePhone = '+237 670 111 222';
-  const buyerName = 'Sanusi Olamide';
-  const buyerAddress = 'Boulevard de la Liberté, Bonanjo, Douala';
-  const buyerPhone = '+237 690 333 444';
-  const itemsSummary = '1x Samsung Galaxy A54 5G (Package size: Small)';
-  const deliveryFee = 1500;
+  useEffect(() => {
+    async function fetchTrip() {
+      const data = await TransporterService.getActiveTrip(jobId);
+      setTripData(data);
+    }
+    fetchTrip();
+  }, [jobId]);
 
-  const handleNextStage = () => {
+  const orderCode = tripData.order_code;
+  const storeName = tripData.store_name;
+  const storeAddress = tripData.store_address;
+  const storePhone = tripData.store_phone;
+  const buyerName = tripData.buyer_name;
+  const buyerAddress = tripData.buyer_address;
+  const buyerPhone = tripData.buyer_phone;
+  const itemsSummary = tripData.items_summary;
+  const deliveryFee = tripData.delivery_fee;
+  const verificationCode = tripData.verification_code;
+
+  const handleNextStage = async () => {
+    let nextStage = currentStage;
     if (currentStage === 1) {
+      nextStage = 2;
       setCurrentStage(2);
       setToastMessage('Arrived at store! Inspect package & verify handover PIN.');
     } else if (currentStage === 2) {
+      nextStage = 3;
       setCurrentStage(3);
       setToastMessage('Package picked up! En route to buyer destination 🏠');
     } else if (currentStage === 3) {
+      nextStage = 4;
       setCurrentStage(4);
       setIsSignModalOpen(true);
     }
+    await TransporterService.updateTripStage(jobId, nextStage);
   };
 
-  const handleCompleteDelivery = (signatureData: string) => {
+  const handleCompleteDelivery = async (signatureData: string) => {
     setIsSignModalOpen(false);
-    setToastMessage('Delivery completed! Signature verified & 1,500 FCFA credited to wallet. 💰');
+    setToastMessage(`Delivery completed! Signature verified & ${formatXAF(deliveryFee)} credited to wallet. 💰`);
+    await TransporterService.submitProofOfDelivery(jobId, signatureData);
     setTimeout(() => {
       navigation.navigate('TransporterJobs');
     }, 1200);
   };
+
 
   const handleEmergencySOS = () => {
     Alert.alert(

@@ -6,7 +6,7 @@ import { ScreenContainer, Text, Card, Button, Badge, Input, BottomSheet, Toast }
 import { formatXAF, formatPhone } from '@wunabuy/utils';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
-import { WalletService } from '../../services/api';
+import { WalletService, TransporterService } from '../../services/api';
 
 const MOCK_TRIP_HISTORY = [
   { id: 't1', code: 'WB-2026-9842', distance: '2.4 km', fee: 1500, date: 'Today, 14:20', type: 'TRIP_PAYOUT' },
@@ -22,7 +22,7 @@ export const TransporterEarningsScreen = () => {
 
   const [availablePayout, setAvailablePayout] = useState(48500);
   const [pendingEscrow, setPendingEscrow] = useState(12500);
-  const [totalEarned, setTotalEarned] = useState(61000);
+  const [totalEarned, setTotalEarned] = useState(384500);
   const [isBalanceVisible, setIsBalanceVisible] = useState(true);
   const [trips, setTrips] = useState(MOCK_TRIP_HISTORY);
   const [refreshing, setRefreshing] = useState(false);
@@ -36,16 +36,17 @@ export const TransporterEarningsScreen = () => {
 
   const loadWalletData = useCallback(async () => {
     try {
-      const walletData = await WalletService.getWallet();
-      if (walletData) {
-        setAvailablePayout(walletData.balance_available || 48500);
-        setTotalEarned((walletData as any).total_earned || walletData.total_deposited || walletData.balance_total || 61000);
+      const data = await TransporterService.getDriverEarnings();
+      if (data) {
+        setAvailablePayout(data.available_payout);
+        setPendingEscrow(data.pending_escrow);
+        setTotalEarned(data.total_earned);
+        if (data.transactions && data.transactions.length > 0) {
+          setTrips(data.transactions as any);
+        }
       }
-
     } catch {
-      // Fallback to initial mock states
-    } finally {
-      setRefreshing(false);
+      // Offline fallback
     }
   }, []);
 
@@ -53,9 +54,10 @@ export const TransporterEarningsScreen = () => {
     loadWalletData();
   }, [loadWalletData]);
 
-  const handleRefresh = useCallback(() => {
+  const handleRefresh = useCallback(async () => {
     setRefreshing(true);
-    loadWalletData();
+    await loadWalletData();
+    setRefreshing(false);
   }, [loadWalletData]);
 
   const handlePresetPercentage = (percentage: number) => {
@@ -79,15 +81,7 @@ export const TransporterEarningsScreen = () => {
     setError('');
 
     try {
-      await WalletService.withdrawWallet({
-        amount,
-        destination_details: {
-          type: momoProvider as any,
-          phone: withdrawPhone,
-          bank_code: null,
-          account_number: withdrawPhone,
-        },
-      });
+      await TransporterService.requestMoMoCashout(amount, withdrawPhone, momoProvider);
 
       setAvailablePayout((prev) => Math.max(0, prev - amount));
       setToastMessage(`Instant payout of ${formatXAF(amount)} initiated to ${formatPhone(withdrawPhone)}! 🚀`);
