@@ -331,10 +331,11 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
                   DRIVER PAYOUT
                 </Text>
               </View>
-              <Text variant="h2" bold color={colors.primary[600]}>
+              <Text variant="bodyLarge" bold color={colors.primary[600]} style={{ fontSize: 16 }}>
                 {formatXAF(item.delivery_fee)}
               </Text>
             </View>
+
 
 
             {/* Action Buttons Row (Moved Down below Driver Payout for Maximum Spacing & Flexibility) */}
@@ -537,6 +538,7 @@ const styles = StyleSheet.create({
   },
   jobCard: {
     marginBottom: 0,
+    overflow: 'hidden',
   },
   jobHeader: {
     flexDirection: 'row',
@@ -560,12 +562,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm + 2,
+    paddingVertical: spacing.sm,
+    minHeight: 44,
     borderRadius: borderRadius.md,
     borderWidth: 1,
     marginTop: spacing.xs + 2,
     marginBottom: spacing.xs,
+    overflow: 'hidden',
   },
+
   cardActionGroup: {
     flexDirection: 'row',
     alignItems: 'center',
