@@ -1,11 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useStaffAuth } from '../stores/staffAuthStore';
 import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
 import { ShieldCheck, Mail, ArrowRight, ArrowLeft, KeyRound, Sparkles, RefreshCw } from 'lucide-react';
 
 export const AuthPage: React.FC = () => {
-  const { requestOTP, verifyOTP } = useStaffAuth();
+  const { isAuthenticated, requestOTP, verifyOTP } = useStaffAuth();
+  const navigate = useNavigate();
+
   const [stage, setStage] = useState<'identifier' | 'otp'>('identifier');
   const [identifier, setIdentifier] = useState('pauline.admin@wunabuy.com');
   const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', '']);
@@ -15,6 +17,13 @@ export const AuthPage: React.FC = () => {
   const [resendTimer, setResendTimer] = useState(45);
 
   const digitInputs = useRef<(HTMLInputElement | null)[]>([]);
+
+  // Auto redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   useEffect(() => {
     let interval: any;
@@ -81,7 +90,9 @@ export const AuthPage: React.FC = () => {
     const success = await verifyOTP(identifier, code);
     setLoading(false);
 
-    if (!success) {
+    if (success) {
+      navigate('/', { replace: true });
+    } else {
       setError('Invalid OTP code. Please enter 654321 or check your code.');
     }
   };
@@ -188,7 +199,8 @@ export const AuthPage: React.FC = () => {
             {/* Demo Quick Auto-Fill Action */}
             <button
               onClick={handleAutoFillDemoOTP}
-              className="w-full py-2 px-3 bg-amber-50 border border-amber-200 text-amber-900 rounded-xl text-xs font-bold flex items-center justify-center space-x-2 hover:bg-amber-100 transition-colors"
+              type="button"
+              className="w-full py-2.5 px-3 bg-amber-50 border border-amber-200 text-amber-900 rounded-xl text-xs font-bold flex items-center justify-center space-x-2 hover:bg-amber-100 transition-colors"
             >
               <Sparkles className="w-4 h-4 text-amber-600" />
               <span>1-Tap Auto-Fill Demo OTP (654321)</span>
