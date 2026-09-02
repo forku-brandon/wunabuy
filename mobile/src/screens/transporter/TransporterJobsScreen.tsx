@@ -175,6 +175,25 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
   };
 
 
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [scannerMode, setScannerMode] = useState<'package' | 'permit' | 'merchant'>('package');
+  const [isScanningProcess, setIsScanningProcess] = useState(false);
+
+  const handleSimulateScan = () => {
+    setIsScanningProcess(true);
+    setTimeout(() => {
+      setIsScanningProcess(false);
+      setIsScannerOpen(false);
+      if (scannerMode === 'package') {
+        setToastMessage('📦 Package QR Code #WB-2026-9842 verified! Syncing account status.');
+      } else if (scannerMode === 'permit') {
+        setToastMessage('💳 Douala Council Fleet Permit scanned & account status updated!');
+      } else {
+        setToastMessage('🏪 Merchant Store QR scanned! Checked in at Douala Tech Hub.');
+      }
+    }, 1200);
+  };
+
   const filteredJobs = jobs.filter((job) => {
     if (activeFilter === 'near') return (job.distance_km ?? 0) <= 2.0;
     if (activeFilter === 'high_pay') return job.delivery_fee >= 2000;
@@ -195,8 +214,16 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
             <Ionicons name="menu" size={24} color={theme.text} />
           </TouchableOpacity>
 
-          {/* Right Action Icons: Notification, Buyer Mode */}
+          {/* Right Action Icons: Scanner, Notification, Buyer Mode */}
           <View style={styles.headerRightActionIcons}>
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => setIsScannerOpen(true)}
+              style={[styles.iconButton, { backgroundColor: isDark ? 'rgba(13,148,136,0.2)' : colors.primary[50], borderColor: colors.primary[200], borderWidth: 1 }]}
+            >
+              <Ionicons name="qr-code-outline" size={20} color={colors.primary[600]} />
+            </TouchableOpacity>
+
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={() => navigation.navigate('NotificationSettings')}
@@ -214,6 +241,7 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
             </TouchableOpacity>
           </View>
         </View>
+
 
         {/* Subtitle Stack */}
         <View style={styles.subtitleStack}>
@@ -464,7 +492,124 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
         )}
       </Modal>
 
+      {/* QR & Barcode Scanner Modal */}
+      <Modal
+        visible={isScannerOpen}
+        animationType="slide"
+        transparent={false}
+        onRequestClose={() => setIsScannerOpen(false)}
+      >
+        <View style={[styles.mapModalContainer, { backgroundColor: theme.background }]}>
+          {/* Header */}
 
+          <View style={[styles.mapModalHeader, { backgroundColor: theme.card, borderBottomColor: theme.border, paddingTop: Math.max(insets.top + spacing.xs, spacing.md) }]}>
+            <TouchableOpacity activeOpacity={0.8} onPress={() => setIsScannerOpen(false)} style={styles.closeMapBtn}>
+              <Ionicons name="close" size={22} color={theme.text} />
+            </TouchableOpacity>
+            <View style={{ flex: 1, marginHorizontal: spacing.sm }}>
+              <Text variant="caption" bold color={colors.primary[600]}>
+                SCANNER & ACCOUNT VERIFIER 📷
+              </Text>
+              <Text variant="h2" bold numberOfLines={1}>
+                Scan &amp; Update Account
+              </Text>
+            </View>
+            <Badge label="LIVE SCAN" variant="primary" size="small" />
+          </View>
+
+          <ScrollView style={{ flex: 1, padding: spacing.base }}>
+            {/* Mode Selector Tabs */}
+            <Text variant="caption" secondary bold style={{ marginBottom: spacing.xs }}>
+              SELECT SCANNER MODE
+            </Text>
+            <View style={{ flexDirection: 'row', gap: spacing.xs, marginBottom: spacing.md }}>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => setScannerMode('package')}
+                style={[
+                  styles.scannerTabChip,
+                  scannerMode === 'package'
+                    ? { backgroundColor: colors.primary[500], borderColor: colors.primary[500] }
+                    : { backgroundColor: isDark ? colors.neutral[800] : colors.neutral[100], borderColor: theme.border }
+                ]}
+              >
+                <Text variant="caption" bold color={scannerMode === 'package' ? '#FFFFFF' : theme.text}>
+                  📦 Package Code
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => setScannerMode('permit')}
+                style={[
+                  styles.scannerTabChip,
+                  scannerMode === 'permit'
+                    ? { backgroundColor: colors.primary[500], borderColor: colors.primary[500] }
+                    : { backgroundColor: isDark ? colors.neutral[800] : colors.neutral[100], borderColor: theme.border }
+                ]}
+              >
+                <Text variant="caption" bold color={scannerMode === 'permit' ? '#FFFFFF' : theme.text}>
+                  💳 Driver Permit
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => setScannerMode('merchant')}
+                style={[
+                  styles.scannerTabChip,
+                  scannerMode === 'merchant'
+                    ? { backgroundColor: colors.primary[500], borderColor: colors.primary[500] }
+                    : { backgroundColor: isDark ? colors.neutral[800] : colors.neutral[100], borderColor: theme.border }
+                ]}
+              >
+                <Text variant="caption" bold color={scannerMode === 'merchant' ? '#FFFFFF' : theme.text}>
+                  🏪 Store Check-in
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Viewfinder Mockup */}
+            <View style={styles.viewfinderBox}>
+              <View style={styles.viewfinderCornerTL} />
+              <View style={styles.viewfinderCornerTR} />
+              <View style={styles.viewfinderCornerBL} />
+              <View style={styles.viewfinderCornerBR} />
+
+              <Ionicons name="qr-code-outline" size={64} color={colors.primary[500]} />
+              <Text variant="caption" bold color="#FFFFFF" style={{ marginTop: spacing.sm, textAlign: 'center' }}>
+                {scannerMode === 'package'
+                  ? 'Align Waybill Barcode or Package QR inside reticle'
+                  : scannerMode === 'permit'
+                  ? 'Align Douala Council Permit or Driver License'
+                  : 'Align Store Check-in QR code'}
+              </Text>
+            </View>
+
+            {/* Instruction Card */}
+            <Card style={{ marginTop: spacing.md }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Ionicons name="information-circle-outline" size={20} color={colors.primary[600]} />
+                <Text variant="bodyMedium" bold style={{ flex: 1 }}>
+                  Automatic Account &amp; Order Sync
+                </Text>
+              </View>
+              <Text variant="caption" secondary style={{ marginTop: 4 }}>
+                Scanning instant codes updates your account verification status, store check-in timestamp, and package handover records directly in real time.
+              </Text>
+            </Card>
+
+            <Button
+              title={isScanningProcess ? 'Scanning & Verifying...' : '⚡ Scan & Sync Account Direct'}
+              variant="primary"
+              size="large"
+              loading={isScanningProcess}
+              onPress={handleSimulateScan}
+              style={{ marginTop: spacing.lg, marginBottom: spacing.xl }}
+            />
+          </ScrollView>
+        </View>
+      </Modal>
 
       {/* Slide-out Navigation Drawer */}
       <TransporterSidebarDrawer
@@ -617,7 +762,68 @@ const styles = StyleSheet.create({
     flex: 1.2,
     backgroundColor: colors.primary[500],
   },
-
+  modalAcceptBtn: {
+    flex: 1.4,
+    backgroundColor: colors.primary[500],
+  },
+  scannerTabChip: {
+    paddingHorizontal: spacing.sm + 2,
+    paddingVertical: spacing.xs + 2,
+    borderRadius: borderRadius.full,
+    borderWidth: 1,
+  },
+  viewfinderBox: {
+    backgroundColor: '#0F172A',
+    height: 220,
+    borderRadius: borderRadius.lg,
+    borderWidth: 2,
+    borderColor: colors.primary[500],
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.base,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  viewfinderCornerTL: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    width: 24,
+    height: 24,
+    borderTopWidth: 4,
+    borderLeftWidth: 4,
+    borderColor: colors.primary[500],
+  },
+  viewfinderCornerTR: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    width: 24,
+    height: 24,
+    borderTopWidth: 4,
+    borderRightWidth: 4,
+    borderColor: colors.primary[500],
+  },
+  viewfinderCornerBL: {
+    position: 'absolute',
+    bottom: 12,
+    left: 12,
+    width: 24,
+    height: 24,
+    borderBottomWidth: 4,
+    borderLeftWidth: 4,
+    borderColor: colors.primary[500],
+  },
+  viewfinderCornerBR: {
+    position: 'absolute',
+    bottom: 12,
+    right: 12,
+    width: 24,
+    height: 24,
+    borderBottomWidth: 4,
+    borderRightWidth: 4,
+    borderColor: colors.primary[500],
+  },
   mapModalContainer: {
     flex: 1,
   },
@@ -660,8 +866,6 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     borderWidth: 1,
   },
-  modalAcceptBtn: {
-    flex: 1,
-  },
 });
+
 
