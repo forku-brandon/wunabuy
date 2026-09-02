@@ -34,19 +34,43 @@ const TOP_PRODUCTS_ANALYTICS = [
   { id: 'p4', name: 'Natural Organic Cameroon Palm Oil (5L)', salesCount: 24, revenue: 156000 },
 ];
 
+import { SellerService } from '../../services/api/sellerService';
+
 export const StoreAnalyticsScreen = ({ navigation }: any) => {
   const insets = useSafeAreaInsets();
   const { theme, isDark } = useThemeStore();
   const { storeName, availableBalance, escrowLockedBalance } = useSellerStore();
 
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '1y'>('7d');
+  const [analyticsData, setAnalyticsData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const totalWeeklyRevenue = WEEKLY_SALES_DATA.reduce((acc, curr) => acc + curr.amount, 0);
+  React.useEffect(() => {
+    let isMounted = true;
+    const fetchAnalytics = async () => {
+      setIsLoading(true);
+      const data = await SellerService.getStoreAnalytics(timeRange);
+      if (isMounted) {
+        setAnalyticsData(data);
+        setIsLoading(false);
+      }
+    };
+    fetchAnalytics();
+    return () => {
+      isMounted = false;
+    };
+  }, [timeRange]);
+
+  const salesGraphData = analyticsData?.weekly_sales || WEEKLY_SALES_DATA;
+  const topProductsList = analyticsData?.top_products || TOP_PRODUCTS_ANALYTICS;
+  const kpiData = analyticsData?.kpis;
+  const totalWeeklyRevenue = analyticsData?.total_revenue || salesGraphData.reduce((acc: number, curr: any) => acc + curr.amount, 0);
 
   const handleExportReport = () => {
     setToastMessage('📊 Store Analytics PDF statement downloaded!');
   };
+
 
   return (
     <ScreenContainer scrollable={false} padded={false}>

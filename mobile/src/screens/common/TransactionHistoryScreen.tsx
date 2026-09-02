@@ -7,19 +7,51 @@ import { useThemeStore } from '../../stores/theme.store';
 import { MOCK_APP_TRANSACTIONS, TransactionItem } from '../../components/wallet/RecentTransactionsWidget';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { WalletService } from '../../services/api/walletService';
+
 export const TransactionHistoryScreen = ({ navigation }: any) => {
   const { theme, isDark } = useThemeStore();
   const insets = useSafeAreaInsets();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<'7d' | '15d' | '1m' | 'custom'>('1m');
+  const [transactions, setTransactions] = useState<TransactionItem[]>(MOCK_APP_TRANSACTIONS);
+  const [isLoading, setIsLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    let isMounted = true;
+    const fetchTransactions = async () => {
+      setIsLoading(true);
+      const apiTxs = await WalletService.getTransactions();
+      if (isMounted && apiTxs && apiTxs.length > 0) {
+        // Map API format to TransactionItem format
+        const mapped: TransactionItem[] = apiTxs.map((t, idx) => ({
+          id: t.id || `tx_${idx}`,
+          title: t.description || 'Wallet Transaction',
+          date: t.created_at ? new Date(t.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '12:00 PM',
+          fullDateGroup: t.created_at ? new Date(t.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Today, 02 Sep 2026',
+          amount: t.type === 'debit' ? -Math.abs(t.amount) : Math.abs(t.amount),
+          type: t.type === 'debit' ? 'debit' : 'credit',
+          status: t.status === 'completed' ? 'completed' : t.status === 'failed' ? 'failed' : 'pending',
+
+          statusText: t.status === 'completed' ? 'Successful' : t.status === 'failed' ? 'Cancelled' : 'Processing',
+        }));
+        setTransactions(mapped);
+      }
+      setIsLoading(false);
+    };
+    fetchTransactions();
+    return () => {
+      isMounted = false;
+    };
+  }, [activeFilter]);
 
   const handleExportStatement = () => {
     setToastMessage('📥 Statement PDF exported & saved to downloads!');
   };
 
-  const filteredTransactions = MOCK_APP_TRANSACTIONS.filter((tx) => {
+  const filteredTransactions = transactions.filter((tx) => {
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       return (
@@ -30,6 +62,7 @@ export const TransactionHistoryScreen = ({ navigation }: any) => {
     }
     return true;
   });
+
 
   // Group transactions by fullDateGroup
   const groupedTransactions = filteredTransactions.reduce<Record<string, TransactionItem[]>>((acc, tx) => {
