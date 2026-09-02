@@ -100,11 +100,8 @@ export const TransporterActiveTripScreen = ({ route, navigation }: any) => {
               {getStageTitle()}
             </Text>
           </View>
-
-          <TouchableOpacity activeOpacity={0.8} onPress={handleEmergencySOS} style={styles.sosCircleBtn}>
-            <Ionicons name="alert-circle" size={22} color="#FFFFFF" />
-          </TouchableOpacity>
         </View>
+
 
         {/* 4-Step Progress Indicator Bar */}
         <View style={styles.stepProgressRow}>
