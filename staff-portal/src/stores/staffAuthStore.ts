@@ -245,17 +245,59 @@ export function useStaffAuth() {
     };
   }, []);
 
-  const login = async (email: string, pass: string): Promise<boolean> => {
+  const requestOTP = async (identifier: string): Promise<{ success: boolean; message: string }> => {
+    const cleanId = identifier.trim().toLowerCase();
     const matched = DEMO_STAFF_PERSONAS.find(
-      (p) => p.email && p.email.toLowerCase() === email.toLowerCase()
+      (p) => (p.email && p.email.toLowerCase() === cleanId) || p.phone.includes(cleanId)
     );
-    if (matched && pass.length >= 6) {
+
+    if (matched || cleanId.includes('@wunabuy.com') || cleanId.length >= 6) {
+      return {
+        success: true,
+        message: `OTP Code sent via SMS/Email to ${identifier}. (Demo Code: 654321)`,
+      };
+    }
+
+    return {
+      success: false,
+      message: 'Staff identity not registered. Please use corporate @wunabuy.com email or employee phone.',
+    };
+  };
+
+  const verifyOTP = async (identifier: string, code: string): Promise<boolean> => {
+    const cleanId = identifier.trim().toLowerCase();
+    let matched = DEMO_STAFF_PERSONAS.find(
+      (p) => (p.email && p.email.toLowerCase() === cleanId) || p.phone.includes(cleanId)
+    );
+
+    if (!matched) {
+      matched = DEMO_STAFF_PERSONAS[0]; // Fallback to Super Admin for new corporate logins
+    }
+
+    if (code === '654321' || code.length === 6) {
       currentUser = matched;
-      currentToken = '1|mock_sanctum_staff_token_' + matched.employee_id;
+      currentToken = '1|mock_sanctum_otp_token_' + matched.employee_id;
+
+      const newLog: AuditLogEntry = {
+        id: 'aud_' + Date.now().toString().slice(-5),
+        timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19),
+        staff_name: matched.full_name,
+        staff_role: matched.staff_department_role,
+        action_code: 'STAFF_OTP_AUTH_SUCCESS',
+        action_description: `Staff authorized via 2-Factor OTP verification for employee ID ${matched.employee_id}`,
+        ip_address: '197.234.221.14 (Douala HQ)',
+        security_level: 'INFO',
+      };
+      currentAuditLogs = [newLog, ...currentAuditLogs];
+
       notify();
       return true;
     }
     return false;
+  };
+
+  const login = async (email: string, pass: string): Promise<boolean> => {
+    return verifyOTP(email, '654321');
   };
 
   const logout = () => {
@@ -263,6 +305,7 @@ export function useStaffAuth() {
     currentToken = null;
     notify();
   };
+
 
   const switchPersona = (staffId: string) => {
     const target = DEMO_STAFF_PERSONAS.find((p) => p.id === staffId);
@@ -314,10 +357,13 @@ export function useStaffAuth() {
     accessToken: currentToken,
     isAuthenticated: Boolean(currentUser && currentToken),
     auditLogs: currentAuditLogs,
+    requestOTP,
+    verifyOTP,
     login,
     logout,
     switchPersona,
     hasPermission,
     addAuditLog,
   };
+
 }
