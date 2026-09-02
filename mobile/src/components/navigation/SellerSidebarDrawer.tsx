@@ -240,17 +240,13 @@ export const SellerSidebarDrawer: React.FC<SellerSidebarDrawerProps> = ({
             {/* 3. Business Telemetry & Analytics */}
             <TouchableOpacity
               activeOpacity={0.82}
-              onPress={() => {
-                Alert.alert(
-                  'Store Analytics',
-                  `Store: ${storeName}\nAvailable: ${formatXAF(availableBalance)}\nEscrow: ${formatXAF(escrowLockedBalance)}\nTotal Orders: ${orders.length}`
-                );
-              }}
+              onPress={() => handleNavigate('StoreAnalytics')}
               style={[
                 styles.partnerMenuCard,
                 { backgroundColor: isDark ? colors.neutral[800] : '#F8FAFC' },
               ]}
             >
+
               <View style={[styles.menuIconCircle, { backgroundColor: '#6366F1' }]}>
                 <Ionicons name="stats-chart" size={18} color={colors.neutral[0]} />
               </View>

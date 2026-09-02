@@ -443,6 +443,13 @@ export const SellerProfileScreen = ({ navigation }: any) => {
               </Text>
             </TouchableOpacity>
 
+            <TouchableOpacity onPress={() => navigation.navigate('StoreAnalytics')} style={styles.toolItem}>
+              <Ionicons name="stats-chart-outline" size={22} color="#6366F1" />
+              <Text variant="caption" style={styles.toolText}>
+                Analytics
+              </Text>
+            </TouchableOpacity>
+
             <TouchableOpacity onPress={() => navigation.navigate('NotificationSettings')} style={styles.toolItem}>
               <Ionicons name="notifications-outline" size={22} color={colors.primary[500]} />
               <Text variant="caption" style={styles.toolText}>
@@ -451,6 +458,7 @@ export const SellerProfileScreen = ({ navigation }: any) => {
             </TouchableOpacity>
           </View>
         </Card>
+
 
         {/* 5. 1-Tap Switch to Buyer Workspace Banner Card */}
         <TouchableOpacity

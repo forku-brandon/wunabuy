@@ -31,8 +31,10 @@ import { FavoritesScreen } from '../screens/buyer/FavoritesScreen';
 import { FootprintScreen } from '../screens/buyer/FootprintScreen';
 import { RefundsScreen } from '../screens/buyer/RefundsScreen';
 import { TransactionHistoryScreen } from '../screens/common/TransactionHistoryScreen';
+import { StoreAnalyticsScreen } from '../screens/seller/StoreAnalyticsScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
+
 
 
 const ChatConversationScreen = ({ route }: any) => (
@@ -90,6 +92,7 @@ export const RootNavigator = () => {
             <Stack.Screen name="Footprint" component={FootprintScreen} />
             <Stack.Screen name="Refunds" component={RefundsScreen} />
             <Stack.Screen name="TransactionHistory" component={TransactionHistoryScreen} />
+            <Stack.Screen name="StoreAnalytics" component={StoreAnalyticsScreen} />
           </>
         ) : activeRole === UserRole.TRANSPORTER ? (
           <>
@@ -107,6 +110,7 @@ export const RootNavigator = () => {
             <Stack.Screen name="BuyerWallet" component={WalletScreen} />
             <Stack.Screen name="Refunds" component={RefundsScreen} />
             <Stack.Screen name="TransactionHistory" component={TransactionHistoryScreen} />
+            <Stack.Screen name="StoreAnalytics" component={StoreAnalyticsScreen} />
           </>
         ) : (
           <>
@@ -130,8 +134,10 @@ export const RootNavigator = () => {
             <Stack.Screen name="Footprint" component={FootprintScreen} />
             <Stack.Screen name="Refunds" component={RefundsScreen} />
             <Stack.Screen name="TransactionHistory" component={TransactionHistoryScreen} />
+            <Stack.Screen name="StoreAnalytics" component={StoreAnalyticsScreen} />
           </>
         )}
+
 
       </Stack.Navigator>
     </NavigationContainer>

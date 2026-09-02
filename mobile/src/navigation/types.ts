@@ -54,6 +54,8 @@ export type RootStackParamList = {
   Footprint: undefined;
   Refunds: undefined;
   TransactionHistory: undefined;
+  StoreAnalytics: undefined;
 };
+
 
 
