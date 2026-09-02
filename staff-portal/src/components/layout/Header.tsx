@@ -1,13 +1,29 @@
 import React, { useState } from 'react';
-import { Search, Bell, LogOut, ShieldCheck, UserCheck, ChevronDown, Calendar, MessageSquare, Gift, Settings, CheckCircle2, Send } from 'lucide-react';
+import {
+  Search,
+  Bell,
+  LogOut,
+  ShieldCheck,
+  UserCheck,
+  ChevronDown,
+  Calendar,
+  MessageSquare,
+  Gift,
+  Menu,
+  Send,
+} from 'lucide-react';
 import { useStaffAuth, DEMO_STAFF_PERSONAS } from '../../stores/staffAuthStore';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 
-export const Header: React.FC = () => {
+export interface HeaderProps {
+  onToggleMobileSidebar?: () => void;
+}
+
+export const Header: React.FC<HeaderProps> = ({ onToggleMobileSidebar }) => {
   const { user, logout, switchPersona, addAuditLog } = useStaffAuth();
   const [isPersonaMenuOpen, setIsPersonaMenuOpen] = useState(false);
-  
+
   // Header Interactive Modals & Drawers State
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
@@ -42,18 +58,32 @@ export const Header: React.FC = () => {
   };
 
   return (
-    <header className="h-20 bg-white border-b border-slate-100 px-8 flex items-center justify-between flex-shrink-0 relative z-30 shadow-xs">
-      {/* Left: Rounded Pill Search Bar */}
-      <div className="w-96 relative">
-        <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-        <input
-          type="text"
-          placeholder="Find something here (orders, store KYC, users)..."
-          className="w-full pl-11 pr-4 py-2.5 text-xs bg-slate-100/80 border-none rounded-full focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition-all font-medium"
-        />
+    <header className="h-20 bg-white border-b border-slate-100 px-4 sm:px-8 flex items-center justify-between flex-shrink-0 relative z-30 shadow-xs">
+      {/* Left: Mobile Hamburger Toggle + Search Bar */}
+      <div className="flex items-center space-x-3 flex-1 max-w-lg">
+        {/* Mobile Hamburger Toggle Button */}
+        {onToggleMobileSidebar && (
+          <button
+            onClick={onToggleMobileSidebar}
+            className="lg:hidden p-2.5 text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
+            title="Open Mobile Navigation Menu"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+        )}
+
+        {/* Responsive Search Input */}
+        <div className="w-full max-w-xs sm:max-w-sm lg:w-96 relative">
+          <Search className="w-4 h-4 absolute left-3.5 sm:left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Search orders, KYC..."
+            className="w-full pl-9 sm:pl-11 pr-4 py-2 sm:py-2.5 text-xs bg-slate-100/80 border-none rounded-full focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition-all font-medium"
+          />
+        </div>
       </div>
 
-      {/* Center: Top Bar Quick Navigation Links */}
+      {/* Center: Top Bar Quick Links (Desktop only) */}
       <div className="hidden xl:flex items-center space-x-6 text-xs font-bold text-slate-500">
         <span className="hover:text-slate-900 cursor-pointer" onClick={() => setChatOpen(true)}>Support Chat</span>
         <span className="flex items-center text-teal-600 font-extrabold cursor-pointer" onClick={() => setFilterPeriodOpen(true)}>
@@ -64,32 +94,32 @@ export const Header: React.FC = () => {
       </div>
 
       {/* Right: Actions Group */}
-      <div className="flex items-center space-x-3">
+      <div className="flex items-center space-x-2 sm:space-x-3">
         {/* Date Filter Pill Button */}
         <button
           onClick={() => setFilterPeriodOpen(true)}
-          className="hidden sm:flex items-center space-x-2 px-4 py-2 rounded-full bg-teal-600 text-white text-xs font-bold shadow-sm hover:bg-teal-700 transition-colors"
+          className="hidden md:flex items-center space-x-2 px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full bg-teal-600 text-white text-xs font-bold shadow-sm hover:bg-teal-700 transition-colors"
         >
           <Calendar className="w-3.5 h-3.5" />
           <span>{selectedPeriod}</span>
         </button>
 
-        {/* Action Icon 1: Bell Notifications (Badge) */}
+        {/* Action Icon 1: Bell Notifications */}
         <div className="relative">
           <button
             onClick={() => setNotificationsOpen(!notificationsOpen)}
-            className="w-10 h-10 rounded-full bg-slate-100/80 hover:bg-slate-200/80 flex items-center justify-center text-slate-600 relative transition-colors"
+            className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-100/80 hover:bg-slate-200/80 flex items-center justify-center text-slate-600 relative transition-colors"
           >
             <Bell className="w-4 h-4" />
             {notificationsCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-5 h-5 bg-teal-600 text-white font-extrabold text-[10px] rounded-full flex items-center justify-center shadow-xs">
+              <span className="absolute -top-1 -right-1 w-4.5 h-4.5 sm:w-5 sm:h-5 bg-teal-600 text-white font-extrabold text-[9px] sm:text-[10px] rounded-full flex items-center justify-center shadow-xs">
                 {notificationsCount}
               </span>
             )}
           </button>
 
           {notificationsOpen && (
-            <div className="absolute right-0 mt-2 w-80 bg-white rounded-3xl shadow-2xl border border-slate-100 py-3 z-50">
+            <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-white rounded-3xl shadow-2xl border border-slate-100 py-3 z-50">
               <div className="px-5 py-2 border-b border-slate-100 flex items-center justify-between">
                 <span className="text-xs font-extrabold text-slate-900 font-heading">Operational Alerts</span>
                 {notificationsCount > 0 ? (
@@ -119,39 +149,40 @@ export const Header: React.FC = () => {
           )}
         </div>
 
-        {/* Action Icon 2: Chat Messages (Badge: 5) */}
+        {/* Action Icon 2: Chat Messages */}
         <button
           onClick={() => setChatOpen(true)}
-          className="w-10 h-10 rounded-full bg-slate-100/80 hover:bg-slate-200/80 flex items-center justify-center text-slate-600 relative transition-colors"
+          className="hidden sm:flex w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-100/80 hover:bg-slate-200/80 items-center justify-center text-slate-600 relative transition-colors"
         >
           <MessageSquare className="w-4 h-4" />
-          <span className="absolute -top-1 -right-1 w-5 h-5 bg-blue-600 text-white font-extrabold text-[10px] rounded-full flex items-center justify-center shadow-xs">
+          <span className="absolute -top-1 -right-1 w-4.5 h-4.5 sm:w-5 sm:h-5 bg-blue-600 text-white font-extrabold text-[9px] sm:text-[10px] rounded-full flex items-center justify-center shadow-xs">
             5
           </span>
         </button>
 
-        {/* Action Icon 3: Rewards/Gifts (Badge: 2) */}
+        {/* Action Icon 3: Rewards/Gifts */}
         <button
           onClick={() => setRewardsOpen(true)}
-          className="w-10 h-10 rounded-full bg-slate-100/80 hover:bg-slate-200/80 flex items-center justify-center text-slate-600 relative transition-colors"
+          className="hidden sm:flex w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-100/80 hover:bg-slate-200/80 items-center justify-center text-slate-600 relative transition-colors"
         >
           <Gift className="w-4 h-4" />
-          <span className="absolute -top-1 -right-1 w-5 h-5 bg-amber-500 text-white font-extrabold text-[10px] rounded-full flex items-center justify-center shadow-xs">
+          <span className="absolute -top-1 -right-1 w-4.5 h-4.5 sm:w-5 sm:h-5 bg-amber-500 text-white font-extrabold text-[9px] sm:text-[10px] rounded-full flex items-center justify-center shadow-xs">
             2
           </span>
         </button>
 
-        <div className="h-6 w-px bg-slate-200 mx-1" />
+        <div className="h-6 w-px bg-slate-200 mx-0.5 sm:mx-1" />
 
         {/* DEMO RBAC PERSONA SWITCHER DROPDOWN */}
         <div className="relative">
           <button
             onClick={() => setIsPersonaMenuOpen(!isPersonaMenuOpen)}
-            className="flex items-center space-x-2 px-3.5 py-2 rounded-full bg-teal-50 border border-teal-200 text-teal-900 text-xs font-bold hover:bg-teal-100 transition-colors"
+            className="flex items-center space-x-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-full bg-teal-50 border border-teal-200 text-teal-900 text-[11px] sm:text-xs font-bold hover:bg-teal-100 transition-colors"
           >
-            <UserCheck className="w-4 h-4 text-teal-600" />
-            <span>Role: <strong className="font-extrabold">{user?.staff_department_role}</strong></span>
-            <ChevronDown className="w-3.5 h-3.5 text-teal-600" />
+            <UserCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-teal-600" />
+            <span className="hidden sm:inline">Role: <strong className="font-extrabold">{user?.staff_department_role}</strong></span>
+            <span className="sm:hidden font-extrabold">{user?.staff_department_role.split('_')[0]}</span>
+            <ChevronDown className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-teal-600" />
           </button>
 
           {isPersonaMenuOpen && (
@@ -195,7 +226,7 @@ export const Header: React.FC = () => {
         <button
           onClick={logout}
           title="Sign out of Staff Portal"
-          className="w-10 h-10 rounded-full bg-slate-100/80 hover:bg-red-50 hover:text-red-600 flex items-center justify-center text-slate-500 transition-colors ml-1"
+          className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-100/80 hover:bg-red-50 hover:text-red-600 flex items-center justify-center text-slate-500 transition-colors"
         >
           <LogOut className="w-4 h-4" />
         </button>
@@ -205,7 +236,7 @@ export const Header: React.FC = () => {
       <Modal isOpen={filterPeriodOpen} onClose={() => setFilterPeriodOpen(false)} title="Select Operational Telemetry Period">
         <div className="space-y-4 text-xs">
           <p className="text-slate-600 font-medium">Select timeframe to aggregate platform GMV, escrow ledgers, and rider dispatches:</p>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {['Today (Live 24h)', 'This Week (2026)', 'This Month (August)', 'Quarter 3 (2026)'].map((p) => (
               <button
                 key={p}

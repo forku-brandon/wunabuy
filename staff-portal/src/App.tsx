@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useStaffAuth } from './stores/staffAuthStore';
@@ -25,6 +25,7 @@ const queryClient = new QueryClient({
 
 const ProtectedLayout: React.FC = () => {
   const { isAuthenticated } = useStaffAuth();
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
@@ -32,9 +33,12 @@ const ProtectedLayout: React.FC = () => {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-slate-50 font-sans">
-      <SidebarNav />
+      <SidebarNav
+        mobileOpen={mobileSidebarOpen}
+        onCloseMobile={() => setMobileSidebarOpen(false)}
+      />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <Header />
+        <Header onToggleMobileSidebar={() => setMobileSidebarOpen(!mobileSidebarOpen)} />
         <Routes>
           <Route path="/" element={<DashboardPage />} />
           <Route path="/kyc" element={<KYCPage />} />

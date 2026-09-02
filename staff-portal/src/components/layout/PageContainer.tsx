@@ -21,24 +21,24 @@ export const PageContainer: React.FC<PageContainerProps> = ({
   const [nodeModalOpen, setNodeModalOpen] = useState(false);
 
   return (
-    <div className="flex-1 overflow-y-auto p-8 bg-[#F4F6FB]">
+    <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-[#F4F6FB]">
       {/* Top Metadata & Breadcrumb Hierarchy Bar */}
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center space-x-2 text-[11px] font-bold text-slate-400">
-          <span className="flex items-center text-slate-600">
+        <div className="flex items-center space-x-1.5 sm:space-x-2 text-[10px] sm:text-[11px] font-bold text-slate-400 overflow-x-auto no-scrollbar">
+          <span className="flex items-center text-slate-600 flex-shrink-0">
             <Home className="w-3.5 h-3.5 mr-1 text-teal-600" />
             <span>Staff Portal</span>
           </span>
-          <ChevronRight className="w-3 h-3 text-slate-300" />
-          <span className="text-slate-600 font-extrabold uppercase tracking-wider">{user?.department_name || 'System Operations'}</span>
-          <ChevronRight className="w-3 h-3 text-slate-300" />
-          <span className="text-teal-700 font-extrabold">{title}</span>
+          <ChevronRight className="w-3 h-3 text-slate-300 flex-shrink-0" />
+          <span className="text-slate-600 font-extrabold uppercase tracking-wider flex-shrink-0">{user?.department_name || 'System Operations'}</span>
+          <ChevronRight className="w-3 h-3 text-slate-300 flex-shrink-0" />
+          <span className="text-teal-700 font-extrabold flex-shrink-0">{title}</span>
         </div>
 
         {/* Weather / Node Indicator Pill */}
         <button
           onClick={() => setNodeModalOpen(true)}
-          className="hidden md:flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-white border border-slate-200/80 shadow-xs text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
+          className="hidden sm:flex items-center space-x-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-white border border-slate-200/80 shadow-xs text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors flex-shrink-0"
         >
           <CloudSun className="w-4 h-4 text-amber-500" />
           <span>28°C • Douala Node (Live)</span>
@@ -46,7 +46,7 @@ export const PageContainer: React.FC<PageContainerProps> = ({
       </div>
 
       {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pb-4 border-b border-slate-200/60">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8 pb-4 border-b border-slate-200/60">
         <div>
           <div className="flex items-center space-x-2 mb-1">
             <span className="px-2.5 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-widest bg-teal-100 text-teal-800 border border-teal-200">
@@ -56,7 +56,7 @@ export const PageContainer: React.FC<PageContainerProps> = ({
               Clearance L{user?.security_clearance_level || 5}
             </span>
           </div>
-          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight font-heading">
+          <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight font-heading">
             {title}
           </h1>
           {subtitle && <p className="text-xs text-slate-500 mt-1 font-semibold">{subtitle}</p>}
@@ -83,7 +83,7 @@ export const PageContainer: React.FC<PageContainerProps> = ({
             </span>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 font-semibold">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 font-semibold">
             <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
               <span className="text-[10px] text-slate-400 font-bold uppercase block">WEBSOCKET LATENCY</span>
               <p className="text-sm font-extrabold text-slate-900 mt-0.5">14 ms (TLS 1.3 Strict)</p>
