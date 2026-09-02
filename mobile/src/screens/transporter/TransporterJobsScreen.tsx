@@ -336,7 +336,7 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
               </Text>
             </View>
 
-            {/* Action Buttons Row (Moved Down for High Flexibility & Spacing) */}
+            {/* Action Buttons Row (Moved Down below Driver Payout for Maximum Spacing & Flexibility) */}
             <View style={styles.cardActionGroup}>
               <TouchableOpacity
                 activeOpacity={0.8}
@@ -563,7 +563,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     borderWidth: 1,
     marginTop: spacing.xs + 2,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
   },
   cardActionGroup: {
     flexDirection: 'row',
