@@ -59,14 +59,14 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileSidebar }) => {
   };
 
   return (
-    <header className="h-16 bg-white dark:bg-[#151C28] border-b border-slate-100 dark:border-slate-800 px-4 sm:px-6 flex items-center justify-between flex-shrink-0 relative z-30 shadow-xs transition-colors">
+    <header className="h-16 bg-white dark:bg-[#121824] border-b border-slate-100 dark:border-slate-800/80 px-4 sm:px-6 flex items-center justify-between flex-shrink-0 relative z-30 shadow-2xs transition-colors">
       {/* Left: Mobile Menu Toggle + Clean Compact Search Bar */}
       <div className="flex items-center space-x-3">
         {/* Mobile Hamburger Toggle Button */}
         {onToggleMobileSidebar && (
           <button
             onClick={onToggleMobileSidebar}
-            className="lg:hidden p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+            className="lg:hidden p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
             title="Open Mobile Navigation Menu"
           >
             <Menu className="w-5 h-5" />
@@ -75,11 +75,11 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileSidebar }) => {
 
         {/* Clean Compact Search Bar */}
         <div className="w-44 sm:w-64 lg:w-80 relative">
-          <Search className="w-3.5 h-3.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+          <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
           <input
             type="text"
             placeholder="Search orders, KYC..."
-            className="w-full pl-9 pr-3 py-1.5 sm:py-2 text-xs bg-slate-100/80 dark:bg-slate-800/80 border-none rounded-full focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white dark:focus:bg-slate-800 text-slate-900 dark:text-slate-100 font-medium transition-all"
+            className="w-full pl-8 pr-3 py-1.5 sm:py-2 text-xs bg-slate-100/80 dark:bg-slate-800/80 border border-slate-200/50 dark:border-slate-700/80 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white dark:focus:bg-slate-800 text-slate-900 dark:text-slate-100 font-medium transition-all"
           />
         </div>
       </div>
@@ -89,7 +89,7 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileSidebar }) => {
         {/* Theme Switcher Toggle Button (Sun / Moon) */}
         <button
           onClick={toggleTheme}
-          className="w-9 h-9 rounded-full bg-slate-100/80 dark:bg-slate-800/80 hover:bg-slate-200/80 dark:hover:bg-slate-700/80 flex items-center justify-center text-slate-700 dark:text-slate-200 transition-colors"
+          className="w-8 h-8 rounded-lg bg-slate-100/80 dark:bg-slate-800/80 hover:bg-slate-200/80 dark:hover:bg-slate-700/80 flex items-center justify-center text-slate-700 dark:text-slate-200 transition-colors"
           title={`Switch to ${theme === 'light' ? 'Dark' : 'Light'} Mode`}
         >
           {theme === 'light' ? (
@@ -102,7 +102,7 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileSidebar }) => {
         {/* Date Filter Pill Button */}
         <button
           onClick={() => setFilterPeriodOpen(true)}
-          className="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-teal-50 dark:bg-teal-950/60 border border-teal-200 dark:border-teal-800 text-teal-800 dark:text-teal-300 text-xs font-bold hover:bg-teal-100 dark:hover:bg-teal-900/60 transition-colors shadow-xs"
+          className="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-teal-50 dark:bg-teal-950/60 border border-teal-200 dark:border-teal-800 text-teal-800 dark:text-teal-300 text-xs font-bold hover:bg-teal-100 dark:hover:bg-teal-900/60 transition-colors shadow-2xs"
         >
           <Calendar className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
           <span>{selectedPeriod}</span>
@@ -111,38 +111,39 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileSidebar }) => {
         {/* Action Icon 1: Support Chat */}
         <button
           onClick={() => setChatOpen(true)}
-          className="w-9 h-9 rounded-full bg-slate-100/80 dark:bg-slate-800/80 hover:bg-slate-200/80 dark:hover:bg-slate-700/80 flex items-center justify-center text-slate-600 dark:text-slate-300 relative transition-colors"
+          className="w-8 h-8 rounded-lg bg-slate-100/80 dark:bg-slate-800/80 hover:bg-slate-200/80 dark:hover:bg-slate-700/80 flex items-center justify-center text-slate-600 dark:text-slate-300 relative transition-colors"
           title="Staff Support Chat"
         >
           <MessageSquare className="w-4 h-4" />
-          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-blue-600 text-white font-extrabold text-[9px] rounded-full flex items-center justify-center shadow-xs">
+          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-blue-600 text-white font-extrabold text-[9px] rounded-full flex items-center justify-center shadow-2xs">
             5
           </span>
         </button>
 
-        {/* Action Icon 2: Bell Notifications */}
+        {/* Action Icon 2: Operational Notifications */}
         <div className="relative">
           <button
             onClick={() => setNotificationsOpen(!notificationsOpen)}
-            className="w-9 h-9 rounded-full bg-slate-100/80 dark:bg-slate-800/80 hover:bg-slate-200/80 dark:hover:bg-slate-700/80 flex items-center justify-center text-slate-600 dark:text-slate-300 relative transition-colors"
-            title="Notifications & Operational Alerts"
+            className="w-8 h-8 rounded-lg bg-slate-100/80 dark:bg-slate-800/80 hover:bg-slate-200/80 dark:hover:bg-slate-700/80 flex items-center justify-center text-slate-600 dark:text-slate-300 relative transition-colors"
+            title="System Notifications"
           >
             <Bell className="w-4 h-4" />
             {notificationsCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-teal-600 text-white font-extrabold text-[9px] rounded-full flex items-center justify-center shadow-xs">
+              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-amber-500 text-slate-950 font-extrabold text-[9px] rounded-full flex items-center justify-center shadow-2xs">
                 {notificationsCount}
               </span>
             )}
           </button>
 
+          {/* Notifications Dropdown Panel */}
           {notificationsOpen && (
-            <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-white dark:bg-[#151C28] rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-800 py-3 z-50">
-              <div className="px-5 py-2 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-white dark:bg-[#121824] rounded-xl shadow-2xl border border-slate-200/80 dark:border-slate-800 py-3 z-50 animate-fade-in">
+              <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                 <span className="text-xs font-extrabold text-slate-900 dark:text-slate-100 font-heading">Operational Alerts</span>
                 {notificationsCount > 0 ? (
                   <button
                     onClick={handleMarkAllRead}
-                    className="text-[10px] font-extrabold px-2.5 py-0.5 bg-teal-100 dark:bg-teal-900/60 text-teal-800 dark:text-teal-300 rounded-full hover:bg-teal-200 transition-colors"
+                    className="text-[10px] font-extrabold px-2 py-0.5 bg-teal-100 dark:bg-teal-900/60 text-teal-800 dark:text-teal-300 rounded hover:bg-teal-200 transition-colors"
                   >
                     Mark All Read
                   </button>
@@ -151,15 +152,15 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileSidebar }) => {
                 )}
               </div>
               <div className="divide-y divide-slate-100 dark:divide-slate-800 max-h-64 overflow-y-auto">
-                <div className="p-4 text-xs hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                <div className="p-3.5 text-xs hover:bg-slate-50 dark:hover:bg-slate-800/50">
                   <p className="font-bold text-slate-800 dark:text-slate-200">🚨 High-Value Payout Approval</p>
                   <p className="text-slate-500 dark:text-slate-400 text-[11px] mt-0.5">Seller requested 850,000 FCFA payout to MTN MoMo.</p>
-                  <span className="text-[10px] text-slate-400 dark:text-slate-500">10 mins ago</span>
+                  <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">10 mins ago</span>
                 </div>
-                <div className="p-4 text-xs hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                <div className="p-3.5 text-xs hover:bg-slate-50 dark:hover:bg-slate-800/50">
                   <p className="font-bold text-slate-800 dark:text-slate-200">📄 Store KYC Document Submitted</p>
                   <p className="text-slate-500 dark:text-slate-400 text-[11px] mt-0.5">Douala Tech Hub uploaded CNI &amp; Storefront photos.</p>
-                  <span className="text-[10px] text-slate-400 dark:text-slate-500">25 mins ago</span>
+                  <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">25 mins ago</span>
                 </div>
               </div>
             </div>
@@ -168,116 +169,133 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileSidebar }) => {
 
         <div className="h-5 w-px bg-slate-200 dark:bg-slate-700 mx-0.5" />
 
-        {/* DEMO RBAC PERSONA SWITCHER DROPDOWN */}
+        {/* User Persona Switcher & Profile Dropdown */}
         <div className="relative">
           <button
             onClick={() => setIsPersonaMenuOpen(!isPersonaMenuOpen)}
-            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200/80 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-[11px] sm:text-xs font-bold transition-colors"
+            className="flex items-center space-x-2 pl-2 pr-2.5 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-700"
           >
-            <UserCheck className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
-            <span className="hidden md:inline">Role: <strong className="font-extrabold">{user?.staff_department_role}</strong></span>
-            <span className="md:hidden font-extrabold">{user?.staff_department_role.split('_')[0]}</span>
-            <ChevronDown className="w-3 h-3 text-slate-400" />
+            <img
+              src={user?.avatar_url || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=100&q=80'}
+              alt={user?.full_name}
+              className="w-7 h-7 rounded-full object-cover border border-teal-500"
+            />
+            <span className="hidden md:block text-xs font-extrabold text-slate-900 dark:text-slate-100 max-w-[120px] truncate">
+              {user?.full_name?.split(' ')[0]}
+            </span>
+            <ChevronDown className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
           </button>
 
+          {/* Persona Switcher Dropdown */}
           {isPersonaMenuOpen && (
-            <div className="absolute right-0 mt-2 w-72 bg-white dark:bg-[#151C28] rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-800 py-3 z-50">
-              <div className="px-5 py-2 border-b border-slate-100 dark:border-slate-800">
-                <p className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                  TEST RBAC STAFF PERSONAS
-                </p>
+            <div className="absolute right-0 mt-2 w-72 bg-white dark:bg-[#121824] rounded-xl shadow-xl border border-slate-200/80 dark:border-slate-800 py-2 z-50 animate-fade-in">
+              <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-800">
+                <p className="text-xs font-extrabold text-slate-900 dark:text-slate-100">{user?.full_name}</p>
+                <p className="text-[10px] text-slate-400 dark:text-slate-500 font-mono truncate">{user?.email}</p>
+                <span className="inline-block mt-1 text-[9px] font-mono font-extrabold px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-950/80 text-purple-800 dark:text-purple-300">
+                  {user?.staff_department_role} (Level {user?.security_clearance_level})
+                </span>
               </div>
 
-              {DEMO_STAFF_PERSONAS.map((persona) => (
+              <div className="px-4 py-1.5 text-[10px] font-mono font-extrabold uppercase text-slate-400 tracking-wider">
+                SWITCH QA STAFF PERSONA
+              </div>
+
+              <div className="max-h-48 overflow-y-auto">
+                {DEMO_STAFF_PERSONAS.map((persona) => (
+                  <button
+                    key={persona.id}
+                    onClick={() => {
+                      switchPersona(persona.id);
+                      setIsPersonaMenuOpen(false);
+                    }}
+                    className={`w-full text-left px-4 py-2 text-xs flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800 ${
+                      user?.id === persona.id ? 'bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-300 font-extrabold' : 'text-slate-700 dark:text-slate-300'
+                    }`}
+                  >
+                    <div>
+                      <div className="font-bold">{persona.full_name}</div>
+                      <div className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">{persona.department_name}</div>
+                    </div>
+                    {user?.id === persona.id && <UserCheck className="w-4 h-4 text-teal-600 dark:text-teal-400" />}
+                  </button>
+                ))}
+              </div>
+
+              <div className="border-t border-slate-100 dark:border-slate-800 pt-1 mt-1">
                 <button
-                  key={persona.id}
                   onClick={() => {
-                    switchPersona(persona.id);
                     setIsPersonaMenuOpen(false);
+                    logout();
                   }}
-                  className={`w-full text-left px-5 py-3 flex items-start space-x-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors ${
-                    user?.id === persona.id ? 'bg-teal-50/70 dark:bg-teal-950/40 border-l-4 border-teal-500' : ''
-                  }`}
+                  className="w-full text-left px-4 py-2 text-xs font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 flex items-center space-x-2"
                 >
-                  <img
-                    src={persona.avatar_url || ''}
-                    alt={persona.full_name}
-                    className="w-8 h-8 rounded-full object-cover border border-slate-200 dark:border-slate-700 mt-0.5"
-                  />
-                  <div>
-                    <p className="text-xs font-extrabold text-slate-900 dark:text-slate-100">{persona.full_name}</p>
-                    <p className="text-[10px] font-bold text-teal-600 dark:text-teal-400">{persona.department_name}</p>
-                    <span className="inline-block mt-0.5 text-[9px] font-mono font-bold px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-md">
-                      {persona.staff_department_role} (L{persona.security_clearance_level})
-                    </span>
-                  </div>
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>Sign Out Session</span>
                 </button>
-              ))}
+              </div>
             </div>
           )}
         </div>
-
-        {/* Logout Icon Button */}
-        <button
-          onClick={logout}
-          title="Sign out of Staff Portal"
-          className="w-9 h-9 rounded-full bg-slate-100/80 dark:bg-slate-800/80 hover:bg-red-50 dark:hover:bg-red-950/50 hover:text-red-600 dark:hover:text-red-400 flex items-center justify-center text-slate-500 dark:text-slate-400 transition-colors"
-        >
-          <LogOut className="w-3.5 h-3.5" />
-        </button>
       </div>
 
-      {/* DATE PERIOD FILTER MODAL */}
-      <Modal isOpen={filterPeriodOpen} onClose={() => setFilterPeriodOpen(false)} title="Select Operational Telemetry Period">
-        <div className="space-y-4 text-xs">
-          <p className="text-slate-600 dark:text-slate-400 font-medium">Select timeframe to aggregate platform GMV, escrow ledgers, and rider dispatches:</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {['Today (Live 24h)', 'This Week (2026)', 'This Month (August)', 'Quarter 3 (2026)'].map((p) => (
-              <button
-                key={p}
-                onClick={() => {
-                  setSelectedPeriod(p);
-                  setFilterPeriodOpen(false);
-                }}
-                className={`p-3 rounded-2xl border text-left font-bold transition-all ${
-                  selectedPeriod === p
-                    ? 'bg-teal-50 dark:bg-teal-950/60 border-teal-500 text-teal-900 dark:text-teal-200 shadow-xs'
-                    : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100'
-                }`}
-              >
-                {p}
-              </button>
-            ))}
-          </div>
+      {/* FILTER PERIOD MODAL */}
+      <Modal
+        isOpen={filterPeriodOpen}
+        onClose={() => setFilterPeriodOpen(false)}
+        title="Filter Dashboard Time Range"
+      >
+        <div className="space-y-3 text-xs">
+          {['Today (Live)', 'This Week (2026)', 'This Month (August 2026)', 'Quarter 3 (2026)', 'All Time'].map((period) => (
+            <button
+              key={period}
+              onClick={() => {
+                setSelectedPeriod(period);
+                setFilterPeriodOpen(false);
+              }}
+              className={`w-full text-left p-3 rounded-lg border font-bold flex items-center justify-between ${
+                selectedPeriod === period
+                  ? 'bg-teal-50 dark:bg-teal-950/60 border-teal-500 text-teal-800 dark:text-teal-300'
+                  : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
+              }`}
+            >
+              <span>{period}</span>
+              {selectedPeriod === period && <UserCheck className="w-4 h-4 text-teal-600 dark:text-teal-400" />}
+            </button>
+          ))}
         </div>
       </Modal>
 
-      {/* STAFF INTERNAL SUPPORT CHAT MODAL */}
-      <Modal isOpen={chatOpen} onClose={() => setChatOpen(false)} title="Staff Internal Support & Merchant Dispatch Chat">
-        <div className="space-y-4 text-xs">
-          <div className="h-56 overflow-y-auto p-3 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3">
-            {chatMessages.map((m, idx) => (
-              <div key={idx} className="p-3 bg-white dark:bg-[#151C28] rounded-xl border border-slate-100 dark:border-slate-800 shadow-xs">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="font-extrabold text-slate-900 dark:text-slate-100">{m.sender}</span>
-                  <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">{m.time}</span>
+      {/* SUPPORT CHAT MODAL */}
+      <Modal
+        isOpen={chatOpen}
+        onClose={() => setChatOpen(false)}
+        title="Internal Staff Operational Chat"
+      >
+        <div className="space-y-4">
+          <div className="h-64 overflow-y-auto space-y-2 p-3 bg-slate-50 dark:bg-slate-800/40 rounded-lg border border-slate-200/80 dark:border-slate-700/80 text-xs">
+            {chatMessages.map((msg, i) => (
+              <div key={i} className="p-2.5 rounded-lg bg-white dark:bg-[#121824] border border-slate-200/60 dark:border-slate-700/60 shadow-2xs">
+                <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-1">
+                  <span>{msg.sender}</span>
+                  <span className="font-mono">{msg.time}</span>
                 </div>
-                <p className="text-slate-600 dark:text-slate-300">{m.text}</p>
+                <p className="text-slate-800 dark:text-slate-200 font-medium">{msg.text}</p>
               </div>
             ))}
           </div>
 
-          <form onSubmit={handleSendChatMessage} className="flex items-center space-x-2">
+          <form onSubmit={handleSendChatMessage} className="flex space-x-2">
             <input
               type="text"
-              placeholder="Type message to merchant or driver..."
               value={chatMessageInput}
               onChange={(e) => setChatMessageInput(e.target.value)}
-              className="flex-1 p-2.5 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-teal-500 text-slate-900 dark:text-slate-100"
+              placeholder="Type internal staff message..."
+              className="flex-1 p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-medium text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 focus:outline-none"
             />
-            <Button type="submit" variant="primary" size="sm" disabled={!chatMessageInput.trim()}>
+            <Button type="submit" variant="primary" size="sm">
               <Send className="w-3.5 h-3.5 mr-1" />
-              Reply
+              Send
             </Button>
           </form>
         </div>

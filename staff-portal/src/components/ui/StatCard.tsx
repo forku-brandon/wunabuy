@@ -18,7 +18,7 @@ export const StatCard: React.FC<StatCardProps> = ({
   change,
   changeType = 'positive',
   icon,
-  iconBg = 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300',
+  iconBg = 'bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300',
   description,
 }) => {
   return (
@@ -29,7 +29,7 @@ export const StatCard: React.FC<StatCardProps> = ({
           <span className="text-[10px] font-mono font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest block">
             {title}
           </span>
-          <div className={`w-9 h-9 rounded-xl flex items-center justify-center border border-slate-200/50 dark:border-slate-700 shadow-xs ${iconBg}`}>
+          <div className={`w-9 h-9 rounded-lg flex items-center justify-center border border-slate-200/50 dark:border-slate-700/80 shadow-2xs ${iconBg}`}>
             {icon}
           </div>
         </div>
@@ -44,9 +44,7 @@ export const StatCard: React.FC<StatCardProps> = ({
 
       {/* Bottom Row: Hairline Divider + Trend Pill & Description */}
       {(change || description) && (
-        <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] font-medium text-slate-500 dark:text-slate-400">
-          {description ? <span className="truncate pr-2">{description}</span> : <div />}
-
+        <div className="pt-3 mt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs">
           {change && (
             <Badge
               variant={
@@ -62,6 +60,12 @@ export const StatCard: React.FC<StatCardProps> = ({
             >
               {change}
             </Badge>
+          )}
+
+          {description && (
+            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 truncate">
+              {description}
+            </span>
           )}
         </div>
       )}
