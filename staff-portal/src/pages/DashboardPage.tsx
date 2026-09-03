@@ -6,14 +6,13 @@ import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
-import { useStaffAuth, DEMO_STAFF_PERSONAS, StaffUser } from '../stores/staffAuthStore';
+import { useStaffAuth, DEMO_STAFF_PERSONAS } from '../stores/staffAuthStore';
 import { formatXAF } from '@wunabuy/utils';
 import {
   TrendingUp,
   Lock,
   FileCheck,
   ShieldAlert,
-  PieChart as PieChartIcon,
   CheckCircle2,
   CalendarDays,
   Plus,
@@ -22,6 +21,9 @@ import {
   UserCheck,
   Search,
   ChevronDown,
+  ArrowRight,
+  Send,
+  PlayCircle,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -45,7 +47,9 @@ export interface AssignedStaffTask {
   recurrence: 'DAILY' | 'WEEKLY' | 'MONTHLY';
   priority: 'HIGH' | 'MEDIUM' | 'LOW';
   due_date: string;
-  completed: boolean;
+  status: 'ASSIGNED' | 'IN_PROGRESS' | 'COMPLETED';
+  accepted_at?: string;
+  completed_at?: string;
 }
 
 const INITIAL_ASSIGNED_TASKS: AssignedStaffTask[] = [
@@ -53,23 +57,24 @@ const INITIAL_ASSIGNED_TASKS: AssignedStaffTask[] = [
     id: 'asgn_1',
     assigned_to_id: 'staff_901', // Pauline Mbarga
     assigned_to_name: 'Pauline Mbarga',
-    assigned_by_name: 'Board Executive',
+    assigned_by_name: 'Executive Board',
     title: 'Audit weekly MTN MoMo & Orange Money platform fee reconciliation statements',
     recurrence: 'WEEKLY',
     priority: 'HIGH',
     due_date: '2026-09-05',
-    completed: false,
+    status: 'IN_PROGRESS',
+    accepted_at: '08:30 AM Today',
   },
   {
     id: 'asgn_2',
     assigned_to_id: 'staff_901', // Pauline Mbarga
     assigned_to_name: 'Pauline Mbarga',
-    assigned_by_name: 'Board Executive',
+    assigned_by_name: 'Executive Board',
     title: 'Review high-value MoMo payouts exceeding 500,000 FCFA threshold',
     recurrence: 'DAILY',
     priority: 'HIGH',
     due_date: '2026-09-03',
-    completed: false,
+    status: 'ASSIGNED',
   },
   {
     id: 'asgn_3',
@@ -80,7 +85,8 @@ const INITIAL_ASSIGNED_TASKS: AssignedStaffTask[] = [
     recurrence: 'MONTHLY',
     priority: 'MEDIUM',
     due_date: '2026-09-28',
-    completed: false,
+    status: 'IN_PROGRESS',
+    accepted_at: '09:15 AM Today',
   },
   {
     id: 'asgn_4',
@@ -91,7 +97,9 @@ const INITIAL_ASSIGNED_TASKS: AssignedStaffTask[] = [
     recurrence: 'WEEKLY',
     priority: 'HIGH',
     due_date: '2026-09-04',
-    completed: false,
+    status: 'COMPLETED',
+    accepted_at: '07:45 AM Today',
+    completed_at: '09:00 AM Today',
   },
 ];
 
@@ -225,6 +233,9 @@ export const DashboardPage: React.FC = () => {
     return saved ? JSON.parse(saved) : INITIAL_ASSIGNED_TASKS;
   });
 
+  // Active Sub-Tab View (Inbound Directives vs Outbound Manager Bench)
+  const [taskViewTab, setTaskViewTab] = useState<'inbound' | 'outbound'>('inbound');
+
   // Modal State for Assigning Task
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
 
@@ -242,10 +253,46 @@ export const DashboardPage: React.FC = () => {
     localStorage.setItem('wunabuy_assigned_staff_tasks', JSON.stringify(assignedTasks));
   }, [assignedTasks]);
 
-  const handleToggleTaskCompletion = (taskId: string) => {
+  // STAGE 1 -> STAGE 2: ACCEPT TASK BY EMPLOYEE
+  const handleAcceptTask = (taskId: string) => {
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     setAssignedTasks((prev) =>
-      prev.map((t) => (t.id === taskId ? { ...t, completed: !t.completed } : t))
+      prev.map((t) =>
+        t.id === taskId
+          ? { ...t, status: 'IN_PROGRESS', accepted_at: `${timeStr} Today` }
+          : t
+      )
     );
+
+    addAuditLog({
+      action_code: 'TASK_ACCEPT',
+      action_description: `Accepted work directive: "${taskId}"`,
+      security_level: 'INFO',
+    });
+
+    setToastMessage('Task ACCEPTED! Status updated to In-Progress.');
+    setTimeout(() => setToastMessage(''), 3000);
+  };
+
+  // STAGE 2 -> STAGE 3: MARK COMPLETED BY EMPLOYEE
+  const handleCompleteTask = (taskId: string) => {
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    setAssignedTasks((prev) =>
+      prev.map((t) =>
+        t.id === taskId
+          ? { ...t, status: 'COMPLETED', completed_at: `${timeStr} Today` }
+          : t
+      )
+    );
+
+    addAuditLog({
+      action_code: 'TASK_COMPLETE',
+      action_description: `Marked work directive as COMPLETED: "${taskId}"`,
+      security_level: 'INFO',
+    });
+
+    setToastMessage('Task COMPLETED! Reflected to assigning manager.');
+    setTimeout(() => setToastMessage(''), 3000);
   };
 
   const handleCreateAssignment = (e: React.FormEvent) => {
@@ -263,7 +310,7 @@ export const DashboardPage: React.FC = () => {
       recurrence: taskRecurrence,
       priority: taskPriority,
       due_date: taskDueDate,
-      completed: false,
+      status: 'ASSIGNED',
     };
 
     setAssignedTasks((prev) => [newTask, ...prev]);
@@ -280,9 +327,14 @@ export const DashboardPage: React.FC = () => {
     setTimeout(() => setToastMessage(''), 3000);
   };
 
-  // Filter assigned tasks for the currently logged-in persona
-  const myAssignedTasks = assignedTasks.filter(
+  // Inbound tasks assigned TO current user
+  const myInboundTasks = assignedTasks.filter(
     (t) => t.assigned_to_id === user?.id || t.assigned_to_name === user?.full_name
+  );
+
+  // Outbound tasks assigned BY current user (or all if Super Admin)
+  const myOutboundTasks = assignedTasks.filter(
+    (t) => user?.security_clearance_level === 5 || t.assigned_by_name.includes(user?.full_name?.split(' ')[0] || 'Pauline')
   );
 
   return (
@@ -341,16 +393,39 @@ export const DashboardPage: React.FC = () => {
         />
       </div>
 
-      {/* NEW SECTION: PERSONAL ASSIGNED STAFF WORK DIRECTIVES */}
+      {/* SECTION: MULTI-STAGE ASSIGNED WORK DIRECTIVES & MANAGER BENCH */}
       <Card className="mb-8 p-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 mb-4 border-b border-slate-100 dark:border-slate-800">
           <div>
-            <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100 font-heading flex items-center">
-              <CalendarDays className="w-5 h-5 text-teal-600 dark:text-teal-400 mr-2" />
-              My Assigned Work Directives &amp; Operational Tasks
-            </h3>
+            <div className="flex items-center space-x-3 mb-1">
+              <button
+                onClick={() => setTaskViewTab('inbound')}
+                className={`text-base font-extrabold font-heading pb-1 transition-colors ${
+                  taskViewTab === 'inbound'
+                    ? 'text-teal-600 dark:text-teal-400 border-b-2 border-teal-600'
+                    : 'text-slate-400 dark:text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                My Inbound Tasks ({myInboundTasks.length})
+              </button>
+
+              {canAssignTasks && (
+                <button
+                  onClick={() => setTaskViewTab('outbound')}
+                  className={`text-base font-extrabold font-heading pb-1 transition-colors ${
+                    taskViewTab === 'outbound'
+                      ? 'text-teal-600 dark:text-teal-400 border-b-2 border-teal-600'
+                      : 'text-slate-400 dark:text-slate-500 hover:text-slate-700'
+                  }`}
+                >
+                  Dispatched Work Bench ({myOutboundTasks.length})
+                </button>
+              )}
+            </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-              Daily, Weekly, or Monthly recurring tasks assigned specifically to {user?.full_name}
+              {taskViewTab === 'inbound'
+                ? `Work directives assigned to ${user?.full_name} (Accept -> Execute -> Complete)`
+                : 'Live status tracking of directives assigned to employees'}
             </p>
           </div>
 
@@ -362,56 +437,123 @@ export const DashboardPage: React.FC = () => {
           )}
         </div>
 
-        <div className="space-y-3">
-          {myAssignedTasks.length === 0 ? (
-            <div className="p-6 text-center text-slate-400 text-xs font-medium bg-slate-50 dark:bg-slate-800/40 rounded-xl">
-              No assigned work directives for your persona today. Check back later or create a new task.
-            </div>
-          ) : (
-            myAssignedTasks.map((task) => (
-              <div
-                key={task.id}
-                className={`p-4 rounded-xl flex items-start justify-between transition-all ${
-                  task.completed
-                    ? 'bg-slate-50/50 dark:bg-slate-800/20 opacity-60'
-                    : 'bg-slate-50 dark:bg-slate-800/60'
-                }`}
-              >
-                <div className="flex items-start space-x-3.5">
-                  <input
-                    type="checkbox"
-                    checked={task.completed}
-                    onChange={() => handleToggleTaskCompletion(task.id)}
-                    className="mt-1 w-4 h-4 rounded text-teal-600 focus:ring-teal-500 cursor-pointer"
-                  />
-                  <div className="space-y-1">
-                    <span
-                      className={`text-xs font-bold block ${
-                        task.completed ? 'line-through text-slate-400' : 'text-slate-900 dark:text-slate-100'
+        {/* TAB 1: MY INBOUND DIRECTIVES (EMPLOYEE VIEW) */}
+        {taskViewTab === 'inbound' && (
+          <div className="space-y-3">
+            {myInboundTasks.length === 0 ? (
+              <div className="p-6 text-center text-slate-400 text-xs font-medium bg-slate-50 dark:bg-slate-800/40 rounded-xl">
+                No assigned work directives for your persona today. Check back later or request an assignment.
+              </div>
+            ) : (
+              myInboundTasks.map((task) => (
+                <div
+                  key={task.id}
+                  className={`p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all ${
+                    task.status === 'COMPLETED'
+                      ? 'bg-emerald-50/40 dark:bg-emerald-950/20'
+                      : task.status === 'IN_PROGRESS'
+                      ? 'bg-amber-50/50 dark:bg-amber-950/30'
+                      : 'bg-slate-50 dark:bg-slate-800/60'
+                  }`}
+                >
+                  <div className="space-y-1.5 min-w-0 flex-1">
+                    <div className="flex items-center space-x-2">
+                      <span className="font-mono text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-teal-100 dark:bg-teal-900/60 text-teal-800 dark:text-teal-300">
+                        {task.recurrence} TASK
+                      </span>
+                      <Badge
+                        variant={task.priority === 'HIGH' ? 'error' : task.priority === 'MEDIUM' ? 'warning' : 'neutral'}
+                        size="sm"
+                      >
+                        {task.priority}
+                      </Badge>
+                      <span className="font-mono text-[10px] text-slate-400 font-bold">Due {task.due_date}</span>
+                    </div>
+
+                    <h4
+                      className={`text-xs font-bold ${
+                        task.status === 'COMPLETED'
+                          ? 'line-through text-slate-400'
+                          : 'text-slate-900 dark:text-slate-100'
                       }`}
                     >
                       {task.title}
-                    </span>
-                    <div className="flex items-center space-x-2 text-[10px]">
-                      <span className="font-mono font-extrabold px-1.5 py-0.5 rounded bg-teal-100 dark:bg-teal-900/60 text-teal-800 dark:text-teal-300">
-                        {task.recurrence} TASK
-                      </span>
-                      <span className="text-slate-400 font-medium">Assigned by {task.assigned_by_name}</span>
-                      <span className="font-mono text-slate-400 font-bold">• Due {task.due_date}</span>
-                    </div>
+                    </h4>
+
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
+                      Assigned by <strong className="text-slate-700 dark:text-slate-300">{task.assigned_by_name}</strong>
+                      {task.accepted_at && <span className="ml-2 font-mono text-amber-600 dark:text-amber-400">Accepted: {task.accepted_at}</span>}
+                      {task.completed_at && <span className="ml-2 font-mono text-emerald-600 dark:text-emerald-400">Completed: {task.completed_at}</span>}
+                    </p>
+                  </div>
+
+                  {/* 2-STAGE ACTION BUTTONS FOR EMPLOYEE */}
+                  <div className="flex items-center space-x-2 flex-shrink-0">
+                    {task.status === 'ASSIGNED' && (
+                      <Button variant="primary" size="sm" onClick={() => handleAcceptTask(task.id)}>
+                        <PlayCircle className="w-3.5 h-3.5 mr-1" />
+                        Accept Task
+                      </Button>
+                    )}
+
+                    {task.status === 'IN_PROGRESS' && (
+                      <Button variant="secondary" size="sm" onClick={() => handleCompleteTask(task.id)}>
+                        <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
+                        Mark Completed
+                      </Button>
+                    )}
+
+                    {task.status === 'COMPLETED' && (
+                      <Badge variant="success" size="md">
+                        ✓ COMPLETED
+                      </Badge>
+                    )}
                   </div>
                 </div>
+              ))
+            )}
+          </div>
+        )}
 
-                <Badge
-                  variant={task.priority === 'HIGH' ? 'error' : task.priority === 'MEDIUM' ? 'warning' : 'neutral'}
-                  size="sm"
-                >
-                  {task.priority}
-                </Badge>
+        {/* TAB 2: DISPATCHED WORK BENCH (MANAGER OUTBOUND TRACKING VIEW) */}
+        {taskViewTab === 'outbound' && (
+          <div className="space-y-3">
+            {myOutboundTasks.map((task) => (
+              <div
+                key={task.id}
+                className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+              >
+                <div className="space-y-1">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xs font-extrabold text-slate-900 dark:text-slate-100">Assigned To: {task.assigned_to_name}</span>
+                    <Badge variant="teal" size="sm">{task.recurrence}</Badge>
+                  </div>
+                  <p className="text-xs text-slate-700 dark:text-slate-300 font-medium">{task.title}</p>
+                  <p className="text-[10px] text-slate-400 font-mono">
+                    Due: {task.due_date}
+                    {task.accepted_at && <span className="ml-2 text-amber-600 dark:text-amber-400">Accepted: {task.accepted_at}</span>}
+                    {task.completed_at && <span className="ml-2 text-emerald-600 dark:text-emerald-400">Completed: {task.completed_at}</span>}
+                  </p>
+                </div>
+
+                <div>
+                  <Badge
+                    variant={
+                      task.status === 'COMPLETED'
+                        ? 'success'
+                        : task.status === 'IN_PROGRESS'
+                        ? 'warning'
+                        : 'info'
+                    }
+                    size="md"
+                  >
+                    {task.status === 'ASSIGNED' ? '🔵 AWAITING ACCEPTANCE' : task.status === 'IN_PROGRESS' ? '🟡 IN PROGRESS' : '🟢 COMPLETED'}
+                  </Badge>
+                </div>
               </div>
-            ))
-          )}
-        </div>
+            ))}
+          </div>
+        )}
       </Card>
 
       {/* Main Analytics Grid */}
