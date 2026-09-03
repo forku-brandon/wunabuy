@@ -4,22 +4,14 @@ import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
-import { useStaffAuth, DEMO_STAFF_PERSONAS, StaffUser } from '../stores/staffAuthStore';
+import { useStaffAuth, DEMO_STAFF_PERSONAS } from '../stores/staffAuthStore';
 import {
   MessageSquare,
   Megaphone,
   Send,
   Plus,
   Hash,
-  User,
-  ShieldCheck,
-  AlertTriangle,
   Pin,
-  CheckCircle2,
-  Paperclip,
-  Smile,
-  Search,
-  Radio,
 } from 'lucide-react';
 
 interface ChatChannel {
@@ -208,7 +200,7 @@ export const CommunicationsPage: React.FC = () => {
           className={`px-5 py-2.5 rounded-2xl text-xs font-extrabold flex items-center space-x-2 transition-all shadow-xs ${
             activeTab === 'chat'
               ? 'bg-teal-600 text-white shadow-md'
-              : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/80'
+              : 'bg-white dark:bg-[#151C28] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800'
           }`}
         >
           <MessageSquare className="w-4 h-4" />
@@ -220,7 +212,7 @@ export const CommunicationsPage: React.FC = () => {
           className={`px-5 py-2.5 rounded-2xl text-xs font-extrabold flex items-center space-x-2 transition-all shadow-xs ${
             activeTab === 'announcements'
               ? 'bg-teal-600 text-white shadow-md'
-              : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/80'
+              : 'bg-white dark:bg-[#151C28] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800'
           }`}
         >
           <Megaphone className="w-4 h-4" />
@@ -234,9 +226,9 @@ export const CommunicationsPage: React.FC = () => {
           {/* Channels & Staff Colleagues Sidebar */}
           <Card className="lg:col-span-1 p-4 flex flex-col justify-between overflow-hidden">
             <div className="space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <span className="text-xs font-extrabold text-slate-900 font-heading">Staff Channels</span>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-100 text-teal-800">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                <span className="text-xs font-extrabold text-slate-900 dark:text-slate-100 font-heading">Staff Channels</span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-100 dark:bg-teal-900/60 text-teal-800 dark:text-teal-300">
                   ONLINE
                 </span>
               </div>
@@ -249,12 +241,12 @@ export const CommunicationsPage: React.FC = () => {
                     onClick={() => setActiveChannelId(channel.id)}
                     className={`w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold flex items-center justify-between transition-all ${
                       activeChannelId === channel.id
-                        ? 'bg-teal-50 text-teal-800 border-l-4 border-teal-600'
-                        : 'text-slate-600 hover:bg-slate-100'
+                        ? 'bg-teal-50 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300 border-l-4 border-teal-600'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
                     }`}
                   >
                     <div className="flex items-center space-x-2">
-                      <Hash className="w-3.5 h-3.5 text-slate-400" />
+                      <Hash className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
                       <span>{channel.name}</span>
                     </div>
                     {channel.unread_count > 0 && (
@@ -267,8 +259,8 @@ export const CommunicationsPage: React.FC = () => {
               </div>
 
               {/* Staff Personas Directory */}
-              <div className="pt-3 border-t border-slate-100">
-                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block mb-2">
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-800">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-2">
                   DIRECT COLLEAGUES ({DEMO_STAFF_PERSONAS.length})
                 </span>
                 <div className="space-y-2">
@@ -277,11 +269,11 @@ export const CommunicationsPage: React.FC = () => {
                       <img
                         src={p.avatar_url || ''}
                         alt={p.full_name}
-                        className="w-6 h-6 rounded-full object-cover border border-slate-200"
+                        className="w-6 h-6 rounded-full object-cover border border-slate-200 dark:border-slate-700"
                       />
                       <div className="min-w-0 flex-1">
-                        <p className="font-bold text-slate-800 truncate">{p.full_name.split(' ')[0]}</p>
-                        <p className="text-[9px] text-slate-400 truncate">{p.staff_department_role}</p>
+                        <p className="font-bold text-slate-800 dark:text-slate-200 truncate">{p.full_name.split(' ')[0]}</p>
+                        <p className="text-[9px] text-slate-400 dark:text-slate-500 truncate">{p.staff_department_role}</p>
                       </div>
                     </div>
                   ))}
@@ -293,15 +285,14 @@ export const CommunicationsPage: React.FC = () => {
           {/* Chat Feed & Message Composer */}
           <Card className="lg:col-span-3 p-6 flex flex-col justify-between h-full">
             {/* Channel Header */}
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center space-x-2">
-                <Hash className="w-5 h-5 text-teal-600" />
-
+                <Hash className="w-5 h-5 text-teal-600 dark:text-teal-400" />
                 <div>
-                  <h3 className="text-base font-extrabold text-slate-900 font-heading">
+                  <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100 font-heading">
                     {currentChannel.name}
                   </h3>
-                  <p className="text-xs text-slate-500 font-medium">{currentChannel.department}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{currentChannel.department}</p>
                 </div>
               </div>
               <Badge variant="teal">REVERB ENCRYPTED</Badge>
@@ -314,32 +305,32 @@ export const CommunicationsPage: React.FC = () => {
                   <img
                     src={msg.sender_avatar}
                     alt={msg.sender_name}
-                    className="w-8 h-8 rounded-full object-cover border border-slate-200 mt-1"
+                    className="w-8 h-8 rounded-full object-cover border border-slate-200 dark:border-slate-700 mt-1"
                   />
-                  <div className="flex-1 bg-slate-50 border border-slate-100 rounded-2xl p-3.5">
+                  <div className="flex-1 bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700 rounded-2xl p-3.5">
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center space-x-2">
-                        <span className="font-extrabold text-slate-900 text-xs">{msg.sender_name}</span>
-                        <span className="px-1.5 py-0.5 text-[9px] font-mono font-bold rounded bg-slate-200 text-slate-700">
+                        <span className="font-extrabold text-slate-900 dark:text-slate-100 text-xs">{msg.sender_name}</span>
+                        <span className="px-1.5 py-0.5 text-[9px] font-mono font-bold rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
                           {msg.sender_role}
                         </span>
                       </div>
-                      <span className="text-[10px] text-slate-400 font-semibold">{msg.timestamp}</span>
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold">{msg.timestamp}</span>
                     </div>
-                    <p className="text-xs text-slate-700 font-medium">{msg.content}</p>
+                    <p className="text-xs text-slate-700 dark:text-slate-300 font-medium">{msg.content}</p>
                   </div>
                 </div>
               ))}
             </div>
 
             {/* Input Composer */}
-            <form onSubmit={handleSendMessage} className="pt-4 border-t border-slate-100 flex items-center space-x-3">
+            <form onSubmit={handleSendMessage} className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center space-x-3">
               <input
                 type="text"
                 placeholder={`Message #${currentChannel.name}...`}
                 value={messageInput}
                 onChange={(e) => setMessageInput(e.target.value)}
-                className="flex-1 p-3 bg-slate-100/80 border-none rounded-2xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-teal-500"
+                className="flex-1 p-3 bg-slate-100/80 dark:bg-slate-800/80 border-none rounded-2xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-teal-500 text-slate-900 dark:text-slate-100"
               />
               <Button type="submit" variant="primary" disabled={!messageInput.trim()}>
                 <Send className="w-4 h-4 mr-1.5" />
@@ -354,13 +345,13 @@ export const CommunicationsPage: React.FC = () => {
       {activeTab === 'announcements' && (
         <div className="space-y-6">
           <Card>
-            <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
+            <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
               <div>
-                <h3 className="text-base font-extrabold text-slate-900 font-heading flex items-center">
-                  <Megaphone className="w-5 h-5 text-teal-600 mr-2" />
+                <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100 font-heading flex items-center">
+                  <Megaphone className="w-5 h-5 text-teal-600 dark:text-teal-400 mr-2" />
                   Official System Broadcasts &amp; Executive Directives
                 </h3>
-                <p className="text-xs text-slate-500 font-medium">Company-wide policy updates, maintenance alerts, and operational targets</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Company-wide policy updates, maintenance alerts, and operational targets</p>
               </div>
 
               <Button variant="primary" size="sm" onClick={() => setAnnouncementModalOpen(true)}>
@@ -376,15 +367,15 @@ export const CommunicationsPage: React.FC = () => {
                   key={item.id}
                   className={`p-5 rounded-2xl border transition-all ${
                     item.is_pinned
-                      ? 'bg-teal-50/40 border-teal-200'
-                      : 'bg-slate-50 border-slate-200'
+                      ? 'bg-teal-50/40 dark:bg-teal-950/30 border-teal-200 dark:border-teal-900'
+                      : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700'
                   }`}
                 >
                   <div className="flex items-start justify-between">
                     <div className="space-y-1">
                       <div className="flex items-center space-x-2">
                         {item.is_pinned && (
-                          <span className="flex items-center text-[10px] font-extrabold text-teal-800 uppercase bg-teal-100 px-2 py-0.5 rounded-full">
+                          <span className="flex items-center text-[10px] font-extrabold text-teal-800 dark:text-teal-300 uppercase bg-teal-100 dark:bg-teal-900/60 px-2 py-0.5 rounded-full">
                             <Pin className="w-3 h-3 mr-1" /> PINNED DIRECTIVE
                           </span>
                         )}
@@ -401,21 +392,21 @@ export const CommunicationsPage: React.FC = () => {
                         </Badge>
                       </div>
 
-                      <h4 className="text-base font-extrabold text-slate-900 font-heading mt-1">
+                      <h4 className="text-base font-extrabold text-slate-900 dark:text-slate-100 font-heading mt-1">
                         {item.title}
                       </h4>
                     </div>
 
-                    <span className="text-[11px] font-mono text-slate-400">{item.published_at}</span>
+                    <span className="text-[11px] font-mono text-slate-400 dark:text-slate-500">{item.published_at}</span>
                   </div>
 
-                  <p className="text-xs text-slate-700 font-medium mt-3 leading-relaxed">
+                  <p className="text-xs text-slate-700 dark:text-slate-300 font-medium mt-3 leading-relaxed">
                     {item.content}
                   </p>
 
-                  <div className="mt-4 pt-3 border-t border-slate-200/80 flex items-center justify-between text-xs text-slate-500">
-                    <span>Published By: <strong className="text-slate-900">{item.author_name}</strong> ({item.author_role})</span>
-                    <span>Audience: <strong className="text-teal-700">{item.target_audience}</strong></span>
+                  <div className="mt-4 pt-3 border-t border-slate-200/80 dark:border-slate-700/80 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                    <span>Published By: <strong className="text-slate-900 dark:text-slate-200">{item.author_name}</strong> ({item.author_role})</span>
+                    <span>Audience: <strong className="text-teal-700 dark:text-teal-400">{item.target_audience}</strong></span>
                   </div>
                 </div>
               ))}
@@ -432,23 +423,23 @@ export const CommunicationsPage: React.FC = () => {
       >
         <div className="space-y-4 text-xs">
           <div>
-            <label className="block font-bold text-slate-700 mb-1">Announcement Title *</label>
+            <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Announcement Title *</label>
             <input
               type="text"
               placeholder="e.g. 🚨 Scheduled Gateway Maintenance"
               value={annTitle}
               onChange={(e) => setAnnTitle(e.target.value)}
-              className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold"
+              className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-slate-900 dark:text-slate-100"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block font-bold text-slate-700 mb-1">Severity Level</label>
+              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Severity Level</label>
               <select
                 value={annSeverity}
                 onChange={(e: any) => setAnnSeverity(e.target.value)}
-                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold"
+                className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-slate-900 dark:text-slate-100"
               >
                 <option value="GENERAL">GENERAL — Informational</option>
                 <option value="POLICY">POLICY — Compliance Directive</option>
@@ -457,11 +448,11 @@ export const CommunicationsPage: React.FC = () => {
             </div>
 
             <div>
-              <label className="block font-bold text-slate-700 mb-1">Target Audience</label>
+              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Target Audience</label>
               <select
                 value={annAudience}
                 onChange={(e) => setAnnAudience(e.target.value)}
-                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold"
+                className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-slate-900 dark:text-slate-100"
               >
                 <option value="All Staff Personnel">All Staff Personnel</option>
                 <option value="Finance & Treasury Only">Finance &amp; Treasury Only</option>
@@ -472,17 +463,17 @@ export const CommunicationsPage: React.FC = () => {
           </div>
 
           <div>
-            <label className="block font-bold text-slate-700 mb-1">Announcement Content Directive *</label>
+            <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Announcement Content Directive *</label>
             <textarea
               rows={4}
               value={annContent}
               onChange={(e) => setAnnContent(e.target.value)}
               placeholder="Detail executive operational instructions..."
-              className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-medium"
+              className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-medium text-slate-900 dark:text-slate-100"
             />
           </div>
 
-          <div className="flex justify-end space-x-3 pt-3 border-t border-slate-100">
+          <div className="flex justify-end space-x-3 pt-3 border-t border-slate-100 dark:border-slate-800">
             <Button variant="outline" onClick={() => setAnnouncementModalOpen(false)}>
               Cancel
             </Button>

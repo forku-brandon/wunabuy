@@ -18,7 +18,7 @@ export const StatCard: React.FC<StatCardProps> = ({
   change,
   changeType = 'positive',
   icon,
-  iconBg = 'bg-slate-100 text-slate-700',
+  iconBg = 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300',
   description,
 }) => {
   return (
@@ -26,17 +26,17 @@ export const StatCard: React.FC<StatCardProps> = ({
       <div>
         {/* Top Row: Micro-eyebrow + Icon Badge */}
         <div className="flex items-center justify-between mb-2">
-          <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest block">
+          <span className="text-[10px] font-mono font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest block">
             {title}
           </span>
-          <div className={`w-9 h-9 rounded-xl flex items-center justify-center border border-slate-200/50 shadow-xs ${iconBg}`}>
+          <div className={`w-9 h-9 rounded-xl flex items-center justify-center border border-slate-200/50 dark:border-slate-700 shadow-xs ${iconBg}`}>
             {icon}
           </div>
         </div>
 
         {/* Middle Row: Crisp Metric Value */}
         <div className="my-1">
-          <span className="text-2xl font-extrabold text-slate-900 font-mono tracking-tight block">
+          <span className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 font-mono tracking-tight block">
             {value}
           </span>
         </div>
@@ -44,7 +44,7 @@ export const StatCard: React.FC<StatCardProps> = ({
 
       {/* Bottom Row: Hairline Divider + Trend Pill & Description */}
       {(change || description) && (
-        <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] font-medium text-slate-500">
+        <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] font-medium text-slate-500 dark:text-slate-400">
           {description ? <span className="truncate pr-2">{description}</span> : <div />}
 
           {change && (
