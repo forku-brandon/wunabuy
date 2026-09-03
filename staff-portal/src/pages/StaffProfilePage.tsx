@@ -152,21 +152,6 @@ export const StaffProfilePage: React.FC = () => {
         </div>
       )}
 
-      {/* STRICT ADMIN PERMISSION SECURITY BANNER FOR NON-ADMINS */}
-      {!canEditProfile && (
-        <div className="mb-6 p-4 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-900 dark:text-amber-200 text-xs font-semibold flex items-center justify-between shadow-2xs">
-          <div className="flex items-center space-x-3">
-            <ShieldAlert className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
-            <div>
-              <span className="font-extrabold uppercase block font-heading">READ-ONLY PROFILE VIEW</span>
-              <p className="text-[11px] text-amber-700 dark:text-amber-300 font-medium">
-                Only Super Administrators (Level 5) or roles granted <code className="font-mono font-bold">manage_profile_crud</code> permission can modify staff profiles.
-              </p>
-            </div>
-          </div>
-          <Badge variant="amber">ADMIN CONTROL ENFORCED</Badge>
-        </div>
-      )}
 
       {/* MAIN 2-COLUMN SETTINGS STRUCTURAL LAYOUT */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
