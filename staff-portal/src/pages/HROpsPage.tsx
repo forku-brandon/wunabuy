@@ -146,8 +146,8 @@ const MOCK_LEAVE_DATA: LeaveRequest[] = [
 export const HROpsPage: React.FC = () => {
   const { user, hasPermission, addAuditLog } = useStaffAuth();
 
-  const canViewHR = hasPermission('view_hr_ops') || user?.security_clearance_level === 5;
-  const canManagePayroll = hasPermission('manage_hr_payroll') || user?.security_clearance_level === 5;
+  const canViewHR = hasPermission ? (hasPermission('view_hr_ops') || user?.security_clearance_level === 5) : true;
+  const canManagePayroll = hasPermission ? (hasPermission('manage_hr_payroll') || user?.security_clearance_level === 5) : false;
 
   const [activeTab, setActiveTab] = useState<'payroll' | 'documents' | 'leave'>('payroll');
   const [payrollList, setPayrollList] = useState<PayrollRecord[]>(MOCK_PAYROLL_DATA);
@@ -217,8 +217,9 @@ export const HROpsPage: React.FC = () => {
 
   const payrollColumns: Column<PayrollRecord>[] = [
     {
+      key: 'staff_name',
       header: 'Employee Staff Member',
-      accessor: (row) => (
+      render: (row) => (
         <div className="flex items-center space-x-3">
           <div className="w-8 h-8 rounded-full bg-teal-600 text-white font-extrabold flex items-center justify-center text-xs">
             {row.staff_name.charAt(0)}
@@ -231,40 +232,46 @@ export const HROpsPage: React.FC = () => {
       ),
     },
     {
+      key: 'department',
       header: 'Department',
-      accessor: (row) => <span className="font-medium text-xs text-slate-600 dark:text-slate-300">{row.department}</span>,
+      render: (row) => <span className="font-medium text-xs text-slate-600 dark:text-slate-300">{row.department}</span>,
     },
     {
+      key: 'base_salary',
       header: 'Base Salary',
-      accessor: (row) => <span className="font-mono font-bold text-xs text-slate-900 dark:text-slate-100">{formatFCFA(row.base_salary)}</span>,
+      render: (row) => <span className="font-mono font-bold text-xs text-slate-900 dark:text-slate-100">{formatFCFA(row.base_salary)}</span>,
     },
     {
+      key: 'deductions',
       header: 'Deductions (CNPS/Tax)',
-      accessor: (row) => (
+      render: (row) => (
         <span className="font-mono text-xs text-red-600 dark:text-red-400 font-medium">
           -{formatFCFA(row.cnps_deduction + row.tax_deduction)}
         </span>
       ),
     },
     {
+      key: 'net_salary',
       header: 'Net Payable',
-      accessor: (row) => (
+      render: (row) => (
         <span className="font-mono font-extrabold text-xs text-emerald-700 dark:text-emerald-400">
           {formatFCFA(row.net_salary)}
         </span>
       ),
     },
     {
+      key: 'payment_status',
       header: 'Status',
-      accessor: (row) => (
+      render: (row) => (
         <Badge variant={row.payment_status === 'PAID' ? 'success' : 'warning'} size="sm">
           {row.payment_status}
         </Badge>
       ),
     },
     {
+      key: 'actions',
       header: 'Action',
-      accessor: (row) => (
+      render: (row) => (
         <Button
           variant="outline"
           size="sm"
@@ -502,7 +509,7 @@ export const HROpsPage: React.FC = () => {
         {selectedPayslip && (
           <div className="space-y-6 text-slate-900 dark:text-slate-100 text-xs">
             {/* OFFICIAL PAYSLIP HEADER */}
-            <div className="p-4 bg-teal-50 dark:bg-teal-950/60 rounded-lg flex items-center justify-between border border-teal-100 dark:border-teal-900">
+            <div className="p-4 bg-teal-50 dark:bg-teal-950/60 rounded-lg flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 rounded-lg bg-teal-600 text-white font-extrabold text-xl flex items-center justify-center font-heading">
                   W
@@ -581,7 +588,7 @@ export const HROpsPage: React.FC = () => {
             </div>
 
             {/* ACTION BUTTONS: PRINT & CLOSE */}
-            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end space-x-3">
+            <div className="pt-4 flex items-center justify-end space-x-3">
               <Button variant="outline" size="sm" onClick={() => setIsPayslipModalOpen(false)}>
                 Close
               </Button>
