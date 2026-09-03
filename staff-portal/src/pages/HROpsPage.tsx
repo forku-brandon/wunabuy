@@ -409,9 +409,9 @@ export const HROpsPage: React.FC = () => {
       ),
     },
     {
-      header: 'Clearance',
-      accessorKey: 'security_clearance_level',
-      cell: (row) => (
+      key: 'clearance',
+      header: 'Clearance Level',
+      render: (row) => (
         <Badge variant={row.security_clearance_level === 5 ? 'amber' : row.security_clearance_level >= 4 ? 'teal' : 'neutral'}>
           Level {row.security_clearance_level}
         </Badge>

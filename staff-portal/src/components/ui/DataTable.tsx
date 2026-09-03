@@ -119,9 +119,9 @@ export function DataTable<T extends Record<string, any>>({
                   key={item.id || rowIdx}
                   className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors"
                 >
-                  {columns.map((col) => (
+                  {columns.map((col, cIdx) => (
                     <td
-                      key={col.key}
+                      key={col.key || `col_${cIdx}`}
                       className={`py-4 px-4 ${
                         col.align === 'right'
                           ? 'text-right'
@@ -130,7 +130,9 @@ export function DataTable<T extends Record<string, any>>({
                           : 'text-left'
                       } ${col.className || ''}`}
                     >
-                      {col.render(item)}
+                      {typeof col.render === 'function'
+                        ? col.render(item)
+                        : (item as any)[col.key] ?? null}
                     </td>
                   ))}
                 </tr>
