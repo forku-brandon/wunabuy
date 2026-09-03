@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   FileCheck,
@@ -11,6 +11,7 @@ import {
   Megaphone,
   ShieldCheck,
   ChevronRight,
+  User,
   X,
 } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -34,9 +35,11 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
   onCloseMobile,
 }) => {
   const { user, hasPermission } = useStaffAuth();
+  const navigate = useNavigate();
 
   const allNavItems: NavItemConfig[] = [
     { label: 'Dashboard', path: '/', icon: LayoutDashboard, permission: 'view_dashboard' },
+    { label: 'My Staff Profile', path: '/profile', icon: User, permission: 'view_dashboard' },
     { label: 'Internal Chat & Broadcasts', path: '/communications', icon: Megaphone, permission: 'view_dashboard', badge: 3 },
     { label: 'Store KYC Queue', path: '/kyc', icon: FileCheck, permission: 'view_kyc', badge: 4 },
     { label: 'Escrow Disputes', path: '/disputes', icon: ShieldAlert, permission: 'view_disputes', badge: 2 },
@@ -79,21 +82,30 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
 
       {/* 2. Scrollable Container: User Profile Card & Navigation Items */}
       <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4 space-y-4">
-        {/* Top User Avatar Profile Card */}
+        {/* Clickable Top User Avatar Profile Card */}
         {user && (
-          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 flex items-center space-x-3">
+          <div
+            onClick={() => {
+              navigate('/profile');
+              if (onCloseMobile) onCloseMobile();
+            }}
+            className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 flex items-center space-x-3 cursor-pointer hover:border-teal-400 dark:hover:border-teal-500 transition-all shadow-xs group"
+          >
             <img
               src={user.avatar_url || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=150&q=80'}
               alt={user.full_name}
               className="w-10 h-10 rounded-full object-cover border-2 border-teal-500 shadow-sm"
             />
             <div className="min-w-0 flex-1">
-              <h4 className="text-xs font-extrabold text-slate-900 dark:text-slate-100 truncate">Hello, {user.full_name.split(' ')[0]}</h4>
+              <h4 className="text-xs font-extrabold text-slate-900 dark:text-slate-100 truncate group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
+                Hello, {user.full_name.split(' ')[0]}
+              </h4>
               <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 truncate">{user.email}</p>
               <span className="inline-block mt-0.5 text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-teal-100 dark:bg-teal-900/60 text-teal-800 dark:text-teal-300">
                 L{user.security_clearance_level} CLEARANCE
               </span>
             </div>
+            <ChevronRight className="w-4 h-4 text-slate-400 dark:text-slate-500 group-hover:translate-x-0.5 transition-transform" />
           </div>
         )}
 
