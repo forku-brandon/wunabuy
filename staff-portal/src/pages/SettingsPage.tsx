@@ -6,7 +6,12 @@ import { Button } from '../components/ui/Button';
 import { StatCard } from '../components/ui/StatCard';
 import { Modal } from '../components/ui/Modal';
 import { DataTable, Column } from '../components/ui/DataTable';
-import { useStaffAuth, AuditLogItem, StaffRoleConfig, StaffPermission } from '../stores/staffAuthStore';
+import {
+  useStaffAuth,
+  AuditLogEntry,
+  StaffRoleDefinition,
+  StaffPermission,
+} from '../stores/staffAuthStore';
 import {
   ShieldCheck,
   Lock,
@@ -15,36 +20,48 @@ import {
 } from 'lucide-react';
 
 const ALL_SYSTEM_PERMISSIONS: { key: StaffPermission; label: string }[] = [
-  { key: 'view_dashboard', label: 'View Dashboard Telemetry' },
+  { key: 'view_dashboard', label: 'View Executive Dashboard' },
   { key: 'view_kyc', label: 'View KYC Queue' },
-  { key: 'approve_kyc', label: 'Approve / Reject KYC Documents' },
+  { key: 'approve_kyc', label: 'Approve/Reject KYC' },
   { key: 'view_disputes', label: 'View Escrow Disputes' },
-  { key: 'adjudicate_disputes', label: 'Adjudicate 3-Way Disputes' },
-  { key: 'view_logistics', label: 'View Fleet GPS Telemetry' },
-  { key: 'override_logistics', label: 'Logistics Manual Dispatch Override' },
-  { key: 'view_financials', label: 'View Payout Reconciliation' },
-  { key: 'approve_payouts', label: 'Authorize MoMo / Orange Payouts' },
-  { key: 'manage_users', label: 'Manage Directory & Suspend Users' },
-  { key: 'manage_marketing', label: 'Create & Edit Promo Vouchers' },
+  { key: 'resolve_disputes', label: 'Resolve Escrow Disputes' },
+  { key: 'view_logistics', label: 'View Logistics Telemetry' },
+  { key: 'override_logistics', label: 'Logistics Manual Override' },
+  { key: 'view_financials', label: 'View Financial Ledger' },
+  { key: 'approve_payouts', label: 'Authorize Payouts' },
+  { key: 'manage_users', label: 'Manage Users & Directory' },
+  { key: 'manage_marketing', label: 'Manage Marketing & Banners' },
+  { key: 'manage_settings', label: 'Manage System Settings' },
   { key: 'view_audit_logs', label: 'View Security Audit Logs' },
-  { key: 'manage_system_settings', label: 'Manage Roles & Permissions Matrix (L5 Only)' },
 ];
 
 export const SettingsPage: React.FC = () => {
-  const { user, auditLogs, roles, addRole, updateRole, deleteRole, addAuditLog, hasPermission } = useStaffAuth();
+  const {
+    user,
+    auditLogs = [],
+    rolesMatrix = [],
+    createRole,
+    updateRolePermissions,
+    deleteRole,
+    addAuditLog,
+    hasPermission,
+  } = useStaffAuth();
   
   // Tab State
   const [activeTab, setActiveTab] = useState<'audit_logs' | 'rbac_roles'>('audit_logs');
 
   // Role Management Modal State
   const [roleModalOpen, setRoleModalOpen] = useState(false);
-  const [editingRole, setEditingRole] = useState<StaffRoleConfig | null>(null);
+  const [editingRole, setEditingRole] = useState<StaffRoleDefinition | null>(null);
   const [roleNameInput, setRoleNameInput] = useState('');
   const [roleDeptInput, setRoleDeptInput] = useState('');
   const [roleClearanceInput, setRoleClearanceInput] = useState('3');
   const [rolePermissionsInput, setRolePermissionsInput] = useState<StaffPermission[]>([]);
 
-  const isSuperAdmin = user?.security_clearance_level === 5 && hasPermission('manage_system_settings');
+  const isSuperAdmin = user?.security_clearance_level === 5 && hasPermission('manage_settings');
+
+  const safeAuditLogs = Array.isArray(auditLogs) ? auditLogs : [];
+  const safeRoles = Array.isArray(rolesMatrix) ? rolesMatrix : [];
 
   const handleOpenCreateRole = () => {
     setEditingRole(null);
@@ -55,11 +72,11 @@ export const SettingsPage: React.FC = () => {
     setRoleModalOpen(true);
   };
 
-  const handleOpenEditRole = (role: StaffRoleConfig) => {
+  const handleOpenEditRole = (role: StaffRoleDefinition) => {
     setEditingRole(role);
-    setRoleNameInput(role.role_name);
-    setRoleDeptInput(role.department_name);
-    setRoleClearanceInput(String(role.security_clearance_level));
+    setRoleNameInput(role.name);
+    setRoleDeptInput(role.department);
+    setRoleClearanceInput(String(role.clearance_level));
     setRolePermissionsInput(role.permissions);
     setRoleModalOpen(true);
   };
@@ -74,74 +91,54 @@ export const SettingsPage: React.FC = () => {
     if (!roleNameInput.trim() || !roleDeptInput.trim()) return;
 
     if (editingRole) {
-      updateRole(editingRole.id, {
-        role_name: roleNameInput,
-        department_name: roleDeptInput,
-        security_clearance_level: parseInt(roleClearanceInput) || 3,
-        permissions: rolePermissionsInput,
-      });
+      updateRolePermissions(editingRole.code, rolePermissionsInput);
 
       addAuditLog({
         action_code: 'RBAC_ROLE_UPDATE',
         action_description: `Updated system staff role "${roleNameInput}" (${rolePermissionsInput.length} permissions)`,
-        target_id: editingRole.id,
+        target_id: editingRole.code,
         security_level: 'CRITICAL',
       });
     } else {
-      const newRoleObj: StaffRoleConfig = {
-        id: 'role_' + Date.now().toString().slice(-4),
-        role_code: roleNameInput.toUpperCase().replace(/\s+/g, '_'),
-        role_name: roleNameInput,
-        department_name: roleDeptInput,
-        security_clearance_level: parseInt(roleClearanceInput) || 3,
+      const newRoleObj: StaffRoleDefinition = {
+        code: roleNameInput.toUpperCase().replace(/\s+/g, '_'),
+        name: roleNameInput,
+        department: roleDeptInput,
+        clearance_level: parseInt(roleClearanceInput) || 3,
         is_custom: true,
         permissions: rolePermissionsInput,
       };
 
-      addRole(newRoleObj);
-
-      addAuditLog({
-        action_code: 'RBAC_ROLE_CREATE',
-        action_description: `Created custom staff role "${roleNameInput}" with Level ${roleClearanceInput} clearance`,
-        target_id: newRoleObj.id,
-        security_level: 'CRITICAL',
-      });
+      createRole(newRoleObj);
     }
 
     setRoleModalOpen(false);
   };
 
-  const handleDeleteRole = (role: StaffRoleConfig) => {
+  const handleDeleteRole = (role: StaffRoleDefinition) => {
     if (!role.is_custom) {
       alert('Default system roles cannot be deleted.');
       return;
     }
 
-    if (confirm(`Are you sure you want to delete custom role "${role.role_name}"?`)) {
-      deleteRole(role.id);
-
-      addAuditLog({
-        action_code: 'RBAC_ROLE_DELETE',
-        action_description: `Deleted custom staff role "${role.role_name}"`,
-        target_id: role.id,
-        security_level: 'CRITICAL',
-      });
+    if (confirm(`Are you sure you want to delete custom role "${role.name}"?`)) {
+      deleteRole(role.code);
     }
   };
 
-  const auditColumns: Column<AuditLogItem>[] = [
+  const auditColumns: Column<AuditLogEntry>[] = [
     {
       key: 'timestamp',
       header: 'Timestamp',
       render: (item) => <span className="font-mono text-slate-900 dark:text-slate-100 font-semibold">{item.timestamp}</span>,
     },
     {
-      key: 'actor_name',
+      key: 'staff_name',
       header: 'Staff Actor',
       render: (item) => (
         <div>
-          <span className="font-bold text-slate-900 dark:text-slate-100 block">{item.actor_name}</span>
-          <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">{item.actor_email}</span>
+          <span className="font-bold text-slate-900 dark:text-slate-100 block">{item.staff_name}</span>
+          <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Role: {item.staff_role}</span>
         </div>
       ),
     },
@@ -187,7 +184,7 @@ export const SettingsPage: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard
           title="TOTAL RECORDED AUDIT LOGS"
-          value={`${auditLogs.length} Records`}
+          value={`${safeAuditLogs.length} Records`}
           change="Immutable Ledger"
           changeType="positive"
           icon={<ShieldCheck className="w-5 h-5 text-teal-600 dark:text-teal-400" />}
@@ -197,7 +194,7 @@ export const SettingsPage: React.FC = () => {
 
         <StatCard
           title="ACTIVE SYSTEM ROLES"
-          value={`${roles.length} Roles`}
+          value={`${safeRoles.length} Roles`}
           change="Level 1 - 5"
           changeType="neutral"
           icon={<Key className="w-5 h-5 text-blue-600 dark:text-blue-400" />}
@@ -237,7 +234,7 @@ export const SettingsPage: React.FC = () => {
           }`}
         >
           <ShieldCheck className="w-4 h-4" />
-          <span>Security Audit Log Ledger ({auditLogs.length})</span>
+          <span>Security Audit Log Ledger ({safeAuditLogs.length})</span>
         </button>
 
         <button
@@ -249,14 +246,14 @@ export const SettingsPage: React.FC = () => {
           }`}
         >
           <Key className="w-4 h-4" />
-          <span>Staff Roles &amp; Permissions Matrix ({roles.length})</span>
+          <span>Staff Roles &amp; Permissions Matrix ({safeRoles.length})</span>
         </button>
       </div>
 
       {/* TAB 1: IMMUTABLE AUDIT LOG LEDGER */}
       {activeTab === 'audit_logs' && (
         <DataTable
-          data={auditLogs}
+          data={safeAuditLogs}
           columns={auditColumns}
           searchPlaceholder="Search audit code, staff actor, description..."
           pageSize={5}
@@ -289,12 +286,12 @@ export const SettingsPage: React.FC = () => {
 
             {/* Roles Grid List */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {roles.map((r) => (
-                <div key={r.id} className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex flex-col justify-between">
+              {safeRoles.map((r) => (
+                <div key={r.code} className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex flex-col justify-between">
                   <div>
                     <div className="flex items-center justify-between">
                       <span className="font-mono text-[10px] font-extrabold px-2.5 py-0.5 rounded bg-teal-100 dark:bg-teal-900/60 text-teal-800 dark:text-teal-300">
-                        CLEARANCE LEVEL {r.security_clearance_level}
+                        CLEARANCE LEVEL {r.clearance_level}
                       </span>
                       {r.is_custom && (
                         <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase">CUSTOM ROLE</span>
@@ -302,16 +299,16 @@ export const SettingsPage: React.FC = () => {
                     </div>
 
                     <h4 className="text-base font-extrabold text-slate-900 dark:text-slate-100 font-heading mt-2">
-                      {r.role_name}
+                      {r.name}
                     </h4>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">{r.department_name}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">{r.department}</p>
 
                     <div className="mt-4 space-y-1">
                       <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
-                        GRANTED PERMISSIONS ({r.permissions.length})
+                        GRANTED PERMISSIONS ({r.permissions ? r.permissions.length : 0})
                       </span>
                       <div className="flex flex-wrap gap-1.5 mt-1">
-                        {r.permissions.map((p) => (
+                        {r.permissions && r.permissions.map((p) => (
                           <span key={p} className="text-[10px] font-semibold px-2 py-0.5 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded text-slate-700 dark:text-slate-300">
                             {p}
                           </span>
@@ -343,7 +340,7 @@ export const SettingsPage: React.FC = () => {
       <Modal
         isOpen={roleModalOpen}
         onClose={() => setRoleModalOpen(false)}
-        title={editingRole ? `Edit Role Matrix — ${editingRole.role_name}` : 'Create Custom Staff Role'}
+        title={editingRole ? `Edit Role Matrix — ${editingRole.name}` : 'Create Custom Staff Role'}
       >
         <div className="space-y-4 text-xs">
           <div className="grid grid-cols-2 gap-3">
