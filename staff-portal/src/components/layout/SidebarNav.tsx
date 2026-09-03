@@ -42,7 +42,6 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
   const allNavItems: NavItemConfig[] = [
     { label: 'Dashboard', path: '/', icon: LayoutDashboard, permission: 'view_dashboard' },
     { label: 'My Staff Profile', path: '/profile', icon: User, permission: 'view_dashboard' },
-    { label: 'Calendar & To-Dos', path: '/calendar', icon: CalendarIcon, permission: 'view_dashboard' },
     { label: 'Internal Chat & Broadcasts', path: '/communications', icon: Megaphone, permission: 'view_dashboard', badge: 3 },
     { label: 'HR & Staff Payroll', path: '/hr', icon: Briefcase, permission: 'view_hr_ops' },
     { label: 'Store KYC Queue', path: '/kyc', icon: FileCheck, permission: 'view_kyc', badge: 4 },

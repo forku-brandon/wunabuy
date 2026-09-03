@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Search,
   Bell,
@@ -11,6 +12,7 @@ import {
   Send,
   Sun,
   Moon,
+  CalendarDays,
 } from 'lucide-react';
 import { useStaffAuth, DEMO_STAFF_PERSONAS } from '../../stores/staffAuthStore';
 import { useTheme } from '../../context/ThemeContext';
@@ -24,6 +26,7 @@ export interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ onToggleMobileSidebar }) => {
   const { user, logout, switchPersona, addAuditLog } = useStaffAuth();
   const { theme, toggleTheme } = useTheme();
+  const navigate = useNavigate();
   const [isPersonaMenuOpen, setIsPersonaMenuOpen] = useState(false);
 
   // Header Interactive Modals & Drawers State
@@ -97,6 +100,16 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileSidebar }) => {
           ) : (
             <Sun className="w-4 h-4 text-amber-400" />
           )}
+        </button>
+
+        {/* Calendar & Operational Tasks Header Button */}
+        <button
+          onClick={() => navigate('/calendar')}
+          className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold transition-all shadow-2xs"
+          title="Open Operational Calendar & Task Manager"
+        >
+          <CalendarDays className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">Calendar &amp; Tasks</span>
         </button>
 
         {/* Date Filter Pill Button */}

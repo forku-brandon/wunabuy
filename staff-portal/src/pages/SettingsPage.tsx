@@ -35,6 +35,7 @@ const ALL_SYSTEM_PERMISSIONS: { key: StaffPermission; label: string }[] = [
   { key: 'manage_profile_crud', label: 'Manage Staff Profile CRUD (Admin Only)' },
   { key: 'view_hr_ops', label: 'View HR & Staff Ops' },
   { key: 'manage_hr_payroll', label: 'Manage HR Payroll & Printable Payslips' },
+  { key: 'assign_staff_tasks', label: 'Assign & Dispatch Staff Work Directives' },
   { key: 'view_audit_logs', label: 'View Security Audit Logs' },
 ];
 

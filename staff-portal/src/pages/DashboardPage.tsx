@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageContainer } from '../components/layout/PageContainer';
 import { StatCard } from '../components/ui/StatCard';
 import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
+import { Button } from '../components/ui/Button';
+import { Modal } from '../components/ui/Modal';
+import { useStaffAuth, DEMO_STAFF_PERSONAS } from '../stores/staffAuthStore';
 import { formatXAF } from '@wunabuy/utils';
 import {
   TrendingUp,
@@ -12,6 +15,11 @@ import {
   ShieldAlert,
   PieChart as PieChartIcon,
   CheckCircle2,
+  CalendarDays,
+  Plus,
+  Clock,
+  Check,
+  UserCheck,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -25,6 +33,65 @@ import {
   Pie,
   Cell,
 } from 'recharts';
+
+export interface AssignedStaffTask {
+  id: string;
+  assigned_to_id: string;
+  assigned_to_name: string;
+  assigned_by_name: string;
+  title: string;
+  recurrence: 'DAILY' | 'WEEKLY' | 'MONTHLY';
+  priority: 'HIGH' | 'MEDIUM' | 'LOW';
+  due_date: string;
+  completed: boolean;
+}
+
+const INITIAL_ASSIGNED_TASKS: AssignedStaffTask[] = [
+  {
+    id: 'asgn_1',
+    assigned_to_id: 'staff_901', // Pauline Mbarga
+    assigned_to_name: 'Pauline Mbarga',
+    assigned_by_name: 'Board Executive',
+    title: 'Audit weekly MTN MoMo & Orange Money platform fee reconciliation statements',
+    recurrence: 'WEEKLY',
+    priority: 'HIGH',
+    due_date: '2026-09-05',
+    completed: false,
+  },
+  {
+    id: 'asgn_2',
+    assigned_to_id: 'staff_901', // Pauline Mbarga
+    assigned_to_name: 'Pauline Mbarga',
+    assigned_by_name: 'Board Executive',
+    title: 'Review high-value MoMo payouts exceeding 500,000 FCFA threshold',
+    recurrence: 'DAILY',
+    priority: 'HIGH',
+    due_date: '2026-09-03',
+    completed: false,
+  },
+  {
+    id: 'asgn_3',
+    assigned_to_id: 'staff_907', // Chantal Nguesso (HR)
+    assigned_to_name: 'Chantal Nguesso',
+    assigned_by_name: 'Pauline Mbarga',
+    title: 'Process monthly CNPS social security deductions and print staff payslips',
+    recurrence: 'MONTHLY',
+    priority: 'MEDIUM',
+    due_date: '2026-09-28',
+    completed: false,
+  },
+  {
+    id: 'asgn_4',
+    assigned_to_id: 'staff_902', // Christian Atangana
+    assigned_to_name: 'Christian Atangana',
+    assigned_by_name: 'Pauline Mbarga',
+    title: 'Verify seller Mobile Money wallet ledger entries before Friday disbursal',
+    recurrence: 'WEEKLY',
+    priority: 'HIGH',
+    due_date: '2026-09-04',
+    completed: false,
+  },
+];
 
 const MOCK_CHART_DATA = [
   { day: 'Mon', gmv: 4200000, escrow: 1850000 },
@@ -45,12 +112,89 @@ const MOCK_DONUT_DATA = [
 
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
+  const { user, hasPermission, addAuditLog } = useStaffAuth();
+
+  const canAssignTasks = hasPermission('assign_staff_tasks') || user?.security_clearance_level === 5;
+
+  // Assigned Tasks Persistence
+  const [assignedTasks, setAssignedTasks] = useState<AssignedStaffTask[]>(() => {
+    const saved = localStorage.getItem('wunabuy_assigned_staff_tasks');
+    return saved ? JSON.parse(saved) : INITIAL_ASSIGNED_TASKS;
+  });
+
+  // Modal State for Assigning Task
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+
+  // Form State
+  const [targetStaffId, setTargetStaffId] = useState(DEMO_STAFF_PERSONAS[0].id);
+  const [taskTitle, setTaskTitle] = useState('');
+  const [taskRecurrence, setTaskRecurrence] = useState<'DAILY' | 'WEEKLY' | 'MONTHLY'>('WEEKLY');
+  const [taskPriority, setTaskPriority] = useState<'HIGH' | 'MEDIUM' | 'LOW'>('HIGH');
+  const [taskDueDate, setTaskDueDate] = useState('2026-09-05');
+
+  // Toast State
+  const [toastMessage, setToastMessage] = useState('');
+
+  useEffect(() => {
+    localStorage.setItem('wunabuy_assigned_staff_tasks', JSON.stringify(assignedTasks));
+  }, [assignedTasks]);
+
+  const handleToggleTaskCompletion = (taskId: string) => {
+    setAssignedTasks((prev) =>
+      prev.map((t) => (t.id === taskId ? { ...t, completed: !t.completed } : t))
+    );
+  };
+
+  const handleCreateAssignment = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!taskTitle.trim()) return;
+
+    const targetPersona = DEMO_STAFF_PERSONAS.find((p) => p.id === targetStaffId) || DEMO_STAFF_PERSONAS[0];
+
+    const newTask: AssignedStaffTask = {
+      id: 'asgn_' + Date.now().toString().slice(-4),
+      assigned_to_id: targetPersona.id,
+      assigned_to_name: targetPersona.full_name,
+      assigned_by_name: user?.full_name || 'Manager',
+      title: taskTitle,
+      recurrence: taskRecurrence,
+      priority: taskPriority,
+      due_date: taskDueDate,
+      completed: false,
+    };
+
+    setAssignedTasks((prev) => [newTask, ...prev]);
+
+    addAuditLog({
+      action_code: 'TASK_ASSIGN_DISPATCH',
+      action_description: `Assigned ${taskRecurrence.toLowerCase()} work task to ${targetPersona.full_name}: "${taskTitle}"`,
+      security_level: 'INFO',
+    });
+
+    setTaskTitle('');
+    setIsAssignModalOpen(false);
+    setToastMessage(`Work directive successfully assigned to ${targetPersona.full_name}!`);
+    setTimeout(() => setToastMessage(''), 3000);
+  };
+
+  // Filter assigned tasks for the currently logged-in persona
+  const myAssignedTasks = assignedTasks.filter(
+    (t) => t.assigned_to_id === user?.id || t.assigned_to_name === user?.full_name
+  );
 
   return (
     <PageContainer
       title="Executive Overview Dashboard"
       subtitle="Real-time Platform GMV, Mobile Money Disbursal Reconciliation & Escrow Telemetry"
     >
+      {/* TOAST NOTIFICATION */}
+      {toastMessage && (
+        <div className="mb-6 p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-900 dark:text-emerald-200 text-xs font-bold flex items-center space-x-2 animate-fade-in shadow-2xs">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
       {/* Top Row: Precision Enterprise Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
         <StatCard
@@ -94,27 +238,97 @@ export const DashboardPage: React.FC = () => {
         />
       </div>
 
+      {/* NEW SECTION: PERSONAL ASSIGNED STAFF WORK DIRECTIVES */}
+      <Card className="mb-8 p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 mb-4 border-b border-slate-100 dark:border-slate-800">
+          <div>
+            <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100 font-heading flex items-center">
+              <CalendarDays className="w-5 h-5 text-teal-600 dark:text-teal-400 mr-2" />
+              My Assigned Work Directives &amp; Operational Tasks
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+              Daily, Weekly, or Monthly recurring tasks assigned specifically to {user?.full_name}
+            </p>
+          </div>
+
+          {canAssignTasks && (
+            <Button variant="primary" size="sm" onClick={() => setIsAssignModalOpen(true)}>
+              <Plus className="w-4 h-4 mr-1" />
+              Assign Work Task to Employee
+            </Button>
+          )}
+        </div>
+
+        <div className="space-y-3">
+          {myAssignedTasks.length === 0 ? (
+            <div className="p-6 text-center text-slate-400 text-xs font-medium bg-slate-50 dark:bg-slate-800/40 rounded-xl">
+              No assigned work directives for your persona today. Check back later or create a new task.
+            </div>
+          ) : (
+            myAssignedTasks.map((task) => (
+              <div
+                key={task.id}
+                className={`p-4 rounded-xl flex items-start justify-between transition-all ${
+                  task.completed
+                    ? 'bg-slate-50/50 dark:bg-slate-800/20 opacity-60'
+                    : 'bg-slate-50 dark:bg-slate-800/60'
+                }`}
+              >
+                <div className="flex items-start space-x-3.5">
+                  <input
+                    type="checkbox"
+                    checked={task.completed}
+                    onChange={() => handleToggleTaskCompletion(task.id)}
+                    className="mt-1 w-4 h-4 rounded text-teal-600 focus:ring-teal-500 cursor-pointer"
+                  />
+                  <div className="space-y-1">
+                    <span
+                      className={`text-xs font-bold block ${
+                        task.completed ? 'line-through text-slate-400' : 'text-slate-900 dark:text-slate-100'
+                      }`}
+                    >
+                      {task.title}
+                    </span>
+                    <div className="flex items-center space-x-2 text-[10px]">
+                      <span className="font-mono font-extrabold px-1.5 py-0.5 rounded bg-teal-100 dark:bg-teal-900/60 text-teal-800 dark:text-teal-300">
+                        {task.recurrence} TASK
+                      </span>
+                      <span className="text-slate-400 font-medium">Assigned by {task.assigned_by_name}</span>
+                      <span className="font-mono text-slate-400 font-bold">• Due {task.due_date}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <Badge
+                  variant={task.priority === 'HIGH' ? 'error' : task.priority === 'MEDIUM' ? 'warning' : 'neutral'}
+                  size="sm"
+                >
+                  {task.priority}
+                </Badge>
+              </div>
+            ))
+          )}
+        </div>
+      </Card>
+
       {/* Main Analytics Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         {/* Left: Donut Chart "Current Escrow Allocation" */}
         <Card className="lg:col-span-1 flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100 dark:border-slate-800">
-              <h3 className="text-xs font-mono font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
-                CURRENT ESCROW ALLOCATION
-              </h3>
-              <PieChartIcon className="w-4 h-4 text-slate-400 dark:text-slate-500" />
-            </div>
-
-            <div className="h-44 w-full flex items-center justify-center relative">
+            <h3 className="text-xs font-mono font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1">
+              ESCROW ALLOCATION BREAKDOWN
+            </h3>
+            <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">Active Mobile Money Escrow Hold Distribution</p>
+            <div className="h-56 mt-4 relative">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={MOCK_DONUT_DATA}
                     cx="50%"
                     cy="50%"
-                    innerRadius={52}
-                    outerRadius={75}
+                    innerRadius={60}
+                    outerRadius={80}
                     paddingAngle={4}
                     dataKey="value"
                   >
@@ -122,176 +336,178 @@ export const DashboardPage: React.FC = () => {
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#121824',
+                      borderColor: '#1E293B',
+                      borderRadius: '8px',
+                      color: '#F8FAFC',
+                      fontSize: '12px',
+                    }}
+                  />
                 </PieChart>
               </ResponsiveContainer>
-              <div className="absolute text-center">
-                <span className="text-[10px] font-mono font-bold text-slate-400 dark:text-slate-500 block uppercase">TOTAL HOLD</span>
-                <span className="text-xl font-extrabold font-mono text-slate-900 dark:text-slate-100">100%</span>
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                <span className="text-lg font-extrabold text-slate-900 dark:text-slate-100 font-mono">100%</span>
+                <span className="text-[10px] text-slate-400 font-mono uppercase">Escrow Total</span>
               </div>
             </div>
+          </div>
 
-            <div className="space-y-2 mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs">
-              {MOCK_DONUT_DATA.map((item) => (
-                <div key={item.name} className="flex items-center justify-between font-medium">
-                  <div className="flex items-center space-x-2">
-                    <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
-                    <span className="text-slate-600 dark:text-slate-300 font-semibold">{item.name}</span>
-                  </div>
-                  <span className="text-slate-900 dark:text-slate-100 font-mono font-bold">{item.value}%</span>
-                </div>
+          {/* Donut Legend */}
+          <div className="grid grid-cols-2 gap-2 pt-4 border-t border-slate-100 dark:border-slate-800 text-[11px] font-semibold">
+            {MOCK_DONUT_DATA.map((item) => (
+              <div key={item.name} className="flex items-center space-x-2">
+                <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }} />
+                <span className="truncate text-slate-600 dark:text-slate-400">{item.name} ({item.value}%)</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        {/* Right: Area Chart "7-Day GMV vs Escrow Velocity" */}
+        <Card className="lg:col-span-2 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <h3 className="text-xs font-mono font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                  GMV &amp; ESCROW VELOCITY (7-DAY TELEMETRY)
+                </h3>
+                <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 mt-0.5">
+                  Platform Volume vs Escrow Lockup (FCFA)
+                </p>
+              </div>
+              <Badge variant="teal" size="sm">LIVE REVERB WSS</Badge>
+            </div>
+
+            <div className="h-64 mt-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={MOCK_CHART_DATA} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="gmvGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#0D9488" stopOpacity={0.4} />
+                      <stop offset="95%" stopColor="#0D9488" stopOpacity={0.0} />
+                    </linearGradient>
+                    <linearGradient id="escrowGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#F59E0B" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#F59E0B" stopOpacity={0.0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" opacity={0.3} />
+                  <XAxis dataKey="day" tick={{ fontSize: 11, fill: '#94A3B8' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: '#94A3B8' }} axisLine={false} tickLine={false} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#121824',
+                      borderColor: '#1E293B',
+                      borderRadius: '8px',
+                      color: '#F8FAFC',
+                      fontSize: '12px',
+                    }}
+                    formatter={(val: any) => [formatXAF(Number(val)), '']}
+                  />
+                  <Area type="monotone" dataKey="gmv" stroke="#0D9488" strokeWidth={2.5} fillOpacity={1} fill="url(#gmvGradient)" />
+                  <Area type="monotone" dataKey="escrow" stroke="#F59E0B" strokeWidth={2} fillOpacity={1} fill="url(#escrowGradient)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800 text-xs font-semibold">
+            <div className="flex items-center space-x-4">
+              <span className="flex items-center text-teal-600 dark:text-teal-400">
+                <span className="w-2.5 h-2.5 rounded-full bg-teal-500 mr-1.5" /> Gross GMV
+              </span>
+              <span className="flex items-center text-amber-600 dark:text-amber-400">
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-500 mr-1.5" /> Escrow Lockup
+              </span>
+            </div>
+            <span className="font-mono text-slate-400 text-[11px]">Updated 1 min ago</span>
+          </div>
+        </Card>
+      </div>
+
+      {/* MODAL: ASSIGN NEW WORK TASK TO EMPLOYEE */}
+      <Modal
+        isOpen={isAssignModalOpen}
+        onClose={() => setIsAssignModalOpen(false)}
+        title="Assign Work Directive to Employee"
+      >
+        <form onSubmit={handleCreateAssignment} className="space-y-4 text-xs font-semibold">
+          <div>
+            <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">Select Employee *</label>
+            <select
+              value={targetStaffId}
+              onChange={(e) => setTargetStaffId(e.target.value)}
+              className="w-full p-3 bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-slate-900 dark:text-slate-100 font-bold focus:ring-2 focus:ring-teal-500 focus:outline-none"
+            >
+              {DEMO_STAFF_PERSONAS.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.full_name} ({p.department_name})
+                </option>
               ))}
-            </div>
-          </div>
-        </Card>
-
-        {/* Right: Enterprise Smooth Area Chart */}
-        <Card className="lg:col-span-2">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 mb-4 border-b border-slate-100 dark:border-slate-800">
-            <div>
-              <h3 className="text-xs font-mono font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
-                MARKETPLACE TELEMETRY OVERVIEW
-              </h3>
-              <p className="text-xs text-slate-900 dark:text-slate-100 font-extrabold mt-0.5 font-heading">
-                Weekly Platform Processing Volume (XAF)
-              </p>
-            </div>
-
-            <div className="flex items-center space-x-4 text-xs font-bold font-mono">
-              <span className="flex items-center text-teal-700 dark:text-teal-400">
-                <span className="w-2.5 h-2.5 rounded-full bg-teal-600 mr-1.5" /> Total GMV
-              </span>
-              <span className="flex items-center text-amber-700 dark:text-amber-400">
-                <span className="w-2.5 h-2.5 rounded-full bg-amber-500 mr-1.5" /> Escrow Locked
-              </span>
-            </div>
+            </select>
           </div>
 
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={MOCK_CHART_DATA}>
-                <defs>
-                  <linearGradient id="colorGmv" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#0D9488" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="#0D9488" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="colorEscrow" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#F59E0B" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="#F59E0B" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                <XAxis dataKey="day" stroke="#94A3B8" fontSize={11} tickLine={false} />
-                <YAxis stroke="#94A3B8" fontSize={10} tickLine={false} tickFormatter={(val) => `${(val / 1000000).toFixed(1)}M`} />
-                <Tooltip formatter={(value: number) => formatXAF(value)} />
-                <Area type="monotone" dataKey="gmv" stroke="#0D9488" strokeWidth={2.5} fillOpacity={1} fill="url(#colorGmv)" />
-                <Area type="monotone" dataKey="escrow" stroke="#F59E0B" strokeWidth={2.5} fillOpacity={1} fill="url(#colorEscrow)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-      </div>
-
-      {/* Row of Enterprise Financial Ledger Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
-        {/* Dark Slate Navy Primary Card */}
-        <div className="p-5 rounded-2xl bg-[#0F172A] text-white shadow-sm flex flex-col justify-between relative overflow-hidden border border-slate-800">
           <div>
-            <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-slate-400 block">TOTAL RECONCILED YIELD</span>
-            <h4 className="text-2xl font-extrabold font-mono mt-2 tracking-tight">{formatXAF(86350000)}</h4>
+            <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">Work Directive Description *</label>
+            <input
+              type="text"
+              value={taskTitle}
+              onChange={(e) => setTaskTitle(e.target.value)}
+              placeholder="e.g. Audit weekly MoMo disbursal statements..."
+              className="w-full p-3 bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-slate-900 dark:text-slate-100 font-bold focus:ring-2 focus:ring-teal-500 focus:outline-none"
+            />
           </div>
-          <div className="mt-5 pt-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400 font-medium">
-            <span>MTN &amp; Orange Nodes</span>
-            <span className="text-emerald-400 font-bold flex items-center">
-              <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> 100% Matched
-            </span>
-          </div>
-        </div>
 
-        {/* Card 2: MTN MoMo */}
-        <div className="p-5 rounded-2xl bg-white dark:bg-[#151C28] border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col justify-between text-slate-900 dark:text-slate-100">
-          <div>
-            <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 block">MTN MOMO RECONCILED</span>
-            <h4 className="text-2xl font-extrabold font-mono text-slate-900 dark:text-slate-100 mt-2 tracking-tight">{formatXAF(54200000)}</h4>
-          </div>
-          <div className="mt-5 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-semibold">
-            <span>USSD *126# Node</span>
-            <span className="text-slate-900 dark:text-slate-100 font-bold">62.7% Volume</span>
-          </div>
-        </div>
-
-        {/* Card 3: Orange Money */}
-        <div className="p-5 rounded-2xl bg-white dark:bg-[#151C28] border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col justify-between text-slate-900 dark:text-slate-100">
-          <div>
-            <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 block">ORANGE MONEY RECONCILED</span>
-            <h4 className="text-2xl font-extrabold font-mono text-slate-900 dark:text-slate-100 mt-2 tracking-tight">{formatXAF(32150000)}</h4>
-          </div>
-          <div className="mt-5 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-semibold">
-            <span>USSD #150# Node</span>
-            <span className="text-slate-900 dark:text-slate-100 font-bold">37.3% Volume</span>
-          </div>
-        </div>
-
-        {/* Card 4: Platform Yield */}
-        <div className="p-5 rounded-2xl bg-white dark:bg-[#151C28] border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col justify-between text-slate-900 dark:text-slate-100">
-          <div>
-            <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 block">NET REVENUE (3.5% FEE)</span>
-            <h4 className="text-2xl font-extrabold font-mono text-slate-900 dark:text-slate-100 mt-2 tracking-tight">{formatXAF(4820000)}</h4>
-          </div>
-          <div className="mt-5 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-semibold">
-            <span>Monthly Yield</span>
-            <span className="text-emerald-700 dark:text-emerald-400 font-bold">+14.2% YoY</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Priority Action Task Queue */}
-      <Card>
-        <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100 dark:border-slate-800">
-          <h3 className="text-xs font-mono font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
-            OPERATIONAL TASK QUEUE
-          </h3>
-          <Badge variant="warning">4 ACTION REQ.</Badge>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Task 1 */}
-          <div
-            onClick={() => navigate('/kyc')}
-            className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700 flex items-start justify-between cursor-pointer hover:border-slate-400 dark:hover:border-slate-600 transition-all text-slate-900 dark:text-slate-100"
-          >
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <span className="text-xs font-bold text-slate-900 dark:text-slate-100 block font-heading">Douala Tech Hub</span>
-              <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 block font-medium">KYC Verification • National ID Front/Back</span>
+              <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">Recurrence Schedule</label>
+              <select
+                value={taskRecurrence}
+                onChange={(e) => setTaskRecurrence(e.target.value as any)}
+                className="w-full p-3 bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-slate-900 dark:text-slate-100 font-bold focus:ring-2 focus:ring-teal-500 focus:outline-none"
+              >
+                <option value="DAILY">DAILY 🔄</option>
+                <option value="WEEKLY">WEEKLY 📅</option>
+                <option value="MONTHLY">MONTHLY 📆</option>
+              </select>
             </div>
-            <Badge variant="warning" size="sm">REVIEW</Badge>
+
+            <div>
+              <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">Priority Level</label>
+              <select
+                value={taskPriority}
+                onChange={(e) => setTaskPriority(e.target.value as any)}
+                className="w-full p-3 bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-slate-900 dark:text-slate-100 font-bold focus:ring-2 focus:ring-teal-500 focus:outline-none"
+              >
+                <option value="HIGH">HIGH (🔴)</option>
+                <option value="MEDIUM">MEDIUM (🟡)</option>
+                <option value="LOW">LOW (🟢)</option>
+              </select>
+            </div>
           </div>
 
-          {/* Task 2 */}
-          <div
-            onClick={() => navigate('/disputes')}
-            className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700 flex items-start justify-between cursor-pointer hover:border-slate-400 dark:hover:border-slate-600 transition-all text-slate-900 dark:text-slate-100"
-          >
-            <div>
-              <span className="text-xs font-bold text-slate-900 dark:text-slate-100 block font-heading">Dispute #WB-2026-9842</span>
-              <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 block font-medium">Buyer reported damaged screen</span>
-            </div>
-            <Badge variant="error" size="sm">DISPUTE</Badge>
+          <div>
+            <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">Due Date</label>
+            <input
+              type="date"
+              value={taskDueDate}
+              onChange={(e) => setTaskDueDate(e.target.value)}
+              className="w-full p-3 bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-slate-900 dark:text-slate-100 font-bold focus:ring-2 focus:ring-teal-500 focus:outline-none"
+            />
           </div>
 
-          {/* Task 3 */}
-          <div
-            onClick={() => navigate('/financials')}
-            className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700 flex items-start justify-between cursor-pointer hover:border-slate-400 dark:hover:border-slate-600 transition-all text-slate-900 dark:text-slate-100"
-          >
-            <div>
-              <span className="text-xs font-bold text-slate-900 dark:text-slate-100 block font-heading">Penja Organic Farm</span>
-              <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 block font-medium">MoMo Payout Request (450,000 FCFA)</span>
-            </div>
-            <Badge variant="teal" size="sm">PAYOUT</Badge>
+          <div className="pt-4 flex items-center justify-end space-x-3">
+            <Button type="button" variant="outline" size="sm" onClick={() => setIsAssignModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" variant="primary" size="sm">
+              Assign &amp; Dispatch Task
+            </Button>
           </div>
-        </div>
-      </Card>
+        </form>
+      </Modal>
     </PageContainer>
   );
 };

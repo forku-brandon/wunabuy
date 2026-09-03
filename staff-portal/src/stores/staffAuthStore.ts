@@ -34,6 +34,7 @@ export type StaffPermission =
   | 'manage_profile_crud'
   | 'view_hr_ops'
   | 'manage_hr_payroll'
+  | 'assign_staff_tasks'
   | 'view_audit_logs';
 
 export interface StaffRoleDefinition {
@@ -61,6 +62,7 @@ export const ALL_STAFF_PERMISSIONS: { code: StaffPermission; label: string; desc
   { code: 'manage_profile_crud', label: 'Manage Staff Profile CRUD (Admin Only)', description: 'Edit and manage individual staff account profile details' },
   { code: 'view_hr_ops', label: 'View HR & Staff Ops', description: 'Access staff directory, contracts, leave requests, and payroll summary' },
   { code: 'manage_hr_payroll', label: 'Manage HR Payroll & Payslips', description: 'Authorize monthly staff salary disbursals and print official payslips' },
+  { code: 'assign_staff_tasks', label: 'Assign & Dispatch Staff Tasks', description: 'Create and assign daily, weekly, or monthly recurring work directives to employees' },
   { code: 'view_audit_logs', label: 'View Security Audit Logs', description: 'Access immutable system administrative action ledger' },
 ];
 
@@ -98,6 +100,7 @@ const INITIAL_ROLES_MATRIX: StaffRoleDefinition[] = [
       'manage_profile_crud',
       'view_hr_ops',
       'manage_hr_payroll',
+      'assign_staff_tasks',
       'view_audit_logs',
     ],
   },
@@ -110,6 +113,7 @@ const INITIAL_ROLES_MATRIX: StaffRoleDefinition[] = [
       'view_dashboard',
       'view_hr_ops',
       'manage_hr_payroll',
+      'assign_staff_tasks',
       'manage_users',
       'view_audit_logs',
     ],
