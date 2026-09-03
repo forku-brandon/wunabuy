@@ -3,12 +3,11 @@ import { PageContainer } from '../components/layout/PageContainer';
 import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
-import { useStaffAuth, ALL_STAFF_PERMISSIONS } from '../stores/staffAuthStore';
+import { useStaffAuth } from '../stores/staffAuthStore';
 import {
   User,
   Lock,
   Bell,
-  ShieldCheck,
   Camera,
   CheckCircle2,
   Save,
@@ -22,7 +21,7 @@ export const StaffProfilePage: React.FC = () => {
   const { user, hasPermission, addAuditLog, updateUserAvatar } = useStaffAuth();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const [activeSubTab, setActiveSubTab] = useState<'profile' | 'password' | 'notifications' | 'verification'>('profile');
+  const [activeSubTab, setActiveSubTab] = useState<'profile' | 'password' | 'notifications'>('profile');
 
   // STRICT ADMIN PERMISSION GUARD FOR PROFILE CRUD
   const canEditProfile = hasPermission('manage_profile_crud') || user?.security_clearance_level === 5;
@@ -134,7 +133,7 @@ export const StaffProfilePage: React.FC = () => {
   return (
     <PageContainer
       title="Account settings"
-      subtitle="Manage corporate staff profile, security credentials, notification alerts &amp; clearance verification"
+      subtitle="Manage corporate staff profile, security credentials &amp; notification alerts"
     >
       {/* HIDDEN FILE INPUT FOR AVATAR UPLOAD */}
       <input
@@ -208,18 +207,6 @@ export const StaffProfilePage: React.FC = () => {
             >
               <Bell className="w-4 h-4 text-slate-400 dark:text-slate-500" />
               <span>Notifications</span>
-            </button>
-
-            <button
-              onClick={() => setActiveSubTab('verification')}
-              className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold flex items-center space-x-3 transition-all ${
-                activeSubTab === 'verification'
-                  ? 'bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 font-extrabold border-l-4 border-teal-600 shadow-2xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-100'
-              }`}
-            >
-              <ShieldCheck className="w-4 h-4 text-slate-400 dark:text-slate-500" />
-              <span>Verification</span>
             </button>
           </nav>
         </Card>
@@ -533,43 +520,6 @@ export const StaffProfilePage: React.FC = () => {
                     className="w-4 h-4 rounded text-teal-600 focus:ring-teal-500 cursor-pointer"
                   />
                 </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 4: VERIFICATION & CLEARANCE */}
-          {activeSubTab === 'verification' && (
-            <div className="space-y-6 text-xs">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-                <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100 font-heading">
-                  Staff Role Clearance Verification
-                </h3>
-                <Badge variant="teal">LEVEL {user?.security_clearance_level || 5} CLEARANCE</Badge>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {ALL_STAFF_PERMISSIONS.map((perm) => {
-                  const isGranted = hasPermission(perm.code);
-
-                  return (
-                    <div
-                      key={perm.code}
-                      className={`p-3.5 rounded-xl border flex items-center justify-between transition-all ${
-                        isGranted
-                          ? 'bg-slate-50 dark:bg-slate-800/60 border-slate-200/80 dark:border-slate-700'
-                          : 'bg-slate-100/40 dark:bg-slate-900/40 border-slate-200/40 dark:border-slate-800 opacity-60'
-                      }`}
-                    >
-                      <div>
-                        <span className="font-bold text-slate-900 dark:text-slate-100 block text-xs">{perm.label}</span>
-                        <span className="font-mono text-[10px] text-slate-400 dark:text-slate-500 font-medium">{perm.code}</span>
-                      </div>
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold ${isGranted ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300' : 'bg-slate-200 text-slate-500 dark:bg-slate-800 dark:text-slate-500'}`}>
-                        {isGranted ? 'VERIFIED' : 'RESTRICTED'}
-                      </span>
-                    </div>
-                  );
-                })}
               </div>
             </div>
           )}
