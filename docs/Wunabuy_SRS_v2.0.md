@@ -1,78 +1,34 @@
 # Software Requirements Specification (SRS)
 # Wunabuy — Multi-Sided E-Commerce & Web Staff Operations Platform
 
-**Document Version:** 2.0 (Enterprise Staff Operations & Mobile Synchronized Baseline)  
+**Document Version:** 2.2 (Enterprise HR Operations, Staff Profile & 15-Flag RBAC Control)  
 **Date:** September 3, 2026  
 **Status:** Approved / In Production Use  
 **Companion Documents:** Wunabuy PRD v1.8, Wunabuy Frontend Tech Spec v1.8, Wunabuy Backend Tech Spec v1.4  
 
 ---
 
-## 🚀 Key Staff Portal v2.0 Architecture & Feature Specifications (September 2026)
+## 🚀 Key Staff Portal v2.2 Architecture & Feature Specifications (September 2026)
 
-- **2-Stage OTP Staff Authentication Flow (`AuthPage.tsx` & `staffAuthStore.ts`)**:
-  - Stage 1: Corporate email/phone entry with 45-second resend timer and 1-tap demo auto-fill (`654321`).
-  - Stage 2: 6-digit box grid with auto-focus and instant router redirection upon verification.
-  
-- **Strict Security RBAC Sidebar Filtering (`SidebarNav.tsx`)**:
-  - Unauthorized navigation links are completely removed from the rendered DOM based on `hasPermission()`, leaving zero visual footprint when switching staff clearance roles.
+- **HR Operations & Staff Payroll Management Module (`HROpsPage.tsx`)**:
+  - Monthly Salary Disbursal Ledger: Base salary, transport allowance, performance incentives, CNPS social security deductions (4.2%), income tax (IRPP), and net payable in FCFA (XAF).
+  - Printable Payslip Engine: Official 1-click **Print Payslip** modal (`window.print()`) with Wunabuy HR header, employer CNPS registration (`389201-X`), itemized tax breakdown, and digital authorization.
+  - Staff Compliance Document Vault: Centralized storage for Employment Contracts, CNI ID copies, NIU Tax certificates, and Health clearances with view and upload actions.
+  - Time-Off Leave Request Queue: Annual leave, sick leave, and maternity leave request queue with 1-click Approve / Reject management workflow.
 
-- **Super Admin Dynamic Roles & Permissions Matrix CRUD (`SettingsPage.tsx` & `staffAuthStore.ts`)**:
-  - Super Admins (Level 5 Clearance) can create custom staff roles, edit permission matrices across 13 system permission flags, and delete roles with level-5 `CRITICAL` audit logging.
+- **Staff Account Profile & Credentials Management (`StaffProfilePage.tsx`)**:
+  - FinTech SaaS structural layout: Vertical left sub-navigation card (`Profile Settings`, `Password`, `Notifications`), 2-column form grid (First Name, Last Name, Email, Mobile with 🇨🇲 +237 flag, Gender radio options, Read-only Employee ID, NIU Tax ID, Office Branch Address).
+  - Local Avatar Image Upload & Persistence: `FileReader` Base64 encoding with `localStorage` browser persistence (`wunabuy_staff_avatar_<id>`) and real-time avatar updates across Header, SidebarNav, and Profile Page.
+  - Strict Admin Profile Guard: Restricted strictly to Super Admins (Level 5 Clearance) or roles granted `manage_profile_crud` permission. Non-admins receive read-only field states and a security alert banner.
 
-- **Modern Soft SaaS UI Aesthetic (Inspired by Boltz Dashboard)**:
-  - Canvas & Surface: Soft off-white blue slate background (`bg-[#F4F6FB]`) with rounded white cards (`bg-white rounded-2xl border border-slate-200/70 shadow-xs`).
-  - Header & Top Bar: Compact header (`h-16 bg-white border-b border-slate-100`), fluid search pill, date period filter pill (`Filter Period`), notification drawer (`Bell` badge 12), support chat drawer (`MessageSquare` badge 5), and RBAC persona switcher.
-  - Node Health Telemetry: Weather & node pill (`28°C Douala Node`) displaying live WebSocket latency (14ms) and active Reverb socket connections.
+- **15-Flag RBAC Roles & Permissions Matrix (`staffAuthStore.ts` & `SettingsPage.tsx`)**:
+  - Total system permissions: 15 active permission flags including `view_dashboard`, `view_kyc`, `approve_kyc`, `view_disputes`, `resolve_disputes`, `view_financials`, `approve_payouts`, `view_logistics`, `override_logistics`, `manage_users`, `manage_marketing`, `manage_settings`, `manage_profile_crud`, `view_hr_ops`, `manage_hr_payroll`, `view_audit_logs`.
+  - Roles Matrix: Super Admin (Level 5), HR & People Operations Lead (Level 4), Finance & Treasury Officer (Level 4), Compliance Officer (Level 4), Operations Manager (Level 3), Support Agent (Level 2), Marketing Lead (Level 2).
 
-- **Mobile & Tablet Responsiveness Overhaul**:
-  - Desktop (`lg:flex`): Fixed sidebar layout.
-  - Mobile/Tablet (`lg:hidden`): Mobile slide-out overlay drawer with dark backdrop (`bg-slate-900/60 backdrop-blur-xs`), close button (`X`), and auto-dismiss upon navigation selection.
-  - Scrollable Sidebar List (`flex-1 overflow-y-auto min-h-0`): Fixed brand header at top and fixed WSS status footer at bottom.
-
-- **Internal Staff Chat & Official System Announcement Broadcast Center (`CommunicationsPage.tsx`)**:
-  - Departmental Channels: `#general-hq`, `#finance-treasury`, `#compliance-kyc`, `#logistics-fleet`, `#executive-board`.
-  - Direct Messaging: Chat directly with active colleagues (`Pauline Mbarga`, `Christian Atangana`, `Marie-Noelle Bikoe`, `Jean-Luc Fotso`, `Therese Abena`).
-  - Official Broadcast Feed: Executive directives with severity badges (`URGENT 🚨`, `POLICY 📋`, `GENERAL 📣`) and target audience selection.
-
-- **Advanced Data Table Primitive & Neutral Palette (`DataTable.tsx`)**:
-  - Integrated real-time search bar per table.
-  - Pagination controls ("Showing 1 to 5 of X entries", "Page 1 of Y", `Previous` and `Next` buttons).
-  - Clean neutral slate typography (`text-slate-900 font-bold`, `text-slate-500 font-medium`).
-
----
-
-## Table of Contents
-
-1. [Introduction](#1-introduction)
-2. [Overall Description](#2-overall-description)  
-3. [System Features & Functional Requirements](#3-system-features--functional-requirements)
-4. [Staff Portal Functional Requirements](#4-staff-portal-functional-requirements)
-5. [External Interface Requirements](#5-external-interface-requirements)
-6. [Non-Functional & Security Requirements](#6-non-functional--security-requirements)
-
----
-
-## 1. Introduction
-
-### 1.1 Purpose
-This Software Requirements Specification (SRS) defines the complete functional, security, and architectural specifications for **Wunabuy**, covering the multi-sided mobile e-commerce application (Buyer, Seller, Transporter) and the enterprise **Web Staff Operations Portal**.
-
----
-
-## 2. Overall Description
-
-### 2.1 Product Perspective
-Wunabuy operates as a unified platform connecting Buyers, Store Merchants, and Delivery Drivers in Cameroon via an Expo React Native mobile app, and Staff Operations via a Vite React Web Portal backed by Laravel 13 REST API and Reverb WebSockets.
-
----
-
-## 3. System Features & Functional Requirements
-
-### 3.1 Escrow & Order Lifecycle
-- **FR-001:** Orders SHALL lock buyer funds in a 48-hour escrow hold until delivery confirmation.
-- **FR-002:** Confirming delivery signature SHALL credit net seller balance after 3.5% commission deduction.
-- **FR-003:** Disputed orders SHALL freeze escrow hold and escalate to staff adjudication in `DisputesPage.tsx`.
+- **Borderless Enterprise Design System (`Card.tsx`, `Badge.tsx`, `Button.tsx`, `SidebarNav.tsx`)**:
+  - Completely borderless card container aesthetic (`bg-white dark:bg-[#121824]`) with clean surface contrast and soft elevation (`shadow-2xs`).
+  - Crisp geometry: `rounded-xl` for cards, `rounded-lg` for form controls & inputs, `rounded-md font-mono` for badges.
+  - Obsidian Dark Mode Palette: Canvas `#090D16`, Card Surface `#121824`.
 
 ---
 
@@ -89,12 +45,5 @@ Wunabuy operates as a unified platform connecting Buyers, Store Merchants, and D
 - **STF-006:** Logistics Telemetry (`LogisticsOpsPage.tsx`) SHALL display live GPS coordinates and allow staff manual trip status overrides.
 - **STF-007:** Financials & Payouts (`FinancialsPage.tsx`) SHALL support security PIN authorization for MTN MoMo and Orange Money disbursals.
 - **STF-008:** Internal Communications (`CommunicationsPage.tsx`) SHALL provide departmental chat channels and company-wide system announcement broadcasting.
-
----
-
-## 5. Non-Functional & Security Requirements
-
-- **NFR-001 Performance:** All data tables SHALL render paginated results in under 50ms.
-- **NFR-002 Responsiveness:** Web Staff Portal SHALL support viewports from 375px mobile screens to 1440px desktop displays.
-- **NFR-003 Auditability:** System audit logs SHALL be immutable and exportable to CSV.
-
+- **STF-009:** HR & Staff Operations (`HROpsPage.tsx`) SHALL support monthly payroll ledgers, itemized salary calculations, 1-click printable payslips, compliance document vaults, and leave request approval workflows.
+- **STF-010:** Staff Profile Management (`StaffProfilePage.tsx`) SHALL allow permitted staff members to update profile details, upload custom avatars with browser `localStorage` persistence, change passwords, and configure operational alerts.
