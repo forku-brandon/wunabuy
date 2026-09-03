@@ -146,7 +146,7 @@ export const StaffProfilePage: React.FC = () => {
 
       {/* SUCCESS TOAST NOTIFICATION */}
       {successMessage && (
-        <div className="mb-6 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 text-xs font-bold flex items-center space-x-2 animate-fade-in shadow-xs">
+        <div className="mb-6 p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-900 dark:text-emerald-200 text-xs font-bold flex items-center space-x-2 animate-fade-in shadow-2xs">
           <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
           <span>{successMessage}</span>
         </div>
@@ -154,7 +154,7 @@ export const StaffProfilePage: React.FC = () => {
 
       {/* STRICT ADMIN PERMISSION SECURITY BANNER FOR NON-ADMINS */}
       {!canEditProfile && (
-        <div className="mb-6 p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs font-semibold flex items-center justify-between shadow-xs">
+        <div className="mb-6 p-4 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-900 dark:text-amber-200 text-xs font-semibold flex items-center justify-between shadow-2xs">
           <div className="flex items-center space-x-3">
             <ShieldAlert className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
             <div>
@@ -175,9 +175,9 @@ export const StaffProfilePage: React.FC = () => {
           <nav className="space-y-1">
             <button
               onClick={() => setActiveSubTab('profile')}
-              className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold flex items-center space-x-3 transition-all ${
+              className={`w-full text-left px-4 py-3 rounded-lg text-xs font-bold flex items-center space-x-3 transition-all ${
                 activeSubTab === 'profile'
-                  ? 'bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 font-extrabold border-l-4 border-teal-600 shadow-2xs'
+                  ? 'bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 font-extrabold shadow-2xs'
                   : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-100'
               }`}
             >
@@ -187,9 +187,9 @@ export const StaffProfilePage: React.FC = () => {
 
             <button
               onClick={() => setActiveSubTab('password')}
-              className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold flex items-center space-x-3 transition-all ${
+              className={`w-full text-left px-4 py-3 rounded-lg text-xs font-bold flex items-center space-x-3 transition-all ${
                 activeSubTab === 'password'
-                  ? 'bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 font-extrabold border-l-4 border-teal-600 shadow-2xs'
+                  ? 'bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 font-extrabold shadow-2xs'
                   : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-100'
               }`}
             >
@@ -199,9 +199,9 @@ export const StaffProfilePage: React.FC = () => {
 
             <button
               onClick={() => setActiveSubTab('notifications')}
-              className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold flex items-center space-x-3 transition-all ${
+              className={`w-full text-left px-4 py-3 rounded-lg text-xs font-bold flex items-center space-x-3 transition-all ${
                 activeSubTab === 'notifications'
-                  ? 'bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 font-extrabold border-l-4 border-teal-600 shadow-2xs'
+                  ? 'bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 font-extrabold shadow-2xs'
                   : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-100'
               }`}
             >
@@ -217,15 +217,15 @@ export const StaffProfilePage: React.FC = () => {
           {activeSubTab === 'profile' && (
             <form onSubmit={handleSaveChanges} className="space-y-8">
               {/* TOP AVATAR SECTION WITH DUAL ACTION BUTTONS */}
-              <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6 pb-6 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6 pb-6">
                 {/* Circular Profile Avatar */}
                 <div className="relative cursor-pointer" onClick={() => canEditProfile && fileInputRef.current?.click()}>
                   <img
                     src={user?.avatar_url || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=300&q=80'}
                     alt={user?.full_name}
-                    className="w-28 h-28 rounded-full object-cover border-4 border-slate-100 dark:border-slate-800 shadow-md"
+                    className="w-28 h-28 rounded-full object-cover shadow-md"
                   />
-                  <div className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-teal-600 text-white flex items-center justify-center border-2 border-white dark:border-[#151C28] shadow-sm">
+                  <div className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-teal-600 text-white flex items-center justify-center shadow-sm">
                     <Camera className="w-4 h-4" />
                   </div>
                 </div>
@@ -268,7 +268,7 @@ export const StaffProfilePage: React.FC = () => {
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
                     placeholder="First name"
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white dark:focus:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
+                    className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 rounded-lg text-slate-900 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white dark:focus:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
                   />
                 </div>
 
@@ -283,7 +283,7 @@ export const StaffProfilePage: React.FC = () => {
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
                     placeholder="Last name"
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white dark:focus:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
+                    className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 rounded-lg text-slate-900 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white dark:focus:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
                   />
                 </div>
 
@@ -298,7 +298,7 @@ export const StaffProfilePage: React.FC = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="examples@gmail.com"
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white dark:focus:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
+                    className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 rounded-lg text-slate-900 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white dark:focus:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
                   />
                 </div>
 
@@ -308,7 +308,7 @@ export const StaffProfilePage: React.FC = () => {
                     Mobile Number <span className="text-red-500">*</span>
                   </label>
                   <div className="flex items-center space-x-2">
-                    <div className="flex items-center space-x-1 px-3 py-3 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-700 dark:text-slate-300 font-bold">
+                    <div className="flex items-center space-x-1 px-3 py-3 bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-700 dark:text-slate-300 font-bold">
                       <span className="text-sm">🇨🇲</span>
                       <span>+237</span>
                     </div>
@@ -318,7 +318,7 @@ export const StaffProfilePage: React.FC = () => {
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder="0806 123 7890"
-                      className="flex-1 p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white dark:focus:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
+                      className="flex-1 p-3 bg-slate-50 dark:bg-slate-800/80 rounded-lg text-slate-900 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white dark:focus:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
                     />
                   </div>
                 </div>
@@ -331,12 +331,12 @@ export const StaffProfilePage: React.FC = () => {
                   <div className="grid grid-cols-2 gap-3">
                     <label
                       onClick={() => canEditProfile && setGender('male')}
-                      className={`p-3 rounded-xl border flex items-center justify-center space-x-2 font-bold transition-all ${
+                      className={`p-3 rounded-lg flex items-center justify-center space-x-2 font-bold transition-all ${
                         !canEditProfile ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
                       } ${
                         gender === 'male'
-                          ? 'bg-teal-50 dark:bg-teal-950/60 border-teal-500 text-teal-800 dark:text-teal-300 shadow-2xs'
-                          : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200/80 dark:border-slate-700 text-slate-600 dark:text-slate-400'
+                          ? 'bg-teal-50 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300 shadow-2xs'
+                          : 'bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400'
                       }`}
                     >
                       <input type="radio" name="gender" disabled={!canEditProfile} checked={gender === 'male'} onChange={() => {}} className="hidden" />
@@ -345,12 +345,12 @@ export const StaffProfilePage: React.FC = () => {
 
                     <label
                       onClick={() => canEditProfile && setGender('female')}
-                      className={`p-3 rounded-xl border flex items-center justify-center space-x-2 font-bold transition-all ${
+                      className={`p-3 rounded-lg flex items-center justify-center space-x-2 font-bold transition-all ${
                         !canEditProfile ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
                       } ${
                         gender === 'female'
-                          ? 'bg-teal-50 dark:bg-teal-950/60 border-teal-500 text-teal-800 dark:text-teal-300 shadow-2xs'
-                          : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200/80 dark:border-slate-700 text-slate-600 dark:text-slate-400'
+                          ? 'bg-teal-50 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300 shadow-2xs'
+                          : 'bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400'
                       }`}
                     >
                       <input type="radio" name="gender" disabled={!canEditProfile} checked={gender === 'female'} onChange={() => {}} className="hidden" />
@@ -368,7 +368,7 @@ export const StaffProfilePage: React.FC = () => {
                     type="text"
                     disabled
                     value={employeeId}
-                    className="w-full p-3 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-500 dark:text-slate-400 font-mono font-bold cursor-not-allowed"
+                    className="w-full p-3 bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-500 dark:text-slate-400 font-mono font-bold cursor-not-allowed"
                   />
                 </div>
 
@@ -383,7 +383,7 @@ export const StaffProfilePage: React.FC = () => {
                     value={taxId}
                     onChange={(e) => setTaxId(e.target.value)}
                     placeholder="M082618940291X"
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-mono font-bold focus:outline-none focus:ring-2 focus:ring-teal-500 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
+                    className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 rounded-lg text-slate-900 dark:text-slate-100 font-mono font-bold focus:outline-none focus:ring-2 focus:ring-teal-500 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
                   />
                 </div>
 
@@ -392,7 +392,7 @@ export const StaffProfilePage: React.FC = () => {
                   <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">
                     Tax Identification Country
                   </label>
-                  <div className="flex items-center space-x-2 p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 rounded-xl font-bold text-slate-900 dark:text-slate-100">
+                  <div className="flex items-center space-x-2 p-3 bg-slate-50 dark:bg-slate-800/80 rounded-lg font-bold text-slate-900 dark:text-slate-100">
                     <span className="text-sm">🇨🇲</span>
                     <select
                       disabled={!canEditProfile}
@@ -418,13 +418,13 @@ export const StaffProfilePage: React.FC = () => {
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
                     placeholder="Ib street orogun ibadan"
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-teal-500 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
+                    className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 rounded-lg text-slate-900 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-teal-500 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
                   />
                 </div>
               </div>
 
               {/* BOTTOM PRIMARY ACTION BUTTON */}
-              <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <div className="pt-4 flex items-center justify-between">
                 <Button type="submit" variant="primary" size="md" disabled={!canEditProfile}>
                   <Save className="w-4 h-4 mr-1.5" />
                   Save Changes
@@ -442,7 +442,7 @@ export const StaffProfilePage: React.FC = () => {
           {/* TAB 2: PASSWORD & SECURITY FORM */}
           {activeSubTab === 'password' && (
             <form onSubmit={handleUpdatePassword} className="space-y-6 text-xs">
-              <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100 font-heading pb-3 border-b border-slate-100 dark:border-slate-800">
+              <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100 font-heading pb-3">
                 Change Staff Account Password
               </h3>
 
@@ -453,7 +453,7 @@ export const StaffProfilePage: React.FC = () => {
                     type="password"
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-bold focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                    className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 rounded-lg text-slate-900 dark:text-slate-100 font-bold focus:ring-2 focus:ring-teal-500 focus:outline-none"
                   />
                 </div>
 
@@ -463,7 +463,7 @@ export const StaffProfilePage: React.FC = () => {
                     type="password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-bold focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                    className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 rounded-lg text-slate-900 dark:text-slate-100 font-bold focus:ring-2 focus:ring-teal-500 focus:outline-none"
                   />
                 </div>
 
@@ -473,12 +473,12 @@ export const StaffProfilePage: React.FC = () => {
                     type="password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-bold focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                    className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 rounded-lg text-slate-900 dark:text-slate-100 font-bold focus:ring-2 focus:ring-teal-500 focus:outline-none"
                   />
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+              <div className="pt-4">
                 <Button type="submit" variant="primary" disabled={!currentPassword || !newPassword}>
                   <Key className="w-4 h-4 mr-1.5" />
                   Update Password
@@ -490,12 +490,12 @@ export const StaffProfilePage: React.FC = () => {
           {/* TAB 3: NOTIFICATIONS SETTINGS */}
           {activeSubTab === 'notifications' && (
             <div className="space-y-6 text-xs">
-              <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100 font-heading pb-3 border-b border-slate-100 dark:border-slate-800">
+              <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100 font-heading pb-3">
                 Staff Operational Alerts &amp; Notifications
               </h3>
 
               <div className="space-y-4 max-w-lg">
-                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700 flex items-center justify-between">
+                <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-800/60 flex items-center justify-between">
                   <div>
                     <span className="font-bold text-slate-900 dark:text-slate-100 block">Email Payout &amp; Disbursal Alerts</span>
                     <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Receive instant email when high-value payout exceeds 500k FCFA</span>
@@ -508,7 +508,7 @@ export const StaffProfilePage: React.FC = () => {
                   />
                 </div>
 
-                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700 flex items-center justify-between">
+                <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-800/60 flex items-center justify-between">
                   <div>
                     <span className="font-bold text-slate-900 dark:text-slate-100 block">SMS Urgent Emergency Signals</span>
                     <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Receive direct SMS alerts for rider emergency distress calls</span>

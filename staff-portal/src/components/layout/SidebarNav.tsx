@@ -56,9 +56,9 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
   const sidebarContent = (
     <div className="h-full flex flex-col justify-between overflow-hidden bg-white dark:bg-[#121824] text-slate-700 dark:text-slate-200 transition-colors">
       {/* 1. Fixed Brand Header */}
-      <div className="h-20 px-6 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 flex-shrink-0">
+      <div className="h-20 px-6 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center space-x-3">
-          <div className="w-9 h-9 rounded-xl bg-teal-600 flex items-center justify-center text-white font-extrabold text-lg shadow-2xs font-heading border border-teal-500">
+          <div className="w-9 h-9 rounded-xl bg-teal-600 flex items-center justify-center text-white font-extrabold text-lg shadow-2xs font-heading">
             W
           </div>
           <div>
@@ -81,7 +81,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
       </div>
 
       {/* 2. Scrollable Container: User Profile Card & Navigation Items */}
-      <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4 space-y-4">
+      <div className="flex-1 min-h-0 overflow-y-auto px-4 py-2 space-y-4">
         {/* Clickable Top User Avatar Profile Card */}
         {user && (
           <div
@@ -89,7 +89,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
               navigate('/profile');
               if (onCloseMobile) onCloseMobile();
             }}
-            className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 flex items-center space-x-3 cursor-pointer hover:border-teal-500 dark:hover:border-teal-500 transition-all shadow-2xs group"
+            className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 flex items-center space-x-3 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-all shadow-2xs group"
           >
             <img
               src={user.avatar_url || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=150&q=80'}
@@ -127,7 +127,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                   clsx(
                     'flex items-center justify-between px-3.5 py-2.5 rounded-lg text-xs font-bold transition-all',
                     isActive
-                      ? 'bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 font-extrabold border-l-4 border-teal-600 shadow-2xs'
+                      ? 'bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 font-extrabold shadow-2xs'
                       : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-100'
                   )
                 }
@@ -137,7 +137,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                   <span>{item.label}</span>
                 </div>
                 {item.badge !== undefined ? (
-                  <span className="px-2 py-0.5 text-[10px] font-mono font-extrabold rounded bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                  <span className="px-2 py-0.5 text-[10px] font-mono font-extrabold rounded bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300">
                     {item.badge}
                   </span>
                 ) : (
@@ -150,7 +150,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
       </div>
 
       {/* 3. Fixed Footer System Operational Status */}
-      <div className="p-3 m-4 rounded-xl bg-teal-50/60 dark:bg-teal-950/40 border border-teal-100 dark:border-teal-900/60 flex-shrink-0">
+      <div className="p-3 m-4 rounded-xl bg-teal-50/60 dark:bg-teal-950/40 flex-shrink-0">
         <div className="flex items-center space-x-2 text-teal-700 dark:text-teal-300 text-xs font-bold">
           <ShieldCheck className="w-4 h-4 text-teal-600 dark:text-teal-400" />
           <span>WSS Node Secured</span>
@@ -163,7 +163,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
   return (
     <>
       {/* Desktop Fixed Sidebar */}
-      <aside className="hidden lg:flex w-64 h-screen bg-white dark:bg-[#121824] text-slate-700 dark:text-slate-200 flex-col border-r border-slate-100 dark:border-slate-800/80 shadow-2xs flex-shrink-0 z-20">
+      <aside className="hidden lg:flex w-64 h-screen bg-white dark:bg-[#121824] text-slate-700 dark:text-slate-200 flex-col shadow-2xs flex-shrink-0 z-20">
         {sidebarContent}
       </aside>
 

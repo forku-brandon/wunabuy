@@ -29,7 +29,7 @@ export const StatCard: React.FC<StatCardProps> = ({
           <span className="text-[10px] font-mono font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest block">
             {title}
           </span>
-          <div className={`w-9 h-9 rounded-lg flex items-center justify-center border border-slate-200/50 dark:border-slate-700/80 shadow-2xs ${iconBg}`}>
+          <div className={`w-9 h-9 rounded-lg flex items-center justify-center shadow-2xs ${iconBg}`}>
             {icon}
           </div>
         </div>
@@ -42,9 +42,9 @@ export const StatCard: React.FC<StatCardProps> = ({
         </div>
       </div>
 
-      {/* Bottom Row: Hairline Divider + Trend Pill & Description */}
+      {/* Bottom Row: Trend Pill & Description */}
       {(change || description) && (
-        <div className="pt-3 mt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs">
+        <div className="pt-3 mt-3 flex items-center justify-between text-xs">
           {change && (
             <Badge
               variant={
