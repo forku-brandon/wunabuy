@@ -19,6 +19,7 @@ import { SettingsPage } from './pages/SettingsPage';
 import { StaffProfilePage } from './pages/StaffProfilePage';
 import { HROpsPage } from './pages/HROpsPage';
 import { CalendarPage } from './pages/CalendarPage';
+import { NotificationsPage } from './pages/NotificationsPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -47,6 +48,7 @@ const ProtectedLayout: React.FC = () => {
         <Header onToggleMobileSidebar={() => setMobileSidebarOpen(!mobileSidebarOpen)} />
         <Routes>
           <Route path="/" element={<DashboardPage />} />
+          <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/profile" element={<StaffProfilePage />} />
           <Route path="/calendar" element={<CalendarPage />} />
           <Route path="/communications" element={<CommunicationsPage />} />

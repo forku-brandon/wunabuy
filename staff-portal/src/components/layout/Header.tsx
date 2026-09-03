@@ -19,6 +19,7 @@ import {
   Globe,
 } from 'lucide-react';
 import { useStaffAuth, DEMO_STAFF_PERSONAS } from '../../stores/staffAuthStore';
+import { useNotifications } from '../../stores/notificationsStore';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { Modal } from '../ui/Modal';
@@ -30,6 +31,7 @@ export interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ onToggleMobileSidebar }) => {
   const { user, logout, switchPersona, addAuditLog, hasPermission } = useStaffAuth();
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const { theme, toggleTheme } = useTheme();
   const { language, setLanguage, t } = useLanguage();
   const navigate = useNavigate();
@@ -175,41 +177,49 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileSidebar }) => {
           <span>{selectedPeriod}</span>
         </button>
 
-        {/* Action Icon 1: Support Chat */}
+        {/* Action Icon 1: Support Chat & Internal Communications */}
         <button
-          onClick={() => setChatOpen(true)}
+          onClick={() => navigate('/communications')}
           className="w-8 h-8 rounded-lg bg-slate-100/80 dark:bg-slate-800/80 hover:bg-slate-200/80 dark:hover:bg-slate-700/80 flex items-center justify-center text-slate-600 dark:text-slate-300 relative transition-colors"
-          title="Staff Support Chat"
+          title="Open Internal Staff Chat & Broadcast Center"
         >
           <MessageSquare className="w-4 h-4" />
           <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-blue-600 text-white font-extrabold text-[9px] rounded-full flex items-center justify-center shadow-2xs">
-            5
+            3
           </span>
         </button>
 
-        {/* Action Icon 2: Operational Notifications */}
+        {/* Action Icon 2: Operational Notifications Center */}
         <div className="relative">
           <button
             onClick={() => setNotificationsOpen(!notificationsOpen)}
             className="w-8 h-8 rounded-lg bg-slate-100/80 dark:bg-slate-800/80 hover:bg-slate-200/80 dark:hover:bg-slate-700/80 flex items-center justify-center text-slate-600 dark:text-slate-300 relative transition-colors"
-            title="System Notifications"
+            title="System Operational Notifications"
           >
             <Bell className="w-4 h-4" />
-            {notificationsCount > 0 && (
+            {unreadCount > 0 && (
               <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-amber-500 text-slate-950 font-extrabold text-[9px] rounded-full flex items-center justify-center shadow-2xs">
-                {notificationsCount}
+                {unreadCount}
               </span>
             )}
           </button>
 
           {/* Notifications Dropdown Panel */}
           {notificationsOpen && (
-            <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-white dark:bg-[#121824] rounded-xl shadow-2xl py-3 z-50 animate-fade-in">
-              <div className="px-4 py-2 flex items-center justify-between">
-                <span className="text-xs font-extrabold text-slate-900 dark:text-slate-100 font-heading">Operational Alerts</span>
-                {notificationsCount > 0 ? (
+            <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-[#121824] rounded-2xl shadow-2xl py-3 z-50 animate-fade-in border border-slate-200 dark:border-slate-800">
+              <div className="px-4 py-2 flex items-center justify-between border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center space-x-2">
+                  <span className="text-xs font-extrabold text-slate-900 dark:text-slate-100 font-heading">Operational Alerts</span>
+                  {unreadCount > 0 && (
+                    <span className="px-2 py-0.5 bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 text-[10px] font-black rounded-full font-mono">
+                      {unreadCount} UNREAD
+                    </span>
+                  )}
+                </div>
+
+                {unreadCount > 0 ? (
                   <button
-                    onClick={handleMarkAllRead}
+                    onClick={markAllAsRead}
                     className="text-[10px] font-extrabold px-2 py-0.5 bg-teal-100 dark:bg-teal-900/60 text-teal-800 dark:text-teal-300 rounded hover:bg-teal-200 transition-colors"
                   >
                     Mark All Read
@@ -218,17 +228,53 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileSidebar }) => {
                   <span className="text-[10px] text-slate-400 font-bold">ALL READ</span>
                 )}
               </div>
-              <div className="divide-y divide-slate-100 dark:divide-slate-800 max-h-64 overflow-y-auto">
-                <div className="p-3.5 text-xs hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                  <p className="font-bold text-slate-800 dark:text-slate-200">🚨 High-Value Payout Approval</p>
-                  <p className="text-slate-500 dark:text-slate-400 text-[11px] mt-0.5">Seller requested 850,000 FCFA payout to MTN MoMo.</p>
-                  <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">10 mins ago</span>
-                </div>
-                <div className="p-3.5 text-xs hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                  <p className="font-bold text-slate-800 dark:text-slate-200">📄 Store KYC Document Submitted</p>
-                  <p className="text-slate-500 dark:text-slate-400 text-[11px] mt-0.5">Douala Tech Hub uploaded CNI &amp; Storefront photos.</p>
-                  <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">25 mins ago</span>
-                </div>
+
+              <div className="divide-y divide-slate-100 dark:divide-slate-800/60 max-h-80 overflow-y-auto">
+                {notifications.slice(0, 5).map((notif) => (
+                  <div
+                    key={notif.id}
+                    onClick={() => {
+                      markAsRead(notif.id);
+                      setNotificationsOpen(false);
+                      navigate(notif.target_url);
+                    }}
+                    className={`p-3.5 text-xs hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer transition-colors ${
+                      !notif.is_read ? 'bg-teal-50/40 dark:bg-teal-950/20 font-medium' : ''
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span
+                        className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded font-mono uppercase ${
+                          notif.priority === 'CRITICAL'
+                            ? 'bg-red-100 text-red-800 dark:bg-red-950/80 dark:text-red-300'
+                            : 'bg-teal-100 text-teal-800 dark:bg-teal-950/80 dark:text-teal-300'
+                        }`}
+                      >
+                        {notif.priority} • {notif.category}
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-mono">
+                        {notif.timestamp ? new Date(notif.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}
+                      </span>
+                    </div>
+
+                    <p className="font-extrabold text-slate-800 dark:text-slate-200 line-clamp-1">{notif.title}</p>
+                    <p className="text-slate-500 dark:text-slate-400 text-[11px] mt-0.5 line-clamp-2">{notif.body}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Bottom Footer Button: View All Notifications */}
+              <div className="p-2 border-t border-slate-100 dark:border-slate-800 text-center">
+                <button
+                  onClick={() => {
+                    setNotificationsOpen(false);
+                    navigate('/notifications');
+                  }}
+                  className="w-full py-2 bg-slate-50 dark:bg-slate-800 hover:bg-teal-50 dark:hover:bg-teal-950/40 text-teal-700 dark:text-teal-300 rounded-xl text-xs font-extrabold flex items-center justify-center space-x-1.5 transition-colors"
+                >
+                  <span>View All Notifications Center</span>
+                  <span className="font-mono text-xs">→</span>
+                </button>
               </div>
             </div>
           )}

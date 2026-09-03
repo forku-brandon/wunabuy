@@ -15,9 +15,11 @@ import {
   Briefcase,
   Calendar as CalendarIcon,
   X,
+  Bell,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useStaffAuth, StaffPermission } from '../../stores/staffAuthStore';
+import { useNotifications } from '../../stores/notificationsStore';
 import { useLanguage } from '../../context/LanguageContext';
 
 interface NavItemConfig {
@@ -38,11 +40,13 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
   onCloseMobile,
 }) => {
   const { user, hasPermission } = useStaffAuth();
+  const { unreadCount } = useNotifications();
   const { t } = useLanguage();
   const navigate = useNavigate();
 
   const allNavItems: NavItemConfig[] = [
     { label: t('nav.dashboard', 'Executive Overview'), path: '/', icon: LayoutDashboard, permission: 'view_dashboard' },
+    { label: 'Notifications Center', path: '/notifications', icon: Bell, permission: 'view_dashboard', badge: unreadCount },
     { label: t('nav.profile', 'My Staff Profile'), path: '/profile', icon: User, permission: 'view_dashboard' },
     { label: 'Internal Chat & Broadcasts', path: '/communications', icon: Megaphone, permission: 'view_dashboard', badge: 3 },
     { label: t('nav.hr_ops', 'HR & Staff Operations'), path: '/hr', icon: Briefcase, permission: 'view_hr_ops' },
