@@ -1,11 +1,11 @@
 # Wunabuy — Backend Technical Specification & API Contracts
 
-**Document Version:** 1.5 (Production API Architecture Baseline)  
-**Date:** August 31, 2026  
+**Document Version:** 2.7 (Production API & Staff Monorepo Baseline)  
+**Date:** September 3, 2026  
 **Status:** Approved / In Production Use  
-**Companion Documents:** Wunabuy SRS v1.8, Wunabuy PRD v1.8, Wunabuy Frontend Tech Spec v1.8  
+**Companion Documents:** Wunabuy SRS v2.6, Wunabuy PRD v2.6, Wunabuy Frontend Tech Spec v2.6  
 **Framework:** Laravel 13 (PHP 8.3+)  
-**Frontend Monorepo Targets:** `wunabuy-mobile` (Expo SDK 54), `@wunabuy/api-client`, `@wunabuy/types`, `@wunabuy/utils`
+**Frontend Monorepo Targets:** `wunabuy-mobile` (Expo SDK 54), `staff-portal` (Vite + React TS), `@wunabuy/api-client`, `@wunabuy/types`, `@wunabuy/utils`
 
 ---
 
@@ -24,6 +24,7 @@
 11. [Seller Store & Fulfillment Backend Architecture](#11-seller-store--fulfillment-backend-architecture)
 12. [Database Schema & PostGIS Spatial Extensions](#12-database-schema--postgis-spatial-extensions)
 13. [Error Codes & Troubleshooting Matrix](#13-error-codes--troubleshooting-matrix)
+14. [Staff Operations Portal & System Notifications API Specifications](#14-staff-operations-portal--system-notifications-api-specifications)
 
 ---
 
@@ -1021,6 +1022,193 @@ CREATE TABLE orders (
 
 ---
 
+## 14. Staff Operations Portal & System Notifications API Specifications
+
+### 14.1 Dual Authentication & Staff Session API Contracts
+
+#### 14.1.1 Request 2-Factor OTP Code
+- **Endpoint:** `POST /api/v1/staff/auth/request-otp`
+- **Headers:** `Content-Type: application/json`
+- **Request Body:**
+  ```json
+  {
+    "identifier": "+237670123456"
+  }
+  ```
+- **Success Response (200 OK):**
+  ```json
+  {
+    "success": true,
+    "data": {
+      "otp_sent": true,
+      "expires_in_seconds": 300,
+      "message": "6-digit OTP code dispatched via SMS."
+    }
+  }
+  ```
+
+#### 14.1.2 Verify 2-Factor OTP Code & Authenticate Staff
+- **Endpoint:** `POST /api/v1/staff/auth/verify-otp`
+- **Request Body:**
+  ```json
+  {
+    "identifier": "+237670123456",
+    "otp_code": "654321"
+  }
+  ```
+- **Success Response (200 OK):**
+  ```json
+  {
+    "success": true,
+    "data": {
+      "access_token": "84|sanctum_staff_token_live_abc123xyz",
+      "token_type": "Bearer",
+      "user": {
+        "id": "usr_stf_001",
+        "employee_id": "WB-ST-001",
+        "full_name": "Pauline Mbarga",
+        "phone": "+237670123456",
+        "email": "p.mbarga@wunabuy.cm",
+        "staff_department_role": "SUPER_ADMIN",
+        "security_clearance_level": 5,
+        "permissions": ["view_dashboard", "manage_staff_accounts", "switch_staff_personas", "view_hr_ops", "approve_payouts"],
+        "status": "active"
+      }
+    }
+  }
+  ```
+
+#### 14.1.3 Authenticate Staff via Corporate Password
+- **Endpoint:** `POST /api/v1/staff/auth/login`
+- **Request Body:**
+  ```json
+  {
+    "identifier": "p.mbarga@wunabuy.cm",
+    "password": "wunabuy2026"
+  }
+  ```
+
+#### 14.1.4 Revoke Staff Session & Logout Audit Logging
+- **Endpoint:** `POST /api/v1/staff/auth/logout`
+- **Headers:** `Authorization: Bearer <token>`
+- **Behavior:** Revokes current Sanctum Bearer token and writes `STAFF_LOGOUT` audit log entry to `audit_logs` table.
+
+---
+
+### 14.2 Staff Directory & 18-Flag RBAC API Contracts
+
+#### 14.2.1 Get Staff Directory Roster
+- **Endpoint:** `GET /api/v1/staff/members`
+- **Headers:** `Authorization: Bearer <token>`
+- **Query Params:** `?page=1&per_page=10&department=HR&status=active`
+- **Success Response (200 OK):**
+  ```json
+  {
+    "success": true,
+    "data": [
+      {
+        "id": "usr_stf_002",
+        "employee_id": "WB-ST-002",
+        "full_name": "Samuel Eto'o Fils",
+        "email": "s.etoo@wunabuy.cm",
+        "phone": "+237699887766",
+        "department_name": "Human Resources",
+        "staff_department_role": "HR_MANAGER",
+        "security_clearance_level": 4,
+        "status": "active"
+      }
+    ]
+  }
+  ```
+
+#### 14.2.2 Provision New Corporate Staff Member
+- **Endpoint:** `POST /api/v1/staff/members`
+- **Request Body:**
+  ```json
+  {
+    "full_name": "Henriette Nkoum",
+    "email": "h.nkoum@wunabuy.cm",
+    "phone": "+237675112233",
+    "department_name": "Logistics & Operations",
+    "staff_department_role": "OPS_MANAGER",
+    "security_clearance_level": 3,
+    "base_salary": 450000
+  }
+  ```
+
+#### 14.2.3 Fetch 18-Flag System Permissions Dictionary & Role Matrix
+- **Endpoint:** `GET /api/v1/staff/rbac/permissions`
+- **Returns:** Full list of 18 granular security permission flags (`switch_staff_personas`, `view_hr_ops`, `manage_staff_accounts`, `approve_payouts`, `adjudicate_disputes`, `manage_kyc_queues`, etc.) mapped across all 7 corporate staff roles (`SUPER_ADMIN`, `HR_MANAGER`, `FINANCE_OFFICER`, `COMPLIANCE_OFFICER`, `OPS_MANAGER`, `SUPPORT_AGENT`, `MARKETING_LEAD`).
+
+---
+
+### 14.3 System Notifications & Alert Engine API Contracts
+
+#### 14.3.1 Get System Notifications & Operational Alerts
+- **Endpoint:** `GET /api/v1/staff/notifications`
+- **Query Params:** `?category=PAYOUT&priority=CRITICAL&is_read=false`
+- **Success Response (200 OK):**
+  ```json
+  {
+    "success": true,
+    "data": [
+      {
+        "id": "notif_001",
+        "title": "🚨 High-Value MTN MoMo Payout Pending Authorization",
+        "body": "Seller Douala Tech Hub requested 850,000 FCFA Mobile Money disbursal.",
+        "category": "PAYOUT",
+        "priority": "CRITICAL",
+        "target_url": "/financials",
+        "is_read": false,
+        "timestamp": "2026-09-03T12:05:00Z"
+      }
+    ],
+    "meta": {
+      "unread_count": 4
+    }
+  }
+  ```
+
+#### 14.3.2 Mark Notification As Read
+- **Endpoint:** `PATCH /api/v1/staff/notifications/:id/read`
+
+#### 14.3.3 Mark All Operational Notifications As Read
+- **Endpoint:** `POST /api/v1/staff/notifications/read-all`
+
+---
+
+### 14.4 HR Operations, Payroll & CNPS Tax Disbursal Contracts
+
+#### 14.4.1 Get Monthly Payroll & Tax Ledger
+- **Endpoint:** `GET /api/v1/staff/hr/payroll`
+- **Success Response (200 OK):**
+  ```json
+  {
+    "success": true,
+    "data": [
+      {
+        "id": "pay_aug_001",
+        "employee_id": "WB-ST-001",
+        "staff_name": "Pauline Mbarga",
+        "department": "Executive Management",
+        "base_salary": 850000,
+        "cnps_deduction": 35700,
+        "tax_deduction": 42500,
+        "net_salary": 771800,
+        "currency": "XAF",
+        "status": "DISBURSED",
+        "payment_method": "MTN_MOMO"
+      }
+    ]
+  }
+  ```
+
+#### 14.4.2 Generate Printable Employee Payslip Voucher
+- **Endpoint:** `GET /api/v1/staff/hr/payroll/:id/voucher`
+- **Returns:** Official CNPS-compliant salary voucher payload containing company tax registration (`WUNABUY CAMEROON SARL`, `NIU: M08261899201Z`), employee tax breakdown, and verification signature.
+
+---
+
 ### Approval Signatures
 
 **Backend Lead Architect:** _Laravel Engineering Team_  
@@ -1028,4 +1216,4 @@ CREATE TABLE orders (
 **Product Manager:** _Agemo Technologies Product Lead_  
 
 ---
-**[End of Backend Technical Specification & API Contracts v1.5]**
+**[End of Backend Technical Specification & API Contracts v2.7]**

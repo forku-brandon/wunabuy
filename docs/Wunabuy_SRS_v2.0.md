@@ -1,27 +1,27 @@
 # Software Requirements Specification (SRS)
 # Wunabuy — Multi-Sided E-Commerce & Web Staff Operations Platform
 
-**Document Version:** 2.6 (Persona Switcher ACL Security Guard, Per-Account Auth Persistence & Production API Services)  
+**Document Version:** 2.7 (Notifications Center, Support Chat, 3-Color Brand Palette & Backend Technical Specs v2.7)  
 **Date:** September 3, 2026  
 **Status:** Approved / In Production Use  
-**Companion Documents:** Wunabuy PRD v1.0, Wunabuy Frontend Tech Spec v1.8, Wunabuy Backend Tech Spec v1.4  
+**Companion Documents:** Wunabuy PRD v2.7, Wunabuy Backend Tech Spec v2.7  
 
 ---
 
-## 🚀 Key Staff Portal v2.6 Architecture & Feature Specifications (September 2026)
+## 🚀 Key Staff Portal v2.7 Architecture & Feature Specifications (September 2026)
 
-- **Persona Switcher Access Control Restriction & Security Hardening (`Header.tsx`, `staffAuthStore.ts`, `SettingsPage.tsx`)**:
-  - **New ACL Permission Flag (`switch_staff_personas`)**: Registered `switch_staff_personas` ("Switch QA Staff Personas & Roles") in platform ACL. By default, granted **ONLY** to `SUPER_ADMIN` (Level 5 Clearance). Super Admin can grant/revoke this flag per role via the RBAC Governance matrix (`SettingsPage.tsx`).
-  - **Header Menu Security Guard (`Header.tsx`)**: Evaluates `hasPermission('switch_staff_personas')`. For all non-admin staff users, the persona switcher section is **COMPLETELY REMOVED** from their user dropdown panel for high security.
+- **System Notifications & Operational Alerts Center (`NotificationsPage.tsx`, `notificationsStore.ts`, `Header.tsx`)**:
+  - **Dedicated Route (`/notifications`)**: Centralized system notifications ledger with unread counter, telemetry KPI cards (Total Alerts, Unread, Critical, Payouts), category tabs (`PAYOUT`, `KYC`, `DISPUTE`, `LOGISTICS`, `HR`, `SYSTEM`), priority filters, real-time text search, and direct operational target action links.
+  - **Top Navbar Bell Dropdown (`Header.tsx`)**: Interactive operational alerts dropdown with unread badge counter, direct target routing, and a prominent **"View All Notifications Center →"** button.
 
-- **Per-Account Staff Authentication & Session Persistence (`AuthPage.tsx` & `staffAuthStore.ts`)**:
-  - **Registered Staff Quick Picker (`AuthPage.tsx`)**: Dropdown menu on both 2-Factor OTP and Password login modes listing all corporate staff accounts (`Pauline Mbarga`, `Christian Atangana`, `Chantal Nguesso`, `Marie Eyebe`, `Alain Ngueme`, `Therese Abena`, `Marcelle Njoya`, and newly provisioned staff).
-  - **Exact Session Hydration**: Authenticating via 2-Factor OTP (`654321`) or Password (`wunabuy2026`) matches the staff member's exact email/phone and hydrates their exact clearance level (1-5) and department permissions.
+- **Staff Support Chat & Broadcast Center Connection (`Header.tsx`, `CommunicationsPage.tsx`)**:
+  - Top header `MessageSquare` support chat button directly routes to the **Internal Staff Support Chat & Broadcast Center (`/communications`)**.
 
-- **Production API Service Client Layer & Endpoint Adapters (`staff-portal/src/services/`)**:
-  - **Base HTTP Client (`apiClient.ts`)**: Base Fetch HTTP client with `VITE_API_BASE_URL` (defaults to `http://localhost:8000/api/v1`), Sanctum Bearer tokens, `ApiError` parsing, and offline fallback.
-  - **Modular Service Clients**: Dedicated RESTful endpoint adapters for Auth (`authApi.ts`), Staff Roster (`staffDirectoryApi.ts`), KYC Queue (`kycApi.ts`), Escrow Disputes (`disputesApi.ts`), Financial Payouts (`financialsApi.ts`), Logistics Telemetry (`logisticsApi.ts`), Work Tasks (`tasksApi.ts`), RBAC Matrix (`rbacApi.ts`), and Audit Logs (`auditLogsApi.ts`).
-  - **Offline Fallback**: Every service method gracefully falls back to local seeders if the backend API server is unreachable.
+- **Strict 3-Color Brand Palette Unification**:
+  - Enforced Emerald Teal (`#0D9488`) primary, Amber Gold (`#F59E0B`) accent, and Clean White / Obsidian Dark Slate (`bg-[#121824]`) secondary surface colors across all UI components, badges, sidebars, headers, and stat cards.
+
+- **Backend Technical Specifications & API Harmony (`Wunabuy_Backend_Tech_Spec_v1.0.md`)**:
+  - Updated backend technical specifications (v2.7) detailing all Staff API endpoints (`/api/v1/staff/*`), 18-flag RBAC permissions, notifications schema, payroll CNPS tax ledger, and escrow payout disbursal endpoints.
 
 - **Active Bilingual Internationalization (i18n) Engine (`LanguageContext.tsx`, `translations.ts`, `Header.tsx`)**:
   - Instant 1-click language toggling between **English (EN 🇬🇧)** and **French (FR 🇫🇷)** with persistent `localStorage` state.
