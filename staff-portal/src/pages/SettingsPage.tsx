@@ -6,6 +6,7 @@ import { Button } from '../components/ui/Button';
 import { StatCard } from '../components/ui/StatCard';
 import { Modal } from '../components/ui/Modal';
 import { DataTable, Column } from '../components/ui/DataTable';
+import { SearchableSelect } from '../components/ui/SearchableSelect';
 import {
   useStaffAuth,
   AuditLogEntry,
@@ -373,18 +374,19 @@ export const SettingsPage: React.FC = () => {
           </div>
 
           <div>
-            <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Security Clearance Level (1 - 5)</label>
-            <select
+            <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Security Clearance Level (Searchable)</label>
+            <SearchableSelect
+              options={[
+                { value: '5', label: 'Level 5 — Super Administrator', description: 'Full Executive Governance & Audit Access' },
+                { value: '4', label: 'Level 4 — Senior Department Officer', description: 'Departmental Approval Authority' },
+                { value: '3', label: 'Level 3 — Department Specialist / Operations', description: 'Operational Dispatch & Overrides' },
+                { value: '2', label: 'Level 2 — Customer Service Support', description: 'Customer Service Queue' },
+                { value: '1', label: 'Level 1 — Basic Viewer', description: 'Read-Only Telemetry' },
+              ]}
               value={roleClearanceInput}
-              onChange={(e) => setRoleClearanceInput(e.target.value)}
-              className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-slate-900 dark:text-slate-100"
-            >
-              <option value="1">Level 1 — Basic Viewer</option>
-              <option value="2">Level 2 — Customer Service Support</option>
-              <option value="3">Level 3 — Department Specialist / Operations</option>
-              <option value="4">Level 4 — Senior Department Officer</option>
-              <option value="5">Level 5 — Super Administrator</option>
-            </select>
+              onChange={(val) => setRoleClearanceInput(val)}
+              searchPlaceholder="Search clearance level..."
+            />
           </div>
 
           <div>

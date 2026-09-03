@@ -164,6 +164,17 @@ const INITIAL_ROLES_MATRIX: StaffRoleDefinition[] = [
     ],
   },
   {
+    code: StaffDepartmentRole.MARKETING_LEAD,
+    name: 'Marketing & Growth Lead',
+    department: 'Marketing & Growth Ops',
+    clearance_level: 2,
+    permissions: [
+      'view_dashboard',
+      'manage_marketing',
+      'view_audit_logs',
+    ],
+  },
+  {
     code: StaffDepartmentRole.SUPPORT_AGENT,
     name: 'Customer Support Specialist',
     department: 'Customer Escrow Support',
