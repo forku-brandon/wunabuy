@@ -195,7 +195,7 @@ export const StaffProfilePage: React.FC = () => {
             </p>
 
             <div className="mt-3 flex items-center justify-center space-x-2">
-              <Badge variant={user?.security_clearance_level === 5 ? 'purple' : 'teal'}>
+              <Badge variant={user?.security_clearance_level === 5 ? 'amber' : 'teal'}>
                 Level {user?.security_clearance_level || 5} Clearance
               </Badge>
               <Badge variant="success">Active Staff</Badge>

@@ -404,15 +404,15 @@ export const HROpsPage: React.FC = () => {
       render: (row) => (
         <div className="space-y-0.5">
           <span className="font-bold text-xs text-slate-800 dark:text-slate-200 block">{row.department_name}</span>
-          <span className="text-[10px] font-mono text-purple-600 dark:text-purple-400 font-extrabold">{row.staff_department_role}</span>
+          <span className="text-[10px] font-mono text-teal-600 dark:text-teal-400 font-extrabold">{row.staff_department_role}</span>
         </div>
       ),
     },
     {
-      key: 'clearance',
-      header: 'Clearance Level',
-      render: (row) => (
-        <Badge variant={row.security_clearance_level === 5 ? 'purple' : row.security_clearance_level >= 4 ? 'teal' : 'neutral'}>
+      header: 'Clearance',
+      accessorKey: 'security_clearance_level',
+      cell: (row) => (
+        <Badge variant={row.security_clearance_level === 5 ? 'amber' : row.security_clearance_level >= 4 ? 'teal' : 'neutral'}>
           Level {row.security_clearance_level}
         </Badge>
       ),
@@ -573,7 +573,7 @@ export const HROpsPage: React.FC = () => {
           value="100%"
           change="Compliant"
           changeType="positive"
-          icon={<FileText className="w-5 h-5 text-purple-600 dark:text-purple-400" />}
+          icon={<FileText className="w-5 h-5 text-teal-600 dark:text-teal-400" />}
           description="CNI &amp; NIU tax filed"
         />
       </div>

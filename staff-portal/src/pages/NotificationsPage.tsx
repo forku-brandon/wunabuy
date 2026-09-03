@@ -181,13 +181,13 @@ export const NotificationsPage: React.FC = () => {
           </div>
         </Card>
 
-        <Card className="p-4 flex items-center space-x-4 border-l-4 border-l-blue-500">
-          <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/60 flex items-center justify-center text-blue-600 dark:text-blue-400">
+        <Card className="p-4 flex items-center space-x-4 border-l-4 border-l-teal-500">
+          <div className="w-12 h-12 rounded-2xl bg-teal-50 dark:bg-teal-950/60 flex items-center justify-center text-teal-600 dark:text-teal-400">
             <Wallet className="w-6 h-6" />
           </div>
           <div>
             <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Payout &amp; Escrow Requests</p>
-            <h3 className="text-2xl font-extrabold text-blue-600 dark:text-blue-400 font-mono mt-0.5">{payoutCount + kycDisputeCount}</h3>
+            <h3 className="text-2xl font-extrabold text-teal-600 dark:text-teal-400 font-mono mt-0.5">{payoutCount + kycDisputeCount}</h3>
           </div>
         </Card>
       </div>
@@ -416,3 +416,4 @@ export const NotificationsPage: React.FC = () => {
     </PageContainer>
   );
 };
+

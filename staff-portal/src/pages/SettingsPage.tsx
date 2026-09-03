@@ -214,8 +214,8 @@ export const SettingsPage: React.FC = () => {
           value={`Level ${user?.security_clearance_level || 5}`}
           change="L5 Super User"
           changeType="positive"
-          icon={<Lock className="w-5 h-5 text-purple-600 dark:text-purple-400" />}
-          iconBg="bg-purple-50 dark:bg-purple-950/60"
+          icon={<Lock className="w-5 h-5 text-amber-600 dark:text-amber-400" />}
+          iconBg="bg-amber-50 dark:bg-amber-950/60"
           description="Full system governance active"
         />
 

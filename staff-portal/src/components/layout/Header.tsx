@@ -184,7 +184,7 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileSidebar }) => {
           title="Open Internal Staff Chat & Broadcast Center"
         >
           <MessageSquare className="w-4 h-4" />
-          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-blue-600 text-white font-extrabold text-[9px] rounded-full flex items-center justify-center shadow-2xs">
+          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-teal-600 text-white font-extrabold text-[9px] rounded-full flex items-center justify-center shadow-2xs">
             3
           </span>
         </button>
@@ -305,7 +305,7 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileSidebar }) => {
               <div className="px-4 py-2">
                 <p className="text-xs font-extrabold text-slate-900 dark:text-slate-100">{user?.full_name}</p>
                 <p className="text-[10px] text-slate-400 dark:text-slate-500 font-mono truncate">{user?.email}</p>
-                <span className="inline-block mt-1 text-[9px] font-mono font-extrabold px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-950/80 text-purple-800 dark:text-purple-300">
+                <span className="inline-block mt-1 text-[9px] font-mono font-extrabold px-1.5 py-0.5 rounded bg-teal-100 dark:bg-teal-950/80 text-teal-800 dark:text-teal-300">
                   {user?.staff_department_role} (Level {user?.security_clearance_level})
                 </span>
               </div>
@@ -316,9 +316,9 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileSidebar }) => {
                     setIsPersonaMenuOpen(false);
                     navigate('/settings');
                   }}
-                  className="w-full py-1.5 px-2 bg-purple-50 dark:bg-purple-950/60 text-purple-900 dark:text-purple-200 rounded-lg text-xs font-bold flex items-center space-x-2 hover:bg-purple-100 transition-colors"
+                  className="w-full py-1.5 px-2 bg-teal-50 dark:bg-teal-950/60 text-teal-900 dark:text-teal-200 rounded-lg text-xs font-bold flex items-center space-x-2 hover:bg-teal-100 dark:hover:bg-teal-900/60 transition-colors"
                 >
-                  <ShieldCheck className="w-3.5 h-3.5 text-purple-600" />
+                  <ShieldCheck className="w-3.5 h-3.5 text-teal-600" />
                   <span>Security &amp; Audit Logs</span>
                 </button>
 

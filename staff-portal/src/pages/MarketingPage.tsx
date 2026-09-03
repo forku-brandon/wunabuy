@@ -263,8 +263,8 @@ export const MarketingPage: React.FC = () => {
           value={formatXAF(3420000)}
           change="Platform Cost"
           changeType="neutral"
-          icon={<Tag className="w-5 h-5 text-purple-600 dark:text-purple-400" />}
-          iconBg="bg-purple-50 dark:bg-purple-950/60"
+          icon={<Tag className="w-5 h-5 text-teal-600 dark:text-teal-400" />}
+          iconBg="bg-teal-50 dark:bg-teal-950/60"
           description="Total promo subsidy invested"
         />
       </div>
