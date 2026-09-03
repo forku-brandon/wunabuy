@@ -16,6 +16,7 @@ import { MarketingPage } from './pages/MarketingPage';
 import { CommunicationsPage } from './pages/CommunicationsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { StaffProfilePage } from './pages/StaffProfilePage';
+import { HROpsPage } from './pages/HROpsPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -35,7 +36,7 @@ const ProtectedLayout: React.FC = () => {
   }
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-slate-50 dark:bg-[#0B0F17] text-slate-900 dark:text-slate-100 font-sans transition-colors">
+    <div className="flex h-screen w-screen overflow-hidden bg-slate-50 dark:bg-[#090D16] text-slate-900 dark:text-slate-100 font-sans transition-colors">
       <SidebarNav
         mobileOpen={mobileSidebarOpen}
         onCloseMobile={() => setMobileSidebarOpen(false)}
@@ -46,6 +47,7 @@ const ProtectedLayout: React.FC = () => {
           <Route path="/" element={<DashboardPage />} />
           <Route path="/profile" element={<StaffProfilePage />} />
           <Route path="/communications" element={<CommunicationsPage />} />
+          <Route path="/hr" element={<HROpsPage />} />
           <Route path="/kyc" element={<KYCPage />} />
           <Route path="/disputes" element={<DisputesPage />} />
           <Route path="/logistics" element={<LogisticsOpsPage />} />

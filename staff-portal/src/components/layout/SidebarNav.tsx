@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   ChevronRight,
   User,
+  Briefcase,
   X,
 } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -41,6 +42,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
     { label: 'Dashboard', path: '/', icon: LayoutDashboard, permission: 'view_dashboard' },
     { label: 'My Staff Profile', path: '/profile', icon: User, permission: 'view_dashboard' },
     { label: 'Internal Chat & Broadcasts', path: '/communications', icon: Megaphone, permission: 'view_dashboard', badge: 3 },
+    { label: 'HR & Staff Payroll', path: '/hr', icon: Briefcase, permission: 'view_hr_ops' },
     { label: 'Store KYC Queue', path: '/kyc', icon: FileCheck, permission: 'view_kyc', badge: 4 },
     { label: 'Escrow Disputes', path: '/disputes', icon: ShieldAlert, permission: 'view_disputes', badge: 2 },
     { label: 'Logistics & Fleet Ops', path: '/logistics', icon: Truck, permission: 'view_logistics', badge: 12 },

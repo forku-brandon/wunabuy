@@ -8,6 +8,7 @@ export enum StaffDepartmentRole {
   OPS_MANAGER = 'OPS_MANAGER',
   SUPPORT_AGENT = 'SUPPORT_AGENT',
   MARKETING_LEAD = 'MARKETING_LEAD',
+  HR_MANAGER = 'HR_MANAGER',
 }
 
 export interface StaffUser extends User {
@@ -31,6 +32,8 @@ export type StaffPermission =
   | 'manage_marketing'
   | 'manage_settings'
   | 'manage_profile_crud'
+  | 'view_hr_ops'
+  | 'manage_hr_payroll'
   | 'view_audit_logs';
 
 export interface StaffRoleDefinition {
@@ -56,6 +59,8 @@ export const ALL_STAFF_PERMISSIONS: { code: StaffPermission; label: string; desc
   { code: 'manage_marketing', label: 'Manage Marketing & Banners', description: 'Publish and toggle mobile promo banners & tips' },
   { code: 'manage_settings', label: 'Manage System Settings', description: 'Configure platform security rules & MFA' },
   { code: 'manage_profile_crud', label: 'Manage Staff Profile CRUD (Admin Only)', description: 'Edit and manage individual staff account profile details' },
+  { code: 'view_hr_ops', label: 'View HR & Staff Ops', description: 'Access staff directory, contracts, leave requests, and payroll summary' },
+  { code: 'manage_hr_payroll', label: 'Manage HR Payroll & Payslips', description: 'Authorize monthly staff salary disbursals and print official payslips' },
   { code: 'view_audit_logs', label: 'View Security Audit Logs', description: 'Access immutable system administrative action ledger' },
 ];
 
@@ -91,6 +96,21 @@ const INITIAL_ROLES_MATRIX: StaffRoleDefinition[] = [
       'manage_marketing',
       'manage_settings',
       'manage_profile_crud',
+      'view_hr_ops',
+      'manage_hr_payroll',
+      'view_audit_logs',
+    ],
+  },
+  {
+    code: StaffDepartmentRole.HR_MANAGER,
+    name: 'HR & People Operations Lead',
+    department: 'Human Resources & People Ops',
+    clearance_level: 4,
+    permissions: [
+      'view_dashboard',
+      'view_hr_ops',
+      'manage_hr_payroll',
+      'manage_users',
       'view_audit_logs',
     ],
   },
@@ -194,6 +214,24 @@ export const DEMO_STAFF_PERSONAS: StaffUser[] = [
     available_roles: [UserRole.STAFF],
     created_at: '2026-02-01T09:30:00Z',
     updated_at: '2026-09-02T11:00:00Z',
+  },
+  {
+    id: 'staff_907',
+    phone: '+237677998877',
+    email: 'chantal.hr@wunabuy.com',
+    full_name: 'Chantal Nguesso',
+    role: UserRole.STAFF,
+    staff_department_role: StaffDepartmentRole.HR_MANAGER,
+    department_name: 'Human Resources & People Ops',
+    employee_id: 'WNB-EMP-007',
+    security_clearance_level: 4,
+    status: UserStatus.ACTIVE,
+    avatar_url: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&w=300&q=80',
+    is_phone_verified: true,
+    default_address: null,
+    available_roles: [UserRole.STAFF],
+    created_at: '2026-01-15T08:00:00Z',
+    updated_at: '2026-09-03T09:00:00Z',
   },
   {
     id: 'staff_903',
