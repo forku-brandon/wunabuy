@@ -31,7 +31,7 @@ It connects three user groups through a single escrow-protected ecosystem:
 | 🏪 **Sellers (Store Owners)** | Digitize storefronts, manage inventory, receive guaranteed payouts after verified delivery |
 | 🚚 **Transport Providers** | Accept delivery jobs, navigate with GPS, earn transparent mileage-based fees |
 
-An internal **Staff Portal** provides operational dashboards across 6 departments (Finance, IT, Customer Service, Operations, Compliance, Marketing) with strict RBAC and MFA.
+An internal **Staff Portal (v2.4)** provides operational dashboards across 7 departments (Executive, HR, Finance, Compliance, Operations, Support, Marketing) with 18-flag RBAC, Granular Field-Level ACL Controls, SearchableSelect Primitives, Staff Account CRUD Provisioning, and Dual 2-Factor OTP / Password Authentication.
 
 ### Core Value Propositions
 

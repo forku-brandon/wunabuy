@@ -1,35 +1,32 @@
 # Software Requirements Specification (SRS)
 # Wunabuy — Multi-Sided E-Commerce & Web Staff Operations Platform
 
-**Document Version:** 2.3 (Corporate Staff Account Directory CRUD, Dual OTP/Password Auth & Live Shift Telemetry)  
+**Document Version:** 2.4 (Granular Field-Level ACL Locks, SearchableSelect Dropdowns & Universal Table Searchers)  
 **Date:** September 3, 2026  
 **Status:** Approved / In Production Use  
 **Companion Documents:** Wunabuy PRD v1.0, Wunabuy Frontend Tech Spec v1.8, Wunabuy Backend Tech Spec v1.4  
 
 ---
 
-## 🚀 Key Staff Portal v2.3 Architecture & Feature Specifications (September 2026)
+## 🚀 Key Staff Portal v2.4 Architecture & Feature Specifications (September 2026)
+
+- **Granular Field-Level ACL Permission Enforcement & Action Lock Indicators (`StaffProfilePage.tsx`, `FinancialsPage.tsx`, `KYCPage.tsx`, `DisputesPage.tsx`, `LogisticsOpsPage.tsx`)**:
+  - **Staff Profile Page (`StaffProfilePage.tsx`)**: All staff members CAN upload/change their profile avatar (`updateUserAvatar`), change access password, and update notification preferences. Core corporate identity fields (First Name, Last Name, Email, Phone, Department, Role Code, Clearance Level, NIU Tax ID) are strictly locked (`disabled={!canEditProfile}`) for non-admins with explicit `Lock` indicators (`LOCKED BY ADMIN GOVERNANCE`).
+  - **Action Locks on Operational Pages**: Action buttons for non-authorized personnel are replaced with disabled lock badges (`<Lock /> Locked (Admin Only)`) across MoMo Payout Approvals (`approve_payouts`), KYC Compliance Verification (`approve_kyc`), Escrow Dispute Adjudication (`resolve_disputes`), and Logistics Dispatch Overrides (`override_logistics`).
+
+- **SearchableSelect Primitive & Universal In-Built Table Searchers (`SearchableSelect.tsx` & `DataTable.tsx`)**:
+  - **SearchableSelect Component (`SearchableSelect.tsx`)**: Reusable UI component featuring an in-built top text search bar filtering options in real time. Applied to all form dropdowns in Provision Staff Modal, Edit Staff Modal, Assign Work Directive Modal, and RBAC Clearance Editor.
+  - **Universal Table Search**: All data tables across the platform leverage `DataTable.tsx` with `searchable={true}` enabled with a top search input filtering across all dataset properties.
+
+- **18-Flag RBAC System Permission Matrix (`staffAuthStore.ts` & `SettingsPage.tsx`)**:
+  - Fully synchronized permissions matrix for all 7 corporate staff roles (`SUPER_ADMIN`, `HR_MANAGER`, `FINANCE_OFFICER`, `COMPLIANCE_OFFICER`, `OPS_MANAGER`, `MARKETING_LEAD`, `SUPPORT_AGENT`).
+  - Level 5 Clearance / Super Admin accounts automatically override all permission checks to ensure 100% platform governance access.
 
 - **Corporate Staff Account Directory & Lifecycle Management Engine (`HROpsPage.tsx` & `staffAuthStore.ts`)**:
-  - Full CRUD management of corporate staff accounts: Super Admins and HR Managers can provision, edit, suspend, or revoke staff accounts.
-  - Staff Provisioning Fields: Staff Full Name, Corporate Email (`fname.lname@wunabuy.com`), Mobile Phone (`+237 6XX XXX XXX`), Department, Staff Department Role, and Security Clearance Level (Level 1-5).
-  - Searchable Staff Roster DataTable with live status badges (`🟢 ACTIVE` / `🔴 SUSPENDED`), Searchable Employee Select picker with live search input, and modal actions (`Edit Info`, `Suspend/Activate`, `Revoke/Delete`).
+  - Full CRUD management of corporate staff accounts: Provisioning modal, editable details, status toggle (`🟢 ACTIVE` / `🔴 SUSPENDED`), and account revocation.
 
 - **Dual Corporate Authentication Engine (`AuthPage.tsx`)**:
   - Dual login modes: **2-Factor OTP Code** (6-digit OTP `654321`) AND **Corporate Password Authentication** (`wunabuy2026`).
-  - Seamless authentication for newly provisioned corporate staff accounts.
-
-- **Large Corporate Employee Working Clock & Duty Telemetry (`DashboardPage.tsx`)**:
-  - Hero Card Digital Clock with live second-by-second ticking time, full date, West Africa Time zone tag (`WAT / UTC+1`), Douala Node status pill (`28°C Douala Node Live`), and active working shift counter.
-  - 3-Stage Task Lifecycle (**`ASSIGNED`** ➡️ **`IN_PROGRESS`** [Accepted] ➡️ **`COMPLETED`**) with live ticking countdown clock and 48-hour due date proximity warning alarm.
-
-- **HR Operations & Staff Payroll Management Module (`HROpsPage.tsx`)**:
-  - Monthly Salary Disbursal Ledger: Base salary, transport allowance, performance incentives, CNPS social security deductions (4.2%), income tax (IRPP), and net payable in FCFA (XAF).
-  - Printable Payslip Engine: Official 1-click **Print Payslip** modal (`window.print()`) with Wunabuy HR header, employer CNPS registration (`389201-X`), itemized tax breakdown, and digital authorization.
-  - Staff Compliance Document Vault & Time-Off Leave Request Queue.
-
-- **18-Flag RBAC Roles & Permissions Matrix (`staffAuthStore.ts` & `SettingsPage.tsx`)**:
-  - Active permissions matrix including `manage_staff_crud` ("Create, Edit & Revoke Corporate Staff Accounts"), `manage_profile_crud`, `assign_staff_tasks`, `view_hr_ops`, `manage_hr_payroll`, `view_dashboard`, `view_kyc`, `approve_kyc`, `view_disputes`, `resolve_disputes`, `view_financials`, `approve_payouts`, `view_logistics`, `override_logistics`, `manage_users`, `manage_marketing`, `manage_settings`, `view_audit_logs`.
 
 ---
 
@@ -39,3 +36,4 @@
 - **STF-001:** Staff auth SHALL support both 2-Factor OTP verification (`654321`) and Corporate Password authentication (`AuthPage.tsx`).
 - **STF-002:** Navigation links SHALL filter strictly based on role clearance permissions (`SidebarNav.tsx`).
 - **STF-003:** Every security sensitive operation SHALL emit an entry to the immutable audit log ledger (`auditLogs`).
+- **STF-004:** All sensitive actions and identity input fields SHALL enforce granular field-level ACL guards with visual `Lock` badges for non-authorized staff personnel.

@@ -1,31 +1,30 @@
-# Wunabuy Web Staff Operations Portal (v2.3)
+# Wunabuy Web Staff Operations Portal (v2.4)
 
-Enterprise Web Application for Wunabuy company personnel, featuring real-time operational telemetry, Corporate Staff Account Provisioning CRUD, Dual OTP/Password Authentication, 18-flag RBAC security clearance, HR & Staff Payroll with printable payslips, 3-stage Task Lifecycle engine with live countdown clocks, borderless design system, and light/dark theme switching.
+Enterprise Web Application for Wunabuy company personnel, featuring real-time operational telemetry, Granular Field-Level ACL Controls, SearchableSelect Dropdown Primitives, Universal Data Table Searchers, Corporate Staff Account Provisioning CRUD, Dual OTP/Password Authentication, 18-flag RBAC security clearance, HR & Staff Payroll with printable payslips, borderless design system, and light/dark theme switching.
 
 ---
 
-## 🌟 Key Features in Version 2.3
+## 🌟 Key Features in Version 2.4
 
-### 1. 👔 Corporate Staff Account Directory & Provisioning (`HROpsPage.tsx` & `staffAuthStore.ts`)
-- **Full Corporate Staff Account CRUD**: Super Admins and HR Managers can provision, edit, suspend, or revoke staff accounts.
-- **Staff Provisioning Modal**: Form to create new staff accounts with Full Name, Corporate Email (`fname.lname@wunabuy.com`), Mobile Phone (`+237 6XX XXX XXX`), Department Name, Department Role, and Security Clearance Level (Level 1-5).
-- **Searchable Staff Roster DataTable**: Lists all staff members with live status badges (`🟢 ACTIVE` / `🔴 SUSPENDED`), Searchable Employee Select picker, and modal actions (`Edit Info`, `Suspend/Activate`, `Revoke/Delete`).
+### 1. 🔒 Granular Field-Level ACL Controls & Lock Indicators (`StaffProfilePage.tsx`, `FinancialsPage.tsx`, `KYCPage.tsx`, `DisputesPage.tsx`, `LogisticsOpsPage.tsx`)
+- **Staff Profile Field Governance**: All staff members can upload profile pictures (`updateUserAvatar`), change passwords, and update notification preferences, while core corporate identity fields (Name, Email, Phone, Department, Clearance Level) are locked (`disabled={!canEditProfile}`) with `Lock` badges for non-admins.
+- **Action Guard Locks**: Interactive action buttons for unauthorized personnel display disabled lock badges (`<Lock /> Locked (Admin Only)`) across MoMo Payout Approvals, KYC Verification, Dispute Adjudication, and Logistics Overrides.
 
-### 2. 🔐 Dual Corporate Authentication Engine (`AuthPage.tsx`)
+### 2. 🔍 SearchableSelect Primitive & Universal Data Table Searchers (`SearchableSelect.tsx` & `DataTable.tsx`)
+- **`SearchableSelect` Component**: Reusable dropdown component with an in-built text search bar filtering options in real time.
+- **Universal Table Search**: Enabled `searchable={true}` across all operational data tables with a top search input filtering across all dataset properties.
+
+### 3. 👔 Corporate Staff Account Directory & Provisioning (`HROpsPage.tsx` & `staffAuthStore.ts`)
+- **Full Corporate Staff Account CRUD**: Super Admins and HR Managers can provision, edit, suspend, or revoke staff accounts with corporate email (`@wunabuy.com`), phone (`+237 6XX XXX XXX`), clearance levels (Level 1-5), and department roles.
+
+### 4. 🔐 Dual Corporate Authentication Engine (`AuthPage.tsx`)
 - **Dual Login Modes**: Support for 2-Factor OTP verification (6-digit code `654321`) AND Corporate Password authentication (`wunabuy2026`).
-- **Seamless Authentication**: Instant login access for newly provisioned corporate staff accounts.
 
-### 3. ⏰ Large Corporate Employee Working Clock & Task Countdown (`DashboardPage.tsx`)
+### 5. ⏰ Large Corporate Employee Working Clock & Task Countdown (`DashboardPage.tsx`)
 - **Hero Card Digital Clock**: Prominent digital clock with live second-by-second ticking time, full date, West Africa Time zone tag (`WAT / UTC+1`), Douala Node status pill (`28°C Douala Node Live`), and active working shift counter.
-- **3-Stage Task Lifecycle**: `ASSIGNED` ➡️ `IN_PROGRESS` (Accepted) ➡️ `COMPLETED` with live countdown clock and 48-hour due date proximity warning alarm.
 
-### 4. 👔 HR Operations & Staff Payroll (`HROpsPage.tsx`)
-- **Monthly Salary Disbursal Ledger**: Base salary, transport allowance, performance incentives, CNPS social security deductions (4.2%), income tax (IRPP), and net payable in FCFA (XAF).
-- **Printable Payslip Engine**: Official 1-click **Print Payslip** modal (`window.print()`) with Wunabuy HR header, employer CNPS registration (`389201-X`), itemized tax breakdown, and digital authorization.
-- **Staff Document Vault & Leave Request Queue**.
-
-### 5. 🔒 18-Flag RBAC Roles & Governance (`SettingsPage.tsx` & `staffAuthStore.ts`)
-- **18 System Permissions**: Includes `manage_staff_crud` ("Create, Edit & Revoke Corporate Staff Accounts"), `manage_profile_crud`, `assign_staff_tasks`, `view_hr_ops`, `manage_hr_payroll`, `view_dashboard`, `view_kyc`, `approve_kyc`, `view_disputes`, `resolve_disputes`, `view_financials`, `approve_payouts`, `view_logistics`, `override_logistics`, `manage_users`, `manage_marketing`, `manage_settings`, `view_audit_logs`.
+### 6. 🔒 18-Flag RBAC Roles & Governance (`SettingsPage.tsx` & `staffAuthStore.ts`)
+- **18 System Permissions**: Fully synchronized permissions matrix across all 7 staff department roles with Level 5 Super Admin override logic.
 
 ---
 
