@@ -37,7 +37,8 @@ export type StaffPermission =
   | 'view_hr_ops'
   | 'manage_hr_payroll'
   | 'assign_staff_tasks'
-  | 'view_audit_logs';
+  | 'view_audit_logs'
+  | 'switch_staff_personas';
 
 export interface StaffRoleDefinition {
   code: string;
@@ -67,6 +68,7 @@ export const ALL_STAFF_PERMISSIONS: { code: StaffPermission; label: string; desc
   { code: 'manage_hr_payroll', label: 'Manage HR Payroll & Payslips', description: 'Authorize monthly staff salary disbursals and print official payslips' },
   { code: 'assign_staff_tasks', label: 'Assign & Dispatch Staff Tasks', description: 'Create and assign daily, weekly, or monthly recurring work directives to employees' },
   { code: 'view_audit_logs', label: 'View Security Audit Logs', description: 'Access immutable system administrative action ledger' },
+  { code: 'switch_staff_personas', label: 'Switch QA Staff Personas & Roles (Admin Only)', description: 'Allow switching active session persona across different staff roles' },
 ];
 
 export interface AuditLogEntry {
@@ -106,6 +108,7 @@ const INITIAL_ROLES_MATRIX: StaffRoleDefinition[] = [
       'manage_hr_payroll',
       'assign_staff_tasks',
       'view_audit_logs',
+      'switch_staff_personas',
     ],
   },
   {

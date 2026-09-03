@@ -29,12 +29,14 @@ export interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ onToggleMobileSidebar }) => {
-  const { user, logout, switchPersona, addAuditLog } = useStaffAuth();
+  const { user, logout, switchPersona, addAuditLog, hasPermission } = useStaffAuth();
   const { theme, toggleTheme } = useTheme();
   const { language, setLanguage, t } = useLanguage();
   const navigate = useNavigate();
   const [isPersonaMenuOpen, setIsPersonaMenuOpen] = useState(false);
   const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
+
+  const canSwitchPersonas = hasPermission('switch_staff_personas');
 
   // Header Interactive Modals & Drawers State
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -286,30 +288,34 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileSidebar }) => {
                 </button>
               </div>
 
-              <div className="px-4 py-1.5 text-[10px] font-mono font-extrabold uppercase text-slate-400 tracking-wider">
-                SWITCH QA STAFF PERSONA
-              </div>
+              {canSwitchPersonas && (
+                <>
+                  <div className="px-4 py-1.5 text-[10px] font-mono font-extrabold uppercase text-slate-400 tracking-wider border-t border-slate-100 dark:border-slate-800">
+                    SWITCH QA STAFF PERSONA (ADMIN)
+                  </div>
 
-              <div className="max-h-48 overflow-y-auto">
-                {DEMO_STAFF_PERSONAS.map((persona) => (
-                  <button
-                    key={persona.id}
-                    onClick={() => {
-                      switchPersona(persona.id);
-                      setIsPersonaMenuOpen(false);
-                    }}
-                    className={`w-full text-left px-4 py-2 text-xs flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800 ${
-                      user?.id === persona.id ? 'bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-300 font-extrabold' : 'text-slate-700 dark:text-slate-300'
-                    }`}
-                  >
-                    <div>
-                      <div className="font-bold">{persona.full_name}</div>
-                      <div className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">{persona.department_name}</div>
-                    </div>
-                    {user?.id === persona.id && <UserCheck className="w-4 h-4 text-teal-600 dark:text-teal-400" />}
-                  </button>
-                ))}
-              </div>
+                  <div className="max-h-48 overflow-y-auto">
+                    {DEMO_STAFF_PERSONAS.map((persona) => (
+                      <button
+                        key={persona.id}
+                        onClick={() => {
+                          switchPersona(persona.id);
+                          setIsPersonaMenuOpen(false);
+                        }}
+                        className={`w-full text-left px-4 py-2 text-xs flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800 ${
+                          user?.id === persona.id ? 'bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-300 font-extrabold' : 'text-slate-700 dark:text-slate-300'
+                        }`}
+                      >
+                        <div>
+                          <div className="font-bold">{persona.full_name}</div>
+                          <div className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">{persona.department_name}</div>
+                        </div>
+                        {user?.id === persona.id && <UserCheck className="w-4 h-4 text-teal-600 dark:text-teal-400" />}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
 
               <div className="pt-1 mt-1">
                 <button

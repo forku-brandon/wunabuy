@@ -39,6 +39,7 @@ const ALL_SYSTEM_PERMISSIONS: { key: StaffPermission; label: string }[] = [
   { key: 'manage_hr_payroll', label: 'Manage HR Payroll & Printable Payslips' },
   { key: 'assign_staff_tasks', label: 'Assign & Dispatch Staff Work Directives' },
   { key: 'view_audit_logs', label: 'View Security Audit Logs' },
+  { key: 'switch_staff_personas', label: 'Switch QA Staff Personas & Roles (Admin Only)' },
 ];
 
 export const SettingsPage: React.FC = () => {
