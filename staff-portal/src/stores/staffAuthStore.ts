@@ -374,7 +374,8 @@ export function useStaffAuth() {
   const switchPersona = (staffId: string) => {
     const target = DEMO_STAFF_PERSONAS.find((p) => p.id === staffId);
     if (target) {
-      currentUser = target;
+      const savedAvatar = localStorage.getItem(`wunabuy_staff_avatar_${target.id}`);
+      currentUser = savedAvatar ? { ...target, avatar_url: savedAvatar } : target;
       currentToken = '1|mock_sanctum_staff_token_' + target.employee_id;
       const newLog: AuditLogEntry = {
         id: 'aud_' + Date.now().toString().slice(-5),
@@ -389,6 +390,17 @@ export function useStaffAuth() {
       currentAuditLogs = [newLog, ...currentAuditLogs];
       notify();
     }
+  };
+
+  const updateUserAvatar = (avatarUrl: string | null) => {
+    if (!currentUser) return;
+    currentUser = { ...currentUser, avatar_url: avatarUrl };
+    if (avatarUrl) {
+      localStorage.setItem(`wunabuy_staff_avatar_${currentUser.id}`, avatarUrl);
+    } else {
+      localStorage.removeItem(`wunabuy_staff_avatar_${currentUser.id}`);
+    }
+    notify();
   };
 
   const hasPermission = (permission: StaffPermission): boolean => {
@@ -464,6 +476,7 @@ export function useStaffAuth() {
     login,
     logout,
     switchPersona,
+    updateUserAvatar,
     hasPermission,
     addAuditLog,
     createRole,

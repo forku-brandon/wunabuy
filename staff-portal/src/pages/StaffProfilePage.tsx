@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { PageContainer } from '../components/layout/PageContainer';
 import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
@@ -19,7 +19,8 @@ import {
 } from 'lucide-react';
 
 export const StaffProfilePage: React.FC = () => {
-  const { user, hasPermission, addAuditLog } = useStaffAuth();
+  const { user, hasPermission, addAuditLog, updateUserAvatar } = useStaffAuth();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [activeSubTab, setActiveSubTab] = useState<'profile' | 'password' | 'notifications' | 'verification'>('profile');
 
@@ -51,6 +52,51 @@ export const StaffProfilePage: React.FC = () => {
 
   // Success Alert State
   const [successMessage, setSuccessMessage] = useState('');
+
+  // FILE UPLOAD HANDLER FOR AVATAR
+  const handleAvatarFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!canEditProfile) {
+      alert('Security Policy: Only Level 5 Administrators or accounts with "manage_profile_crud" permission can update staff profile avatars.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64Data = reader.result as string;
+      updateUserAvatar(base64Data);
+
+      addAuditLog({
+        action_code: 'PROFILE_AVATAR_UPDATE',
+        action_description: `Updated staff profile picture for ${user?.full_name}`,
+        security_level: 'INFO',
+      });
+
+      setSuccessMessage('Profile picture updated and saved locally!');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleDeleteAvatar = () => {
+    if (!canEditProfile) {
+      alert('Security Policy: Only Level 5 Administrators or accounts with "manage_profile_crud" permission can delete staff profile avatars.');
+      return;
+    }
+
+    updateUserAvatar(null);
+
+    addAuditLog({
+      action_code: 'PROFILE_AVATAR_DELETE',
+      action_description: `Deleted staff profile picture for ${user?.full_name}`,
+      security_level: 'INFO',
+    });
+
+    setSuccessMessage('Profile picture removed!');
+    setTimeout(() => setSuccessMessage(''), 3000);
+  };
 
   const handleSaveChanges = (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,6 +136,15 @@ export const StaffProfilePage: React.FC = () => {
       title="Account settings"
       subtitle="Manage corporate staff profile, security credentials, notification alerts &amp; clearance verification"
     >
+      {/* HIDDEN FILE INPUT FOR AVATAR UPLOAD */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        accept="image/*"
+        onChange={handleAvatarFileSelect}
+        className="hidden"
+      />
+
       {/* SUCCESS TOAST NOTIFICATION */}
       {successMessage && (
         <div className="mb-6 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 text-xs font-bold flex items-center space-x-2 animate-fade-in shadow-xs">
@@ -177,7 +232,7 @@ export const StaffProfilePage: React.FC = () => {
               {/* TOP AVATAR SECTION WITH DUAL ACTION BUTTONS */}
               <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6 pb-6 border-b border-slate-100 dark:border-slate-800">
                 {/* Circular Profile Avatar */}
-                <div className="relative">
+                <div className="relative cursor-pointer" onClick={() => canEditProfile && fileInputRef.current?.click()}>
                   <img
                     src={user?.avatar_url || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=300&q=80'}
                     alt={user?.full_name}
@@ -195,7 +250,7 @@ export const StaffProfilePage: React.FC = () => {
                     variant="primary"
                     size="sm"
                     disabled={!canEditProfile}
-                    onClick={() => alert('Select new avatar photo...')}
+                    onClick={() => fileInputRef.current?.click()}
                   >
                     <Upload className="w-3.5 h-3.5 mr-1.5" />
                     Upload New
@@ -205,7 +260,7 @@ export const StaffProfilePage: React.FC = () => {
                     variant="outline"
                     size="sm"
                     disabled={!canEditProfile}
-                    onClick={() => alert('Avatar deleted. Reset to default placeholder.')}
+                    onClick={handleDeleteAvatar}
                   >
                     <Trash2 className="w-3.5 h-3.5 mr-1.5 text-slate-400" />
                     Delete avatar
