@@ -955,9 +955,16 @@ export const HROpsPage: React.FC = () => {
         {selectedPayslip && (
           <div className="space-y-6 text-slate-900 text-xs">
             <div className="flex items-center justify-between border-b pb-4">
-              <div>
-                <h2 className="text-lg font-black font-heading text-teal-800">WUNABUY CAMEROON SARL</h2>
-                <p className="text-[10px] text-slate-500 font-mono">Akwa Boulevard, Street 104, Douala • NIU: M082618940291X</p>
+              <div className="flex items-center space-x-3">
+                <img
+                  src="/wunabuy-logo.jpg"
+                  alt="Wunabuy Logo"
+                  className="w-12 h-12 rounded-xl object-cover border border-teal-600 shadow-2xs"
+                />
+                <div>
+                  <h2 className="text-lg font-black font-heading text-teal-800">WUNABUY CAMEROON SARL</h2>
+                  <p className="text-[10px] text-slate-500 font-mono">Akwa Boulevard, Street 104, Douala • NIU: M082618940291X</p>
+                </div>
               </div>
               <div className="text-right font-mono">
                 <span className="font-bold text-xs block text-slate-800">PAYSLIP #{selectedPayslip.id.toUpperCase()}</span>

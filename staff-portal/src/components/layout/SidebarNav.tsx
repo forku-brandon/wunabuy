@@ -63,13 +63,19 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
       {/* 1. Fixed Brand Header */}
       <div className="h-20 px-6 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center space-x-3">
-          <div className="w-9 h-9 rounded-xl bg-teal-600 flex items-center justify-center text-white font-extrabold text-lg shadow-2xs font-heading">
-            W
-          </div>
+          <img
+            src="/wunabuy-logo.jpg"
+            alt="Wunabuy Logo"
+            className="w-9 h-9 rounded-xl object-cover shadow-2xs border border-teal-500/30"
+            onError={(e) => {
+              // Fallback if image fails to render
+              (e.target as HTMLElement).style.display = 'none';
+            }}
+          />
           <div>
             <h1 className="text-base font-extrabold text-slate-900 dark:text-slate-100 tracking-tight font-heading">Wunabuy</h1>
             <span className="text-[10px] font-bold uppercase tracking-wider text-teal-600 dark:text-teal-400 block -mt-0.5 font-mono">
-              Staff Portal v2.0
+              Staff Portal v2.6
             </span>
           </div>
         </div>

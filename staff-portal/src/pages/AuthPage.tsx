@@ -130,9 +130,11 @@ export const AuthPage: React.FC = () => {
       <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-200 p-8 relative z-10">
         {/* Brand Header */}
         <div className="text-center mb-6">
-          <div className="w-14 h-14 rounded-2xl bg-teal-600 flex items-center justify-center text-white font-extrabold text-2xl mx-auto shadow-xl mb-3 font-heading border-2 border-teal-400">
-            W
-          </div>
+          <img
+            src="/wunabuy-logo.jpg"
+            alt="Wunabuy Official Logo"
+            className="w-16 h-16 rounded-2xl object-cover mx-auto shadow-xl mb-3 border-2 border-teal-500"
+          />
           <h2 className="text-2xl font-extrabold text-slate-900 font-heading">Wunabuy Staff Portal</h2>
           <p className="text-xs text-slate-500 mt-1 font-medium">
             Corporate Authentication &amp; Staff Account Operations
