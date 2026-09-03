@@ -6,6 +6,7 @@ import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
+import { SearchableSelect } from '../components/ui/SearchableSelect';
 import { useStaffAuth, DEMO_STAFF_PERSONAS, StaffUser } from '../stores/staffAuthStore';
 import { formatXAF } from '@wunabuy/utils';
 import {
@@ -902,31 +903,33 @@ export const DashboardPage: React.FC = () => {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">Recurrence Schedule</label>
-              <select
+              <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">Recurrence Schedule (Searchable)</label>
+              <SearchableSelect
+                options={[
+                  { value: 'DAILY', label: 'DAILY 🔄', description: 'Repeats every workday' },
+                  { value: 'WEEKLY', label: 'WEEKLY 📅', description: 'Repeats every Monday' },
+                  { value: 'MONTHLY', label: 'MONTHLY 📆', description: 'Repeats on 1st of month' },
+                ]}
                 value={taskRecurrence}
-                onChange={(e) => setTaskRecurrence(e.target.value as any)}
-                className="w-full p-3 bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-slate-900 dark:text-slate-100 font-bold focus:ring-2 focus:ring-teal-500 focus:outline-none"
-              >
-                <option value="DAILY">DAILY 🔄</option>
-                <option value="WEEKLY">WEEKLY 📅</option>
-                <option value="MONTHLY">MONTHLY 📆</option>
-              </select>
+                onChange={(val) => setTaskRecurrence(val as any)}
+                searchPlaceholder="Search recurrence..."
+              />
             </div>
 
             <div>
-              <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">Priority Level</label>
-              <select
+              <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">Priority Level (Searchable)</label>
+              <SearchableSelect
+                options={[
+                  { value: 'HIGH', label: 'HIGH (🔴)', description: 'Urgent immediate action' },
+                  { value: 'MEDIUM', label: 'MEDIUM (🟡)', description: 'Standard operational task' },
+                  { value: 'LOW', label: 'LOW (🟢)', description: 'Low priority backlog' },
+                ]}
                 value={taskPriority}
-                onChange={(e) => setTaskPriority(e.target.value as any)}
-                className="w-full p-3 bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-slate-900 dark:text-slate-100 font-bold focus:ring-2 focus:ring-teal-500 focus:outline-none"
-              >
-                <option value="HIGH">HIGH (🔴)</option>
-                <option value="MEDIUM">MEDIUM (🟡)</option>
-                <option value="LOW">LOW (🟢)</option>
-              </select>
+                onChange={(val) => setTaskPriority(val as any)}
+                searchPlaceholder="Search priority..."
+              />
             </div>
           </div>
 

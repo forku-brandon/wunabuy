@@ -6,6 +6,7 @@ import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { DataTable, Column } from '../components/ui/DataTable';
 import { Modal } from '../components/ui/Modal';
+import { SearchableSelect } from '../components/ui/SearchableSelect';
 import { useStaffAuth, StaffUser, StaffDepartmentRole } from '../stores/staffAuthStore';
 import {
   Users,
@@ -157,6 +158,37 @@ const MOCK_LEAVE_DATA: LeaveRequest[] = [
   },
 ];
 
+const DEPARTMENT_OPTIONS = [
+  { value: 'Executive Management', label: 'Executive Management', description: 'Board Executives & C-Level Admin' },
+  { value: 'Human Resources & People Ops', label: 'Human Resources & People Ops', description: 'Staffing, Payroll & CNPS Compliance' },
+  { value: 'Finance & Treasury', label: 'Finance & Treasury', description: 'MoMo Disbursals & Bank Ledger' },
+  { value: 'Legal & Risk Verification', label: 'Legal & Risk Verification', description: 'Store & Driver KYC Audit' },
+  { value: 'Logistics & Fleet Ops', label: 'Logistics & Fleet Ops', description: 'Rider & Driver Trip Telemetry' },
+  { value: 'Customer Escrow Support', label: 'Customer Escrow Support', description: '3-Way Escrow Dispute Adjudication' },
+];
+
+const ROLE_OPTIONS = [
+  { value: StaffDepartmentRole.SUPER_ADMIN, label: 'SUPER_ADMIN', description: 'Level 5 Full Access Clearance' },
+  { value: StaffDepartmentRole.HR_MANAGER, label: 'HR_MANAGER', description: 'Level 4 Staffing & Payroll Lead' },
+  { value: StaffDepartmentRole.FINANCE_OFFICER, label: 'FINANCE_OFFICER', description: 'Level 4 Treasury & MoMo Disbursals' },
+  { value: StaffDepartmentRole.COMPLIANCE_OFFICER, label: 'COMPLIANCE_OFFICER', description: 'Level 4 KYC Verification Specialist' },
+  { value: StaffDepartmentRole.OPS_MANAGER, label: 'OPS_MANAGER', description: 'Level 3 Logistics & Fleet Manager' },
+  { value: StaffDepartmentRole.SUPPORT_AGENT, label: 'SUPPORT_AGENT', description: 'Level 2 Customer Support Specialist' },
+];
+
+const CLEARANCE_OPTIONS = [
+  { value: '5', label: 'Level 5 (Super Admin Executive)', description: 'Full System Control & Audit Ledger' },
+  { value: '4', label: 'Level 4 (Department Manager)', description: 'Departmental Approval Authority' },
+  { value: '3', label: 'Level 3 (Supervisor)', description: 'Operational Dispatch & Overrides' },
+  { value: '2', label: 'Level 2 (Support)', description: 'Customer Service Queue' },
+  { value: '1', label: 'Level 1 (Auditor)', description: 'Read-Only Telemetry' },
+];
+
+const STATUS_OPTIONS = [
+  { value: 'active', label: 'ACTIVE 🟢', description: 'Corporate Portal Access Enabled' },
+  { value: 'suspended', label: 'SUSPENDED 🔴', description: 'Access Revoked & Blocked' },
+];
+
 export const HROpsPage: React.FC = () => {
   const {
     user,
@@ -192,7 +224,7 @@ export const HROpsPage: React.FC = () => {
   const [newStaffFullName, setNewStaffFullName] = useState('');
   const [newStaffEmail, setNewStaffEmail] = useState('');
   const [newStaffPhone, setNewStaffPhone] = useState('670123456');
-  const [newStaffDepartment, setNewStaffDepartment] = useState('Operations & Logistics');
+  const [newStaffDepartment, setNewStaffDepartment] = useState('Logistics & Fleet Ops');
   const [newStaffRole, setNewStaffRole] = useState<string>(StaffDepartmentRole.OPS_MANAGER);
   const [newStaffClearance, setNewStaffClearance] = useState<number>(3);
 
@@ -713,7 +745,7 @@ export const HROpsPage: React.FC = () => {
         </Card>
       )}
 
-      {/* MODAL 1: PROVISION NEW STAFF ACCOUNT */}
+      {/* MODAL 1: PROVISION NEW STAFF ACCOUNT WITH SEARCHABLE DROPDOWNS */}
       <Modal
         isOpen={isCreateStaffModalOpen}
         onClose={() => setIsCreateStaffModalOpen(false)}
@@ -756,53 +788,36 @@ export const HROpsPage: React.FC = () => {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">Department</label>
-              <select
+              <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">Department (Searchable)</label>
+              <SearchableSelect
+                options={DEPARTMENT_OPTIONS}
                 value={newStaffDepartment}
-                onChange={(e) => setNewStaffDepartment(e.target.value)}
-                className="w-full p-3 bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-slate-900 dark:text-slate-100 font-bold focus:ring-2 focus:ring-teal-500 focus:outline-none"
-              >
-                <option value="Executive Management">Executive Management</option>
-                <option value="Human Resources & People Ops">Human Resources &amp; People Ops</option>
-                <option value="Finance & Treasury">Finance &amp; Treasury</option>
-                <option value="Legal & Risk Verification">Legal &amp; Risk Verification</option>
-                <option value="Logistics & Fleet Ops">Logistics &amp; Fleet Ops</option>
-                <option value="Customer Escrow Support">Customer Escrow Support</option>
-              </select>
+                onChange={(val) => setNewStaffDepartment(val)}
+                searchPlaceholder="Search department..."
+              />
             </div>
 
             <div>
-              <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">Staff Role Code</label>
-              <select
+              <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">Staff Role Code (Searchable)</label>
+              <SearchableSelect
+                options={ROLE_OPTIONS}
                 value={newStaffRole}
-                onChange={(e) => setNewStaffRole(e.target.value)}
-                className="w-full p-3 bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-slate-900 dark:text-slate-100 font-bold focus:ring-2 focus:ring-teal-500 focus:outline-none"
-              >
-                <option value={StaffDepartmentRole.SUPER_ADMIN}>SUPER_ADMIN (Level 5)</option>
-                <option value={StaffDepartmentRole.HR_MANAGER}>HR_MANAGER (Level 4)</option>
-                <option value={StaffDepartmentRole.FINANCE_OFFICER}>FINANCE_OFFICER (Level 4)</option>
-                <option value={StaffDepartmentRole.COMPLIANCE_OFFICER}>COMPLIANCE_OFFICER (Level 4)</option>
-                <option value={StaffDepartmentRole.OPS_MANAGER}>OPS_MANAGER (Level 3)</option>
-                <option value={StaffDepartmentRole.SUPPORT_AGENT}>SUPPORT_AGENT (Level 2)</option>
-              </select>
+                onChange={(val) => setNewStaffRole(val)}
+                searchPlaceholder="Search role..."
+              />
             </div>
           </div>
 
           <div>
-            <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">Security Clearance Level (1-5)</label>
-            <select
-              value={newStaffClearance}
-              onChange={(e) => setNewStaffClearance(Number(e.target.value))}
-              className="w-full p-3 bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-slate-900 dark:text-slate-100 font-bold focus:ring-2 focus:ring-teal-500 focus:outline-none font-mono"
-            >
-              <option value={5}>Level 5 (Super Admin Executive)</option>
-              <option value={4}>Level 4 (Department Manager / HR / Finance)</option>
-              <option value={3}>Level 3 (Operations Supervisor)</option>
-              <option value={2}>Level 2 (Support Specialist)</option>
-              <option value={1}>Level 1 (Auditor Read-Only)</option>
-            </select>
+            <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">Security Clearance Level (Searchable)</label>
+            <SearchableSelect
+              options={CLEARANCE_OPTIONS}
+              value={String(newStaffClearance)}
+              onChange={(val) => setNewStaffClearance(Number(val))}
+              searchPlaceholder="Search clearance..."
+            />
           </div>
 
           <div className="pt-4 flex items-center justify-end space-x-3">
@@ -817,7 +832,7 @@ export const HROpsPage: React.FC = () => {
         </form>
       </Modal>
 
-      {/* MODAL 2: EDIT STAFF ACCOUNT */}
+      {/* MODAL 2: EDIT STAFF ACCOUNT WITH SEARCHABLE DROPDOWNS */}
       <Modal
         isOpen={isEditStaffModalOpen}
         onClose={() => setIsEditStaffModalOpen(false)}
@@ -857,33 +872,36 @@ export const HROpsPage: React.FC = () => {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">Account Status</label>
-              <select
-                value={editStatus}
-                onChange={(e) => setEditStatus(e.target.value)}
-                className="w-full p-3 bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-slate-900 dark:text-slate-100 font-bold focus:ring-2 focus:ring-teal-500 focus:outline-none font-mono"
-              >
-                <option value="active">ACTIVE 🟢</option>
-                <option value="suspended">SUSPENDED 🔴</option>
-              </select>
+              <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">Department (Searchable)</label>
+              <SearchableSelect
+                options={DEPARTMENT_OPTIONS}
+                value={editDepartment}
+                onChange={(val) => setEditDepartment(val)}
+                searchPlaceholder="Search department..."
+              />
             </div>
 
             <div>
-              <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">Clearance Level</label>
-              <select
-                value={editClearance}
-                onChange={(e) => setEditClearance(Number(e.target.value))}
-                className="w-full p-3 bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-slate-900 dark:text-slate-100 font-bold focus:ring-2 focus:ring-teal-500 focus:outline-none font-mono"
-              >
-                <option value={5}>Level 5 (Super Admin)</option>
-                <option value={4}>Level 4 (Department Lead)</option>
-                <option value={3}>Level 3 (Supervisor)</option>
-                <option value={2}>Level 2 (Support)</option>
-                <option value={1}>Level 1 (Auditor)</option>
-              </select>
+              <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">Account Status (Searchable)</label>
+              <SearchableSelect
+                options={STATUS_OPTIONS}
+                value={editStatus}
+                onChange={(val) => setEditStatus(val)}
+                searchPlaceholder="Search status..."
+              />
             </div>
+          </div>
+
+          <div>
+            <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">Security Clearance Level (Searchable)</label>
+            <SearchableSelect
+              options={CLEARANCE_OPTIONS}
+              value={String(editClearance)}
+              onChange={(val) => setEditClearance(Number(val))}
+              searchPlaceholder="Search clearance..."
+            />
           </div>
 
           <div className="pt-4 flex items-center justify-end space-x-3">
