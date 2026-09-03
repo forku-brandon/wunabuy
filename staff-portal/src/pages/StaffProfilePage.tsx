@@ -6,88 +6,83 @@ import { Button } from '../components/ui/Button';
 import { useStaffAuth, ALL_STAFF_PERMISSIONS } from '../stores/staffAuthStore';
 import {
   User,
-  ShieldCheck,
-  Key,
   Lock,
-  Mail,
-  Phone,
-  Building2,
-  Calendar,
+  Bell,
+  ShieldCheck,
   Camera,
   CheckCircle2,
   Save,
-  Globe,
-  Check,
-  X,
+  Key,
+  Trash2,
+  Upload,
 } from 'lucide-react';
 
 export const StaffProfilePage: React.FC = () => {
   const { user, hasPermission, addAuditLog } = useStaffAuth();
 
-  const [activeTab, setActiveTab] = useState<'details' | 'security' | 'permissions'>('details');
+  const [activeSubTab, setActiveSubTab] = useState<'profile' | 'password' | 'notifications' | 'verification'>('profile');
 
-  // Form State
-  const [fullName, setFullName] = useState(user?.full_name || 'Pauline Mbarga');
-  const [phone, setPhone] = useState(user?.phone || '+237 670 000 099');
+  // Form State matching Reference FinTech UI
+  const initialFirstName = user?.full_name ? user.full_name.split(' ')[0] : 'Pauline';
+  const initialLastName = user?.full_name ? user.full_name.split(' ').slice(1).join(' ') : 'Mbarga';
+
+  const [firstName, setFirstName] = useState(initialFirstName);
+  const [lastName, setLastName] = useState(initialLastName);
   const [email, setEmail] = useState(user?.email || 'pauline.admin@wunabuy.com');
-  const [officeBranch, setOfficeBranch] = useState('Douala HQ — Akwa Boulevard');
-  
+  const [phone, setPhone] = useState(user?.phone ? user.phone.replace('+237', '').trim() : '0806 123 7890');
+  const [gender, setGender] = useState<'male' | 'female'>('female');
+  const [employeeId] = useState(user?.employee_id || '1559 000 7788 8DER');
+  const [taxId, setTaxId] = useState('M082618940291X');
+  const [taxCountry, setTaxCountry] = useState('Cameroon');
+  const [address, setAddress] = useState('Akwa Boulevard, Street 104, Douala, Cameroon');
+
   // Security Form State
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [mfaEnabled, setMfaEnabled] = useState(true);
+
+  // Notifications State
+  const [emailNotifs, setEmailNotifs] = useState(true);
+  const [smsNotifs, setSmsNotifs] = useState(true);
 
   // Success Alert State
   const [successMessage, setSuccessMessage] = useState('');
 
-  const handleSaveDetails = (e: React.FormEvent) => {
+  const handleSaveChanges = (e: React.FormEvent) => {
     e.preventDefault();
     addAuditLog({
-      action_code: 'PROFILE_DETAILS_UPDATE',
-      action_description: `Updated personal profile details for ${user?.full_name}`,
+      action_code: 'PROFILE_SETTINGS_UPDATE',
+      action_description: `Updated profile account settings for ${firstName} ${lastName}`,
       security_level: 'INFO',
     });
-    setSuccessMessage('Profile details updated successfully!');
+    setSuccessMessage('Account settings saved successfully!');
     setTimeout(() => setSuccessMessage(''), 3000);
   };
 
   const handleUpdatePassword = (e: React.FormEvent) => {
     e.preventDefault();
     if (newPassword !== confirmPassword) {
-      alert('New password and confirm password do not match.');
+      alert('New password and confirmation do not match.');
       return;
     }
     addAuditLog({
       action_code: 'PROFILE_PASSWORD_CHANGE',
-      action_description: `Changed account login password for ${user?.full_name}`,
+      action_description: `Changed account password for ${user?.full_name}`,
       security_level: 'WARNING',
     });
     setCurrentPassword('');
     setNewPassword('');
     setConfirmPassword('');
-    setSuccessMessage('Staff account password updated successfully!');
-    setTimeout(() => setSuccessMessage(''), 3000);
-  };
-
-  const handleToggleMFA = () => {
-    const nextState = !mfaEnabled;
-    setMfaEnabled(nextState);
-    addAuditLog({
-      action_code: nextState ? 'MFA_ENABLE' : 'MFA_DISABLE',
-      action_description: `${nextState ? 'Enabled' : 'Disabled'} 2-Factor Authentication (MFA) for ${user?.full_name}`,
-      security_level: 'WARNING',
-    });
-    setSuccessMessage(`2-Factor Authentication (2FA) ${nextState ? 'enabled' : 'disabled'}!`);
+    setSuccessMessage('Password updated successfully!');
     setTimeout(() => setSuccessMessage(''), 3000);
   };
 
   return (
     <PageContainer
-      title="Staff Account Profile &amp; Credentials"
-      subtitle="Manage Personal Profile Information, Security Passwords, 2FA &amp; View Clearance Permissions"
+      title="Account settings"
+      subtitle="Manage corporate staff profile, security credentials, notification alerts &amp; clearance verification"
     >
-      {/* SUCCESS TOAST ALERT */}
+      {/* SUCCESS TOAST NOTIFICATION */}
       {successMessage && (
         <div className="mb-6 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 text-xs font-bold flex items-center space-x-2 animate-fade-in shadow-xs">
           <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
@@ -95,320 +90,383 @@ export const StaffProfilePage: React.FC = () => {
         </div>
       )}
 
-      {/* HERO STAFF IDENTITY PROFILE CARD */}
-      <Card className="mb-8 p-6 sm:p-8">
-        <div className="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8">
-          {/* Avatar Container with Upload Badge */}
-          <div className="relative group flex-shrink-0">
-            <img
-              src={user?.avatar_url || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=300&q=80'}
-              alt={user?.full_name}
-              className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl object-cover border-4 border-teal-500 shadow-md"
-            />
+      {/* MAIN 2-COLUMN SETTINGS STRUCTURAL LAYOUT */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+        {/* LEFT COLUMN: VERTICAL SETTINGS NAVIGATION CARD */}
+        <Card className="lg:col-span-1 p-2">
+          <nav className="space-y-1">
             <button
-              onClick={() => alert('Avatar upload modal opened. Select new 3D portrait asset.')}
-              className="absolute -bottom-2 -right-2 p-2.5 rounded-full bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-lg hover:scale-105 transition-transform"
-              title="Update Staff Avatar Photo"
+              onClick={() => setActiveSubTab('profile')}
+              className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold flex items-center space-x-3 transition-all ${
+                activeSubTab === 'profile'
+                  ? 'bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 font-extrabold border-l-4 border-teal-600 shadow-2xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-100'
+              }`}
             >
-              <Camera className="w-4 h-4" />
+              <User className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+              <span>Profile Settings</span>
             </button>
-          </div>
 
-          {/* User Details Header Content */}
-          <div className="flex-1 text-center md:text-left">
-            <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mb-2">
-              <span className="px-3 py-1 rounded-full text-xs font-mono font-extrabold bg-teal-100 dark:bg-teal-950/80 text-teal-800 dark:text-teal-300 border border-teal-200 dark:border-teal-800">
-                EMPLOYEE ID: {user?.employee_id || 'WNB-EMP-001'}
-              </span>
-              <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-purple-100 dark:bg-purple-950/80 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
-                LEVEL {user?.security_clearance_level || 5} CLEARANCE
-              </span>
-              <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center space-x-1">
-                <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400 mr-1" />
-                ACTIVE SESSION
-              </span>
-            </div>
+            <button
+              onClick={() => setActiveSubTab('password')}
+              className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold flex items-center space-x-3 transition-all ${
+                activeSubTab === 'password'
+                  ? 'bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 font-extrabold border-l-4 border-teal-600 shadow-2xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-100'
+              }`}
+            >
+              <Lock className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+              <span>Password</span>
+            </button>
 
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight font-heading">
-              {user?.full_name || 'Pauline Mbarga'}
-            </h2>
-            <p className="text-xs font-extrabold text-teal-600 dark:text-teal-400 mt-0.5">
-              {user?.staff_department_role} • {user?.department_name}
-            </p>
+            <button
+              onClick={() => setActiveSubTab('notifications')}
+              className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold flex items-center space-x-3 transition-all ${
+                activeSubTab === 'notifications'
+                  ? 'bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 font-extrabold border-l-4 border-teal-600 shadow-2xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-100'
+              }`}
+            >
+              <Bell className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+              <span>Notifications</span>
+            </button>
 
-            <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-              <div className="flex items-center justify-center md:justify-start space-x-2 text-slate-600 dark:text-slate-400 font-medium">
-                <Mail className="w-4 h-4 text-slate-400 dark:text-slate-500" />
-                <span className="truncate">{user?.email}</span>
-              </div>
-              <div className="flex items-center justify-center md:justify-start space-x-2 text-slate-600 dark:text-slate-400 font-medium">
-                <Phone className="w-4 h-4 text-slate-400 dark:text-slate-500" />
-                <span>{user?.phone}</span>
-              </div>
-              <div className="flex items-center justify-center md:justify-start space-x-2 text-slate-600 dark:text-slate-400 font-medium">
-                <Building2 className="w-4 h-4 text-slate-400 dark:text-slate-500" />
-                <span>{officeBranch}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </Card>
-
-      {/* TOP TAB NAVIGATION BAR */}
-      <div className="flex items-center space-x-3 mb-6 overflow-x-auto no-scrollbar">
-        <button
-          onClick={() => setActiveTab('details')}
-          className={`px-5 py-2.5 rounded-2xl text-xs font-extrabold flex items-center space-x-2 transition-all shadow-xs flex-shrink-0 ${
-            activeTab === 'details'
-              ? 'bg-teal-600 text-white shadow-md'
-              : 'bg-white dark:bg-[#151C28] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800'
-          }`}
-        >
-          <User className="w-4 h-4" />
-          <span>Personal Details &amp; Contact</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('security')}
-          className={`px-5 py-2.5 rounded-2xl text-xs font-extrabold flex items-center space-x-2 transition-all shadow-xs flex-shrink-0 ${
-            activeTab === 'security'
-              ? 'bg-teal-600 text-white shadow-md'
-              : 'bg-white dark:bg-[#151C28] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800'
-          }`}
-        >
-          <Lock className="w-4 h-4" />
-          <span>Security &amp; Password</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('permissions')}
-          className={`px-5 py-2.5 rounded-2xl text-xs font-extrabold flex items-center space-x-2 transition-all shadow-xs flex-shrink-0 ${
-            activeTab === 'permissions'
-              ? 'bg-teal-600 text-white shadow-md'
-              : 'bg-white dark:bg-[#151C28] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800'
-          }`}
-        >
-          <ShieldCheck className="w-4 h-4" />
-          <span>Granted Permissions Matrix ({ALL_STAFF_PERMISSIONS.length})</span>
-        </button>
-      </div>
-
-      {/* TAB 1: PERSONAL DETAILS & CONTACT INFORMATION */}
-      {activeTab === 'details' && (
-        <Card className="p-6 sm:p-8">
-          <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100 font-heading mb-6 pb-3 border-b border-slate-100 dark:border-slate-800 flex items-center">
-            <User className="w-5 h-5 text-teal-600 dark:text-teal-400 mr-2" />
-            Edit Personal &amp; Corporate Contact Information
-          </h3>
-
-          <form onSubmit={handleSaveDetails} className="space-y-6 text-xs">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                  Full Name *
-                </label>
-                <input
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                  Corporate Email Address *
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                  Phone Number (E.164 Cameroon Format) *
-                </label>
-                <input
-                  type="text"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                  Physical Office Branch Location
-                </label>
-                <input
-                  type="text"
-                  value={officeBranch}
-                  onChange={(e) => setOfficeBranch(e.target.value)}
-                  className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 focus:outline-none"
-                />
-              </div>
-            </div>
-
-            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end">
-              <Button type="submit" variant="primary">
-                <Save className="w-4 h-4 mr-1.5" />
-                Save Profile Changes
-              </Button>
-            </div>
-          </form>
+            <button
+              onClick={() => setActiveSubTab('verification')}
+              className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold flex items-center space-x-3 transition-all ${
+                activeSubTab === 'verification'
+                  ? 'bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 font-extrabold border-l-4 border-teal-600 shadow-2xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-100'
+              }`}
+            >
+              <ShieldCheck className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+              <span>Verification</span>
+            </button>
+          </nav>
         </Card>
-      )}
 
-      {/* TAB 2: SECURITY & PASSWORD CREDENTIALS */}
-      {activeTab === 'security' && (
-        <div className="space-y-6">
-          <Card className="p-6 sm:p-8">
-            <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100 font-heading mb-6 pb-3 border-b border-slate-100 dark:border-slate-800 flex items-center">
-              <Lock className="w-5 h-5 text-teal-600 dark:text-teal-400 mr-2" />
-              Change Staff Login Password
-            </h3>
+        {/* RIGHT COLUMN: ACCOUNT SETTINGS FORM CONTAINER */}
+        <Card className="lg:col-span-3 p-6 sm:p-8">
+          {/* TAB 1: PROFILE SETTINGS FORM */}
+          {activeSubTab === 'profile' && (
+            <form onSubmit={handleSaveChanges} className="space-y-8">
+              {/* TOP AVATAR SECTION WITH DUAL ACTION BUTTONS */}
+              <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6 pb-6 border-b border-slate-100 dark:border-slate-800">
+                {/* Circular Profile Avatar */}
+                <div className="relative">
+                  <img
+                    src={user?.avatar_url || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=300&q=80'}
+                    alt={user?.full_name}
+                    className="w-28 h-28 rounded-full object-cover border-4 border-slate-100 dark:border-slate-800 shadow-md"
+                  />
+                  <div className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-teal-600 text-white flex items-center justify-center border-2 border-white dark:border-[#151C28] shadow-sm">
+                    <Camera className="w-4 h-4" />
+                  </div>
+                </div>
 
-            <form onSubmit={handleUpdatePassword} className="space-y-6 text-xs">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Avatar Action Buttons */}
+                <div className="flex items-center space-x-3">
+                  <Button type="button" variant="primary" size="sm" onClick={() => alert('Select new avatar photo...')}>
+                    <Upload className="w-3.5 h-3.5 mr-1.5" />
+                    Upload New
+                  </Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => alert('Avatar deleted. Reset to default placeholder.')}>
+                    <Trash2 className="w-3.5 h-3.5 mr-1.5 text-slate-400" />
+                    Delete avatar
+                  </Button>
+                </div>
+              </div>
+
+              {/* 2-COLUMN FORM FIELDS GRID */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs font-semibold">
+                {/* First Name */}
                 <div>
-                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                    Current Password *
+                  <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">
+                    First Name <span className="text-red-500">*</span>
                   </label>
+                  <input
+                    type="text"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    placeholder="First name"
+                    className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white dark:focus:bg-slate-800 transition-all"
+                  />
+                </div>
+
+                {/* Last Name */}
+                <div>
+                  <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">
+                    Last Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    placeholder="Last name"
+                    className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white dark:focus:bg-slate-800 transition-all"
+                  />
+                </div>
+
+                {/* Email */}
+                <div>
+                  <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="examples@gmail.com"
+                    className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white dark:focus:bg-slate-800 transition-all"
+                  />
+                </div>
+
+                {/* Mobile Number with Country Flag */}
+                <div>
+                  <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">
+                    Mobile Number <span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-1 px-3 py-3 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-700 dark:text-slate-300 font-bold">
+                      <span className="text-sm">🇨🇲</span>
+                      <span>+237</span>
+                    </div>
+                    <input
+                      type="text"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="0806 123 7890"
+                      className="flex-1 p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white dark:focus:bg-slate-800 transition-all"
+                    />
+                  </div>
+                </div>
+
+                {/* Gender Radio Selector */}
+                <div>
+                  <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">
+                    Gender
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <label
+                      onClick={() => setGender('male')}
+                      className={`p-3 rounded-xl border flex items-center justify-center space-x-2 cursor-pointer font-bold transition-all ${
+                        gender === 'male'
+                          ? 'bg-teal-50 dark:bg-teal-950/60 border-teal-500 text-teal-800 dark:text-teal-300 shadow-2xs'
+                          : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200/80 dark:border-slate-700 text-slate-600 dark:text-slate-400'
+                      }`}
+                    >
+                      <input type="radio" name="gender" checked={gender === 'male'} onChange={() => {}} className="hidden" />
+                      <span>Male</span>
+                    </label>
+
+                    <label
+                      onClick={() => setGender('female')}
+                      className={`p-3 rounded-xl border flex items-center justify-center space-x-2 cursor-pointer font-bold transition-all ${
+                        gender === 'female'
+                          ? 'bg-teal-50 dark:bg-teal-950/60 border-teal-500 text-teal-800 dark:text-teal-300 shadow-2xs'
+                          : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200/80 dark:border-slate-700 text-slate-600 dark:text-slate-400'
+                      }`}
+                    >
+                      <input type="radio" name="gender" checked={gender === 'female'} onChange={() => {}} className="hidden" />
+                      <span>Female</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Read-only Employee ID */}
+                <div>
+                  <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">
+                    ID / Employee Code
+                  </label>
+                  <input
+                    type="text"
+                    disabled
+                    value={employeeId}
+                    className="w-full p-3 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-500 dark:text-slate-400 font-mono font-bold cursor-not-allowed"
+                  />
+                </div>
+
+                {/* Tax Identification Number */}
+                <div>
+                  <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">
+                    Tax Identification Number (NIU)
+                  </label>
+                  <input
+                    type="text"
+                    value={taxId}
+                    onChange={(e) => setTaxId(e.target.value)}
+                    placeholder="M082618940291X"
+                    className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-mono font-bold focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all"
+                  />
+                </div>
+
+                {/* Tax Identification Country */}
+                <div>
+                  <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">
+                    Tax Identification Country
+                  </label>
+                  <div className="flex items-center space-x-2 p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 rounded-xl font-bold text-slate-900 dark:text-slate-100">
+                    <span className="text-sm">🇨🇲</span>
+                    <select
+                      value={taxCountry}
+                      onChange={(e) => setTaxCountry(e.target.value)}
+                      className="w-full bg-transparent border-none focus:outline-none font-bold text-slate-900 dark:text-slate-100"
+                    >
+                      <option value="Cameroon">Cameroon</option>
+                      <option value="Nigeria">Nigeria</option>
+                      <option value="Ivory Coast">Ivory Coast</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Residential Address / Office Branch (Full Width) */}
+                <div className="md:col-span-2">
+                  <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">
+                    Residential Address / Office Branch
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    placeholder="Ib street orogun ibadan"
+                    className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all"
+                  />
+                </div>
+              </div>
+
+              {/* BOTTOM PRIMARY ACTION BUTTON */}
+              <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+                <Button type="submit" variant="primary" size="md">
+                  <Save className="w-4 h-4 mr-1.5" />
+                  Save Changes
+                </Button>
+              </div>
+            </form>
+          )}
+
+          {/* TAB 2: PASSWORD & SECURITY FORM */}
+          {activeSubTab === 'password' && (
+            <form onSubmit={handleUpdatePassword} className="space-y-6 text-xs">
+              <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100 font-heading pb-3 border-b border-slate-100 dark:border-slate-800">
+                Change Staff Account Password
+              </h3>
+
+              <div className="space-y-4 max-w-md">
+                <div>
+                  <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">Current Password *</label>
                   <input
                     type="password"
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
-                    placeholder="Enter current password..."
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                    className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-bold focus:ring-2 focus:ring-teal-500 focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                    New Password *
-                  </label>
+                  <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">New Password *</label>
                   <input
                     type="password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="Enter new strong password..."
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                    className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-bold focus:ring-2 focus:ring-teal-500 focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                    Confirm New Password *
-                  </label>
+                  <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">Confirm New Password *</label>
                   <input
                     type="password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Confirm new password..."
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                    className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-bold focus:ring-2 focus:ring-teal-500 focus:outline-none"
                   />
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end">
+              <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
                 <Button type="submit" variant="primary" disabled={!currentPassword || !newPassword}>
                   <Key className="w-4 h-4 mr-1.5" />
-                  Update Password &amp; Log Audit
+                  Update Password
                 </Button>
               </div>
             </form>
-          </Card>
+          )}
 
-          {/* 2-FACTOR AUTHENTICATION STATUS */}
-          <Card className="p-6 sm:p-8">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h4 className="text-base font-extrabold text-slate-900 dark:text-slate-100 font-heading">
-                  2-Factor Authentication (2FA / OTP Enforcement)
-                </h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
-                  Requires 6-digit SMS / Email OTP verification upon every corporate staff login.
-                </p>
+          {/* TAB 3: NOTIFICATIONS SETTINGS */}
+          {activeSubTab === 'notifications' && (
+            <div className="space-y-6 text-xs">
+              <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100 font-heading pb-3 border-b border-slate-100 dark:border-slate-800">
+                Staff Operational Alerts &amp; Notifications
+              </h3>
+
+              <div className="space-y-4 max-w-lg">
+                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700 flex items-center justify-between">
+                  <div>
+                    <span className="font-bold text-slate-900 dark:text-slate-100 block">Email Payout &amp; Disbursal Alerts</span>
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Receive instant email when high-value payout exceeds 500k FCFA</span>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={emailNotifs}
+                    onChange={() => setEmailNotifs(!emailNotifs)}
+                    className="w-4 h-4 rounded text-teal-600 focus:ring-teal-500 cursor-pointer"
+                  />
+                </div>
+
+                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700 flex items-center justify-between">
+                  <div>
+                    <span className="font-bold text-slate-900 dark:text-slate-100 block">SMS Urgent Emergency Signals</span>
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Receive direct SMS alerts for rider emergency distress calls</span>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={smsNotifs}
+                    onChange={() => setSmsNotifs(!smsNotifs)}
+                    className="w-4 h-4 rounded text-teal-600 focus:ring-teal-500 cursor-pointer"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 4: VERIFICATION & CLEARANCE */}
+          {activeSubTab === 'verification' && (
+            <div className="space-y-6 text-xs">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100 font-heading">
+                  Staff Role Clearance Verification
+                </h3>
+                <Badge variant="teal">LEVEL {user?.security_clearance_level || 5} CLEARANCE</Badge>
               </div>
 
-              <Button
-                variant={mfaEnabled ? 'outline' : 'primary'}
-                onClick={handleToggleMFA}
-              >
-                {mfaEnabled ? 'Disable 2FA' : 'Enable 2FA Enforcement'}
-              </Button>
-            </div>
-          </Card>
-        </div>
-      )}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {ALL_STAFF_PERMISSIONS.map((perm) => {
+                  const isGranted = hasPermission(perm.code);
 
-      {/* TAB 3: GRANTED PERMISSIONS MATRIX */}
-      {activeTab === 'permissions' && (
-        <Card className="p-6 sm:p-8">
-          <div className="flex items-center justify-between pb-4 mb-6 border-b border-slate-100 dark:border-slate-800">
-            <div>
-              <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100 font-heading flex items-center">
-                <ShieldCheck className="w-5 h-5 text-teal-600 dark:text-teal-400 mr-2" />
-                Active Staff Role Permission Matrix
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                Permissions granted to role <strong className="text-teal-700 dark:text-teal-400">{user?.staff_department_role}</strong> (Level {user?.security_clearance_level} Clearance)
-              </p>
-            </div>
-            <Badge variant="teal">STRICT RBAC ENFORCED</Badge>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {ALL_STAFF_PERMISSIONS.map((perm) => {
-              const isGranted = hasPermission(perm.code);
-
-              return (
-                <div
-                  key={perm.code}
-                  className={`p-4 rounded-2xl border flex items-start justify-between transition-all ${
-                    isGranted
-                      ? 'bg-slate-50 dark:bg-slate-800/60 border-slate-200/80 dark:border-slate-700'
-                      : 'bg-slate-100/40 dark:bg-slate-900/40 border-slate-200/40 dark:border-slate-800 opacity-60'
-                  }`}
-                >
-                  <div className="space-y-1">
-                    <div className="flex items-center space-x-2">
-                      <span className="font-extrabold text-slate-900 dark:text-slate-100 text-xs">{perm.label}</span>
-                      <span className="font-mono text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
-                        {perm.code}
+                  return (
+                    <div
+                      key={perm.code}
+                      className={`p-3.5 rounded-xl border flex items-center justify-between transition-all ${
+                        isGranted
+                          ? 'bg-slate-50 dark:bg-slate-800/60 border-slate-200/80 dark:border-slate-700'
+                          : 'bg-slate-100/40 dark:bg-slate-900/40 border-slate-200/40 dark:border-slate-800 opacity-60'
+                      }`}
+                    >
+                      <div>
+                        <span className="font-bold text-slate-900 dark:text-slate-100 block text-xs">{perm.label}</span>
+                        <span className="font-mono text-[10px] text-slate-400 dark:text-slate-500 font-medium">{perm.code}</span>
+                      </div>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold ${isGranted ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300' : 'bg-slate-200 text-slate-500 dark:bg-slate-800 dark:text-slate-500'}`}>
+                        {isGranted ? 'VERIFIED' : 'RESTRICTED'}
                       </span>
                     </div>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">{perm.description}</p>
-                  </div>
-
-                  <span
-                    className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold flex items-center space-x-1 ${
-                      isGranted
-                        ? 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300'
-                        : 'bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
-                    }`}
-                  >
-                    {isGranted ? (
-                      <>
-                        <Check className="w-3 h-3 text-emerald-600 dark:text-emerald-400 mr-0.5" />
-                        GRANTED
-                      </>
-                    ) : (
-                      <>
-                        <X className="w-3 h-3 text-slate-400 dark:text-slate-500 mr-0.5" />
-                        RESTRICTED
-                      </>
-                    )}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </Card>
-      )}
+      </div>
     </PageContainer>
   );
 };
