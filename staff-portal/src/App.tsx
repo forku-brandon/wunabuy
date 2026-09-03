@@ -17,6 +17,7 @@ import { CommunicationsPage } from './pages/CommunicationsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { StaffProfilePage } from './pages/StaffProfilePage';
 import { HROpsPage } from './pages/HROpsPage';
+import { CalendarPage } from './pages/CalendarPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -46,6 +47,7 @@ const ProtectedLayout: React.FC = () => {
         <Routes>
           <Route path="/" element={<DashboardPage />} />
           <Route path="/profile" element={<StaffProfilePage />} />
+          <Route path="/calendar" element={<CalendarPage />} />
           <Route path="/communications" element={<CommunicationsPage />} />
           <Route path="/hr" element={<HROpsPage />} />
           <Route path="/kyc" element={<KYCPage />} />
