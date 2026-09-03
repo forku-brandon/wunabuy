@@ -6,7 +6,7 @@ import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
-import { useStaffAuth, DEMO_STAFF_PERSONAS } from '../stores/staffAuthStore';
+import { useStaffAuth, DEMO_STAFF_PERSONAS, StaffUser } from '../stores/staffAuthStore';
 import { formatXAF } from '@wunabuy/utils';
 import {
   TrendingUp,
@@ -24,6 +24,7 @@ import {
   ArrowRight,
   Send,
   PlayCircle,
+  AlertTriangle,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -73,7 +74,7 @@ const INITIAL_ASSIGNED_TASKS: AssignedStaffTask[] = [
     title: 'Review high-value MoMo payouts exceeding 500,000 FCFA threshold',
     recurrence: 'DAILY',
     priority: 'HIGH',
-    due_date: '2026-09-03',
+    due_date: '2026-09-04',
     status: 'ASSIGNED',
   },
   {
@@ -119,6 +120,85 @@ const MOCK_DONUT_DATA = [
   { name: 'Disputed Hold', value: 9, color: '#F59E0B' },
   { name: 'Platform Yield', value: 5, color: '#6366F1' },
 ];
+
+// LIVE TICKING COUNTDOWN CLOCK & PROXIMITY NOTIFIER COMPONENT
+interface TaskCountdownClockProps {
+  dueDateStr: string;
+}
+
+const TaskCountdownClock: React.FC<TaskCountdownClockProps> = ({ dueDateStr }) => {
+  const [timeLeft, setTimeLeft] = useState<{
+    days: number;
+    hours: number;
+    minutes: number;
+    seconds: number;
+    isOverdue: boolean;
+    isUrgent: boolean;
+  }>({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+    isOverdue: false,
+    isUrgent: false,
+  });
+
+  useEffect(() => {
+    const calculateTime = () => {
+      const dueTime = new Date(`${dueDateStr}T23:59:59`).getTime();
+      const now = new Date().getTime();
+      const diff = dueTime - now;
+
+      if (diff <= 0) {
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0, isOverdue: true, isUrgent: true });
+        return;
+      }
+
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+      // Urgent if 2 days or less remaining
+      const isUrgent = days <= 2;
+
+      setTimeLeft({ days, hours, minutes, seconds, isOverdue: false, isUrgent });
+    };
+
+    calculateTime();
+    const timer = setInterval(calculateTime, 1000);
+    return () => clearInterval(timer);
+  }, [dueDateStr]);
+
+  if (timeLeft.isOverdue) {
+    return (
+      <div className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-red-100 dark:bg-red-950/80 text-red-800 dark:text-red-300 font-mono font-extrabold text-[11px] animate-pulse shadow-2xs">
+        <AlertTriangle className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
+        <span>🚨 OVERDUE DEADLINE</span>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={`inline-flex items-center space-x-1.5 px-3 py-1 rounded-lg font-mono font-extrabold text-[11px] transition-all shadow-2xs ${
+        timeLeft.isUrgent
+          ? 'bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-200 animate-pulse border border-amber-300 dark:border-amber-700'
+          : 'bg-teal-50 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300'
+      }`}
+    >
+      <Clock className={`w-3.5 h-3.5 ${timeLeft.isUrgent ? 'text-amber-600 dark:text-amber-400 animate-spin' : 'text-teal-600 dark:text-teal-400'}`} />
+      <span>
+        {timeLeft.days}d {String(timeLeft.hours).padStart(2, '0')}h {String(timeLeft.minutes).padStart(2, '0')}m {String(timeLeft.seconds).padStart(2, '0')}s
+      </span>
+      {timeLeft.isUrgent && (
+        <span className="ml-1 text-[9px] bg-amber-500 text-slate-950 px-1 rounded font-black">
+          ⏰ DUE SOON
+        </span>
+      )}
+    </div>
+  );
+};
 
 // REUSABLE SEARCHABLE EMPLOYEE SELECT DROPDOWN COMPONENT
 interface SearchableEmployeeSelectProps {
@@ -270,7 +350,7 @@ export const DashboardPage: React.FC = () => {
       security_level: 'INFO',
     });
 
-    setToastMessage('Task ACCEPTED! Status updated to In-Progress.');
+    setToastMessage('Task ACCEPTED! Countdown clock activated for due date deadline.');
     setTimeout(() => setToastMessage(''), 3000);
   };
 
@@ -337,6 +417,14 @@ export const DashboardPage: React.FC = () => {
     (t) => user?.security_clearance_level === 5 || t.assigned_by_name.includes(user?.full_name?.split(' ')[0] || 'Pauline')
   );
 
+  // Check if any in-progress tasks are urgent (due in <= 2 days)
+  const hasUrgentInboundTask = myInboundTasks.some((t) => {
+    if (t.status !== 'IN_PROGRESS') return false;
+    const dueTime = new Date(`${t.due_date}T23:59:59`).getTime();
+    const diffDays = (dueTime - Date.now()) / (1000 * 60 * 60 * 24);
+    return diffDays <= 2;
+  });
+
   return (
     <PageContainer
       title="Executive Overview Dashboard"
@@ -395,6 +483,22 @@ export const DashboardPage: React.FC = () => {
 
       {/* SECTION: MULTI-STAGE ASSIGNED WORK DIRECTIVES & MANAGER BENCH */}
       <Card className="mb-8 p-6">
+        {/* DUE SOON PROXIMITY ALARM BANNER FOR ACCEPTED TASKS */}
+        {hasUrgentInboundTask && taskViewTab === 'inbound' && (
+          <div className="mb-6 p-4 rounded-xl bg-amber-50 dark:bg-amber-950/70 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs font-semibold flex items-center justify-between shadow-2xs animate-pulse">
+            <div className="flex items-center space-x-3">
+              <Clock className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 animate-spin" />
+              <div>
+                <span className="font-extrabold uppercase block font-heading">⏰ URGENT DUE DATE ALARM</span>
+                <p className="text-[11px] text-amber-800 dark:text-amber-300 font-medium">
+                  You have accepted task(s) due within the next 48 hours! Check live countdown ticking clocks below.
+                </p>
+              </div>
+            </div>
+            <Badge variant="amber" size="sm">ACTION REQUIRED</Badge>
+          </div>
+        )}
+
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 mb-4 border-b border-slate-100 dark:border-slate-800">
           <div>
             <div className="flex items-center space-x-3 mb-1">
@@ -452,12 +556,12 @@ export const DashboardPage: React.FC = () => {
                     task.status === 'COMPLETED'
                       ? 'bg-emerald-50/40 dark:bg-emerald-950/20'
                       : task.status === 'IN_PROGRESS'
-                      ? 'bg-amber-50/50 dark:bg-amber-950/30'
+                      ? 'bg-amber-50/50 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/60'
                       : 'bg-slate-50 dark:bg-slate-800/60'
                   }`}
                 >
                   <div className="space-y-1.5 min-w-0 flex-1">
-                    <div className="flex items-center space-x-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <span className="font-mono text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-teal-100 dark:bg-teal-900/60 text-teal-800 dark:text-teal-300">
                         {task.recurrence} TASK
                       </span>
@@ -467,7 +571,15 @@ export const DashboardPage: React.FC = () => {
                       >
                         {task.priority}
                       </Badge>
-                      <span className="font-mono text-[10px] text-slate-400 font-bold">Due {task.due_date}</span>
+
+                      {/* LIVE TICKING COUNTDOWN CLOCK FOR ACCEPTED IN_PROGRESS TASKS */}
+                      {task.status === 'IN_PROGRESS' && (
+                        <TaskCountdownClock dueDateStr={task.due_date} />
+                      )}
+
+                      {task.status === 'ASSIGNED' && (
+                        <span className="font-mono text-[10px] text-slate-400 font-bold">Due {task.due_date}</span>
+                      )}
                     </div>
 
                     <h4
@@ -527,6 +639,7 @@ export const DashboardPage: React.FC = () => {
                   <div className="flex items-center space-x-2">
                     <span className="text-xs font-extrabold text-slate-900 dark:text-slate-100">Assigned To: {task.assigned_to_name}</span>
                     <Badge variant="teal" size="sm">{task.recurrence}</Badge>
+                    {task.status === 'IN_PROGRESS' && <TaskCountdownClock dueDateStr={task.due_date} />}
                   </div>
                   <p className="text-xs text-slate-700 dark:text-slate-300 font-medium">{task.title}</p>
                   <p className="text-[10px] text-slate-400 font-mono">
