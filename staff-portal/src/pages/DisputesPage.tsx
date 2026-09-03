@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   AlertCircle,
   FileText,
+  Lock,
 } from 'lucide-react';
 
 interface EscrowDisputeItem {
@@ -72,7 +73,7 @@ export const DisputesPage: React.FC = () => {
   const [rulingType, setRulingType] = useState<'BUYER_REFUND' | 'SELLER_RELEASE' | 'SPLIT_50_50'>('BUYER_REFUND');
   const [rulingRationale, setRulingRationale] = useState('');
 
-  const canAdjudicate = hasPermission('adjudicate_disputes');
+  const canAdjudicate = hasPermission('resolve_disputes');
 
   const handleExecuteRuling = () => {
     if (!adjudicateTarget || !rulingRationale.trim()) return;
@@ -273,9 +274,16 @@ export const DisputesPage: React.FC = () => {
               <Button variant="outline" onClick={() => setAdjudicateTarget(null)}>
                 Cancel
               </Button>
-              <Button variant="primary" disabled={!rulingRationale.trim()} onClick={handleExecuteRuling}>
-                Execute Binding Ruling &amp; Log Audit
-              </Button>
+              {canAdjudicate ? (
+                <Button variant="primary" disabled={!rulingRationale.trim()} onClick={handleExecuteRuling}>
+                  Execute Binding Ruling &amp; Log Audit
+                </Button>
+              ) : (
+                <Button variant="outline" disabled className="opacity-60 cursor-not-allowed font-bold text-xs">
+                  <Lock className="w-3.5 h-3.5 mr-1 text-amber-600" />
+                  Adjudication Locked (Admin Only)
+                </Button>
+              )}
             </div>
           </div>
         </Modal>

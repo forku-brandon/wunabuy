@@ -1,20 +1,21 @@
 import React, { useState, useRef } from 'react';
 import { PageContainer } from '../components/layout/PageContainer';
 import { Card } from '../components/ui/Card';
-import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
+import { Badge } from '../components/ui/Badge';
 import { useStaffAuth } from '../stores/staffAuthStore';
 import {
   User,
   Lock,
   Bell,
   Camera,
-  CheckCircle2,
-  Save,
-  Key,
   Trash2,
-  Upload,
+  CheckCircle2,
+  ShieldCheck,
+  Building,
+  Key,
   ShieldAlert,
+  Info,
 } from 'lucide-react';
 
 export const StaffProfilePage: React.FC = () => {
@@ -23,7 +24,7 @@ export const StaffProfilePage: React.FC = () => {
 
   const [activeSubTab, setActiveSubTab] = useState<'profile' | 'password' | 'notifications'>('profile');
 
-  // STRICT ADMIN PERMISSION GUARD FOR PROFILE CRUD
+  // STRICT ADMIN PERMISSION GUARD FOR PROFILE CORE IDENTITY CRUD
   const canEditProfile = hasPermission('manage_profile_crud') || user?.security_clearance_level === 5;
 
   // Form State matching Reference FinTech UI
@@ -33,9 +34,9 @@ export const StaffProfilePage: React.FC = () => {
   const [firstName, setFirstName] = useState(initialFirstName);
   const [lastName, setLastName] = useState(initialLastName);
   const [email, setEmail] = useState(user?.email || 'pauline.admin@wunabuy.com');
-  const [phone, setPhone] = useState(user?.phone ? user.phone.replace('+237', '').trim() : '0806 123 7890');
+  const [phone, setPhone] = useState(user?.phone ? user.phone.replace('+237', '').trim() : '670 123 456');
   const [gender, setGender] = useState<'male' | 'female'>('female');
-  const [employeeId] = useState(user?.employee_id || '1559 000 7788 8DER');
+  const [employeeId] = useState(user?.employee_id || 'WNB-EMP-001');
   const [taxId, setTaxId] = useState('M082618940291X');
   const [taxCountry, setTaxCountry] = useState('Cameroon');
   const [address, setAddress] = useState('Akwa Boulevard, Street 104, Douala, Cameroon');
@@ -51,16 +52,12 @@ export const StaffProfilePage: React.FC = () => {
 
   // Success Alert State
   const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
-  // FILE UPLOAD HANDLER FOR AVATAR
+  // FILE UPLOAD HANDLER FOR AVATAR (ALLOWED FOR ALL STAFF MEMBERS)
   const handleAvatarFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    if (!canEditProfile) {
-      alert('Security Policy: Only Level 5 Administrators or accounts with "manage_profile_crud" permission can update staff profile avatars.');
-      return;
-    }
 
     const reader = new FileReader();
     reader.onload = () => {
@@ -80,11 +77,6 @@ export const StaffProfilePage: React.FC = () => {
   };
 
   const handleDeleteAvatar = () => {
-    if (!canEditProfile) {
-      alert('Security Policy: Only Level 5 Administrators or accounts with "manage_profile_crud" permission can delete staff profile avatars.');
-      return;
-    }
-
     updateUserAvatar(null);
 
     addAuditLog({
@@ -100,51 +92,62 @@ export const StaffProfilePage: React.FC = () => {
   const handleSaveChanges = (e: React.FormEvent) => {
     e.preventDefault();
     if (!canEditProfile) {
-      alert('Security Policy: Only Level 5 Administrators or accounts with "manage_profile_crud" permission can alter staff profiles.');
+      setErrorMessage('Access Restricted: Corporate identity fields can only be modified by Super Admins.');
+      setTimeout(() => setErrorMessage(''), 4000);
       return;
     }
+
     addAuditLog({
-      action_code: 'PROFILE_SETTINGS_UPDATE',
-      action_description: `Updated profile account settings for ${firstName} ${lastName}`,
+      action_code: 'PROFILE_UPDATE_INFO',
+      action_description: `Updated profile details for ${firstName} ${lastName}`,
       security_level: 'INFO',
     });
-    setSuccessMessage('Account settings saved successfully!');
+
+    setSuccessMessage('Corporate profile information successfully updated!');
     setTimeout(() => setSuccessMessage(''), 3000);
   };
 
-  const handleUpdatePassword = (e: React.FormEvent) => {
+  const handleSavePassword = (e: React.FormEvent) => {
     e.preventDefault();
-    if (newPassword !== confirmPassword) {
-      alert('New password and confirmation do not match.');
+    if (newPassword.length < 6) {
+      setErrorMessage('New password must be at least 6 characters.');
+      setTimeout(() => setErrorMessage(''), 3000);
       return;
     }
+    if (newPassword !== confirmPassword) {
+      setErrorMessage('Passwords do not match!');
+      setTimeout(() => setErrorMessage(''), 3000);
+      return;
+    }
+
     addAuditLog({
-      action_code: 'PROFILE_PASSWORD_CHANGE',
-      action_description: `Changed account password for ${user?.full_name}`,
-      security_level: 'WARNING',
+      action_code: 'STAFF_PASSWORD_CHANGE',
+      action_description: `Changed account password for employee ID ${employeeId}`,
+      security_level: 'CRITICAL',
     });
+
     setCurrentPassword('');
     setNewPassword('');
     setConfirmPassword('');
-    setSuccessMessage('Password updated successfully!');
-    setTimeout(() => setSuccessMessage(''), 3000);
+    setSuccessMessage('Corporate account password updated successfully!');
+    setTimeout(() => setSuccessMessage(''), 3500);
   };
 
   return (
     <PageContainer
-      title="Account settings"
-      subtitle="Manage corporate staff profile, security credentials &amp; notification alerts"
+      title="Corporate Staff Profile &amp; Settings"
+      subtitle="Manage your staff profile avatar, credentials, and notification preferences."
     >
-      {/* HIDDEN FILE INPUT FOR AVATAR UPLOAD */}
+      {/* Hidden File Input for Avatar Upload */}
       <input
         type="file"
         ref={fileInputRef}
-        accept="image/*"
         onChange={handleAvatarFileSelect}
+        accept="image/*"
         className="hidden"
       />
 
-      {/* SUCCESS TOAST NOTIFICATION */}
+      {/* TOAST ALERTS */}
       {successMessage && (
         <div className="mb-6 p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-900 dark:text-emerald-200 text-xs font-bold flex items-center space-x-2 animate-fade-in shadow-2xs">
           <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
@@ -152,363 +155,399 @@ export const StaffProfilePage: React.FC = () => {
         </div>
       )}
 
+      {errorMessage && (
+        <div className="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-950/60 text-red-900 dark:text-red-200 text-xs font-bold flex items-center space-x-2 animate-fade-in shadow-2xs">
+          <ShieldAlert className="w-4 h-4 text-red-600 dark:text-red-400 flex-shrink-0" />
+          <span>{errorMessage}</span>
+        </div>
+      )}
 
-      {/* MAIN 2-COLUMN SETTINGS STRUCTURAL LAYOUT */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
-        {/* LEFT COLUMN: VERTICAL SETTINGS NAVIGATION CARD */}
-        <Card className="lg:col-span-1 p-2">
-          <nav className="space-y-1">
+      {/* MAIN PROFILE LAYOUT */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        {/* LEFT COLUMN: NAVIGATION & AVATAR CARD */}
+        <div className="lg:col-span-1 space-y-6">
+          <Card className="p-6 text-center">
+            {/* Avatar Image & Overlay Upload Controls */}
+            <div className="relative w-28 h-28 mx-auto mb-4 group">
+              <img
+                src={
+                  user?.avatar_url ||
+                  'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=300&q=80'
+                }
+                alt={user?.full_name || 'Staff User'}
+                className="w-28 h-28 rounded-full object-cover border-4 border-white dark:border-slate-800 shadow-md transition-transform group-hover:scale-105"
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="absolute bottom-0 right-0 p-2 bg-teal-600 hover:bg-teal-700 text-white rounded-full shadow-lg transition-all transform hover:scale-110"
+                title="Upload Profile Picture"
+              >
+                <Camera className="w-4 h-4" />
+              </button>
+            </div>
+
+            <h3 className="font-extrabold text-base text-slate-900 dark:text-slate-100 font-heading">
+              {user?.full_name || 'Pauline Mbarga'}
+            </h3>
+            <p className="text-xs text-teal-600 dark:text-teal-400 font-mono font-bold mt-0.5">
+              {user?.staff_department_role || 'SUPER_ADMIN'}
+            </p>
+
+            <div className="mt-3 flex items-center justify-center space-x-2">
+              <Badge variant={user?.security_clearance_level === 5 ? 'purple' : 'teal'}>
+                Level {user?.security_clearance_level || 5} Clearance
+              </Badge>
+              <Badge variant="success">Active Staff</Badge>
+            </div>
+
+            {/* Avatar Action Buttons (Allowed for all Staff) */}
+            <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-center space-x-2 text-xs">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                className="text-xs font-bold"
+              >
+                <Camera className="w-3.5 h-3.5 mr-1 text-teal-600" />
+                Change Picture
+              </Button>
+
+              {user?.avatar_url && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDeleteAvatar}
+                  className="text-xs text-red-600 hover:bg-red-50"
+                  title="Remove Picture"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </Button>
+              )}
+            </div>
+          </Card>
+
+          {/* VERTICAL SUB-NAVIGATION PANEL */}
+          <Card className="p-2 space-y-1">
             <button
               onClick={() => setActiveSubTab('profile')}
-              className={`w-full text-left px-4 py-3 rounded-lg text-xs font-bold flex items-center space-x-3 transition-all ${
+              className={`w-full p-3 rounded-lg text-left text-xs font-extrabold flex items-center justify-between transition-all ${
                 activeSubTab === 'profile'
-                  ? 'bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 font-extrabold shadow-2xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-100'
+                  ? 'bg-teal-600 text-white shadow-2xs'
+                  : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
               }`}
             >
-              <User className="w-4 h-4 text-teal-600 dark:text-teal-400" />
-              <span>Profile Settings</span>
+              <div className="flex items-center space-x-2.5">
+                <User className="w-4 h-4" />
+                <span>Profile Identity</span>
+              </div>
+              {!canEditProfile && <Lock className="w-3.5 h-3.5 opacity-60" />}
             </button>
 
             <button
               onClick={() => setActiveSubTab('password')}
-              className={`w-full text-left px-4 py-3 rounded-lg text-xs font-bold flex items-center space-x-3 transition-all ${
+              className={`w-full p-3 rounded-lg text-left text-xs font-extrabold flex items-center justify-between transition-all ${
                 activeSubTab === 'password'
-                  ? 'bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 font-extrabold shadow-2xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-100'
+                  ? 'bg-teal-600 text-white shadow-2xs'
+                  : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
               }`}
             >
-              <Lock className="w-4 h-4 text-slate-400 dark:text-slate-500" />
-              <span>Password</span>
+              <div className="flex items-center space-x-2.5">
+                <Key className="w-4 h-4" />
+                <span>Change Password</span>
+              </div>
             </button>
 
             <button
               onClick={() => setActiveSubTab('notifications')}
-              className={`w-full text-left px-4 py-3 rounded-lg text-xs font-bold flex items-center space-x-3 transition-all ${
+              className={`w-full p-3 rounded-lg text-left text-xs font-extrabold flex items-center justify-between transition-all ${
                 activeSubTab === 'notifications'
-                  ? 'bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 font-extrabold shadow-2xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-100'
+                  ? 'bg-teal-600 text-white shadow-2xs'
+                  : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
               }`}
             >
-              <Bell className="w-4 h-4 text-slate-400 dark:text-slate-500" />
-              <span>Notifications</span>
+              <div className="flex items-center space-x-2.5">
+                <Bell className="w-4 h-4" />
+                <span>Notification Settings</span>
+              </div>
             </button>
-          </nav>
-        </Card>
+          </Card>
+        </div>
 
-        {/* RIGHT COLUMN: ACCOUNT SETTINGS FORM CONTAINER */}
-        <Card className="lg:col-span-3 p-6 sm:p-8">
-          {/* TAB 1: PROFILE SETTINGS FORM */}
+        {/* RIGHT COLUMN: TAB CONTENT FORM */}
+        <div className="lg:col-span-3">
+          {/* SUB-TAB 1: PROFILE IDENTITY FORM */}
           {activeSubTab === 'profile' && (
-            <form onSubmit={handleSaveChanges} className="space-y-8">
-              {/* TOP AVATAR SECTION WITH DUAL ACTION BUTTONS */}
-              <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6 pb-6">
-                {/* Circular Profile Avatar */}
-                <div className="relative cursor-pointer" onClick={() => canEditProfile && fileInputRef.current?.click()}>
-                  <img
-                    src={user?.avatar_url || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=300&q=80'}
-                    alt={user?.full_name}
-                    className="w-28 h-28 rounded-full object-cover shadow-md"
-                  />
-                  <div className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-teal-600 text-white flex items-center justify-center shadow-sm">
-                    <Camera className="w-4 h-4" />
-                  </div>
+            <Card className="p-8">
+              <div className="flex items-center justify-between pb-6 mb-6 border-b border-slate-100 dark:border-slate-800">
+                <div>
+                  <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100 font-heading">
+                    Corporate Staff Personal Details
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                    Corporate personnel identity record filed with Wunabuy HR.
+                  </p>
                 </div>
-
-                {/* Avatar Action Buttons */}
-                <div className="flex items-center space-x-3">
-                  <Button
-                    type="button"
-                    variant="primary"
-                    size="sm"
-                    disabled={!canEditProfile}
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <Upload className="w-3.5 h-3.5 mr-1.5" />
-                    Upload New
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={!canEditProfile}
-                    onClick={handleDeleteAvatar}
-                  >
-                    <Trash2 className="w-3.5 h-3.5 mr-1.5 text-slate-400" />
-                    Delete avatar
-                  </Button>
-                </div>
+                {!canEditProfile ? (
+                  <span className="px-3 py-1 bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-300 text-[10px] font-bold rounded-full flex items-center space-x-1">
+                    <Lock className="w-3 h-3 text-amber-600" />
+                    <span>LOCKED BY ADMIN GOVERNANCE</span>
+                  </span>
+                ) : (
+                  <span className="px-3 py-1 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 text-emerald-800 text-[10px] font-bold rounded-full flex items-center space-x-1">
+                    <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                    <span>SUPER ADMIN EDIT ACCESS</span>
+                  </span>
+                )}
               </div>
 
-              {/* 2-COLUMN FORM FIELDS GRID */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs font-semibold">
-                {/* First Name */}
-                <div>
-                  <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">
-                    First Name <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    disabled={!canEditProfile}
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    placeholder="First name"
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 rounded-lg text-slate-900 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white dark:focus:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
-                  />
-                </div>
-
-                {/* Last Name */}
-                <div>
-                  <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">
-                    Last Name <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    disabled={!canEditProfile}
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    placeholder="Last name"
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 rounded-lg text-slate-900 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white dark:focus:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
-                  />
-                </div>
-
-                {/* Email */}
-                <div>
-                  <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    disabled={!canEditProfile}
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="examples@gmail.com"
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 rounded-lg text-slate-900 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white dark:focus:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
-                  />
-                </div>
-
-                {/* Mobile Number with Country Flag */}
-                <div>
-                  <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">
-                    Mobile Number <span className="text-red-500">*</span>
-                  </label>
-                  <div className="flex items-center space-x-2">
-                    <div className="flex items-center space-x-1 px-3 py-3 bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-700 dark:text-slate-300 font-bold">
-                      <span className="text-sm">🇨🇲</span>
-                      <span>+237</span>
-                    </div>
+              <form onSubmit={handleSaveChanges} className="space-y-6">
+                {/* First Name & Last Name */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2 flex items-center justify-between">
+                      <span>First Name</span>
+                      {!canEditProfile && <Lock className="w-3 h-3 text-slate-400" />}
+                    </label>
                     <input
                       type="text"
                       disabled={!canEditProfile}
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="0806 123 7890"
-                      className="flex-1 p-3 bg-slate-50 dark:bg-slate-800/80 rounded-lg text-slate-900 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white dark:focus:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      className="w-full p-3 bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-xs font-bold text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 disabled:opacity-60 disabled:cursor-not-allowed"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2 flex items-center justify-between">
+                      <span>Last Name</span>
+                      {!canEditProfile && <Lock className="w-3 h-3 text-slate-400" />}
+                    </label>
+                    <input
+                      type="text"
+                      disabled={!canEditProfile}
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      className="w-full p-3 bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-xs font-bold text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 disabled:opacity-60 disabled:cursor-not-allowed"
                     />
                   </div>
                 </div>
 
-                {/* Gender Radio Selector */}
-                <div>
-                  <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">
-                    Gender
-                  </label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <label
-                      onClick={() => canEditProfile && setGender('male')}
-                      className={`p-3 rounded-lg flex items-center justify-center space-x-2 font-bold transition-all ${
-                        !canEditProfile ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
-                      } ${
-                        gender === 'male'
-                          ? 'bg-teal-50 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300 shadow-2xs'
-                          : 'bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400'
-                      }`}
-                    >
-                      <input type="radio" name="gender" disabled={!canEditProfile} checked={gender === 'male'} onChange={() => {}} className="hidden" />
-                      <span>Male</span>
+                {/* Email & Phone */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2 flex items-center justify-between">
+                      <span>Corporate Email Address</span>
+                      {!canEditProfile && <Lock className="w-3 h-3 text-slate-400" />}
                     </label>
-
-                    <label
-                      onClick={() => canEditProfile && setGender('female')}
-                      className={`p-3 rounded-lg flex items-center justify-center space-x-2 font-bold transition-all ${
-                        !canEditProfile ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
-                      } ${
-                        gender === 'female'
-                          ? 'bg-teal-50 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300 shadow-2xs'
-                          : 'bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400'
-                      }`}
-                    >
-                      <input type="radio" name="gender" disabled={!canEditProfile} checked={gender === 'female'} onChange={() => {}} className="hidden" />
-                      <span>Female</span>
-                    </label>
-                  </div>
-                </div>
-
-                {/* Read-only Employee ID */}
-                <div>
-                  <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">
-                    ID / Employee Code
-                  </label>
-                  <input
-                    type="text"
-                    disabled
-                    value={employeeId}
-                    className="w-full p-3 bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-500 dark:text-slate-400 font-mono font-bold cursor-not-allowed"
-                  />
-                </div>
-
-                {/* Tax Identification Number */}
-                <div>
-                  <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">
-                    Tax Identification Number (NIU)
-                  </label>
-                  <input
-                    type="text"
-                    disabled={!canEditProfile}
-                    value={taxId}
-                    onChange={(e) => setTaxId(e.target.value)}
-                    placeholder="M082618940291X"
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 rounded-lg text-slate-900 dark:text-slate-100 font-mono font-bold focus:outline-none focus:ring-2 focus:ring-teal-500 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
-                  />
-                </div>
-
-                {/* Tax Identification Country */}
-                <div>
-                  <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">
-                    Tax Identification Country
-                  </label>
-                  <div className="flex items-center space-x-2 p-3 bg-slate-50 dark:bg-slate-800/80 rounded-lg font-bold text-slate-900 dark:text-slate-100">
-                    <span className="text-sm">🇨🇲</span>
-                    <select
+                    <input
+                      type="email"
                       disabled={!canEditProfile}
-                      value={taxCountry}
-                      onChange={(e) => setTaxCountry(e.target.value)}
-                      className="w-full bg-transparent border-none focus:outline-none font-bold text-slate-900 dark:text-slate-100 disabled:opacity-60 disabled:cursor-not-allowed"
-                    >
-                      <option value="Cameroon">Cameroon</option>
-                      <option value="Nigeria">Nigeria</option>
-                      <option value="Ivory Coast">Ivory Coast</option>
-                    </select>
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full p-3 bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-xs font-bold font-mono text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 disabled:opacity-60 disabled:cursor-not-allowed"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2 flex items-center justify-between">
+                      <span>Mobile Phone (+237)</span>
+                      {!canEditProfile && <Lock className="w-3 h-3 text-slate-400" />}
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500">🇨🇲 +237</span>
+                      <input
+                        type="text"
+                        disabled={!canEditProfile}
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        className="w-full pl-18 pr-3 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-xs font-bold font-mono text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 disabled:opacity-60 disabled:cursor-not-allowed"
+                      />
+                    </div>
                   </div>
                 </div>
 
-                {/* Residential Address / Office Branch (Full Width) */}
-                <div className="md:col-span-2">
-                  <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">
-                    Residential Address / Office Branch
-                  </label>
-                  <textarea
-                    rows={3}
-                    disabled={!canEditProfile}
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    placeholder="Ib street orogun ibadan"
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 rounded-lg text-slate-900 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-teal-500 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
-                  />
+                {/* Gender & Employee ID */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">Gender Identity</label>
+                    <div className="flex items-center space-x-4 pt-1">
+                      <label className="flex items-center space-x-2 text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="gender"
+                          value="female"
+                          disabled={!canEditProfile}
+                          checked={gender === 'female'}
+                          onChange={() => setGender('female')}
+                          className="w-4 h-4 text-teal-600 focus:ring-teal-500"
+                        />
+                        <span>Female</span>
+                      </label>
+
+                      <label className="flex items-center space-x-2 text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="gender"
+                          value="male"
+                          disabled={!canEditProfile}
+                          checked={gender === 'male'}
+                          onChange={() => setGender('male')}
+                          className="w-4 h-4 text-teal-600 focus:ring-teal-500"
+                        />
+                        <span>Male</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">System Employee ID</label>
+                    <input
+                      type="text"
+                      disabled
+                      value={employeeId}
+                      className="w-full p-3 bg-slate-100 dark:bg-slate-900 border-none rounded-lg text-xs font-mono font-extrabold text-teal-700 dark:text-teal-400 cursor-not-allowed"
+                    />
+                  </div>
                 </div>
-              </div>
 
-              {/* BOTTOM PRIMARY ACTION BUTTON */}
-              <div className="pt-4 flex items-center justify-between">
-                <Button type="submit" variant="primary" size="md" disabled={!canEditProfile}>
-                  <Save className="w-4 h-4 mr-1.5" />
-                  Save Changes
-                </Button>
+                {/* NIU Tax ID & Country */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">NIU Tax Identification Number</label>
+                    <input
+                      type="text"
+                      disabled={!canEditProfile}
+                      value={taxId}
+                      onChange={(e) => setTaxId(e.target.value)}
+                      className="w-full p-3 bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-xs font-bold font-mono text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 disabled:opacity-60 disabled:cursor-not-allowed"
+                    />
+                  </div>
 
-                {!canEditProfile && (
-                  <span className="text-[11px] font-mono font-bold text-amber-600 dark:text-amber-400">
-                    🔒 READ-ONLY: LEVEL 5 ADMIN PERMISSION REQUIRED
-                  </span>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">Office Branch Address</label>
+                    <input
+                      type="text"
+                      disabled={!canEditProfile}
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
+                      className="w-full p-3 bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-xs font-bold text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 disabled:opacity-60 disabled:cursor-not-allowed"
+                    />
+                  </div>
+                </div>
+
+                {/* Action Footer */}
+                {canEditProfile && (
+                  <div className="pt-6 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+                    <Button type="submit" variant="primary">
+                      Save Profile Changes
+                    </Button>
+                  </div>
                 )}
-              </div>
-            </form>
+              </form>
+            </Card>
           )}
 
-          {/* TAB 2: PASSWORD & SECURITY FORM */}
+          {/* SUB-TAB 2: CHANGE PASSWORD FORM (ALLOWED FOR ALL STAFF) */}
           {activeSubTab === 'password' && (
-            <form onSubmit={handleUpdatePassword} className="space-y-6 text-xs">
-              <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100 font-heading pb-3">
-                Change Staff Account Password
-              </h3>
+            <Card className="p-8">
+              <div className="pb-6 mb-6 border-b border-slate-100 dark:border-slate-800">
+                <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100 font-heading">
+                  Change Account Password
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                  Update your corporate staff access password.
+                </p>
+              </div>
 
-              <div className="space-y-4 max-w-md">
+              <form onSubmit={handleSavePassword} className="space-y-5 max-w-lg">
                 <div>
-                  <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">Current Password *</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">Current Password</label>
                   <input
                     type="password"
+                    required
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 rounded-lg text-slate-900 dark:text-slate-100 font-bold focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                    placeholder="••••••••••••"
+                    className="w-full p-3 bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-xs font-bold text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-teal-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">New Password *</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">New Password</label>
                   <input
                     type="password"
+                    required
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 rounded-lg text-slate-900 dark:text-slate-100 font-bold focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                    placeholder="••••••••••••"
+                    className="w-full p-3 bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-xs font-bold text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-teal-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">Confirm New Password *</label>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">Confirm New Password</label>
                   <input
                     type="password"
+                    required
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 rounded-lg text-slate-900 dark:text-slate-100 font-bold focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                    placeholder="••••••••••••"
+                    className="w-full p-3 bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-xs font-bold text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-teal-500"
                   />
                 </div>
-              </div>
 
-              <div className="pt-4">
-                <Button type="submit" variant="primary" disabled={!currentPassword || !newPassword}>
-                  <Key className="w-4 h-4 mr-1.5" />
-                  Update Password
-                </Button>
-              </div>
-            </form>
+                <div className="pt-4 flex justify-end">
+                  <Button type="submit" variant="primary">
+                    Update Password
+                  </Button>
+                </div>
+              </form>
+            </Card>
           )}
 
-          {/* TAB 3: NOTIFICATIONS SETTINGS */}
+          {/* SUB-TAB 3: NOTIFICATION SETTINGS (ALLOWED FOR ALL STAFF) */}
           {activeSubTab === 'notifications' && (
-            <div className="space-y-6 text-xs">
-              <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100 font-heading pb-3">
-                Staff Operational Alerts &amp; Notifications
-              </h3>
+            <Card className="p-8">
+              <div className="pb-6 mb-6 border-b border-slate-100 dark:border-slate-800">
+                <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100 font-heading">
+                  Staff Notification Preferences
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                  Configure corporate SMS and email operational alerts.
+                </p>
+              </div>
 
-              <div className="space-y-4 max-w-lg">
-                <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-800/60 flex items-center justify-between">
+              <div className="space-y-4 max-w-xl">
+                <div className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-xl flex items-center justify-between">
                   <div>
-                    <span className="font-bold text-slate-900 dark:text-slate-100 block">Email Payout &amp; Disbursal Alerts</span>
-                    <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Receive instant email when high-value payout exceeds 500k FCFA</span>
+                    <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100">Corporate Email Dispatch Alerts</h4>
+                    <p className="text-[10px] text-slate-500 font-medium">Receive assigned task notifications via email.</p>
                   </div>
                   <input
                     type="checkbox"
                     checked={emailNotifs}
-                    onChange={() => setEmailNotifs(!emailNotifs)}
-                    className="w-4 h-4 rounded text-teal-600 focus:ring-teal-500 cursor-pointer"
+                    onChange={(e) => setEmailNotifs(e.target.checked)}
+                    className="w-4 h-4 text-teal-600 rounded focus:ring-teal-500 cursor-pointer"
                   />
                 </div>
 
-                <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-800/60 flex items-center justify-between">
+                <div className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-xl flex items-center justify-between">
                   <div>
-                    <span className="font-bold text-slate-900 dark:text-slate-100 block">SMS Urgent Emergency Signals</span>
-                    <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Receive direct SMS alerts for rider emergency distress calls</span>
+                    <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100">Urgent SMS Due Alarm Notifications</h4>
+                    <p className="text-[10px] text-slate-500 font-medium">Receive SMS alerts when tasks are within 48h of deadline.</p>
                   </div>
                   <input
                     type="checkbox"
                     checked={smsNotifs}
-                    onChange={() => setSmsNotifs(!smsNotifs)}
-                    className="w-4 h-4 rounded text-teal-600 focus:ring-teal-500 cursor-pointer"
+                    onChange={(e) => setSmsNotifs(e.target.checked)}
+                    className="w-4 h-4 text-teal-600 rounded focus:ring-teal-500 cursor-pointer"
                   />
                 </div>
               </div>
-            </div>
+            </Card>
           )}
-        </Card>
+        </div>
       </div>
     </PageContainer>
   );

@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   XCircle,
   Eye,
+  Lock,
 } from 'lucide-react';
 
 interface KYCSubmissionItem {
@@ -243,7 +244,7 @@ export const KYCPage: React.FC = () => {
               />
             </div>
 
-            {canApprove && (
+            {canApprove ? (
               <div className="flex justify-end space-x-3 pt-3 border-t border-slate-100 dark:border-slate-800">
                 <Button variant="secondary" onClick={() => handleDecision('REJECTED')}>
                   <XCircle className="w-4 h-4 mr-1" />
@@ -253,6 +254,11 @@ export const KYCPage: React.FC = () => {
                   <CheckCircle2 className="w-4 h-4 mr-1" />
                   Approve KYC &amp; Enable Role
                 </Button>
+              </div>
+            ) : (
+              <div className="p-3 bg-amber-50 dark:bg-amber-950/60 rounded-xl text-amber-900 dark:text-amber-200 text-xs font-semibold flex items-center space-x-2">
+                <Lock className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                <span>Approval Access Restricted: Your account does not have "approve_kyc" clearance.</span>
               </div>
             )}
           </div>

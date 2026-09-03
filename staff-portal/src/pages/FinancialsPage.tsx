@@ -188,14 +188,21 @@ export const FinancialsPage: React.FC = () => {
       align: 'right',
       render: (item) => (
         <div className="flex items-center justify-end space-x-2">
-          {item.status === 'PENDING_APPROVAL' && canApprovePayout ? (
-            <Button
-              size="sm"
-              variant="primary"
-              onClick={() => setAuthorizeTarget(item)}
-            >
-              Authorize Payout
-            </Button>
+          {item.status === 'PENDING_APPROVAL' ? (
+            canApprovePayout ? (
+              <Button
+                size="sm"
+                variant="primary"
+                onClick={() => setAuthorizeTarget(item)}
+              >
+                Authorize Payout
+              </Button>
+            ) : (
+              <Button size="sm" variant="outline" disabled className="opacity-60 cursor-not-allowed text-xs font-bold">
+                <Lock className="w-3.5 h-3.5 mr-1 text-amber-600" />
+                Locked (Admin Only)
+              </Button>
+            )
           ) : (
             <span className="text-[11px] font-mono text-slate-400 dark:text-slate-500 font-semibold">
               {item.status === 'PROCESSED' ? 'Reconciled' : 'Under Investigation'}

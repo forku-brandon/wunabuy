@@ -15,6 +15,7 @@ import {
   Radio,
   AlertTriangle,
   PhoneCall,
+  Lock,
 } from 'lucide-react';
 
 interface ActiveTripItem {
@@ -198,7 +199,7 @@ export const LogisticsOpsPage: React.FC = () => {
             Details
           </Button>
 
-          {canOverride && (
+          {canOverride ? (
             <Button
               size="sm"
               variant="secondary"
@@ -208,6 +209,11 @@ export const LogisticsOpsPage: React.FC = () => {
               }}
             >
               Override
+            </Button>
+          ) : (
+            <Button size="sm" variant="outline" disabled className="opacity-60 cursor-not-allowed text-xs font-bold">
+              <Lock className="w-3.5 h-3.5 mr-1 text-amber-600" />
+              Locked
             </Button>
           )}
         </div>
