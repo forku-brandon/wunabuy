@@ -314,19 +314,28 @@ const INITIAL_AUDIT_LOGS: AuditLogEntry[] = [
   },
 ];
 
-// PERSISTENT STAFF DIRECTORY STATE
+// PERSISTENT STAFF DIRECTORY & AUDIT LEDGER STATE
 const savedDirectory = localStorage.getItem('wunabuy_staff_directory');
 let currentStaffList: StaffUser[] = savedDirectory ? JSON.parse(savedDirectory) : DEMO_STAFF_PERSONAS;
 
-let currentUser: StaffUser | null = currentStaffList[0];
-let currentToken: string | null = '1|mock_sanctum_staff_token_WNB-EMP-001';
-let currentAuditLogs: AuditLogEntry[] = INITIAL_AUDIT_LOGS;
+const savedLogs = localStorage.getItem('wunabuy_staff_audit_logs');
+let currentAuditLogs: AuditLogEntry[] = savedLogs ? JSON.parse(savedLogs) : INITIAL_AUDIT_LOGS;
+
+const savedUser = localStorage.getItem('wunabuy_staff_session_user');
+let currentUser: StaffUser | null = savedUser ? JSON.parse(savedUser) : currentStaffList[0];
+let currentToken: string | null = currentUser ? ('1|mock_sanctum_staff_token_' + currentUser.employee_id) : null;
 let rolesMatrix: StaffRoleDefinition[] = INITIAL_ROLES_MATRIX;
 
 const listeners = new Set<() => void>();
 
 function notify() {
   localStorage.setItem('wunabuy_staff_directory', JSON.stringify(currentStaffList));
+  localStorage.setItem('wunabuy_staff_audit_logs', JSON.stringify(currentAuditLogs));
+  if (currentUser) {
+    localStorage.setItem('wunabuy_staff_session_user', JSON.stringify(currentUser));
+  } else {
+    localStorage.removeItem('wunabuy_staff_session_user');
+  }
   listeners.forEach((l) => l());
 }
 
@@ -342,15 +351,18 @@ export function useStaffAuth() {
   }, []);
 
   const requestOTP = async (identifier: string): Promise<{ success: boolean; message: string }> => {
-    const cleanId = identifier.trim().toLowerCase();
+    const cleanId = identifier.trim().toLowerCase().replace(/\s+/g, '');
     const matched = currentStaffList.find(
-      (p) => (p.email && p.email.toLowerCase() === cleanId) || p.phone.includes(cleanId)
+      (p) =>
+        (p.email && p.email.toLowerCase() === cleanId) ||
+        p.phone.replace(/\s+/g, '').includes(cleanId) ||
+        cleanId.includes(p.phone.replace(/\s+/g, ''))
     );
 
     if (matched || cleanId.includes('@wunabuy.com') || cleanId.length >= 6) {
       return {
         success: true,
-        message: `OTP Code sent via SMS/Email to ${identifier}. (Demo Code: 654321)`,
+        message: `OTP Security Code sent via SMS/Email to ${identifier}. (Demo Security Code: 654321)`,
       };
     }
 
@@ -361,14 +373,19 @@ export function useStaffAuth() {
   };
 
   const verifyOTP = async (identifier: string, code: string): Promise<boolean> => {
-    const cleanId = identifier.trim().toLowerCase();
+    const cleanId = identifier.trim().toLowerCase().replace(/\s+/g, '');
     let matched = currentStaffList.find(
-      (p) => (p.email && p.email.toLowerCase() === cleanId) || p.phone.includes(cleanId)
+      (p) =>
+        (p.email && p.email.toLowerCase() === cleanId) ||
+        p.phone.replace(/\s+/g, '').includes(cleanId) ||
+        cleanId.includes(p.phone.replace(/\s+/g, ''))
     );
 
-    if (!matched) {
-      matched = currentStaffList[0]; // Fallback to Super Admin for new corporate logins
+    if (!matched && (cleanId.includes('@wunabuy.com') || cleanId.length >= 6)) {
+      matched = currentStaffList[0]; // Fallback to primary admin persona if logging in with custom input
     }
+
+    if (!matched) return false;
 
     if (code === '654321' || code.length === 6) {
       currentUser = matched;
@@ -380,7 +397,7 @@ export function useStaffAuth() {
         staff_name: matched.full_name,
         staff_role: matched.staff_department_role,
         action_code: 'STAFF_OTP_AUTH_SUCCESS',
-        action_description: `Staff authorized via 2-Factor OTP verification for employee ID ${matched.employee_id}`,
+        action_description: `Staff member ${matched.full_name} (${matched.email || matched.phone}) authorized via 2-Factor OTP verification for employee ID ${matched.employee_id}`,
         ip_address: '197.234.221.14 (Douala HQ)',
         security_level: 'INFO',
       };
@@ -393,14 +410,19 @@ export function useStaffAuth() {
   };
 
   const loginWithPassword = async (identifier: string, pass: string): Promise<boolean> => {
-    const cleanId = identifier.trim().toLowerCase();
+    const cleanId = identifier.trim().toLowerCase().replace(/\s+/g, '');
     let matched = currentStaffList.find(
-      (p) => (p.email && p.email.toLowerCase() === cleanId) || p.phone.includes(cleanId)
+      (p) =>
+        (p.email && p.email.toLowerCase() === cleanId) ||
+        p.phone.replace(/\s+/g, '').includes(cleanId) ||
+        cleanId.includes(p.phone.replace(/\s+/g, ''))
     );
 
-    if (!matched) {
+    if (!matched && (cleanId.includes('@wunabuy.com') || cleanId.length >= 6)) {
       matched = currentStaffList[0];
     }
+
+    if (!matched) return false;
 
     if (pass.length >= 4) {
       currentUser = matched;
@@ -412,7 +434,7 @@ export function useStaffAuth() {
         staff_name: matched.full_name,
         staff_role: matched.staff_department_role,
         action_code: 'STAFF_PASS_AUTH_SUCCESS',
-        action_description: `Staff authorized via corporate password authentication for employee ID ${matched.employee_id}`,
+        action_description: `Staff member ${matched.full_name} (${matched.email || matched.phone}) authorized via corporate password authentication for employee ID ${matched.employee_id}`,
         ip_address: '197.234.221.14 (Douala HQ)',
         security_level: 'INFO',
       };
@@ -429,6 +451,19 @@ export function useStaffAuth() {
   };
 
   const logout = () => {
+    if (currentUser) {
+      const newLog: AuditLogEntry = {
+        id: 'aud_' + Date.now().toString().slice(-5),
+        timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19),
+        staff_name: currentUser.full_name,
+        staff_role: currentUser.staff_department_role,
+        action_code: 'STAFF_LOGOUT',
+        action_description: `Staff member ${currentUser.full_name} (${currentUser.employee_id}) logged out of active session.`,
+        ip_address: '197.234.221.14 (Douala HQ)',
+        security_level: 'INFO',
+      };
+      currentAuditLogs = [newLog, ...currentAuditLogs];
+    }
     currentUser = null;
     currentToken = null;
     notify();
