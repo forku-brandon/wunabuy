@@ -32,6 +32,7 @@ export type StaffPermission =
   | 'manage_marketing'
   | 'manage_settings'
   | 'manage_profile_crud'
+  | 'manage_staff_crud'
   | 'view_hr_ops'
   | 'manage_hr_payroll'
   | 'assign_staff_tasks'
@@ -60,6 +61,7 @@ export const ALL_STAFF_PERMISSIONS: { code: StaffPermission; label: string; desc
   { code: 'manage_marketing', label: 'Manage Marketing & Banners', description: 'Publish and toggle mobile promo banners & tips' },
   { code: 'manage_settings', label: 'Manage System Settings', description: 'Configure platform security rules & MFA' },
   { code: 'manage_profile_crud', label: 'Manage Staff Profile CRUD (Admin Only)', description: 'Edit and manage individual staff account profile details' },
+  { code: 'manage_staff_crud', label: 'Create, Edit & Revoke Staff Accounts', description: 'Provision new staff accounts, edit details, and revoke corporate access' },
   { code: 'view_hr_ops', label: 'View HR & Staff Ops', description: 'Access staff directory, contracts, leave requests, and payroll summary' },
   { code: 'manage_hr_payroll', label: 'Manage HR Payroll & Payslips', description: 'Authorize monthly staff salary disbursals and print official payslips' },
   { code: 'assign_staff_tasks', label: 'Assign & Dispatch Staff Tasks', description: 'Create and assign daily, weekly, or monthly recurring work directives to employees' },
@@ -98,6 +100,7 @@ const INITIAL_ROLES_MATRIX: StaffRoleDefinition[] = [
       'manage_marketing',
       'manage_settings',
       'manage_profile_crud',
+      'manage_staff_crud',
       'view_hr_ops',
       'manage_hr_payroll',
       'assign_staff_tasks',
@@ -113,6 +116,7 @@ const INITIAL_ROLES_MATRIX: StaffRoleDefinition[] = [
       'view_dashboard',
       'view_hr_ops',
       'manage_hr_payroll',
+      'manage_staff_crud',
       'assign_staff_tasks',
       'manage_users',
       'view_audit_logs',
@@ -154,30 +158,21 @@ const INITIAL_ROLES_MATRIX: StaffRoleDefinition[] = [
       'view_dashboard',
       'view_logistics',
       'override_logistics',
-      'view_kyc',
+      'view_disputes',
+      'assign_staff_tasks',
       'view_audit_logs',
     ],
   },
   {
     code: StaffDepartmentRole.SUPPORT_AGENT,
-    name: 'Customer Support Representative',
+    name: 'Customer Support Specialist',
     department: 'Customer Escrow Support',
     clearance_level: 2,
     permissions: [
       'view_dashboard',
       'view_disputes',
-      'resolve_disputes',
-      'manage_users',
-    ],
-  },
-  {
-    code: StaffDepartmentRole.MARKETING_LEAD,
-    name: 'Marketing & Merchant Growth Lead',
-    department: 'Marketing & Merchant Growth',
-    clearance_level: 2,
-    permissions: [
-      'view_dashboard',
-      'manage_marketing',
+      'view_kyc',
+      'view_audit_logs',
     ],
   },
 ];
@@ -185,7 +180,7 @@ const INITIAL_ROLES_MATRIX: StaffRoleDefinition[] = [
 export const DEMO_STAFF_PERSONAS: StaffUser[] = [
   {
     id: 'staff_901',
-    phone: '+237670000099',
+    phone: '+237670123456',
     email: 'pauline.admin@wunabuy.com',
     full_name: 'Pauline Mbarga',
     role: UserRole.STAFF,
@@ -299,45 +294,27 @@ const INITIAL_AUDIT_LOGS: AuditLogEntry[] = [
     timestamp: '2026-09-02 12:45:10',
     staff_name: 'Pauline Mbarga',
     staff_role: 'SUPER_ADMIN',
-    action_code: 'SYS_POLICY_UPDATE',
-    action_description: 'Updated Platform MFA enforcement rule to mandatory level 4.',
+    action_code: 'PAYOUT_HIGH_VALUE_APPROVE',
+    action_description: 'Approved 850,000 FCFA Mobile Money escrow disbursal for Douala Tech Hub.',
     ip_address: '197.234.221.14 (Douala HQ)',
-    target_id: 'SYS_CONFIG',
-    security_level: 'WARNING',
-  },
-  {
-    id: 'aud_9002',
-    timestamp: '2026-09-02 11:30:44',
-    staff_name: 'Marie-Noelle Bikoe',
-    staff_role: 'COMPLIANCE_OFFICER',
-    action_code: 'KYC_MERCHANT_APPROVE',
-    action_description: 'Approved merchant store KYC for Douala Tech Hub (CNI #109283741).',
-    ip_address: '197.234.221.18 (Douala HQ)',
-    target_id: 'kyc_101',
-    security_level: 'INFO',
-  },
-  {
-    id: 'aud_9003',
-    timestamp: '2026-09-02 10:15:22',
-    staff_name: 'Christian Atangana',
-    staff_role: 'FINANCE_OFFICER',
-    action_code: 'PAYOUT_DUAL_APPROVE',
-    action_description: 'Authorized merchant bulk payout of 850,000 FCFA to MTN MoMo.',
-    ip_address: '197.234.221.12 (Douala HQ)',
-    target_id: 'po_99120',
+    target_id: 'tr_momo_8829',
     security_level: 'CRITICAL',
   },
 ];
 
-// In-Memory Shared State Store for Staff Auth & Dynamic Roles Matrix
-let currentUser: StaffUser | null = DEMO_STAFF_PERSONAS[0];
-let currentToken: string | null = '1|mock_sanctum_staff_token';
+// PERSISTENT STAFF DIRECTORY STATE
+const savedDirectory = localStorage.getItem('wunabuy_staff_directory');
+let currentStaffList: StaffUser[] = savedDirectory ? JSON.parse(savedDirectory) : DEMO_STAFF_PERSONAS;
+
+let currentUser: StaffUser | null = currentStaffList[0];
+let currentToken: string | null = '1|mock_sanctum_staff_token_WNB-EMP-001';
 let currentAuditLogs: AuditLogEntry[] = INITIAL_AUDIT_LOGS;
 let rolesMatrix: StaffRoleDefinition[] = INITIAL_ROLES_MATRIX;
 
 const listeners = new Set<() => void>();
 
 function notify() {
+  localStorage.setItem('wunabuy_staff_directory', JSON.stringify(currentStaffList));
   listeners.forEach((l) => l());
 }
 
@@ -354,7 +331,7 @@ export function useStaffAuth() {
 
   const requestOTP = async (identifier: string): Promise<{ success: boolean; message: string }> => {
     const cleanId = identifier.trim().toLowerCase();
-    const matched = DEMO_STAFF_PERSONAS.find(
+    const matched = currentStaffList.find(
       (p) => (p.email && p.email.toLowerCase() === cleanId) || p.phone.includes(cleanId)
     );
 
@@ -373,12 +350,12 @@ export function useStaffAuth() {
 
   const verifyOTP = async (identifier: string, code: string): Promise<boolean> => {
     const cleanId = identifier.trim().toLowerCase();
-    let matched = DEMO_STAFF_PERSONAS.find(
+    let matched = currentStaffList.find(
       (p) => (p.email && p.email.toLowerCase() === cleanId) || p.phone.includes(cleanId)
     );
 
     if (!matched) {
-      matched = DEMO_STAFF_PERSONAS[0]; // Fallback to Super Admin for new corporate logins
+      matched = currentStaffList[0]; // Fallback to Super Admin for new corporate logins
     }
 
     if (code === '654321' || code.length === 6) {
@@ -403,8 +380,40 @@ export function useStaffAuth() {
     return false;
   };
 
+  const loginWithPassword = async (identifier: string, pass: string): Promise<boolean> => {
+    const cleanId = identifier.trim().toLowerCase();
+    let matched = currentStaffList.find(
+      (p) => (p.email && p.email.toLowerCase() === cleanId) || p.phone.includes(cleanId)
+    );
+
+    if (!matched) {
+      matched = currentStaffList[0];
+    }
+
+    if (pass.length >= 4) {
+      currentUser = matched;
+      currentToken = '1|mock_sanctum_pass_token_' + matched.employee_id;
+
+      const newLog: AuditLogEntry = {
+        id: 'aud_' + Date.now().toString().slice(-5),
+        timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19),
+        staff_name: matched.full_name,
+        staff_role: matched.staff_department_role,
+        action_code: 'STAFF_PASS_AUTH_SUCCESS',
+        action_description: `Staff authorized via corporate password authentication for employee ID ${matched.employee_id}`,
+        ip_address: '197.234.221.14 (Douala HQ)',
+        security_level: 'INFO',
+      };
+      currentAuditLogs = [newLog, ...currentAuditLogs];
+
+      notify();
+      return true;
+    }
+    return false;
+  };
+
   const login = async (email: string, pass: string): Promise<boolean> => {
-    return verifyOTP(email, '654321');
+    return loginWithPassword(email, pass);
   };
 
   const logout = () => {
@@ -414,7 +423,7 @@ export function useStaffAuth() {
   };
 
   const switchPersona = (staffId: string) => {
-    const target = DEMO_STAFF_PERSONAS.find((p) => p.id === staffId);
+    const target = currentStaffList.find((p) => p.id === staffId);
     if (target) {
       const savedAvatar = localStorage.getItem(`wunabuy_staff_avatar_${target.id}`);
       currentUser = savedAvatar ? { ...target, avatar_url: savedAvatar } : target;
@@ -471,6 +480,80 @@ export function useStaffAuth() {
     notify();
   };
 
+  // STAFF ACCOUNT CRUD MANAGEMENT ENGINE
+  const createStaffAccount = (data: {
+    full_name: string;
+    email: string;
+    phone: string;
+    department_name: string;
+    staff_department_role: string;
+    security_clearance_level: number;
+  }) => {
+    const newStaff: StaffUser = {
+      id: 'staff_' + Date.now().toString().slice(-4),
+      full_name: data.full_name,
+      email: data.email,
+      phone: data.phone.startsWith('+237') ? data.phone : `+237${data.phone.replace(/\s+/g, '')}`,
+      role: UserRole.STAFF,
+      staff_department_role: data.staff_department_role,
+      department_name: data.department_name,
+      employee_id: 'WNB-EMP-' + Math.floor(100 + Math.random() * 900),
+      security_clearance_level: data.security_clearance_level,
+      status: UserStatus.ACTIVE,
+      avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80',
+      is_phone_verified: true,
+      default_address: null,
+      available_roles: [UserRole.STAFF],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    currentStaffList = [newStaff, ...currentStaffList];
+
+    addAuditLog({
+      action_code: 'STAFF_ACCOUNT_CREATE',
+      action_description: `Created new staff account for ${newStaff.full_name} (${newStaff.email}) in ${newStaff.department_name}`,
+      target_id: newStaff.id,
+      security_level: 'CRITICAL',
+    });
+
+    notify();
+    return newStaff;
+  };
+
+  const updateStaffAccount = (id: string, updates: Partial<StaffUser>) => {
+    currentStaffList = currentStaffList.map((s) =>
+      s.id === id ? { ...s, ...updates, updated_at: new Date().toISOString() } : s
+    );
+
+    if (currentUser?.id === id) {
+      currentUser = { ...currentUser, ...updates };
+    }
+
+    addAuditLog({
+      action_code: 'STAFF_ACCOUNT_UPDATE',
+      action_description: `Updated staff profile & security permissions for employee ID ${id}`,
+      target_id: id,
+      security_level: 'CRITICAL',
+    });
+
+    notify();
+  };
+
+  const deleteStaffAccount = (id: string) => {
+    const target = currentStaffList.find((s) => s.id === id);
+    currentStaffList = currentStaffList.filter((s) => s.id !== id);
+
+    addAuditLog({
+      action_code: 'STAFF_ACCOUNT_DELETE',
+      action_description: `Revoked corporate access & deleted staff account for ${target?.full_name || id}`,
+      target_id: id,
+      security_level: 'CRITICAL',
+    });
+
+    notify();
+  };
+
   // DYNAMIC ROLES & PERMISSIONS CRUD ENGINE
   const createRole = (newRole: StaffRoleDefinition) => {
     rolesMatrix = [...rolesMatrix, { ...newRole, is_custom: true }];
@@ -513,14 +596,19 @@ export function useStaffAuth() {
     isAuthenticated: Boolean(currentUser && currentToken),
     auditLogs: currentAuditLogs,
     rolesMatrix,
+    staffMembers: currentStaffList,
     requestOTP,
     verifyOTP,
+    loginWithPassword,
     login,
     logout,
     switchPersona,
     updateUserAvatar,
     hasPermission,
     addAuditLog,
+    createStaffAccount,
+    updateStaffAccount,
+    deleteStaffAccount,
     createRole,
     updateRolePermissions,
     deleteRole,

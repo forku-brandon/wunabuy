@@ -6,7 +6,7 @@ import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { DataTable, Column } from '../components/ui/DataTable';
 import { Modal } from '../components/ui/Modal';
-import { useStaffAuth } from '../stores/staffAuthStore';
+import { useStaffAuth, StaffUser, StaffDepartmentRole } from '../stores/staffAuthStore';
 import {
   Users,
   Wallet,
@@ -23,6 +23,13 @@ import {
   Briefcase,
   Check,
   X,
+  Plus,
+  UserPlus,
+  Edit,
+  Trash2,
+  UserCheck,
+  UserX,
+  Lock,
 } from 'lucide-react';
 
 interface PayrollRecord {
@@ -83,99 +90,125 @@ const MOCK_PAYROLL_DATA: PayrollRecord[] = [
   },
   {
     id: 'pay_102',
-    employee_id: 'WNB-EMP-007',
-    staff_name: 'Chantal Nguesso',
-    department: 'Human Resources',
-    job_title: 'HR & People Ops Lead',
+    employee_id: 'WNB-EMP-014',
+    staff_name: 'Christian Atangana',
+    department: 'Finance & Treasury',
+    job_title: 'Finance & Treasury Officer',
     base_salary: 850000,
-    transport_allowance: 100000,
+    transport_allowance: 80000,
     bonus: 50000,
     cnps_deduction: 35700,
     tax_deduction: 59500,
-    net_salary: 904800,
+    net_salary: 884800,
     payment_status: 'PAID',
     pay_period: 'August 2026',
     payment_date: '2026-08-28',
   },
   {
     id: 'pay_103',
-    employee_id: 'WNB-EMP-014',
-    staff_name: 'Christian Atangana',
-    department: 'Finance & Treasury',
-    job_title: 'Treasury Officer',
-    base_salary: 750000,
-    transport_allowance: 80000,
-    bonus: 40000,
-    cnps_deduction: 31500,
-    tax_deduction: 52500,
-    net_salary: 786000,
+    employee_id: 'WNB-EMP-007',
+    staff_name: 'Chantal Nguesso',
+    department: 'Human Resources & People Ops',
+    job_title: 'HR & People Operations Lead',
+    base_salary: 950000,
+    transport_allowance: 100000,
+    bonus: 75000,
+    cnps_deduction: 39900,
+    tax_deduction: 66500,
+    net_salary: 1018600,
     payment_status: 'PAID',
     pay_period: 'August 2026',
     payment_date: '2026-08-28',
   },
-  {
-    id: 'pay_104',
-    employee_id: 'WNB-EMP-022',
-    staff_name: 'Marie-Noelle Bikoe',
-    department: 'Legal & Compliance',
-    job_title: 'Compliance Specialist',
-    base_salary: 680000,
-    transport_allowance: 75000,
-    bonus: 30000,
-    cnps_deduction: 28560,
-    tax_deduction: 47600,
-    net_salary: 708840,
-    payment_status: 'PENDING',
-    pay_period: 'August 2026',
-    payment_date: 'Pending',
-  },
 ];
 
 const MOCK_DOCUMENTS_DATA: StaffDocument[] = [
-  { id: 'doc_1', employee_id: 'WNB-EMP-001', staff_name: 'Pauline Mbarga', doc_type: 'Employment Contract', file_name: 'Pauline_Mbarga_Contract_2026.pdf', upload_date: '2026-01-10', verification_status: 'VERIFIED' },
-  { id: 'doc_2', employee_id: 'WNB-EMP-001', staff_name: 'Pauline Mbarga', doc_type: 'CNI ID Card', file_name: 'Pauline_Mbarga_CNI_2026.pdf', upload_date: '2026-01-10', verification_status: 'VERIFIED' },
-  { id: 'doc_3', employee_id: 'WNB-EMP-007', staff_name: 'Chantal Nguesso', doc_type: 'NIU Tax Certificate', file_name: 'Chantal_Nguesso_NIU.pdf', upload_date: '2026-01-15', verification_status: 'VERIFIED' },
-  { id: 'doc_4', employee_id: 'WNB-EMP-014', staff_name: 'Christian Atangana', doc_type: 'Health Clearance', file_name: 'Christian_Atangana_Health.pdf', upload_date: '2026-02-01', verification_status: 'PENDING' },
+  {
+    id: 'doc_201',
+    employee_id: 'WNB-EMP-001',
+    staff_name: 'Pauline Mbarga',
+    doc_type: 'Employment Contract',
+    file_name: 'Pauline_Mbarga_Executive_Contract_2026.pdf',
+    upload_date: '2026-01-15',
+    verification_status: 'VERIFIED',
+  },
+  {
+    id: 'doc_202',
+    employee_id: 'WNB-EMP-014',
+    staff_name: 'Christian Atangana',
+    doc_type: 'CNI ID Card',
+    file_name: 'CNI_Christian_Atangana_109283.pdf',
+    upload_date: '2026-02-01',
+    verification_status: 'VERIFIED',
+  },
 ];
 
 const MOCK_LEAVE_DATA: LeaveRequest[] = [
-  { id: 'lv_1', employee_id: 'WNB-EMP-014', staff_name: 'Christian Atangana', leave_type: 'Annual Leave', start_date: '2026-09-10', end_date: '2026-09-20', days_count: 10, reason: 'Family vacation in Kribi', status: 'PENDING' },
-  { id: 'lv_2', employee_id: 'WNB-EMP-022', staff_name: 'Marie-Noelle Bikoe', leave_type: 'Sick Leave', start_date: '2026-09-01', end_date: '2026-09-03', days_count: 3, reason: 'Medical treatment', status: 'APPROVED' },
+  {
+    id: 'lv_301',
+    employee_id: 'WNB-EMP-038',
+    staff_name: 'Jean-Luc Fotso',
+    leave_type: 'Annual Leave',
+    start_date: '2026-09-10',
+    end_date: '2026-09-24',
+    days_count: 14,
+    reason: 'Annual family vacation leave in Yaounde.',
+    status: 'PENDING',
+  },
 ];
 
 export const HROpsPage: React.FC = () => {
-  const { user, hasPermission, addAuditLog } = useStaffAuth();
+  const {
+    user,
+    hasPermission,
+    addAuditLog,
+    staffMembers,
+    createStaffAccount,
+    updateStaffAccount,
+    deleteStaffAccount,
+  } = useStaffAuth();
 
-  const canViewHR = hasPermission ? (hasPermission('view_hr_ops') || user?.security_clearance_level === 5) : true;
-  const canManagePayroll = hasPermission ? (hasPermission('manage_hr_payroll') || user?.security_clearance_level === 5) : false;
+  const canViewHR = hasPermission('view_hr_ops') || user?.security_clearance_level === 5;
+  const canManagePayroll = hasPermission('manage_hr_payroll') || user?.security_clearance_level === 5;
+  const canManageStaff = hasPermission('manage_staff_crud') || user?.security_clearance_level === 5;
 
-  const [activeTab, setActiveTab] = useState<'payroll' | 'documents' | 'leave'>('payroll');
-  const [payrollList, setPayrollList] = useState<PayrollRecord[]>(MOCK_PAYROLL_DATA);
+  const [activeTab, setActiveTab] = useState<'payroll' | 'documents' | 'leave' | 'staff_directory'>('staff_directory');
+  const [payrollList] = useState<PayrollRecord[]>(MOCK_PAYROLL_DATA);
   const [leaveList, setLeaveList] = useState<LeaveRequest[]>(MOCK_LEAVE_DATA);
 
   // Payslip Modal State
   const [selectedPayslip, setSelectedPayslip] = useState<PayrollRecord | null>(null);
-  const [isPayslipModalOpen, setIsPayslipModalOpen] = useState(false);
 
-  // Toast Notification
+  // Toast Notification State
   const [toastMessage, setToastMessage] = useState('');
 
-  const formatFCFA = (val: number) => {
-    return new Intl.NumberFormat('fr-FR').format(val) + ' FCFA';
-  };
+  // STAFF ACCOUNT CRUD MODALS STATE
+  const [isCreateStaffModalOpen, setIsCreateStaffModalOpen] = useState(false);
+  const [isEditStaffModalOpen, setIsEditStaffModalOpen] = useState(false);
+  const [isDeleteStaffModalOpen, setIsDeleteStaffModalOpen] = useState(false);
+  const [selectedStaff, setSelectedStaff] = useState<StaffUser | null>(null);
 
-  const handleOpenPayslip = (record: PayrollRecord) => {
-    if (!canManagePayroll) {
-      alert('Access Restricted: Only HR Managers or Super Admins can generate official payslips.');
-      return;
-    }
-    setSelectedPayslip(record);
-    setIsPayslipModalOpen(true);
-    addAuditLog({
-      action_code: 'HR_PAYSLIP_VIEW',
-      action_description: `Generated official payslip for ${record.staff_name} (${record.employee_id})`,
-      security_level: 'INFO',
-    });
+  // Form State for Creating Staff Account
+  const [newStaffFullName, setNewStaffFullName] = useState('');
+  const [newStaffEmail, setNewStaffEmail] = useState('');
+  const [newStaffPhone, setNewStaffPhone] = useState('670123456');
+  const [newStaffDepartment, setNewStaffDepartment] = useState('Operations & Logistics');
+  const [newStaffRole, setNewStaffRole] = useState<string>(StaffDepartmentRole.OPS_MANAGER);
+  const [newStaffClearance, setNewStaffClearance] = useState<number>(3);
+
+  // Form State for Editing Staff Account
+  const [editFullName, setEditFullName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [editDepartment, setEditDepartment] = useState('');
+  const [editRole, setEditRole] = useState('');
+  const [editClearance, setEditClearance] = useState<number>(3);
+  const [editStatus, setEditStatus] = useState<string>('active');
+
+  const formatFCFA = (amount: number) => {
+    return new Intl.NumberFormat('fr-CM', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 })
+      .format(amount)
+      .replace('FCFA', 'FCFA');
   };
 
   const handlePrintPayslip = () => {
@@ -199,9 +232,98 @@ export const HROpsPage: React.FC = () => {
     setTimeout(() => setToastMessage(''), 3000);
   };
 
+  // STAFF ACCOUNT CREATION HANDLER
+  const handleCreateStaffSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newStaffFullName.trim() || !newStaffEmail.trim()) return;
+
+    if (!canManageStaff) {
+      alert('Security Policy: Only HR Managers or Super Admins can provision staff accounts.');
+      return;
+    }
+
+    const created = createStaffAccount({
+      full_name: newStaffFullName,
+      email: newStaffEmail,
+      phone: newStaffPhone,
+      department_name: newStaffDepartment,
+      staff_department_role: newStaffRole,
+      security_clearance_level: newStaffClearance,
+    });
+
+    setNewStaffFullName('');
+    setNewStaffEmail('');
+    setIsCreateStaffModalOpen(false);
+    setToastMessage(`Corporate Staff Account for ${created.full_name} (${created.employee_id}) successfully provisioned!`);
+    setTimeout(() => setToastMessage(''), 3500);
+  };
+
+  // STAFF ACCOUNT EDIT HANDLER
+  const handleOpenEditModal = (staff: StaffUser) => {
+    setSelectedStaff(staff);
+    setEditFullName(staff.full_name);
+    setEditEmail(staff.email || '');
+    setEditPhone(staff.phone || '');
+    setEditDepartment(staff.department_name);
+    setEditRole(staff.staff_department_role);
+    setEditClearance(staff.security_clearance_level);
+    setEditStatus(staff.status || 'active');
+    setIsEditStaffModalOpen(true);
+  };
+
+  const handleEditStaffSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedStaff) return;
+
+    if (!canManageStaff) {
+      alert('Security Policy: Only HR Managers or Super Admins can modify staff accounts.');
+      return;
+    }
+
+    updateStaffAccount(selectedStaff.id, {
+      full_name: editFullName,
+      email: editEmail,
+      phone: editPhone,
+      department_name: editDepartment,
+      staff_department_role: editRole,
+      security_clearance_level: editClearance,
+      status: editStatus as any,
+    });
+
+    setIsEditStaffModalOpen(false);
+    setToastMessage(`Staff details for ${editFullName} updated successfully!`);
+    setTimeout(() => setToastMessage(''), 3500);
+  };
+
+  // STAFF ACCOUNT DELETE HANDLER
+  const handleConfirmDeleteStaff = () => {
+    if (!selectedStaff) return;
+
+    if (!canManageStaff) {
+      alert('Security Policy: Only HR Managers or Super Admins can revoke staff accounts.');
+      return;
+    }
+
+    deleteStaffAccount(selectedStaff.id);
+    setIsDeleteStaffModalOpen(false);
+    setToastMessage(`Corporate access revoked and staff account deleted for ${selectedStaff.full_name}!`);
+    setTimeout(() => setToastMessage(''), 3500);
+  };
+
+  const handleToggleStaffStatus = (staff: StaffUser) => {
+    if (!canManageStaff) {
+      alert('Security Policy: Only HR Managers or Super Admins can alter staff account status.');
+      return;
+    }
+    const newStatus = staff.status === 'active' ? 'suspended' : 'active';
+    updateStaffAccount(staff.id, { status: newStatus as any });
+    setToastMessage(`Staff account status for ${staff.full_name} changed to ${newStatus.toUpperCase()}`);
+    setTimeout(() => setToastMessage(''), 3000);
+  };
+
   if (!canViewHR) {
     return (
-      <PageContainer title="HR Operations &amp; Staff Payroll" subtitle="Access Control Restricted">
+      <PageContainer title="HR Operations &amp; Staff Directory" subtitle="Access Control Restricted">
         <div className="p-8 bg-amber-50 dark:bg-amber-950/60 rounded-xl text-amber-900 dark:text-amber-200 text-xs font-semibold flex items-center space-x-4 shadow-2xs">
           <ShieldAlert className="w-8 h-8 text-amber-600 dark:text-amber-400 flex-shrink-0" />
           <div>
@@ -214,6 +336,110 @@ export const HROpsPage: React.FC = () => {
       </PageContainer>
     );
   }
+
+  // DATA TABLE COLUMNS FOR STAFF DIRECTORY
+  const staffDirectoryColumns: Column<StaffUser>[] = [
+    {
+      key: 'full_name',
+      header: 'Staff Member & ID',
+      render: (row) => (
+        <div className="flex items-center space-x-3">
+          <img
+            src={row.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80'}
+            alt={row.full_name}
+            className="w-8 h-8 rounded-full object-cover border border-teal-500 flex-shrink-0"
+          />
+          <div>
+            <div className="font-extrabold text-slate-900 dark:text-slate-100 text-xs">{row.full_name}</div>
+            <div className="font-mono text-[10px] text-teal-600 dark:text-teal-400 font-bold">{row.employee_id}</div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: 'contact',
+      header: 'Corporate Email & Phone',
+      render: (row) => (
+        <div className="space-y-0.5 text-xs">
+          <div className="font-bold text-slate-800 dark:text-slate-200 font-mono">{row.email}</div>
+          <div className="text-[10px] text-slate-400 font-mono">{row.phone}</div>
+        </div>
+      ),
+    },
+    {
+      key: 'department',
+      header: 'Department & Role',
+      render: (row) => (
+        <div className="space-y-0.5">
+          <span className="font-bold text-xs text-slate-800 dark:text-slate-200 block">{row.department_name}</span>
+          <span className="text-[10px] font-mono text-purple-600 dark:text-purple-400 font-extrabold">{row.staff_department_role}</span>
+        </div>
+      ),
+    },
+    {
+      key: 'clearance',
+      header: 'Clearance Level',
+      render: (row) => (
+        <Badge variant={row.security_clearance_level === 5 ? 'purple' : row.security_clearance_level >= 4 ? 'teal' : 'neutral'}>
+          Level {row.security_clearance_level}
+        </Badge>
+      ),
+    },
+    {
+      key: 'status',
+      header: 'Account Status',
+      render: (row) => (
+        <Badge variant={row.status === 'active' ? 'success' : 'error'}>
+          {row.status === 'active' ? '🟢 ACTIVE' : '🔴 SUSPENDED'}
+        </Badge>
+      ),
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      render: (row) => (
+        <div className="flex items-center space-x-1.5">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!canManageStaff}
+            onClick={() => handleOpenEditModal(row)}
+            title="Edit Staff Info"
+          >
+            <Edit className="w-3.5 h-3.5" />
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!canManageStaff}
+            onClick={() => handleToggleStaffStatus(row)}
+            title={row.status === 'active' ? 'Suspend Account' : 'Activate Account'}
+          >
+            {row.status === 'active' ? (
+              <UserX className="w-3.5 h-3.5 text-amber-600" />
+            ) : (
+              <UserCheck className="w-3.5 h-3.5 text-emerald-600" />
+            )}
+          </Button>
+
+          {user?.security_clearance_level === 5 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setSelectedStaff(row);
+                setIsDeleteStaffModalOpen(true);
+              }}
+              title="Revoke & Delete Staff Account"
+            >
+              <Trash2 className="w-3.5 h-3.5 text-red-600" />
+            </Button>
+          )}
+        </div>
+      ),
+    },
+  ];
 
   const payrollColumns: Column<PayrollRecord>[] = [
     {
@@ -260,24 +486,10 @@ export const HROpsPage: React.FC = () => {
       ),
     },
     {
-      key: 'payment_status',
-      header: 'Status',
-      render: (row) => (
-        <Badge variant={row.payment_status === 'PAID' ? 'success' : 'warning'} size="sm">
-          {row.payment_status}
-        </Badge>
-      ),
-    },
-    {
       key: 'actions',
       header: 'Action',
       render: (row) => (
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={!canManagePayroll}
-          onClick={() => handleOpenPayslip(row)}
-        >
+        <Button variant="secondary" size="sm" onClick={() => setSelectedPayslip(row)}>
           <Printer className="w-3.5 h-3.5 mr-1" />
           Print Payslip
         </Button>
@@ -287,8 +499,8 @@ export const HROpsPage: React.FC = () => {
 
   return (
     <PageContainer
-      title="HR Operations &amp; Staff Payroll"
-      subtitle="Manage corporate staff compliance documents, monthly salary ledgers, leave requests &amp; print official payslips"
+      title="Human Resources &amp; Corporate Staff Operations"
+      subtitle="Staff Account Roster, Provisioning CRUD, Monthly Payroll &amp; CNPS Tax Ledger"
     >
       {/* TOAST NOTIFICATION */}
       {toastMessage && (
@@ -298,27 +510,27 @@ export const HROpsPage: React.FC = () => {
         </div>
       )}
 
-      {/* TOP HR OVERVIEW KPI STAT CARDS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      {/* Top Stat Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
         <StatCard
-          title="Total Active Staff"
-          value="24 Personnel"
-          change="+2 this month"
+          title="Total Staff Members"
+          value={`${staffMembers.length} Staff`}
+          change="Active Roster"
           changeType="positive"
           icon={<Users className="w-5 h-5 text-teal-600 dark:text-teal-400" />}
-          description="Across 6 departments"
+          description="Provisioned company accounts"
         />
         <StatCard
-          title="Monthly Payroll Yield"
-          value="14.85M FCFA"
-          change="Disbursed"
-          changeType="positive"
+          title="Monthly Gross Payroll"
+          value={formatFCFA(3363400)}
+          change="August 2026"
+          changeType="neutral"
           icon={<Wallet className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />}
-          description="August 2026 Period"
+          description="Salary + CNPS + Tax"
         />
         <StatCard
           title="Pending Leave Queue"
-          value="3 Requests"
+          value="1 Request"
           change="Requires Action"
           changeType="warning"
           icon={<Calendar className="w-5 h-5 text-amber-600 dark:text-amber-400" />}
@@ -326,7 +538,7 @@ export const HROpsPage: React.FC = () => {
         />
         <StatCard
           title="Verified Contracts"
-          value="98.4%"
+          value="100%"
           change="Compliant"
           changeType="positive"
           icon={<FileText className="w-5 h-5 text-purple-600 dark:text-purple-400" />}
@@ -335,7 +547,19 @@ export const HROpsPage: React.FC = () => {
       </div>
 
       {/* TAB NAVIGATION BAR */}
-      <div className="flex items-center space-x-3 mb-6">
+      <div className="flex flex-wrap items-center gap-3 mb-6">
+        <button
+          onClick={() => setActiveTab('staff_directory')}
+          className={`px-4 py-2.5 rounded-lg text-xs font-extrabold flex items-center space-x-2 transition-all ${
+            activeTab === 'staff_directory'
+              ? 'bg-teal-600 text-white shadow-2xs'
+              : 'bg-white dark:bg-[#121824] text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
+          }`}
+        >
+          <Users className="w-4 h-4" />
+          <span>Staff Directory &amp; Roster ({staffMembers.length})</span>
+        </button>
+
         <button
           onClick={() => setActiveTab('payroll')}
           className={`px-4 py-2.5 rounded-lg text-xs font-extrabold flex items-center space-x-2 transition-all ${
@@ -345,7 +569,7 @@ export const HROpsPage: React.FC = () => {
           }`}
         >
           <Wallet className="w-4 h-4" />
-          <span>Payroll &amp; Printable Payslips</span>
+          <span>Payroll &amp; Payslips</span>
         </button>
 
         <button
@@ -372,6 +596,35 @@ export const HROpsPage: React.FC = () => {
           <span>Leave Requests ({leaveList.length})</span>
         </button>
       </div>
+
+      {/* TAB 0: STAFF DIRECTORY & PROVISIONING (CRUD ENGINE) */}
+      {activeTab === 'staff_directory' && (
+        <Card className="p-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
+            <div>
+              <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100 font-heading">
+                Corporate Staff Roster &amp; Account Provisioning
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                Create corporate accounts with email, phone, security clearance, and dual OTP/Password login.
+              </p>
+            </div>
+            {canManageStaff && (
+              <Button variant="primary" size="sm" onClick={() => setIsCreateStaffModalOpen(true)}>
+                <UserPlus className="w-4 h-4 mr-1.5" />
+                Provision New Staff Account
+              </Button>
+            )}
+          </div>
+
+          <DataTable
+            data={staffMembers}
+            columns={staffDirectoryColumns}
+            searchable={true}
+            searchPlaceholder="Search staff member by name, corporate email, phone, employee ID..."
+          />
+        </Card>
+      )}
 
       {/* TAB 1: PAYROLL & PRINTABLE PAYSLIPS */}
       {activeTab === 'payroll' && (
@@ -400,98 +653,58 @@ export const HROpsPage: React.FC = () => {
         </Card>
       )}
 
-      {/* TAB 2: STAFF DOCUMENTS & COMPLIANCE */}
+      {/* TAB 2: STAFF DOCUMENTS VAULT */}
       {activeTab === 'documents' && (
         <Card className="p-6">
-          <div className="flex items-center justify-between pb-4 mb-6">
+          <div className="flex items-center justify-between mb-6 pb-4">
             <div>
               <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100 font-heading">
-                Staff Employment &amp; Verification Documents
+                Staff Document Vault &amp; Legal Contracts
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                Contracts, CNI Copies, NIU Tax Certificates, and Medical clearances
+                Verified CNI Cards, Employment Contracts &amp; NIU Tax Certificates
               </p>
             </div>
-            <Button variant="outline" disabled={!canManagePayroll} onClick={() => alert('Document upload modal opened.')}>
-              <Upload className="w-4 h-4 mr-1.5" />
-              Upload New Staff Document
-            </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-3">
             {MOCK_DOCUMENTS_DATA.map((doc) => (
-              <div
-                key={doc.id}
-                className="p-4 rounded-lg bg-slate-50 dark:bg-slate-800/60 flex items-center justify-between"
-              >
-                <div className="space-y-1">
-                  <div className="flex items-center space-x-2">
-                    <FileText className="w-4 h-4 text-teal-600 dark:text-teal-400" />
-                    <span className="font-extrabold text-slate-900 dark:text-slate-100 text-xs">{doc.staff_name}</span>
-                    <span className="font-mono text-[10px] text-slate-400 font-bold">{doc.employee_id}</span>
+              <div key={doc.id} className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <FileText className="w-6 h-6 text-teal-600 dark:text-teal-400" />
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100">{doc.doc_type} — {doc.staff_name}</h4>
+                    <p className="text-[10px] text-slate-400 font-mono">{doc.file_name} • Uploaded {doc.upload_date}</p>
                   </div>
-                  <p className="text-xs text-slate-700 dark:text-slate-300 font-semibold">{doc.doc_type}</p>
-                  <p className="text-[11px] text-slate-400 font-mono">{doc.file_name} • Uploaded {doc.upload_date}</p>
                 </div>
-
-                <div className="flex items-center space-x-2">
-                  <Badge variant={doc.verification_status === 'VERIFIED' ? 'success' : 'warning'} size="sm">
-                    {doc.verification_status}
-                  </Badge>
-                  <Button variant="ghost" size="sm" onClick={() => alert(`Downloading ${doc.file_name}...`)}>
-                    <Download className="w-4 h-4" />
-                  </Button>
-                </div>
+                <Badge variant="success">VERIFIED</Badge>
               </div>
             ))}
           </div>
         </Card>
       )}
 
-      {/* TAB 3: LEAVE REQUESTS */}
+      {/* TAB 3: LEAVE QUEUE */}
       {activeTab === 'leave' && (
         <Card className="p-6">
-          <div className="pb-4 mb-6">
-            <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100 font-heading">
-              Staff Time-off &amp; Leave Approval Queue
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-              Review annual leave, sick leave, and emergency absence requests
-            </p>
-          </div>
-
-          <div className="space-y-3">
+          <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100 font-heading mb-4">
+            Staff Leave Requests &amp; Approval Queue
+          </h3>
+          <div className="space-y-4">
             {leaveList.map((req) => (
-              <div
-                key={req.id}
-                className="p-4 rounded-lg bg-slate-50 dark:bg-slate-800/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
-              >
-                <div className="space-y-1">
-                  <div className="flex items-center space-x-2">
-                    <span className="font-extrabold text-slate-900 dark:text-slate-100 text-xs">{req.staff_name}</span>
-                    <span className="font-mono text-[10px] text-teal-600 dark:text-teal-400 font-bold">{req.employee_id}</span>
-                    <Badge variant="teal" size="sm">{req.leave_type}</Badge>
-                  </div>
-                  <p className="text-xs text-slate-600 dark:text-slate-300 font-medium">
-                    Duration: <strong className="font-mono">{req.start_date}</strong> to <strong className="font-mono">{req.end_date}</strong> ({req.days_count} days)
-                  </p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Reason: "{req.reason}"</p>
+              <div key={req.id} className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-bold text-slate-900 dark:text-slate-100 block">{req.staff_name} ({req.leave_type})</span>
+                  <span className="text-[10px] text-slate-500 font-medium">{req.start_date} to {req.end_date} ({req.days_count} Days)</span>
+                  <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 font-medium">{req.reason}</p>
                 </div>
-
                 <div className="flex items-center space-x-2">
-                  <Badge variant={req.status === 'APPROVED' ? 'success' : 'warning'} size="sm">
-                    {req.status}
-                  </Badge>
-                  {req.status === 'PENDING' && (
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      disabled={!canManagePayroll}
-                      onClick={() => handleApproveLeave(req.id, req.staff_name)}
-                    >
-                      <Check className="w-3.5 h-3.5 mr-1" />
+                  {req.status === 'PENDING' ? (
+                    <Button variant="primary" size="sm" onClick={() => handleApproveLeave(req.id, req.staff_name)}>
                       Approve Leave
                     </Button>
+                  ) : (
+                    <Badge variant="success">APPROVED</Badge>
                   )}
                 </div>
               </div>
@@ -500,99 +713,285 @@ export const HROpsPage: React.FC = () => {
         </Card>
       )}
 
-      {/* OFFICIAL PRINTABLE PAYSLIP MODAL */}
+      {/* MODAL 1: PROVISION NEW STAFF ACCOUNT */}
       <Modal
-        isOpen={isPayslipModalOpen}
-        onClose={() => setIsPayslipModalOpen(false)}
-        title="Official Staff Salary Payslip"
+        isOpen={isCreateStaffModalOpen}
+        onClose={() => setIsCreateStaffModalOpen(false)}
+        title="Provision New Corporate Staff Account"
+      >
+        <form onSubmit={handleCreateStaffSubmit} className="space-y-4 text-xs font-semibold">
+          <div>
+            <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">Staff Full Name *</label>
+            <input
+              type="text"
+              required
+              value={newStaffFullName}
+              onChange={(e) => setNewStaffFullName(e.target.value)}
+              placeholder="e.g. Jean-Luc Fotso"
+              className="w-full p-3 bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-slate-900 dark:text-slate-100 font-bold focus:ring-2 focus:ring-teal-500 focus:outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">Corporate Email Address *</label>
+            <input
+              type="email"
+              required
+              value={newStaffEmail}
+              onChange={(e) => setNewStaffEmail(e.target.value)}
+              placeholder="jeanluc.fotso@wunabuy.com"
+              className="w-full p-3 bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-slate-900 dark:text-slate-100 font-bold focus:ring-2 focus:ring-teal-500 focus:outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">Employee Phone Number (+237) *</label>
+            <input
+              type="text"
+              required
+              value={newStaffPhone}
+              onChange={(e) => setNewStaffPhone(e.target.value)}
+              placeholder="670123456"
+              className="w-full p-3 bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-slate-900 dark:text-slate-100 font-bold focus:ring-2 focus:ring-teal-500 focus:outline-none font-mono"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">Department</label>
+              <select
+                value={newStaffDepartment}
+                onChange={(e) => setNewStaffDepartment(e.target.value)}
+                className="w-full p-3 bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-slate-900 dark:text-slate-100 font-bold focus:ring-2 focus:ring-teal-500 focus:outline-none"
+              >
+                <option value="Executive Management">Executive Management</option>
+                <option value="Human Resources & People Ops">Human Resources &amp; People Ops</option>
+                <option value="Finance & Treasury">Finance &amp; Treasury</option>
+                <option value="Legal & Risk Verification">Legal &amp; Risk Verification</option>
+                <option value="Logistics & Fleet Ops">Logistics &amp; Fleet Ops</option>
+                <option value="Customer Escrow Support">Customer Escrow Support</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">Staff Role Code</label>
+              <select
+                value={newStaffRole}
+                onChange={(e) => setNewStaffRole(e.target.value)}
+                className="w-full p-3 bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-slate-900 dark:text-slate-100 font-bold focus:ring-2 focus:ring-teal-500 focus:outline-none"
+              >
+                <option value={StaffDepartmentRole.SUPER_ADMIN}>SUPER_ADMIN (Level 5)</option>
+                <option value={StaffDepartmentRole.HR_MANAGER}>HR_MANAGER (Level 4)</option>
+                <option value={StaffDepartmentRole.FINANCE_OFFICER}>FINANCE_OFFICER (Level 4)</option>
+                <option value={StaffDepartmentRole.COMPLIANCE_OFFICER}>COMPLIANCE_OFFICER (Level 4)</option>
+                <option value={StaffDepartmentRole.OPS_MANAGER}>OPS_MANAGER (Level 3)</option>
+                <option value={StaffDepartmentRole.SUPPORT_AGENT}>SUPPORT_AGENT (Level 2)</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">Security Clearance Level (1-5)</label>
+            <select
+              value={newStaffClearance}
+              onChange={(e) => setNewStaffClearance(Number(e.target.value))}
+              className="w-full p-3 bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-slate-900 dark:text-slate-100 font-bold focus:ring-2 focus:ring-teal-500 focus:outline-none font-mono"
+            >
+              <option value={5}>Level 5 (Super Admin Executive)</option>
+              <option value={4}>Level 4 (Department Manager / HR / Finance)</option>
+              <option value={3}>Level 3 (Operations Supervisor)</option>
+              <option value={2}>Level 2 (Support Specialist)</option>
+              <option value={1}>Level 1 (Auditor Read-Only)</option>
+            </select>
+          </div>
+
+          <div className="pt-4 flex items-center justify-end space-x-3">
+            <Button type="button" variant="outline" size="sm" onClick={() => setIsCreateStaffModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" variant="primary" size="sm">
+              <UserPlus className="w-4 h-4 mr-1.5" />
+              Provision Staff Account
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* MODAL 2: EDIT STAFF ACCOUNT */}
+      <Modal
+        isOpen={isEditStaffModalOpen}
+        onClose={() => setIsEditStaffModalOpen(false)}
+        title={`Edit Staff Account — ${selectedStaff?.full_name}`}
+      >
+        <form onSubmit={handleEditStaffSubmit} className="space-y-4 text-xs font-semibold">
+          <div>
+            <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">Full Name *</label>
+            <input
+              type="text"
+              required
+              value={editFullName}
+              onChange={(e) => setEditFullName(e.target.value)}
+              className="w-full p-3 bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-slate-900 dark:text-slate-100 font-bold focus:ring-2 focus:ring-teal-500 focus:outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">Corporate Email *</label>
+            <input
+              type="email"
+              required
+              value={editEmail}
+              onChange={(e) => setEditEmail(e.target.value)}
+              className="w-full p-3 bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-slate-900 dark:text-slate-100 font-bold focus:ring-2 focus:ring-teal-500 focus:outline-none font-mono"
+            />
+          </div>
+
+          <div>
+            <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">Phone Number *</label>
+            <input
+              type="text"
+              required
+              value={editPhone}
+              onChange={(e) => setEditPhone(e.target.value)}
+              className="w-full p-3 bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-slate-900 dark:text-slate-100 font-bold focus:ring-2 focus:ring-teal-500 focus:outline-none font-mono"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">Account Status</label>
+              <select
+                value={editStatus}
+                onChange={(e) => setEditStatus(e.target.value)}
+                className="w-full p-3 bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-slate-900 dark:text-slate-100 font-bold focus:ring-2 focus:ring-teal-500 focus:outline-none font-mono"
+              >
+                <option value="active">ACTIVE 🟢</option>
+                <option value="suspended">SUSPENDED 🔴</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">Clearance Level</label>
+              <select
+                value={editClearance}
+                onChange={(e) => setEditClearance(Number(e.target.value))}
+                className="w-full p-3 bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-slate-900 dark:text-slate-100 font-bold focus:ring-2 focus:ring-teal-500 focus:outline-none font-mono"
+              >
+                <option value={5}>Level 5 (Super Admin)</option>
+                <option value={4}>Level 4 (Department Lead)</option>
+                <option value={3}>Level 3 (Supervisor)</option>
+                <option value={2}>Level 2 (Support)</option>
+                <option value={1}>Level 1 (Auditor)</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="pt-4 flex items-center justify-end space-x-3">
+            <Button type="button" variant="outline" size="sm" onClick={() => setIsEditStaffModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" variant="primary" size="sm">
+              Save Account Changes
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* MODAL 3: DELETE / REVOKE STAFF ACCOUNT CONFIRMATION */}
+      <Modal
+        isOpen={isDeleteStaffModalOpen}
+        onClose={() => setIsDeleteStaffModalOpen(false)}
+        title="Revoke Corporate Staff Account"
+      >
+        <div className="space-y-4 text-xs font-semibold">
+          <div className="p-4 bg-red-50 dark:bg-red-950/60 rounded-xl text-red-900 dark:text-red-200 flex items-start space-x-3">
+            <ShieldAlert className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <span className="font-extrabold uppercase block font-heading">CRITICAL ACCOUNT DELETION</span>
+              <p className="text-[11px] text-red-800 dark:text-red-300 font-medium">
+                Are you sure you want to revoke access and delete the corporate staff account for{' '}
+                <strong className="font-extrabold text-red-950 dark:text-red-100">{selectedStaff?.full_name}</strong> ({selectedStaff?.employee_id})?
+                This action is logged in the security audit ledger.
+              </p>
+            </div>
+          </div>
+
+          <div className="pt-4 flex items-center justify-end space-x-3">
+            <Button type="button" variant="outline" size="sm" onClick={() => setIsDeleteStaffModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="button" variant="danger" size="sm" onClick={handleConfirmDeleteStaff}>
+              <Trash2 className="w-4 h-4 mr-1.5" />
+              Revoke &amp; Delete Account
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* PRINTABLE PAYSLIP MODAL */}
+      <Modal
+        isOpen={Boolean(selectedPayslip)}
+        onClose={() => setSelectedPayslip(null)}
+        title={`Official Staff Payslip — ${selectedPayslip?.pay_period}`}
       >
         {selectedPayslip && (
-          <div className="space-y-6 text-slate-900 dark:text-slate-100 text-xs">
-            {/* OFFICIAL PAYSLIP HEADER */}
-            <div className="p-4 bg-teal-50 dark:bg-teal-950/60 rounded-lg flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-lg bg-teal-600 text-white font-extrabold text-xl flex items-center justify-center font-heading">
-                  W
-                </div>
-                <div>
-                  <h4 className="font-extrabold text-sm font-heading">WUNABUY SARL — HR &amp; PAYROLL</h4>
-                  <p className="text-[10px] font-mono text-teal-800 dark:text-teal-300">CNPS Reg: 389201-X • Douala, Cameroon</p>
-                </div>
+          <div className="space-y-6 text-slate-900 text-xs">
+            <div className="flex items-center justify-between border-b pb-4">
+              <div>
+                <h2 className="text-lg font-black font-heading text-teal-800">WUNABUY CAMEROON SARL</h2>
+                <p className="text-[10px] text-slate-500 font-mono">Akwa Boulevard, Street 104, Douala • NIU: M082618940291X</p>
               </div>
-              <div className="text-right font-mono text-[10px]">
-                <span className="font-extrabold text-slate-900 dark:text-slate-100 block">PAY PERIOD</span>
-                <span className="text-teal-700 dark:text-teal-400 font-bold">{selectedPayslip.pay_period}</span>
+              <div className="text-right font-mono">
+                <span className="font-bold text-xs block text-slate-800">PAYSLIP #{selectedPayslip.id.toUpperCase()}</span>
+                <span className="text-[10px] text-slate-500">Issued: {selectedPayslip.payment_date}</span>
               </div>
             </div>
 
-            {/* EMPLOYEE METADATA GRID */}
-            <div className="grid grid-cols-2 gap-4 p-3 bg-slate-50 dark:bg-slate-800/60 rounded-lg font-medium">
+            <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl font-medium">
               <div>
-                <span className="text-slate-400 text-[10px] block font-mono">STAFF MEMBER</span>
-                <span className="font-extrabold text-xs">{selectedPayslip.staff_name}</span>
+                <span className="text-[10px] text-slate-400 font-bold block uppercase">Employee Name</span>
+                <span className="font-bold text-sm text-slate-900">{selectedPayslip.staff_name}</span>
+                <span className="text-[11px] text-teal-700 font-mono block">{selectedPayslip.employee_id}</span>
               </div>
               <div>
-                <span className="text-slate-400 text-[10px] block font-mono">EMPLOYEE ID</span>
-                <span className="font-mono font-bold text-xs">{selectedPayslip.employee_id}</span>
-              </div>
-              <div>
-                <span className="text-slate-400 text-[10px] block font-mono">DEPARTMENT</span>
-                <span>{selectedPayslip.department}</span>
-              </div>
-              <div>
-                <span className="text-slate-400 text-[10px] block font-mono">JOB TITLE</span>
-                <span>{selectedPayslip.job_title}</span>
+                <span className="text-[10px] text-slate-400 font-bold block uppercase">Department &amp; Title</span>
+                <span className="font-bold text-xs text-slate-900">{selectedPayslip.job_title}</span>
+                <span className="text-[11px] text-slate-600 block">{selectedPayslip.department}</span>
               </div>
             </div>
 
-            {/* ITEMIZED SALARY BREAKDOWN TABLE */}
-            <div className="space-y-2">
-              <h5 className="font-extrabold uppercase font-mono text-[10px] text-slate-400">SALARY EARNINGS &amp; ALLOWANCES</h5>
-              <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-lg space-y-2">
-                <div className="flex justify-between">
-                  <span>Basic Monthly Salary</span>
-                  <span className="font-mono font-bold">{formatFCFA(selectedPayslip.base_salary)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Transport Allowance</span>
-                  <span className="font-mono font-bold">{formatFCFA(selectedPayslip.transport_allowance)}</span>
-                </div>
-                {selectedPayslip.bonus > 0 && (
-                  <div className="flex justify-between text-teal-600 dark:text-teal-400 font-bold">
-                    <span>Performance Incentive Bonus</span>
-                    <span className="font-mono">+{formatFCFA(selectedPayslip.bonus)}</span>
-                  </div>
-                )}
+            <div className="space-y-2 border-t pt-4">
+              <div className="flex justify-between font-bold">
+                <span>Base Gross Salary</span>
+                <span className="font-mono">{formatFCFA(selectedPayslip.base_salary)}</span>
               </div>
-
-              <h5 className="font-extrabold uppercase font-mono text-[10px] text-slate-400 pt-2">STATUTORY DEDUCTIONS</h5>
-              <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-lg space-y-2 text-red-600 dark:text-red-400">
-                <div className="flex justify-between">
-                  <span>CNPS Social Security (4.2%)</span>
-                  <span className="font-mono font-bold">-{formatFCFA(selectedPayslip.cnps_deduction)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>IRPP Income Tax</span>
-                  <span className="font-mono font-bold">-{formatFCFA(selectedPayslip.tax_deduction)}</span>
-                </div>
+              <div className="flex justify-between text-slate-600">
+                <span>Transport Allowance</span>
+                <span className="font-mono">{formatFCFA(selectedPayslip.transport_allowance)}</span>
+              </div>
+              <div className="flex justify-between text-slate-600">
+                <span>Performance Bonus</span>
+                <span className="font-mono">{formatFCFA(selectedPayslip.bonus)}</span>
+              </div>
+              <div className="flex justify-between text-red-600 font-medium">
+                <span>CNPS Social Security (4.2%)</span>
+                <span className="font-mono">-{formatFCFA(selectedPayslip.cnps_deduction)}</span>
+              </div>
+              <div className="flex justify-between text-red-600 font-medium">
+                <span>IRPP Income Tax Deduction</span>
+                <span className="font-mono">-{formatFCFA(selectedPayslip.tax_deduction)}</span>
+              </div>
+              <div className="flex justify-between text-sm font-extrabold border-t pt-3 text-emerald-800 font-mono">
+                <span>NET PAYABLE DISBURSED</span>
+                <span>{formatFCFA(selectedPayslip.net_salary)}</span>
               </div>
             </div>
 
-            {/* NET SALARY TOTAL */}
-            <div className="p-4 bg-emerald-50 dark:bg-emerald-950/60 rounded-lg flex items-center justify-between">
-              <div>
-                <span className="text-[10px] font-mono font-bold text-emerald-800 dark:text-emerald-300 block uppercase">NET PAYABLE SALARY</span>
-                <span className="text-xl font-extrabold font-mono text-emerald-700 dark:text-emerald-300">{formatFCFA(selectedPayslip.net_salary)}</span>
-              </div>
-              <Badge variant="success" size="md">DISBURSED VIA MOMO</Badge>
-            </div>
-
-            {/* ACTION BUTTONS: PRINT & CLOSE */}
             <div className="pt-4 flex items-center justify-end space-x-3">
-              <Button variant="outline" size="sm" onClick={() => setIsPayslipModalOpen(false)}>
+              <Button type="button" variant="outline" size="sm" onClick={() => setSelectedPayslip(null)}>
                 Close
               </Button>
-              <Button variant="primary" size="sm" onClick={handlePrintPayslip}>
+              <Button type="button" variant="primary" size="sm" onClick={handlePrintPayslip}>
                 <Printer className="w-4 h-4 mr-1.5" />
                 Print Payslip (PDF)
               </Button>

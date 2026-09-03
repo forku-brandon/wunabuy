@@ -33,6 +33,7 @@ const ALL_SYSTEM_PERMISSIONS: { key: StaffPermission; label: string }[] = [
   { key: 'manage_marketing', label: 'Manage Marketing & Banners' },
   { key: 'manage_settings', label: 'Manage System Settings' },
   { key: 'manage_profile_crud', label: 'Manage Staff Profile CRUD (Admin Only)' },
+  { key: 'manage_staff_crud', label: 'Create, Edit & Revoke Staff Accounts' },
   { key: 'view_hr_ops', label: 'View HR & Staff Ops' },
   { key: 'manage_hr_payroll', label: 'Manage HR Payroll & Printable Payslips' },
   { key: 'assign_staff_tasks', label: 'Assign & Dispatch Staff Work Directives' },
