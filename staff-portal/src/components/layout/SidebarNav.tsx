@@ -64,11 +64,10 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
       <div className="h-20 px-6 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center space-x-3">
           <img
-            src="/wunabuy-logo.jpg"
-            alt="Wunabuy Logo"
-            className="w-9 h-9 rounded-xl object-cover shadow-2xs border border-teal-500/30"
+            src="/wunabuy-icon.png"
+            alt="Wunabuy Mobile Icon Logo"
+            className="w-10 h-10 rounded-xl object-contain shadow-2xs border border-teal-500/20 bg-white p-0.5"
             onError={(e) => {
-              // Fallback if image fails to render
               (e.target as HTMLElement).style.display = 'none';
             }}
           />

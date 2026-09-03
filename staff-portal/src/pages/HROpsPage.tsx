@@ -957,9 +957,9 @@ export const HROpsPage: React.FC = () => {
             <div className="flex items-center justify-between border-b pb-4">
               <div className="flex items-center space-x-3">
                 <img
-                  src="/wunabuy-logo.jpg"
-                  alt="Wunabuy Logo"
-                  className="w-12 h-12 rounded-xl object-cover border border-teal-600 shadow-2xs"
+                  src="/wunabuy-icon.png"
+                  alt="Wunabuy Icon Logo"
+                  className="w-12 h-12 rounded-xl object-contain border border-teal-600 shadow-2xs bg-white p-1"
                 />
                 <div>
                   <h2 className="text-lg font-black font-heading text-teal-800">WUNABUY CAMEROON SARL</h2>

@@ -131,9 +131,9 @@ export const AuthPage: React.FC = () => {
         {/* Brand Header */}
         <div className="text-center mb-6">
           <img
-            src="/wunabuy-logo.jpg"
-            alt="Wunabuy Official Logo"
-            className="w-16 h-16 rounded-2xl object-cover mx-auto shadow-xl mb-3 border-2 border-teal-500"
+            src="/wunabuy-icon.png"
+            alt="Wunabuy Mobile Icon Logo"
+            className="w-20 h-20 rounded-2xl object-contain mx-auto shadow-xl mb-3 border-2 border-teal-500 bg-white p-1"
           />
           <h2 className="text-2xl font-extrabold text-slate-900 font-heading">Wunabuy Staff Portal</h2>
           <p className="text-xs text-slate-500 mt-1 font-medium">
