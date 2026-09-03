@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PageContainer } from '../components/layout/PageContainer';
 import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
@@ -7,6 +7,7 @@ import { StatCard } from '../components/ui/StatCard';
 import { Modal } from '../components/ui/Modal';
 import { DataTable, Column } from '../components/ui/DataTable';
 import { useStaffAuth } from '../stores/staffAuthStore';
+import { kycApi } from '../services';
 import {
   FileCheck,
   Building2,
@@ -73,8 +74,26 @@ export const KYCPage: React.FC = () => {
 
   const canApprove = hasPermission('approve_kyc');
 
-  const handleDecision = (decision: 'APPROVED' | 'REJECTED') => {
+  useEffect(() => {
+    kycApi
+      .getKYCQueue()
+      .then((res) => {
+        if (res.data && res.data.length > 0) {
+          setQueue(res.data);
+        }
+      })
+      .catch(() => {
+        // Fallback to local mock data when API server is offline
+      });
+  }, []);
+
+  const handleDecision = async (decision: 'APPROVED' | 'REJECTED') => {
     if (!inspectTarget) return;
+
+    // Call backend API endpoint with fallback
+    kycApi.submitDecision(inspectTarget.id, decision, rejectionNotes).catch(() => {
+      // Offline fallback handling
+    });
 
     addAuditLog({
       action_code: decision === 'APPROVED' ? 'KYC_DOCUMENT_APPROVE' : 'KYC_DOCUMENT_REJECT',

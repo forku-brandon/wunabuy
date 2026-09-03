@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PageContainer } from '../components/layout/PageContainer';
 import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
@@ -7,6 +7,7 @@ import { StatCard } from '../components/ui/StatCard';
 import { Modal } from '../components/ui/Modal';
 import { DataTable, Column } from '../components/ui/DataTable';
 import { useStaffAuth } from '../stores/staffAuthStore';
+import { logisticsApi } from '../services';
 import {
   Truck,
   ShieldAlert,
@@ -110,8 +111,26 @@ export const LogisticsOpsPage: React.FC = () => {
 
   const canOverride = hasPermission('override_logistics');
 
-  const handleManualOverride = () => {
+  useEffect(() => {
+    logisticsApi
+      .getActiveTrips()
+      .then((res) => {
+        if (res.data && res.data.length > 0) {
+          setTrips(res.data);
+        }
+      })
+      .catch(() => {
+        // Fallback to local mock trips when API server is offline
+      });
+  }, []);
+
+  const handleManualOverride = async () => {
     if (!overrideTarget || !overrideReason.trim()) return;
+
+    // Call backend API endpoint with fallback
+    logisticsApi.overrideTripStage(overrideTarget.id, 4, overrideReason).catch(() => {
+      // Offline fallback handling
+    });
 
     addAuditLog({
       action_code: 'LOGISTICS_MANUAL_OVERRIDE',

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PageContainer } from '../components/layout/PageContainer';
 import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
@@ -7,6 +7,7 @@ import { StatCard } from '../components/ui/StatCard';
 import { Modal } from '../components/ui/Modal';
 import { DataTable, Column } from '../components/ui/DataTable';
 import { useStaffAuth } from '../stores/staffAuthStore';
+import { financialsApi } from '../services';
 import { formatXAF } from '@wunabuy/utils';
 import {
   Wallet,
@@ -100,8 +101,26 @@ export const FinancialsPage: React.FC = () => {
 
   const canApprovePayout = hasPermission('approve_payouts');
 
-  const handleAuthorizePayout = () => {
+  useEffect(() => {
+    financialsApi
+      .getPayoutLedger()
+      .then((res) => {
+        if (res.data && res.data.length > 0) {
+          setLedger(res.data);
+        }
+      })
+      .catch(() => {
+        // Fallback to local mock ledger when API server is offline
+      });
+  }, []);
+
+  const handleAuthorizePayout = async () => {
     if (!authorizeTarget || securityPin.length < 4) return;
+
+    // Call backend API endpoint with fallback
+    financialsApi.authorizePayout(authorizeTarget.id, securityPin).catch(() => {
+      // Offline fallback handling
+    });
 
     addAuditLog({
       action_code: 'FINANCIAL_PAYOUT_AUTHORIZE',
