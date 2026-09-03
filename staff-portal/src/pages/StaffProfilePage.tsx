@@ -15,12 +15,16 @@ import {
   Key,
   Trash2,
   Upload,
+  ShieldAlert,
 } from 'lucide-react';
 
 export const StaffProfilePage: React.FC = () => {
   const { user, hasPermission, addAuditLog } = useStaffAuth();
 
   const [activeSubTab, setActiveSubTab] = useState<'profile' | 'password' | 'notifications' | 'verification'>('profile');
+
+  // STRICT ADMIN PERMISSION GUARD FOR PROFILE CRUD
+  const canEditProfile = hasPermission('manage_profile_crud') || user?.security_clearance_level === 5;
 
   // Form State matching Reference FinTech UI
   const initialFirstName = user?.full_name ? user.full_name.split(' ')[0] : 'Pauline';
@@ -50,6 +54,10 @@ export const StaffProfilePage: React.FC = () => {
 
   const handleSaveChanges = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canEditProfile) {
+      alert('Security Policy: Only Level 5 Administrators or accounts with "manage_profile_crud" permission can alter staff profiles.');
+      return;
+    }
     addAuditLog({
       action_code: 'PROFILE_SETTINGS_UPDATE',
       action_description: `Updated profile account settings for ${firstName} ${lastName}`,
@@ -87,6 +95,22 @@ export const StaffProfilePage: React.FC = () => {
         <div className="mb-6 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 text-xs font-bold flex items-center space-x-2 animate-fade-in shadow-xs">
           <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
           <span>{successMessage}</span>
+        </div>
+      )}
+
+      {/* STRICT ADMIN PERMISSION SECURITY BANNER FOR NON-ADMINS */}
+      {!canEditProfile && (
+        <div className="mb-6 p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs font-semibold flex items-center justify-between shadow-xs">
+          <div className="flex items-center space-x-3">
+            <ShieldAlert className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+            <div>
+              <span className="font-extrabold uppercase block font-heading">READ-ONLY PROFILE VIEW</span>
+              <p className="text-[11px] text-amber-700 dark:text-amber-300 font-medium">
+                Only Super Administrators (Level 5) or roles granted <code className="font-mono font-bold">manage_profile_crud</code> permission can modify staff profiles.
+              </p>
+            </div>
+          </div>
+          <Badge variant="amber">ADMIN CONTROL ENFORCED</Badge>
         </div>
       )}
 
@@ -166,11 +190,23 @@ export const StaffProfilePage: React.FC = () => {
 
                 {/* Avatar Action Buttons */}
                 <div className="flex items-center space-x-3">
-                  <Button type="button" variant="primary" size="sm" onClick={() => alert('Select new avatar photo...')}>
+                  <Button
+                    type="button"
+                    variant="primary"
+                    size="sm"
+                    disabled={!canEditProfile}
+                    onClick={() => alert('Select new avatar photo...')}
+                  >
                     <Upload className="w-3.5 h-3.5 mr-1.5" />
                     Upload New
                   </Button>
-                  <Button type="button" variant="outline" size="sm" onClick={() => alert('Avatar deleted. Reset to default placeholder.')}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={!canEditProfile}
+                    onClick={() => alert('Avatar deleted. Reset to default placeholder.')}
+                  >
                     <Trash2 className="w-3.5 h-3.5 mr-1.5 text-slate-400" />
                     Delete avatar
                   </Button>
@@ -186,10 +222,11 @@ export const StaffProfilePage: React.FC = () => {
                   </label>
                   <input
                     type="text"
+                    disabled={!canEditProfile}
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
                     placeholder="First name"
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white dark:focus:bg-slate-800 transition-all"
+                    className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white dark:focus:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
                   />
                 </div>
 
@@ -200,10 +237,11 @@ export const StaffProfilePage: React.FC = () => {
                   </label>
                   <input
                     type="text"
+                    disabled={!canEditProfile}
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
                     placeholder="Last name"
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white dark:focus:bg-slate-800 transition-all"
+                    className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white dark:focus:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
                   />
                 </div>
 
@@ -214,10 +252,11 @@ export const StaffProfilePage: React.FC = () => {
                   </label>
                   <input
                     type="email"
+                    disabled={!canEditProfile}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="examples@gmail.com"
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white dark:focus:bg-slate-800 transition-all"
+                    className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white dark:focus:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
                   />
                 </div>
 
@@ -233,10 +272,11 @@ export const StaffProfilePage: React.FC = () => {
                     </div>
                     <input
                       type="text"
+                      disabled={!canEditProfile}
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder="0806 123 7890"
-                      className="flex-1 p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white dark:focus:bg-slate-800 transition-all"
+                      className="flex-1 p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white dark:focus:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
                     />
                   </div>
                 </div>
@@ -248,26 +288,30 @@ export const StaffProfilePage: React.FC = () => {
                   </label>
                   <div className="grid grid-cols-2 gap-3">
                     <label
-                      onClick={() => setGender('male')}
-                      className={`p-3 rounded-xl border flex items-center justify-center space-x-2 cursor-pointer font-bold transition-all ${
+                      onClick={() => canEditProfile && setGender('male')}
+                      className={`p-3 rounded-xl border flex items-center justify-center space-x-2 font-bold transition-all ${
+                        !canEditProfile ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
+                      } ${
                         gender === 'male'
                           ? 'bg-teal-50 dark:bg-teal-950/60 border-teal-500 text-teal-800 dark:text-teal-300 shadow-2xs'
                           : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200/80 dark:border-slate-700 text-slate-600 dark:text-slate-400'
                       }`}
                     >
-                      <input type="radio" name="gender" checked={gender === 'male'} onChange={() => {}} className="hidden" />
+                      <input type="radio" name="gender" disabled={!canEditProfile} checked={gender === 'male'} onChange={() => {}} className="hidden" />
                       <span>Male</span>
                     </label>
 
                     <label
-                      onClick={() => setGender('female')}
-                      className={`p-3 rounded-xl border flex items-center justify-center space-x-2 cursor-pointer font-bold transition-all ${
+                      onClick={() => canEditProfile && setGender('female')}
+                      className={`p-3 rounded-xl border flex items-center justify-center space-x-2 font-bold transition-all ${
+                        !canEditProfile ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
+                      } ${
                         gender === 'female'
                           ? 'bg-teal-50 dark:bg-teal-950/60 border-teal-500 text-teal-800 dark:text-teal-300 shadow-2xs'
                           : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200/80 dark:border-slate-700 text-slate-600 dark:text-slate-400'
                       }`}
                     >
-                      <input type="radio" name="gender" checked={gender === 'female'} onChange={() => {}} className="hidden" />
+                      <input type="radio" name="gender" disabled={!canEditProfile} checked={gender === 'female'} onChange={() => {}} className="hidden" />
                       <span>Female</span>
                     </label>
                   </div>
@@ -293,10 +337,11 @@ export const StaffProfilePage: React.FC = () => {
                   </label>
                   <input
                     type="text"
+                    disabled={!canEditProfile}
                     value={taxId}
                     onChange={(e) => setTaxId(e.target.value)}
                     placeholder="M082618940291X"
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-mono font-bold focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all"
+                    className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-mono font-bold focus:outline-none focus:ring-2 focus:ring-teal-500 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
                   />
                 </div>
 
@@ -308,9 +353,10 @@ export const StaffProfilePage: React.FC = () => {
                   <div className="flex items-center space-x-2 p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 rounded-xl font-bold text-slate-900 dark:text-slate-100">
                     <span className="text-sm">🇨🇲</span>
                     <select
+                      disabled={!canEditProfile}
                       value={taxCountry}
                       onChange={(e) => setTaxCountry(e.target.value)}
-                      className="w-full bg-transparent border-none focus:outline-none font-bold text-slate-900 dark:text-slate-100"
+                      className="w-full bg-transparent border-none focus:outline-none font-bold text-slate-900 dark:text-slate-100 disabled:opacity-60 disabled:cursor-not-allowed"
                     >
                       <option value="Cameroon">Cameroon</option>
                       <option value="Nigeria">Nigeria</option>
@@ -326,20 +372,27 @@ export const StaffProfilePage: React.FC = () => {
                   </label>
                   <textarea
                     rows={3}
+                    disabled={!canEditProfile}
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
                     placeholder="Ib street orogun ibadan"
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all"
+                    className="w-full p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-teal-500 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
                   />
                 </div>
               </div>
 
               {/* BOTTOM PRIMARY ACTION BUTTON */}
-              <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
-                <Button type="submit" variant="primary" size="md">
+              <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <Button type="submit" variant="primary" size="md" disabled={!canEditProfile}>
                   <Save className="w-4 h-4 mr-1.5" />
                   Save Changes
                 </Button>
+
+                {!canEditProfile && (
+                  <span className="text-[11px] font-mono font-bold text-amber-600 dark:text-amber-400">
+                    🔒 READ-ONLY: LEVEL 5 ADMIN PERMISSION REQUIRED
+                  </span>
+                )}
               </div>
             </form>
           )}

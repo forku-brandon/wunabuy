@@ -30,6 +30,7 @@ export type StaffPermission =
   | 'manage_users'
   | 'manage_marketing'
   | 'manage_settings'
+  | 'manage_profile_crud'
   | 'view_audit_logs';
 
 export interface StaffRoleDefinition {
@@ -54,6 +55,7 @@ export const ALL_STAFF_PERMISSIONS: { code: StaffPermission; label: string; desc
   { code: 'manage_users', label: 'Manage Users & Directory', description: 'Suspend or reactivate platform user & driver accounts' },
   { code: 'manage_marketing', label: 'Manage Marketing & Banners', description: 'Publish and toggle mobile promo banners & tips' },
   { code: 'manage_settings', label: 'Manage System Settings', description: 'Configure platform security rules & MFA' },
+  { code: 'manage_profile_crud', label: 'Manage Staff Profile CRUD (Admin Only)', description: 'Edit and manage individual staff account profile details' },
   { code: 'view_audit_logs', label: 'View Security Audit Logs', description: 'Access immutable system administrative action ledger' },
 ];
 
@@ -88,6 +90,7 @@ const INITIAL_ROLES_MATRIX: StaffRoleDefinition[] = [
       'manage_users',
       'manage_marketing',
       'manage_settings',
+      'manage_profile_crud',
       'view_audit_logs',
     ],
   },

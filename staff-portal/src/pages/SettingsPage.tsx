@@ -32,6 +32,7 @@ const ALL_SYSTEM_PERMISSIONS: { key: StaffPermission; label: string }[] = [
   { key: 'manage_users', label: 'Manage Users & Directory' },
   { key: 'manage_marketing', label: 'Manage Marketing & Banners' },
   { key: 'manage_settings', label: 'Manage System Settings' },
+  { key: 'manage_profile_crud', label: 'Manage Staff Profile CRUD (Admin Only)' },
   { key: 'view_audit_logs', label: 'View Security Audit Logs' },
 ];
 
