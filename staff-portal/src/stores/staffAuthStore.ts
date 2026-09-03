@@ -456,6 +456,9 @@ export function useStaffAuth() {
 
   const hasPermission = (permission: StaffPermission): boolean => {
     if (!currentUser) return false;
+    if (currentUser.security_clearance_level === 5 || currentUser.staff_department_role === 'SUPER_ADMIN') {
+      return true;
+    }
     const roleDef = rolesMatrix.find((r) => r.code === currentUser?.staff_department_role);
     if (!roleDef) return false;
     return roleDef.permissions.includes(permission);

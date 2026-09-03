@@ -13,6 +13,9 @@ import {
   Sun,
   Moon,
   CalendarDays,
+  ShieldCheck,
+  Settings,
+  User,
 } from 'lucide-react';
 import { useStaffAuth, DEMO_STAFF_PERSONAS } from '../../stores/staffAuthStore';
 import { useTheme } from '../../context/ThemeContext';
@@ -100,6 +103,16 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileSidebar }) => {
           ) : (
             <Sun className="w-4 h-4 text-amber-400" />
           )}
+        </button>
+
+        {/* Security & Audit Logs Header Button */}
+        <button
+          onClick={() => navigate('/settings')}
+          className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition-all shadow-2xs"
+          title="Open Security & Audit Logs"
+        >
+          <ShieldCheck className="w-3.5 h-3.5" />
+          <span className="hidden md:inline">Security &amp; Audit Logs</span>
         </button>
 
         {/* Calendar & Operational Tasks Header Button */}
@@ -208,6 +221,30 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileSidebar }) => {
                 <span className="inline-block mt-1 text-[9px] font-mono font-extrabold px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-950/80 text-purple-800 dark:text-purple-300">
                   {user?.staff_department_role} (Level {user?.security_clearance_level})
                 </span>
+              </div>
+
+              <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-800 space-y-1">
+                <button
+                  onClick={() => {
+                    setIsPersonaMenuOpen(false);
+                    navigate('/settings');
+                  }}
+                  className="w-full py-1.5 px-2 bg-purple-50 dark:bg-purple-950/60 text-purple-900 dark:text-purple-200 rounded-lg text-xs font-bold flex items-center space-x-2 hover:bg-purple-100 transition-colors"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5 text-purple-600" />
+                  <span>Security &amp; Audit Logs</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setIsPersonaMenuOpen(false);
+                    navigate('/profile');
+                  }}
+                  className="w-full py-1.5 px-2 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-lg text-xs font-bold flex items-center space-x-2 hover:bg-slate-100 transition-colors"
+                >
+                  <User className="w-3.5 h-3.5 text-teal-600" />
+                  <span>My Staff Profile</span>
+                </button>
               </div>
 
               <div className="px-4 py-1.5 text-[10px] font-mono font-extrabold uppercase text-slate-400 tracking-wider">
