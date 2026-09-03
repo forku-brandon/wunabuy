@@ -6,7 +6,7 @@ import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
-import { useStaffAuth, DEMO_STAFF_PERSONAS } from '../stores/staffAuthStore';
+import { useStaffAuth, DEMO_STAFF_PERSONAS, StaffUser } from '../stores/staffAuthStore';
 import { formatXAF } from '@wunabuy/utils';
 import {
   TrendingUp,
@@ -20,6 +20,8 @@ import {
   Clock,
   Check,
   UserCheck,
+  Search,
+  ChevronDown,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -109,6 +111,107 @@ const MOCK_DONUT_DATA = [
   { name: 'Disputed Hold', value: 9, color: '#F59E0B' },
   { name: 'Platform Yield', value: 5, color: '#6366F1' },
 ];
+
+// REUSABLE SEARCHABLE EMPLOYEE SELECT DROPDOWN COMPONENT
+interface SearchableEmployeeSelectProps {
+  selectedStaffId: string;
+  onSelectStaff: (staffId: string) => void;
+}
+
+const SearchableEmployeeSelect: React.FC<SearchableEmployeeSelectProps> = ({
+  selectedStaffId,
+  onSelectStaff,
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const selectedPersona = DEMO_STAFF_PERSONAS.find((p) => p.id === selectedStaffId) || DEMO_STAFF_PERSONAS[0];
+
+  const filteredPersonas = DEMO_STAFF_PERSONAS.filter((p) => {
+    const q = searchQuery.toLowerCase();
+    return (
+      p.full_name.toLowerCase().includes(q) ||
+      p.department_name.toLowerCase().includes(q) ||
+      p.email.toLowerCase().includes(q) ||
+      p.employee_id.toLowerCase().includes(q)
+    );
+  });
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-lg text-left flex items-center justify-between font-bold text-slate-900 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700/80 transition-colors shadow-2xs"
+      >
+        <div className="flex items-center space-x-3">
+          <img
+            src={selectedPersona.avatar_url || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=100&q=80'}
+            alt={selectedPersona.full_name}
+            className="w-7 h-7 rounded-full object-cover border border-teal-500"
+          />
+          <div>
+            <span className="text-xs font-extrabold block">{selectedPersona.full_name}</span>
+            <span className="text-[10px] text-slate-400 font-mono font-semibold">{selectedPersona.department_name} • {selectedPersona.employee_id}</span>
+          </div>
+        </div>
+        <ChevronDown className="w-4 h-4 text-slate-400" />
+      </button>
+
+      {isOpen && (
+        <div className="absolute left-0 right-0 mt-2 bg-white dark:bg-[#121824] rounded-xl shadow-2xl p-3 z-50 animate-fade-in space-y-2">
+          {/* Live Search Input Box */}
+          <div className="relative">
+            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              autoFocus
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search staff by name, department, ID..."
+              className="w-full pl-8 pr-3 py-2 bg-slate-100 dark:bg-slate-800 rounded-lg text-xs font-medium text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
+            />
+          </div>
+
+          {/* Filtered Employees List */}
+          <div className="max-h-48 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
+            {filteredPersonas.length === 0 ? (
+              <div className="p-3 text-center text-xs text-slate-400 font-medium">No matching staff members found</div>
+            ) : (
+              filteredPersonas.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => {
+                    onSelectStaff(p.id);
+                    setIsOpen(false);
+                    setSearchQuery('');
+                  }}
+                  className={`w-full p-2.5 text-left flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/80 rounded-lg transition-colors ${
+                    p.id === selectedStaffId ? 'bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 font-bold' : ''
+                  }`}
+                >
+                  <div className="flex items-center space-x-2.5">
+                    <img
+                      src={p.avatar_url || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=100&q=80'}
+                      alt={p.full_name}
+                      className="w-7 h-7 rounded-full object-cover"
+                    />
+                    <div>
+                      <span className="text-xs font-bold block text-slate-900 dark:text-slate-100">{p.full_name}</span>
+                      <span className="text-[10px] text-slate-400 font-mono">{p.department_name} • {p.employee_id}</span>
+                    </div>
+                  </div>
+                  {p.id === selectedStaffId && <Check className="w-4 h-4 text-teal-600 dark:text-teal-400" />}
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
@@ -427,7 +530,7 @@ export const DashboardPage: React.FC = () => {
         </Card>
       </div>
 
-      {/* MODAL: ASSIGN NEW WORK TASK TO EMPLOYEE */}
+      {/* MODAL: ASSIGN NEW WORK TASK TO EMPLOYEE WITH SEARCHABLE DROPDOWN */}
       <Modal
         isOpen={isAssignModalOpen}
         onClose={() => setIsAssignModalOpen(false)}
@@ -435,18 +538,13 @@ export const DashboardPage: React.FC = () => {
       >
         <form onSubmit={handleCreateAssignment} className="space-y-4 text-xs font-semibold">
           <div>
-            <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">Select Employee *</label>
-            <select
-              value={targetStaffId}
-              onChange={(e) => setTargetStaffId(e.target.value)}
-              className="w-full p-3 bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-slate-900 dark:text-slate-100 font-bold focus:ring-2 focus:ring-teal-500 focus:outline-none"
-            >
-              {DEMO_STAFF_PERSONAS.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.full_name} ({p.department_name})
-                </option>
-              ))}
-            </select>
+            <label className="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">
+              Select Employee (Search by Name, Department, or ID) *
+            </label>
+            <SearchableEmployeeSelect
+              selectedStaffId={targetStaffId}
+              onSelectStaff={(id) => setTargetStaffId(id)}
+            />
           </div>
 
           <div>
