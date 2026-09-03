@@ -1,30 +1,29 @@
-# Wunabuy Web Staff Operations Portal (v2.4)
+# Wunabuy Web Staff Operations Portal (v2.5)
 
-Enterprise Web Application for Wunabuy company personnel, featuring real-time operational telemetry, Granular Field-Level ACL Controls, SearchableSelect Dropdown Primitives, Universal Data Table Searchers, Corporate Staff Account Provisioning CRUD, Dual OTP/Password Authentication, 18-flag RBAC security clearance, HR & Staff Payroll with printable payslips, borderless design system, and light/dark theme switching.
+Enterprise Web Application for Wunabuy company personnel, featuring real-time operational telemetry, Active Bilingual (EN/FR) i18n Language Engine, Production API Service Adapter Layer, Granular Field-Level ACL Controls, SearchableSelect Dropdown Primitives, Universal Data Table Searchers, Corporate Staff Account Provisioning CRUD, Dual OTP/Password Authentication, 18-flag RBAC security clearance, HR & Staff Payroll with printable payslips, borderless design system, and light/dark theme switching.
 
 ---
 
-## 🌟 Key Features in Version 2.4
+## 🌟 Key Features in Version 2.5
 
-### 1. 🔒 Granular Field-Level ACL Controls & Lock Indicators (`StaffProfilePage.tsx`, `FinancialsPage.tsx`, `KYCPage.tsx`, `DisputesPage.tsx`, `LogisticsOpsPage.tsx`)
-- **Staff Profile Field Governance**: All staff members can upload profile pictures (`updateUserAvatar`), change passwords, and update notification preferences, while core corporate identity fields (Name, Email, Phone, Department, Clearance Level) are locked (`disabled={!canEditProfile}`) with `Lock` badges for non-admins.
-- **Action Guard Locks**: Interactive action buttons for unauthorized personnel display disabled lock badges (`<Lock /> Locked (Admin Only)`) across MoMo Payout Approvals, KYC Verification, Dispute Adjudication, and Logistics Overrides.
+### 1. 🌐 Active Bilingual (EN/FR) i18n Language Engine (`LanguageContext.tsx`, `translations.ts`, `Header.tsx`)
+- **Top Header Language Selector**: Interactive language pill dropdown (`🌐 EN 🇬🇧` / `🌐 FR 🇫🇷`) next to Theme Switcher allowing 1-click instant switching between English and French.
+- **Language Preference Persistence**: Saves user language selection in `localStorage` (`wunabuy_staff_lang`) and sets document root `<html lang="en">` / `<html lang="fr">`.
+- **Comprehensive Translations**: Dictionary covering navigation, actions, status badges, hero clock, and operational dialogs.
 
-### 2. 🔍 SearchableSelect Primitive & Universal Data Table Searchers (`SearchableSelect.tsx` & `DataTable.tsx`)
-- **`SearchableSelect` Component**: Reusable dropdown component with an in-built text search bar filtering options in real time.
-- **Universal Table Search**: Enabled `searchable={true}` across all operational data tables with a top search input filtering across all dataset properties.
+### 2. 🔌 Production API Service Client & Endpoint Integration Adapter Layer (`staff-portal/src/services/`)
+- **Base HTTP Client (`apiClient.ts`)**: Sanctum Bearer token injection, `ApiError` parsing, and configurable `VITE_API_BASE_URL`.
+- **Modular Service Clients**: Dedicated endpoint adapters for Auth (`authApi.ts`), Staff Roster (`staffDirectoryApi.ts`), KYC Queue (`kycApi.ts`), Escrow Disputes (`disputesApi.ts`), Financial Payouts (`financialsApi.ts`), Logistics Telemetry (`logisticsApi.ts`), Work Tasks (`tasksApi.ts`), RBAC Matrix (`rbacApi.ts`), and Audit Logs (`auditLogsApi.ts`).
+- **Offline Fallback**: Every service method gracefully falls back to local seeders if the backend API server is unreachable.
 
-### 3. 👔 Corporate Staff Account Directory & Provisioning (`HROpsPage.tsx` & `staffAuthStore.ts`)
-- **Full Corporate Staff Account CRUD**: Super Admins and HR Managers can provision, edit, suspend, or revoke staff accounts with corporate email (`@wunabuy.com`), phone (`+237 6XX XXX XXX`), clearance levels (Level 1-5), and department roles.
+### 3. 🔒 Granular Field-Level ACL Controls & Lock Indicators (`StaffProfilePage.tsx`, `FinancialsPage.tsx`, `KYCPage.tsx`, `DisputesPage.tsx`, `LogisticsOpsPage.tsx`)
+- **Field & Action Locks**: Profile avatar upload & password change allowed for all staff, while core corporate identity fields and critical operational action buttons are locked with visual `Lock` badges for non-admins.
 
-### 4. 🔐 Dual Corporate Authentication Engine (`AuthPage.tsx`)
-- **Dual Login Modes**: Support for 2-Factor OTP verification (6-digit code `654321`) AND Corporate Password authentication (`wunabuy2026`).
+### 4. 🔍 SearchableSelect Primitive & Universal Data Table Searchers (`SearchableSelect.tsx` & `DataTable.tsx`)
+- In-built text search bar in dropdowns and top search filter enabled across all data tables.
 
-### 5. ⏰ Large Corporate Employee Working Clock & Task Countdown (`DashboardPage.tsx`)
-- **Hero Card Digital Clock**: Prominent digital clock with live second-by-second ticking time, full date, West Africa Time zone tag (`WAT / UTC+1`), Douala Node status pill (`28°C Douala Node Live`), and active working shift counter.
-
-### 6. 🔒 18-Flag RBAC Roles & Governance (`SettingsPage.tsx` & `staffAuthStore.ts`)
-- **18 System Permissions**: Fully synchronized permissions matrix across all 7 staff department roles with Level 5 Super Admin override logic.
+### 5. 👔 Corporate Staff Account Directory & Provisioning (`HROpsPage.tsx` & `staffAuthStore.ts`)
+- Full CRUD management of corporate staff accounts with corporate email (`@wunabuy.com`), phone (`+237 6XX XXX XXX`), clearance levels (Level 1-5), and department roles.
 
 ---
 

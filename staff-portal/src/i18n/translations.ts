@@ -128,3 +128,4 @@ export const translations: Record<Language, Record<string, string>> = {
     'rbac.clearance_level': 'Niveau d\'Habilitation de Sécurité',
   },
 };
+
