@@ -97,3 +97,4 @@ Wunabuy operates as a unified platform connecting Buyers, Store Merchants, and D
 - **NFR-001 Performance:** All data tables SHALL render paginated results in under 50ms.
 - **NFR-002 Responsiveness:** Web Staff Portal SHALL support viewports from 375px mobile screens to 1440px desktop displays.
 - **NFR-003 Auditability:** System audit logs SHALL be immutable and exportable to CSV.
+
