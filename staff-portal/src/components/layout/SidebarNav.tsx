@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useStaffAuth, StaffPermission } from '../../stores/staffAuthStore';
+import { useLanguage } from '../../context/LanguageContext';
 
 interface NavItemConfig {
   label: string;
@@ -37,20 +38,21 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
   onCloseMobile,
 }) => {
   const { user, hasPermission } = useStaffAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   const allNavItems: NavItemConfig[] = [
-    { label: 'Dashboard', path: '/', icon: LayoutDashboard, permission: 'view_dashboard' },
-    { label: 'My Staff Profile', path: '/profile', icon: User, permission: 'view_dashboard' },
+    { label: t('nav.dashboard', 'Executive Overview'), path: '/', icon: LayoutDashboard, permission: 'view_dashboard' },
+    { label: t('nav.profile', 'My Staff Profile'), path: '/profile', icon: User, permission: 'view_dashboard' },
     { label: 'Internal Chat & Broadcasts', path: '/communications', icon: Megaphone, permission: 'view_dashboard', badge: 3 },
-    { label: 'HR & Staff Payroll', path: '/hr', icon: Briefcase, permission: 'view_hr_ops' },
-    { label: 'Store KYC Queue', path: '/kyc', icon: FileCheck, permission: 'view_kyc', badge: 4 },
-    { label: 'Escrow Disputes', path: '/disputes', icon: ShieldAlert, permission: 'view_disputes', badge: 2 },
-    { label: 'Logistics & Fleet Ops', path: '/logistics', icon: Truck, permission: 'view_logistics', badge: 12 },
-    { label: 'Financials & Payouts', path: '/financials', icon: Wallet, permission: 'view_financials' },
+    { label: t('nav.hr_ops', 'HR & Staff Operations'), path: '/hr', icon: Briefcase, permission: 'view_hr_ops' },
+    { label: t('nav.kyc', 'Store KYC Queue'), path: '/kyc', icon: FileCheck, permission: 'view_kyc', badge: 4 },
+    { label: t('nav.disputes', 'Escrow Disputes'), path: '/disputes', icon: ShieldAlert, permission: 'view_disputes', badge: 2 },
+    { label: t('nav.logistics', 'Logistics & Fleet Ops'), path: '/logistics', icon: Truck, permission: 'view_logistics', badge: 12 },
+    { label: t('nav.financials', 'Financials & Ledger'), path: '/financials', icon: Wallet, permission: 'view_financials' },
     { label: 'Users & Directory', path: '/users', icon: Users, permission: 'manage_users' },
     { label: 'Marketing & Promos', path: '/marketing', icon: Megaphone, permission: 'manage_marketing' },
-    { label: 'Security & Audit Logs', path: '/settings', icon: Settings, permission: 'view_audit_logs' },
+    { label: t('nav.settings', 'Security & Audit Logs'), path: '/settings', icon: Settings, permission: 'view_audit_logs' },
   ];
 
   // STRICT SECURITY FILTER: Completely hide unauthorized navigation items

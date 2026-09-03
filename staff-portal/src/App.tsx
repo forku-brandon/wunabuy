@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useStaffAuth } from './stores/staffAuthStore';
 import { ThemeProvider } from './context/ThemeContext';
+import { LanguageProvider } from './context/LanguageContext';
 import { SidebarNav } from './components/layout/SidebarNav';
 import { Header } from './components/layout/Header';
 import { AuthPage } from './pages/AuthPage';
@@ -67,14 +68,16 @@ const ProtectedLayout: React.FC = () => {
 export const App: React.FC = () => {
   return (
     <ThemeProvider>
-      <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/login" element={<AuthPage />} />
-            <Route path="/*" element={<ProtectedLayout />} />
-          </Routes>
-        </BrowserRouter>
-      </QueryClientProvider>
+      <LanguageProvider>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/login" element={<AuthPage />} />
+              <Route path="/*" element={<ProtectedLayout />} />
+            </Routes>
+          </BrowserRouter>
+        </QueryClientProvider>
+      </LanguageProvider>
     </ThemeProvider>
   );
 };

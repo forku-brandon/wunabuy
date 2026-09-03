@@ -8,6 +8,7 @@ import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { SearchableSelect } from '../components/ui/SearchableSelect';
 import { useStaffAuth, DEMO_STAFF_PERSONAS, StaffUser } from '../stores/staffAuthStore';
+import { useLanguage } from '../context/LanguageContext';
 import { formatXAF } from '@wunabuy/utils';
 import {
   TrendingUp,
@@ -124,6 +125,7 @@ const MOCK_DONUT_DATA = [
 
 // LARGE ENTERPRISE DIGITAL EMPLOYEE WORKING CLOCK COMPONENT
 const LargeEmployeeWorkingClock: React.FC = () => {
+  const { t, language } = useLanguage();
   const [time, setTime] = useState<Date>(new Date());
   const [shiftSeconds, setShiftSeconds] = useState<number>(15480); // 04h 18m 00s initial shift duration
 
@@ -135,14 +137,14 @@ const LargeEmployeeWorkingClock: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const timeString = time.toLocaleTimeString('en-US', {
+  const timeString = time.toLocaleTimeString(language === 'fr' ? 'fr-FR' : 'en-US', {
     hour12: true,
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
   });
 
-  const dateString = time.toLocaleDateString('en-US', {
+  const dateString = time.toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
@@ -191,7 +193,7 @@ const LargeEmployeeWorkingClock: React.FC = () => {
           </span>
           <div className="text-left">
             <span className="text-[10px] font-mono font-extrabold text-slate-400 uppercase tracking-wider block">TELEMETRY NODE</span>
-            <span className="text-xs font-extrabold text-slate-800 dark:text-slate-200">28°C Douala Node (Live)</span>
+            <span className="text-xs font-extrabold text-slate-800 dark:text-slate-200">{t('clock.node_status', '28°C Douala Node (Live)')}</span>
           </div>
         </div>
 
@@ -199,7 +201,7 @@ const LargeEmployeeWorkingClock: React.FC = () => {
         <div className="px-4 py-2.5 rounded-xl bg-teal-50 dark:bg-teal-950/60 flex items-center space-x-2.5">
           <div className="w-2.5 h-2.5 rounded-full bg-teal-500 animate-pulse"></div>
           <div className="text-left">
-            <span className="text-[10px] font-mono font-extrabold text-teal-800 dark:text-teal-300 uppercase tracking-wider block">EMPLOYEE SHIFT DUTY</span>
+            <span className="text-[10px] font-mono font-extrabold text-teal-800 dark:text-teal-300 uppercase tracking-wider block">{t('clock.active_shift', 'EMPLOYEE SHIFT DUTY')}</span>
             <span className="text-xs font-mono font-black text-teal-900 dark:text-teal-200">{formatShiftDuration(shiftSeconds)}</span>
           </div>
         </div>
