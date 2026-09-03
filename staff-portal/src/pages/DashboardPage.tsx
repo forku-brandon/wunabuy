@@ -121,6 +121,92 @@ const MOCK_DONUT_DATA = [
   { name: 'Platform Yield', value: 5, color: '#6366F1' },
 ];
 
+// LARGE ENTERPRISE DIGITAL EMPLOYEE WORKING CLOCK COMPONENT
+const LargeEmployeeWorkingClock: React.FC = () => {
+  const [time, setTime] = useState<Date>(new Date());
+  const [shiftSeconds, setShiftSeconds] = useState<number>(15480); // 04h 18m 00s initial shift duration
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTime(new Date());
+      setShiftSeconds((prev) => prev + 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const timeString = time.toLocaleTimeString('en-US', {
+    hour12: true,
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
+
+  const dateString = time.toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+
+  const formatShiftDuration = (totalSeconds: number) => {
+    const hrs = Math.floor(totalSeconds / 3600);
+    const mins = Math.floor((totalSeconds % 3600) / 60);
+    const secs = totalSeconds % 60;
+    return `${String(hrs).padStart(2, '0')}h ${String(mins).padStart(2, '0')}m ${String(secs).padStart(2, '0')}s`;
+  };
+
+  return (
+    <div className="mb-8 p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#121824] shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden transition-all">
+      {/* Decorative Left Accent Bar */}
+      <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-teal-500 via-teal-600 to-amber-500"></div>
+
+      {/* Left: Ticking Digital Time Display */}
+      <div className="flex items-center space-x-5 pl-2">
+        <div className="w-14 h-14 rounded-2xl bg-teal-50 dark:bg-teal-950/80 text-teal-600 dark:text-teal-400 flex items-center justify-center shadow-2xs">
+          <Clock className="w-7 h-7 animate-pulse" />
+        </div>
+        <div>
+          <div className="flex items-baseline space-x-3">
+            <h2 className="text-3xl sm:text-4xl font-black font-mono tracking-tight text-slate-900 dark:text-slate-100">
+              {timeString}
+            </h2>
+            <span className="font-mono text-xs font-bold text-teal-600 dark:text-teal-400 uppercase tracking-widest px-2 py-0.5 rounded bg-teal-50 dark:bg-teal-950/60">
+              WAT (UTC+1)
+            </span>
+          </div>
+          <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mt-1">
+            {dateString}
+          </p>
+        </div>
+      </div>
+
+      {/* Right: Employee Shift Duty & Node Status Badges */}
+      <div className="flex flex-wrap items-center gap-3">
+        {/* Douala Node Live Status Pill */}
+        <div className="px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 flex items-center space-x-2.5">
+          <span className="relative flex h-2.5 w-2.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+          </span>
+          <div className="text-left">
+            <span className="text-[10px] font-mono font-extrabold text-slate-400 uppercase tracking-wider block">TELEMETRY NODE</span>
+            <span className="text-xs font-extrabold text-slate-800 dark:text-slate-200">28°C Douala Node (Live)</span>
+          </div>
+        </div>
+
+        {/* Working Shift Active Counter */}
+        <div className="px-4 py-2.5 rounded-xl bg-teal-50 dark:bg-teal-950/60 flex items-center space-x-2.5">
+          <div className="w-2.5 h-2.5 rounded-full bg-teal-500 animate-pulse"></div>
+          <div className="text-left">
+            <span className="text-[10px] font-mono font-extrabold text-teal-800 dark:text-teal-300 uppercase tracking-wider block">EMPLOYEE SHIFT DUTY</span>
+            <span className="text-xs font-mono font-black text-teal-900 dark:text-teal-200">{formatShiftDuration(shiftSeconds)}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // LIVE TICKING COUNTDOWN CLOCK & PROXIMITY NOTIFIER COMPONENT
 interface TaskCountdownClockProps {
   dueDateStr: string;
@@ -437,6 +523,9 @@ export const DashboardPage: React.FC = () => {
           <span>{toastMessage}</span>
         </div>
       )}
+
+      {/* LARGE CORPORATE DIGITAL EMPLOYEE WORKING CLOCK HERO CARD */}
+      <LargeEmployeeWorkingClock />
 
       {/* Top Row: Precision Enterprise Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">

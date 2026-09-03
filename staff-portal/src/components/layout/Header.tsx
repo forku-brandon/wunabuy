@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Search,
@@ -13,59 +13,11 @@ import {
   Sun,
   Moon,
   CalendarDays,
-  Clock,
 } from 'lucide-react';
 import { useStaffAuth, DEMO_STAFF_PERSONAS } from '../../stores/staffAuthStore';
 import { useTheme } from '../../context/ThemeContext';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
-
-// CORPORATE DIGITAL WORKING CLOCK COMPONENT
-const CorporateDigitalClock: React.FC = () => {
-  const [time, setTime] = useState<Date>(new Date());
-
-  useEffect(() => {
-    const timer = setInterval(() => setTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const timeString = time.toLocaleTimeString('en-US', {
-    hour12: true,
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  });
-
-  const dateString = time.toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-  });
-
-  return (
-    <div className="hidden md:flex items-center space-x-2.5 px-3 py-1.5 rounded-lg bg-slate-100/80 dark:bg-slate-800/80 text-slate-800 dark:text-slate-200 shadow-2xs">
-      <div className="flex items-center space-x-1.5">
-        <span className="relative flex h-2 w-2">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-        </span>
-        <Clock className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
-      </div>
-
-      <div className="flex items-center space-x-2 font-mono">
-        <span className="text-xs font-black tracking-tight text-slate-900 dark:text-slate-100 font-mono">
-          {timeString}
-        </span>
-        <span className="text-[10px] text-slate-400 font-bold hidden lg:inline">
-          • {dateString}
-        </span>
-        <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-teal-100 dark:bg-teal-900/60 text-teal-800 dark:text-teal-300">
-          DUTY ACTIVE
-        </span>
-      </div>
-    </div>
-  );
-};
 
 export interface HeaderProps {
   onToggleMobileSidebar?: () => void;
@@ -111,7 +63,7 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileSidebar }) => {
 
   return (
     <header className="h-16 bg-white dark:bg-[#121824] px-4 sm:px-6 flex items-center justify-between flex-shrink-0 relative z-30 shadow-2xs transition-colors">
-      {/* Left: Mobile Menu Toggle + Clean Compact Search Bar + Digital Clock */}
+      {/* Left: Mobile Menu Toggle + Clean Compact Search Bar */}
       <div className="flex items-center space-x-3">
         {/* Mobile Hamburger Toggle Button */}
         {onToggleMobileSidebar && (
@@ -125,7 +77,7 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileSidebar }) => {
         )}
 
         {/* Clean Compact Search Bar */}
-        <div className="w-36 sm:w-56 lg:w-72 relative">
+        <div className="w-44 sm:w-64 lg:w-80 relative">
           <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
           <input
             type="text"
@@ -133,9 +85,6 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileSidebar }) => {
             className="w-full pl-8 pr-3 py-1.5 sm:py-2 text-xs bg-slate-100/80 dark:bg-slate-800/80 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white dark:focus:bg-slate-800 text-slate-900 dark:text-slate-100 font-medium transition-all"
           />
         </div>
-
-        {/* CORPORATE DIGITAL WORKING CLOCK */}
-        <CorporateDigitalClock />
       </div>
 
       {/* Right: Streamlined Action Buttons */}
