@@ -16,7 +16,6 @@ import {
   AlertTriangle,
   PhoneCall,
 } from 'lucide-react';
-import { formatXAF } from '@wunabuy/utils';
 
 interface ActiveTripItem {
   id: string;
@@ -133,15 +132,15 @@ export const LogisticsOpsPage: React.FC = () => {
     {
       key: 'trip_code',
       header: 'Trip Code',
-      render: (item) => <span className="font-mono font-bold text-slate-900">{item.trip_code}</span>,
+      render: (item) => <span className="font-mono font-bold text-slate-900 dark:text-slate-100">{item.trip_code}</span>,
     },
     {
       key: 'driver_name',
       header: 'Transporter Driver',
       render: (item) => (
         <div>
-          <span className="font-bold text-slate-900 block">{item.driver_name}</span>
-          <span className="text-[11px] text-slate-500 font-medium">{item.driver_vehicle}</span>
+          <span className="font-bold text-slate-900 dark:text-slate-100 block">{item.driver_name}</span>
+          <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">{item.driver_vehicle}</span>
         </div>
       ),
     },
@@ -150,8 +149,8 @@ export const LogisticsOpsPage: React.FC = () => {
       header: 'Store Pickup',
       render: (item) => (
         <div>
-          <span className="font-bold text-slate-800 block">{item.store_name}</span>
-          <span className="text-[11px] text-slate-400 font-medium">Hub: {item.pickup_quarter}</span>
+          <span className="font-bold text-slate-800 dark:text-slate-200 block">{item.store_name}</span>
+          <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">Hub: {item.pickup_quarter}</span>
         </div>
       ),
     },
@@ -160,8 +159,8 @@ export const LogisticsOpsPage: React.FC = () => {
       header: 'Buyer Quarter',
       render: (item) => (
         <div>
-          <span className="font-bold text-slate-800 block">{item.buyer_name}</span>
-          <span className="text-[11px] text-slate-400 font-medium">Quarter: {item.delivery_quarter}</span>
+          <span className="font-bold text-slate-800 dark:text-slate-200 block">{item.buyer_name}</span>
+          <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">Quarter: {item.delivery_quarter}</span>
         </div>
       ),
     },
@@ -179,8 +178,8 @@ export const LogisticsOpsPage: React.FC = () => {
       header: 'Distance / Elapsed',
       render: (item) => (
         <div>
-          <span className="block font-bold text-slate-900">{item.distance_km} km</span>
-          <span className="text-[11px] text-slate-500 font-medium">{item.elapsed_mins} mins elapsed</span>
+          <span className="block font-bold text-slate-900 dark:text-slate-100">{item.distance_km} km</span>
+          <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">{item.elapsed_mins} mins elapsed</span>
         </div>
       ),
     },
@@ -195,7 +194,7 @@ export const LogisticsOpsPage: React.FC = () => {
             variant="outline"
             onClick={() => setDetailsTrip(item)}
           >
-            <Navigation className="w-3.5 h-3.5 mr-1 text-slate-500" />
+            <Navigation className="w-3.5 h-3.5 mr-1 text-slate-500 dark:text-slate-400" />
             Details
           </Button>
 
@@ -228,8 +227,8 @@ export const LogisticsOpsPage: React.FC = () => {
           value="48 Drivers"
           change="Douala & Yaoundé"
           changeType="positive"
-          icon={<Radio className="w-5 h-5 text-teal-600" />}
-          iconBg="bg-teal-50"
+          icon={<Radio className="w-5 h-5 text-teal-600 dark:text-teal-400" />}
+          iconBg="bg-teal-50 dark:bg-teal-950/60"
           description="Live WebSocket GPS telemetry active"
         />
 
@@ -238,8 +237,8 @@ export const LogisticsOpsPage: React.FC = () => {
           value="28 Active Trips"
           change="Avg. 24 mins"
           changeType="neutral"
-          icon={<Truck className="w-5 h-5 text-blue-600" />}
-          iconBg="bg-blue-50"
+          icon={<Truck className="w-5 h-5 text-blue-600 dark:text-blue-400" />}
+          iconBg="bg-blue-50 dark:bg-blue-950/60"
           description="Parcel dispatch in progress"
         />
 
@@ -248,8 +247,8 @@ export const LogisticsOpsPage: React.FC = () => {
           value="98.6%"
           change="Last 7 Days"
           changeType="positive"
-          icon={<CheckCircle2 className="w-5 h-5 text-emerald-600" />}
-          iconBg="bg-emerald-50"
+          icon={<CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />}
+          iconBg="bg-emerald-50 dark:bg-emerald-950/60"
           description="Verified POD signature confirmation"
         />
 
@@ -258,8 +257,8 @@ export const LogisticsOpsPage: React.FC = () => {
           value="0 Incidents"
           change="Normal Node"
           changeType="positive"
-          icon={<ShieldAlert className="w-5 h-5 text-slate-400" />}
-          iconBg="bg-slate-100"
+          icon={<ShieldAlert className="w-5 h-5 text-slate-400 dark:text-slate-500" />}
+          iconBg="bg-slate-100 dark:bg-slate-800"
           description="Zero rider distress signals active"
         />
       </div>
@@ -277,40 +276,40 @@ export const LogisticsOpsPage: React.FC = () => {
       {detailsTrip && (
         <Modal isOpen={Boolean(detailsTrip)} onClose={() => setDetailsTrip(null)} title={`Live Trip Telemetry — ${detailsTrip.trip_code}`}>
           <div className="space-y-4 text-xs">
-            <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-between">
+            <div className="p-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl flex items-center justify-between">
               <div>
-                <span className="text-[10px] font-bold text-slate-500 uppercase">DRIVER VEHICLE</span>
-                <h4 className="text-sm font-extrabold text-slate-900 mt-0.5">{detailsTrip.driver_name}</h4>
-                <p className="text-[11px] text-slate-600 font-medium">{detailsTrip.driver_vehicle}</p>
+                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">DRIVER VEHICLE</span>
+                <h4 className="text-sm font-extrabold text-slate-900 dark:text-slate-100 mt-0.5">{detailsTrip.driver_name}</h4>
+                <p className="text-[11px] text-slate-600 dark:text-slate-300 font-medium">{detailsTrip.driver_vehicle}</p>
               </div>
-              <a href={`tel:${detailsTrip.driver_phone}`} className="px-3.5 py-1.5 rounded-full bg-slate-900 text-white font-bold flex items-center space-x-1.5 hover:bg-slate-800 transition-colors">
+              <a href={`tel:${detailsTrip.driver_phone}`} className="px-3.5 py-1.5 rounded-full bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 font-bold flex items-center space-x-1.5 hover:bg-slate-800 transition-colors">
                 <PhoneCall className="w-3.5 h-3.5" />
                 <span>Call Rider</span>
               </a>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                <span className="text-[10px] text-slate-400 font-bold uppercase">STORE PICKUP LOCATION</span>
-                <p className="font-bold text-slate-900 mt-0.5">{detailsTrip.store_name}</p>
-                <p className="text-[11px] text-slate-500 font-medium">{detailsTrip.pickup_quarter}, Douala</p>
+              <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase">STORE PICKUP LOCATION</span>
+                <p className="font-bold text-slate-900 dark:text-slate-100 mt-0.5">{detailsTrip.store_name}</p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">{detailsTrip.pickup_quarter}, Douala</p>
               </div>
 
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                <span className="text-[10px] text-slate-400 font-bold uppercase">BUYER DELIVERY DESTINATION</span>
-                <p className="font-bold text-slate-900 mt-0.5">{detailsTrip.buyer_name}</p>
-                <p className="text-[11px] text-slate-500 font-medium">{detailsTrip.delivery_quarter}, Douala</p>
+              <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase">BUYER DELIVERY DESTINATION</span>
+                <p className="font-bold text-slate-900 dark:text-slate-100 mt-0.5">{detailsTrip.buyer_name}</p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">{detailsTrip.delivery_quarter}, Douala</p>
               </div>
             </div>
 
-            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-              <span className="text-[10px] text-slate-400 font-bold uppercase">GPS SPATIAL TELEMETRY</span>
-              <p className="font-mono text-xs text-slate-900 font-bold mt-0.5">
+            <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+              <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase">GPS SPATIAL TELEMETRY</span>
+              <p className="font-mono text-xs text-slate-900 dark:text-slate-100 font-bold mt-0.5">
                 Lat: {detailsTrip.latitude.toFixed(4)}, Lng: {detailsTrip.longitude.toFixed(4)} • Speed: 32 km/h
               </p>
             </div>
 
-            <div className="flex justify-end pt-2 border-t border-slate-100">
+            <div className="flex justify-end pt-2 border-t border-slate-100 dark:border-slate-800">
               <Button variant="outline" onClick={() => setDetailsTrip(null)}>
                 Close
               </Button>
@@ -326,18 +325,18 @@ export const LogisticsOpsPage: React.FC = () => {
         title={`Logistics Manual Override — ${overrideTarget?.trip_code}`}
       >
         <div className="space-y-4 text-xs">
-          <div className="p-3 bg-slate-100 border border-slate-200 rounded-2xl flex items-start space-x-3">
-            <AlertTriangle className="w-5 h-5 text-slate-700 flex-shrink-0 mt-0.5" />
-            <div className="text-slate-700">
+          <div className="p-3 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl flex items-start space-x-3">
+            <AlertTriangle className="w-5 h-5 text-slate-700 dark:text-slate-300 flex-shrink-0 mt-0.5" />
+            <div className="text-slate-700 dark:text-slate-300">
               <p className="font-bold">Staff Operational Intervention</p>
-              <p className="mt-0.5 text-slate-500 font-medium">
+              <p className="mt-0.5 text-slate-500 dark:text-slate-400 font-medium">
                 Overriding this delivery trip will mark the package as verified delivered in the system ledger under staff record ({user?.employee_id}).
               </p>
             </div>
           </div>
 
           <div>
-            <label className="block font-bold text-slate-700 mb-1">
+            <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
               Mandatory Override Reason &amp; Dispatch Notes *
             </label>
             <textarea
@@ -345,11 +344,11 @@ export const LogisticsOpsPage: React.FC = () => {
               value={overrideReason}
               onChange={(e) => setOverrideReason(e.target.value)}
               placeholder="Specify operational reason (e.g. Phone loss confirmed by merchant)..."
-              className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-slate-400"
+              className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-medium text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-400"
             />
           </div>
 
-          <div className="flex justify-end space-x-3 pt-3 border-t border-slate-100">
+          <div className="flex justify-end space-x-3 pt-3 border-t border-slate-100 dark:border-slate-800">
             <Button variant="outline" onClick={() => setOverrideModalOpen(false)}>
               Cancel
             </Button>

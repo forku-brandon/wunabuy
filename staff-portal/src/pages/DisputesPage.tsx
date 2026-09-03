@@ -3,155 +3,141 @@ import { PageContainer } from '../components/layout/PageContainer';
 import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
+import { StatCard } from '../components/ui/StatCard';
 import { Modal } from '../components/ui/Modal';
-import { ImageLightbox } from '../components/ui/ImageLightbox';
 import { DataTable, Column } from '../components/ui/DataTable';
-import { DisputeReason } from '@wunabuy/types';
 import { useStaffAuth } from '../stores/staffAuthStore';
+import { formatXAF } from '@wunabuy/utils';
 import {
   ShieldAlert,
-  ShieldCheck,
-  RotateCcw,
+  Gavel,
   CheckCircle2,
-  AlertTriangle,
-  Scale,
+  AlertCircle,
   FileText,
-  DollarSign,
-  User,
-  Store,
-  Bike,
 } from 'lucide-react';
-import { formatXAF } from '@wunabuy/utils';
 
 interface EscrowDisputeItem {
   id: string;
   order_code: string;
   buyer_name: string;
-  buyer_phone: string;
-  seller_store_name: string;
-  seller_phone: string;
-  transporter_driver_name: string;
-  amount_escrow_held: number;
-  dispute_reason: DisputeReason;
-  buyer_claim_text: string;
-  seller_defense_text: string;
+  seller_name: string;
+  transporter_name: string;
+  dispute_reason: string;
+  dispute_description: string;
+  escrow_amount: number;
+  status: 'OPEN' | 'UNDER_REVIEW' | 'RESOLVED_REFUND' | 'RESOLVED_RELEASE';
+  filed_at: string;
   evidence_photos: string[];
-  opened_at: string;
-  status: 'OPEN_HOLD' | 'RESOLVED_BUYER_REFUND' | 'RESOLVED_SELLER_RELEASE' | 'SPLIT';
-  risk_rating: 'LOW' | 'MEDIUM' | 'HIGH';
 }
 
 const MOCK_DISPUTES: EscrowDisputeItem[] = [
   {
     id: 'disp_101',
-    order_code: 'WB-ORD-9842',
+    order_code: 'WB-2026-9842',
     buyer_name: 'Amadou Bello',
-    buyer_phone: '+237 699 554 433',
-    seller_store_name: 'Douala Tech Hub',
-    seller_phone: '+237 670 123 456',
-    transporter_driver_name: 'Jean-Paul Nkoum',
-    amount_escrow_held: 185000,
-    dispute_reason: DisputeReason.DAMAGED,
-    buyer_claim_text: 'Screen of Samsung A54 arrived with hairline cracks.',
-    seller_defense_text: 'Item was bubble-wrapped and pristine when handed to rider.',
+    seller_name: 'Douala Tech Hub',
+    transporter_name: 'Jean-Paul Nkoum',
+    dispute_reason: 'DAMAGED_ITEM',
+    dispute_description: 'Screen arrived with hairline crack on corner. Package box was undamaged upon delivery.',
+    escrow_amount: 185000,
+    status: 'OPEN',
+    filed_at: '2026-09-02 14:15',
     evidence_photos: [
-      'https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1541807084-5c52b6b3adef?auto=format&fit=crop&w=400&q=80',
     ],
-    opened_at: '2026-09-01 14:20',
-    status: 'OPEN_HOLD',
-    risk_rating: 'HIGH',
   },
   {
     id: 'disp_102',
-    order_code: 'WB-ORD-9843',
+    order_code: 'WB-2026-9843',
     buyer_name: 'Chantal Ngo',
-    buyer_phone: '+237 677 889 900',
-    seller_store_name: 'Penja Organic Farm',
-    seller_phone: '+237 699 887 766',
-    transporter_driver_name: 'Samuel Ebobe',
-    amount_escrow_held: 45000,
-    dispute_reason: DisputeReason.WRONG_ITEM,
-    buyer_claim_text: 'Received 5kg white pepper instead of 5kg black pepper.',
-    seller_defense_text: 'Apologies, packaging label mix-up in central warehouse.',
+    seller_name: 'Heritage African Couture',
+    transporter_name: 'Samuel Ebobe',
+    dispute_reason: 'WRONG_ITEM',
+    dispute_description: 'Received size L dress instead of size M specified in order invoice.',
+    escrow_amount: 45000,
+    status: 'UNDER_REVIEW',
+    filed_at: '2026-09-01 11:30',
     evidence_photos: [
-      'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=400&q=80',
     ],
-    opened_at: '2026-09-02 08:30',
-    status: 'OPEN_HOLD',
-    risk_rating: 'LOW',
   },
 ];
 
 export const DisputesPage: React.FC = () => {
-  const { user, addAuditLog, hasPermission } = useStaffAuth();
+  const { addAuditLog, hasPermission } = useStaffAuth();
   const [disputes, setDisputes] = useState<EscrowDisputeItem[]>(MOCK_DISPUTES);
   
   // Interactive Modals
-  const [selectedDispute, setSelectedDispute] = useState<EscrowDisputeItem | null>(null);
-  const [adjudicateModalOpen, setAdjudicateModalOpen] = useState(false);
-  const [adjudicateAction, setAdjudicateAction] = useState<'BUYER_REFUND' | 'SELLER_RELEASE' | 'SPLIT'>('BUYER_REFUND');
-  const [adjudicateRationale, setAdjudicateRationale] = useState('');
-  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const [adjudicateTarget, setAdjudicateTarget] = useState<EscrowDisputeItem | null>(null);
+  const [rulingType, setRulingType] = useState<'BUYER_REFUND' | 'SELLER_RELEASE' | 'SPLIT_50_50'>('BUYER_REFUND');
+  const [rulingRationale, setRulingRationale] = useState('');
 
   const canAdjudicate = hasPermission('adjudicate_disputes');
 
-  const handleExecuteAdjudication = () => {
-    if (!selectedDispute || !adjudicateRationale.trim()) return;
+  const handleExecuteRuling = () => {
+    if (!adjudicateTarget || !rulingRationale.trim()) return;
 
-    const newStatus =
-      adjudicateAction === 'BUYER_REFUND'
-        ? 'RESOLVED_BUYER_REFUND'
-        : adjudicateAction === 'SELLER_RELEASE'
-        ? 'RESOLVED_SELLER_RELEASE'
-        : 'SPLIT';
+    const nextStatus = rulingType === 'BUYER_REFUND' ? 'RESOLVED_REFUND' : 'RESOLVED_RELEASE';
 
     addAuditLog({
-      action_code: 'DISPUTE_ADJUDICATE_EXECUTE',
-      action_description: `Adjudicated dispute ${selectedDispute.order_code} with decision: ${newStatus}. Rationale: ${adjudicateRationale}`,
-      target_id: selectedDispute.id,
+      action_code: 'DISPUTE_ADJUDICATE',
+      action_description: `Adjudicated dispute ${adjudicateTarget.order_code} with ruling ${rulingType}. Rationale: ${rulingRationale}`,
+      target_id: adjudicateTarget.id,
       security_level: 'CRITICAL',
     });
 
     setDisputes((prev) =>
-      prev.map((d) => (d.id === selectedDispute.id ? { ...d, status: newStatus as any } : d))
+      prev.map((d) => (d.id === adjudicateTarget.id ? { ...d, status: nextStatus } : d))
     );
 
-    setSelectedDispute((prev) => (prev ? { ...prev, status: newStatus as any } : null));
-    setAdjudicateModalOpen(false);
-    setAdjudicateRationale('');
+    setAdjudicateTarget(null);
+    setRulingRationale('');
   };
 
   const columns: Column<EscrowDisputeItem>[] = [
     {
       key: 'order_code',
-      header: 'Order Ref',
-      render: (item) => <span className="font-mono font-bold text-slate-900">{item.order_code}</span>,
+      header: 'Order Code',
+      render: (item) => <span className="font-mono font-bold text-slate-900 dark:text-slate-100">{item.order_code}</span>,
     },
     {
       key: 'buyer_name',
-      header: 'Buyer / Seller',
+      header: 'Buyer vs Seller',
       render: (item) => (
         <div>
-          <span className="font-bold text-slate-900 block">{item.buyer_name}</span>
-          <span className="text-[11px] text-slate-500 font-medium">vs {item.seller_store_name}</span>
+          <span className="font-bold text-slate-900 dark:text-slate-100 block">Buyer: {item.buyer_name}</span>
+          <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Store: {item.seller_name}</span>
         </div>
       ),
     },
     {
-      key: 'amount_escrow_held',
-      header: 'Escrow Frozen Hold',
-      render: (item) => <span className="font-bold text-slate-900">{formatXAF(item.amount_escrow_held)}</span>,
+      key: 'dispute_reason',
+      header: 'Dispute Claim',
+      render: (item) => (
+        <div>
+          <span className="font-bold text-red-600 dark:text-red-400 block">{item.dispute_reason}</span>
+          <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium line-clamp-1">{item.dispute_description}</span>
+        </div>
+      ),
     },
     {
-      key: 'dispute_reason',
-      header: 'Claim Reason',
-      render: (item) => <Badge variant="amber">{item.dispute_reason}</Badge>,
+      key: 'escrow_amount',
+      header: 'Frozen Escrow Amount',
+      render: (item) => <span className="font-bold text-slate-900 dark:text-slate-100">{formatXAF(item.escrow_amount)}</span>,
     },
     {
       key: 'status',
       header: 'Status',
       render: (item) => (
-        <Badge variant={item.status === 'OPEN_HOLD' ? 'warning' : 'success'}>
+        <Badge
+          variant={
+            item.status === 'OPEN'
+              ? 'error'
+              : item.status === 'UNDER_REVIEW'
+              ? 'warning'
+              : 'success'
+          }
+        >
           {item.status}
         </Badge>
       ),
@@ -162,21 +148,18 @@ export const DisputesPage: React.FC = () => {
       align: 'right',
       render: (item) => (
         <div className="flex items-center justify-end space-x-2">
-          <Button size="sm" variant="outline" onClick={() => setSelectedDispute(item)}>
-            Inspect Case
-          </Button>
-
-          {canAdjudicate && item.status === 'OPEN_HOLD' && (
+          {item.status !== 'RESOLVED_REFUND' && item.status !== 'RESOLVED_RELEASE' && canAdjudicate ? (
             <Button
               size="sm"
               variant="primary"
-              onClick={() => {
-                setSelectedDispute(item);
-                setAdjudicateModalOpen(true);
-              }}
+              onClick={() => setAdjudicateTarget(item)}
             >
-              Adjudicate
+              Adjudicate Ruling
             </Button>
+          ) : (
+            <span className="text-[11px] font-mono text-slate-400 dark:text-slate-500 font-semibold">
+              Resolved Case
+            </span>
           )}
         </div>
       ),
@@ -185,148 +168,117 @@ export const DisputesPage: React.FC = () => {
 
   return (
     <PageContainer
-      title="3-Way Escrow Disputes &amp; Adjudication Bench"
-      subtitle="Investigate Customer Complaints, Store Defenses &amp; Rider Handover Telemetry Prior to Ledger Release"
+      title="3-Way Escrow Disputes Bench"
+      subtitle="Investigate Customer Disputes, Verify Photo Evidence &amp; Execute Binding Escrow Rulings"
     >
+      {/* Top Stat Cards Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <StatCard
+          title="OPEN DISPUTE CASES"
+          value="2 Cases"
+          change="Action Required"
+          changeType="negative"
+          icon={<ShieldAlert className="w-5 h-5 text-red-600 dark:text-red-400" />}
+          iconBg="bg-red-50 dark:bg-red-950/60"
+          description="Awaiting staff adjudication"
+        />
+
+        <StatCard
+          title="FROZEN DISPUTE ESCROW"
+          value={formatXAF(230000)}
+          change="Protected Pool"
+          changeType="neutral"
+          icon={<AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400" />}
+          iconBg="bg-amber-50 dark:bg-amber-950/60"
+          description="Funds locked pending ruling"
+        />
+
+        <StatCard
+          title="RESOLVED THIS MONTH"
+          value="18 Cases"
+          change="Avg 4.2 Hours"
+          changeType="positive"
+          icon={<CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />}
+          iconBg="bg-emerald-50 dark:bg-emerald-950/60"
+          description="Adjudicated by legal team"
+        />
+
+        <StatCard
+          title="BUYER REFUND RATE"
+          value="12.5%"
+          change="Fair Resolution"
+          changeType="neutral"
+          icon={<Gavel className="w-5 h-5 text-blue-600 dark:text-blue-400" />}
+          iconBg="bg-blue-50 dark:bg-blue-950/60"
+          description="Percentage of dispute refunds"
+        />
+      </div>
+
       {/* Advanced Reusable DataTable */}
       <DataTable
         data={disputes}
         columns={columns}
-        searchPlaceholder="Search dispute code, buyer name, or store..."
+        searchPlaceholder="Search order code, buyer, seller name, or claim..."
         pageSize={5}
-        emptyMessage="No active escrow dispute cases."
+        emptyMessage="No dispute records found."
       />
 
-      {/* CASE INSPECTION MODAL */}
-      {selectedDispute && (
+      {/* ADJUDICATE DISPUTE RULING MODAL */}
+      {adjudicateTarget && (
         <Modal
-          isOpen={Boolean(selectedDispute) && !adjudicateModalOpen}
-          onClose={() => setSelectedDispute(null)}
-          title={`Dispute Adjudication Case — ${selectedDispute.order_code}`}
+          isOpen={Boolean(adjudicateTarget)}
+          onClose={() => setAdjudicateTarget(null)}
+          title={`Adjudicate Escrow Dispute Ruling — ${adjudicateTarget.order_code}`}
         >
           <div className="space-y-4 text-xs">
-            <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-between">
-              <div>
-                <span className="text-[10px] font-bold text-slate-500 uppercase">FROZEN ESCROW HOLD</span>
-                <h4 className="text-lg font-extrabold text-slate-900 mt-0.5">{formatXAF(selectedDispute.amount_escrow_held)}</h4>
-              </div>
-              <Badge variant={selectedDispute.status === 'OPEN_HOLD' ? 'warning' : 'success'}>
-                {selectedDispute.status}
-              </Badge>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                <span className="text-[10px] text-slate-400 font-bold uppercase">BUYER CLAIM STATEMENT</span>
-                <p className="font-bold text-slate-900 mt-1">{selectedDispute.buyer_name}</p>
-                <p className="text-[11px] text-slate-600 mt-0.5 font-medium">{selectedDispute.buyer_claim_text}</p>
-              </div>
-
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                <span className="text-[10px] text-slate-400 font-bold uppercase">SELLER DEFENSE STATEMENT</span>
-                <p className="font-bold text-slate-900 mt-1">{selectedDispute.seller_store_name}</p>
-                <p className="text-[11px] text-slate-600 mt-0.5 font-medium">{selectedDispute.seller_defense_text}</p>
-              </div>
-            </div>
-
-            {selectedDispute.evidence_photos.length > 0 && (
-              <div>
-                <span className="font-bold text-slate-700 block mb-2">Evidence Photo Uploads</span>
-                <div className="flex items-center space-x-3">
-                  {selectedDispute.evidence_photos.map((url, idx) => (
-                    <img
-                      key={idx}
-                      src={url}
-                      alt="Evidence"
-                      onClick={() => setLightboxImage(url)}
-                      className="w-16 h-16 rounded-xl object-cover border border-slate-200 cursor-pointer hover:opacity-80 transition-opacity"
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="flex justify-between items-center pt-3 border-t border-slate-100">
-              <Button variant="outline" onClick={() => setSelectedDispute(null)}>
-                Close
-              </Button>
-
-              {canAdjudicate && selectedDispute.status === 'OPEN_HOLD' && (
-                <Button variant="primary" onClick={() => setAdjudicateModalOpen(true)}>
-                  Execute Final Adjudication
-                </Button>
-              )}
-            </div>
-          </div>
-        </Modal>
-      )}
-
-      {/* ADJUDICATION DECISION MODAL */}
-      {selectedDispute && adjudicateModalOpen && (
-        <Modal
-          isOpen={adjudicateModalOpen}
-          onClose={() => setAdjudicateModalOpen(false)}
-          title={`Adjudicate Escrow Hold — ${selectedDispute.order_code}`}
-        >
-          <div className="space-y-4 text-xs">
-            <div>
-              <label className="block font-bold text-slate-700 mb-2">Adjudication Ruling *</label>
-              <div className="grid grid-cols-3 gap-2">
-                <button
-                  onClick={() => setAdjudicateAction('BUYER_REFUND')}
-                  className={`p-3 rounded-xl border text-center font-bold transition-all ${
-                    adjudicateAction === 'BUYER_REFUND' ? 'bg-slate-900 text-white shadow-xs' : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
-                  }`}
-                >
-                  100% Buyer Refund
-                </button>
-                <button
-                  onClick={() => setAdjudicateAction('SELLER_RELEASE')}
-                  className={`p-3 rounded-xl border text-center font-bold transition-all ${
-                    adjudicateAction === 'SELLER_RELEASE' ? 'bg-slate-900 text-white shadow-xs' : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
-                  }`}
-                >
-                  100% Seller Release
-                </button>
-                <button
-                  onClick={() => setAdjudicateAction('SPLIT')}
-                  className={`p-3 rounded-xl border text-center font-bold transition-all ${
-                    adjudicateAction === 'SPLIT' ? 'bg-slate-900 text-white shadow-xs' : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
-                  }`}
-                >
-                  50/50 Split
-                </button>
+            <div className="p-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl">
+              <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">BUYER CLAIM REPORT</span>
+              <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 mt-1">{adjudicateTarget.dispute_description}</h4>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                Buyer: {adjudicateTarget.buyer_name} • Store: {adjudicateTarget.seller_name} • Rider: {adjudicateTarget.transporter_name}
+              </p>
+              <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between font-bold">
+                <span className="text-slate-700 dark:text-slate-300">Frozen Escrow Amount:</span>
+                <span className="text-sm text-slate-900 dark:text-slate-100 font-extrabold">{formatXAF(adjudicateTarget.escrow_amount)}</span>
               </div>
             </div>
 
             <div>
-              <label className="block font-bold text-slate-700 mb-1">
-                Mandatory Legal Adjudication Rationale *
+              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Binding Staff Escrow Ruling *</label>
+              <select
+                value={rulingType}
+                onChange={(e: any) => setRulingType(e.target.value)}
+                className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-slate-900 dark:text-slate-100"
+              >
+                <option value="BUYER_REFUND">100% Full Buyer Refund (Escrow Returned)</option>
+                <option value="SELLER_RELEASE">100% Full Seller Release (Escrow Credited to Merchant)</option>
+                <option value="SPLIT_50_50">50/50 Split Settlement (Partial Disbursal)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                Mandatory Legal Rationale &amp; Evidence Audit Notes *
               </label>
               <textarea
                 rows={3}
-                value={adjudicateRationale}
-                onChange={(e) => setAdjudicateRationale(e.target.value)}
-                placeholder="Specify evidence reviewed and legal rationale for audit record..."
-                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-slate-400"
+                value={rulingRationale}
+                onChange={(e) => setRulingRationale(e.target.value)}
+                placeholder="Detail legal findings and rationale for audit ledger..."
+                className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-medium text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-400"
               />
             </div>
 
-            <div className="flex justify-end space-x-3 pt-3 border-t border-slate-100">
-              <Button variant="outline" onClick={() => setAdjudicateModalOpen(false)}>
+            <div className="flex justify-end space-x-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+              <Button variant="outline" onClick={() => setAdjudicateTarget(null)}>
                 Cancel
               </Button>
-              <Button variant="primary" disabled={!adjudicateRationale.trim()} onClick={handleExecuteAdjudication}>
-                Execute Ruling &amp; Log Audit
+              <Button variant="primary" disabled={!rulingRationale.trim()} onClick={handleExecuteRuling}>
+                Execute Binding Ruling &amp; Log Audit
               </Button>
             </div>
           </div>
         </Modal>
-      )}
-
-      {/* Lightbox Modal */}
-      {lightboxImage && (
-        <ImageLightbox imageUrl={lightboxImage} onClose={() => setLightboxImage(null)} />
       )}
     </PageContainer>
   );

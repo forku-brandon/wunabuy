@@ -10,15 +10,9 @@ import { UserRole, UserStatus } from '@wunabuy/types';
 import { useStaffAuth } from '../stores/staffAuthStore';
 import {
   Users,
-  UserCheck,
   UserX,
-  ShieldCheck,
-  Search,
-  CheckCircle2,
-  AlertTriangle,
   Building2,
   Bike,
-  Shield,
 } from 'lucide-react';
 
 interface DirectoryUserItem {
@@ -125,8 +119,8 @@ export const UsersPage: React.FC = () => {
       header: 'Full Name / Phone',
       render: (item) => (
         <div>
-          <span className="font-bold text-slate-900 block">{item.full_name}</span>
-          <span className="text-[11px] text-slate-500 font-medium">{item.phone}</span>
+          <span className="font-bold text-slate-900 dark:text-slate-100 block">{item.full_name}</span>
+          <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">{item.phone}</span>
         </div>
       ),
     },
@@ -135,8 +129,8 @@ export const UsersPage: React.FC = () => {
       header: 'Email / City',
       render: (item) => (
         <div>
-          <span className="font-bold text-slate-800 block">{item.email || 'No email attached'}</span>
-          <span className="text-[11px] text-slate-400 font-medium">City: {item.city}</span>
+          <span className="font-bold text-slate-800 dark:text-slate-200 block">{item.email || 'No email attached'}</span>
+          <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">City: {item.city}</span>
         </div>
       ),
     },
@@ -157,7 +151,7 @@ export const UsersPage: React.FC = () => {
     {
       key: 'registered_at',
       header: 'Registered Date',
-      render: (item) => <span className="font-mono text-slate-900 font-semibold">{item.registered_at}</span>,
+      render: (item) => <span className="font-mono text-slate-900 dark:text-slate-100 font-semibold">{item.registered_at}</span>,
     },
     {
       key: 'actions',
@@ -191,8 +185,8 @@ export const UsersPage: React.FC = () => {
           value="14,250 Accounts"
           change="Douala & Yaoundé"
           changeType="positive"
-          icon={<Users className="w-5 h-5 text-teal-600" />}
-          iconBg="bg-teal-50"
+          icon={<Users className="w-5 h-5 text-teal-600 dark:text-teal-400" />}
+          iconBg="bg-teal-50 dark:bg-teal-950/60"
           description="E.164 phone verified accounts"
         />
 
@@ -201,8 +195,8 @@ export const UsersPage: React.FC = () => {
           value="1,840 Stores"
           change="KYC Approved"
           changeType="positive"
-          icon={<Building2 className="w-5 h-5 text-emerald-600" />}
-          iconBg="bg-emerald-50"
+          icon={<Building2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />}
+          iconBg="bg-emerald-50 dark:bg-emerald-950/60"
           description="Active seller storefronts"
         />
 
@@ -211,8 +205,8 @@ export const UsersPage: React.FC = () => {
           value="420 Drivers"
           change="Permit Verified"
           changeType="positive"
-          icon={<Bike className="w-5 h-5 text-blue-600" />}
-          iconBg="bg-blue-50"
+          icon={<Bike className="w-5 h-5 text-blue-600 dark:text-blue-400" />}
+          iconBg="bg-blue-50 dark:bg-blue-950/60"
           description="Riders with active GPS telemetry"
         />
 
@@ -221,8 +215,8 @@ export const UsersPage: React.FC = () => {
           value="4 Suspended"
           change="Under Investigation"
           changeType="negative"
-          icon={<UserX className="w-5 h-5 text-red-600" />}
-          iconBg="bg-red-50"
+          icon={<UserX className="w-5 h-5 text-red-600 dark:text-red-400" />}
+          iconBg="bg-red-50 dark:bg-red-950/60"
           description="Access suspended by staff"
         />
       </div>
@@ -244,14 +238,14 @@ export const UsersPage: React.FC = () => {
           title={`Account Restriction — ${restrictTarget.full_name}`}
         >
           <div className="space-y-4 text-xs">
-            <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
-              <span className="text-[10px] font-bold text-slate-500 uppercase block">TARGET USER ACCOUNT</span>
-              <h4 className="text-base font-bold text-slate-900 mt-1">{restrictTarget.full_name}</h4>
-              <p className="text-[11px] text-slate-500 font-medium">Phone: {restrictTarget.phone} • Role: {restrictTarget.role}</p>
+            <div className="p-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl">
+              <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase block">TARGET USER ACCOUNT</span>
+              <h4 className="text-base font-bold text-slate-900 dark:text-slate-100 mt-1">{restrictTarget.full_name}</h4>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Phone: {restrictTarget.phone} • Role: {restrictTarget.role}</p>
             </div>
 
             <div>
-              <label className="block font-bold text-slate-700 mb-1">
+              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
                 Mandatory Staff Operational Reason *
               </label>
               <textarea
@@ -259,11 +253,11 @@ export const UsersPage: React.FC = () => {
                 value={restrictionReason}
                 onChange={(e) => setRestrictionReason(e.target.value)}
                 placeholder="Specify reason (e.g. Fraud report, document mismatch, suspicious activity)..."
-                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-slate-400"
+                className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-medium text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-400"
               />
             </div>
 
-            <div className="flex justify-end space-x-3 pt-3 border-t border-slate-100">
+            <div className="flex justify-end space-x-3 pt-3 border-t border-slate-100 dark:border-slate-800">
               <Button variant="outline" onClick={() => setRestrictTarget(null)}>
                 Cancel
               </Button>

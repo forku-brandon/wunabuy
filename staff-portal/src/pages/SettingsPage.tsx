@@ -3,128 +3,165 @@ import { PageContainer } from '../components/layout/PageContainer';
 import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
+import { StatCard } from '../components/ui/StatCard';
 import { Modal } from '../components/ui/Modal';
 import { DataTable, Column } from '../components/ui/DataTable';
-import { useStaffAuth, SecurityAuditLog, StaffRoleMatrix } from '../stores/staffAuthStore';
+import { useStaffAuth, AuditLogItem, StaffRoleConfig, StaffPermission } from '../stores/staffAuthStore';
 import {
-  ShieldAlert,
   ShieldCheck,
-  Key,
-  Users,
-  Download,
-  Plus,
-  Edit2,
-  Trash2,
   Lock,
-  Search,
+  Plus,
+  Key,
 } from 'lucide-react';
 
+const ALL_SYSTEM_PERMISSIONS: { key: StaffPermission; label: string }[] = [
+  { key: 'view_dashboard', label: 'View Dashboard Telemetry' },
+  { key: 'view_kyc', label: 'View KYC Queue' },
+  { key: 'approve_kyc', label: 'Approve / Reject KYC Documents' },
+  { key: 'view_disputes', label: 'View Escrow Disputes' },
+  { key: 'adjudicate_disputes', label: 'Adjudicate 3-Way Disputes' },
+  { key: 'view_logistics', label: 'View Fleet GPS Telemetry' },
+  { key: 'override_logistics', label: 'Logistics Manual Dispatch Override' },
+  { key: 'view_financials', label: 'View Payout Reconciliation' },
+  { key: 'approve_payouts', label: 'Authorize MoMo / Orange Payouts' },
+  { key: 'manage_users', label: 'Manage Directory & Suspend Users' },
+  { key: 'manage_marketing', label: 'Create & Edit Promo Vouchers' },
+  { key: 'view_audit_logs', label: 'View Security Audit Logs' },
+  { key: 'manage_system_settings', label: 'Manage Roles & Permissions Matrix (L5 Only)' },
+];
+
 export const SettingsPage: React.FC = () => {
-  const {
-    user,
-    auditLogs,
-    rolesMatrix,
-    createRole,
-    updateRolePermissions,
-    deleteRole,
-    addAuditLog,
-    hasPermission,
-  } = useStaffAuth();
+  const { user, auditLogs, roles, addRole, updateRole, deleteRole, addAuditLog, hasPermission } = useStaffAuth();
+  
+  // Tab State
+  const [activeTab, setActiveTab] = useState<'audit_logs' | 'rbac_roles'>('audit_logs');
 
-  // Create Role Modal State
-  const [createRoleModalOpen, setCreateRoleModalOpen] = useState(false);
-  const [newRoleName, setNewRoleName] = useState('');
-  const [newRoleDept, setNewRoleDept] = useState('');
-  const [newRoleClearance, setNewRoleClearance] = useState<number>(3);
-  const [selectedPermissions, setSelectedPermissions] = useState<string[]>(['view_dashboard']);
+  // Role Management Modal State
+  const [roleModalOpen, setRoleModalOpen] = useState(false);
+  const [editingRole, setEditingRole] = useState<StaffRoleConfig | null>(null);
+  const [roleNameInput, setRoleNameInput] = useState('');
+  const [roleDeptInput, setRoleDeptInput] = useState('');
+  const [roleClearanceInput, setRoleClearanceInput] = useState('3');
+  const [rolePermissionsInput, setRolePermissionsInput] = useState<StaffPermission[]>([]);
 
-  // Edit Role Modal State
-  const [editRoleTarget, setEditRoleTarget] = useState<StaffRoleMatrix | null>(null);
-  const [editPermissions, setEditPermissions] = useState<string[]>([]);
+  const isSuperAdmin = user?.security_clearance_level === 5 && hasPermission('manage_system_settings');
 
-  const isSuperAdmin = user?.staff_department_role === 'SUPER_ADMIN';
-  const canViewAuditLogs = hasPermission('view_audit_logs');
-
-  const ALL_PERMISSIONS = [
-    { key: 'view_dashboard', label: 'View Dashboard & Stat Telemetry' },
-    { key: 'view_kyc', label: 'View KYC Submissions Queue' },
-    { key: 'approve_kyc', label: 'Approve & Verify Merchant KYC Documents' },
-    { key: 'view_disputes', label: 'View Escrow Disputes' },
-    { key: 'adjudicate_disputes', label: 'Adjudicate 3-Way Escrow Disputes (Refund/Release)' },
-    { key: 'view_logistics', label: 'View Logistics & Transporter Telemetry' },
-    { key: 'override_logistics', label: 'Override Delivery Dispatch Status' },
-    { key: 'view_financials', label: 'View Financial Balances & Ledger' },
-    { key: 'approve_payouts', label: 'Authorize Mobile Money Payout Disbursals' },
-    { key: 'manage_users', label: 'Manage Users (Suspend / Re-activate)' },
-    { key: 'manage_marketing', label: 'Manage Marketing Banners & Promo Campaigns' },
-    { key: 'view_audit_logs', label: 'View Security Audit Logs' },
-    { key: 'manage_staff_roles', label: 'Manage Staff Roles & RBAC Matrix (Super Admin Only)' },
-  ];
-
-  const handleCreateRoleSubmit = () => {
-    if (!newRoleName.trim() || !newRoleDept.trim()) return;
-
-    createRole({
-      role_code: newRoleName.toUpperCase().replace(/\s+/g, '_'),
-      role_display_name: newRoleName,
-      department_name: newRoleDept,
-      security_clearance_level: newRoleClearance,
-      permissions: selectedPermissions as any,
-      is_custom_role: true,
-    });
-
-    setCreateRoleModalOpen(false);
-    setNewRoleName('');
-    setNewRoleDept('');
-    setSelectedPermissions(['view_dashboard']);
+  const handleOpenCreateRole = () => {
+    setEditingRole(null);
+    setRoleNameInput('');
+    setRoleDeptInput('Operations & Support');
+    setRoleClearanceInput('3');
+    setRolePermissionsInput(['view_dashboard', 'view_kyc']);
+    setRoleModalOpen(true);
   };
 
-  const handleSaveEditPermissions = () => {
-    if (!editRoleTarget) return;
-
-    updateRolePermissions(editRoleTarget.role_code, editPermissions as any);
-    setEditRoleTarget(null);
+  const handleOpenEditRole = (role: StaffRoleConfig) => {
+    setEditingRole(role);
+    setRoleNameInput(role.role_name);
+    setRoleDeptInput(role.department_name);
+    setRoleClearanceInput(String(role.security_clearance_level));
+    setRolePermissionsInput(role.permissions);
+    setRoleModalOpen(true);
   };
 
-  const handleExportAuditLogs = () => {
-    addAuditLog({
-      action_code: 'AUDIT_LOGS_EXPORT',
-      action_description: 'Exported security audit log ledger CSV',
-      security_level: 'INFO',
-    });
-    alert('Security Audit Log CSV exported successfully.');
+  const handleTogglePermissionCheckbox = (perm: StaffPermission) => {
+    setRolePermissionsInput((prev) =>
+      prev.includes(perm) ? prev.filter((p) => p !== perm) : [...prev, perm]
+    );
   };
 
-  const auditColumns: Column<SecurityAuditLog>[] = [
+  const handleSaveRole = () => {
+    if (!roleNameInput.trim() || !roleDeptInput.trim()) return;
+
+    if (editingRole) {
+      updateRole(editingRole.id, {
+        role_name: roleNameInput,
+        department_name: roleDeptInput,
+        security_clearance_level: parseInt(roleClearanceInput) || 3,
+        permissions: rolePermissionsInput,
+      });
+
+      addAuditLog({
+        action_code: 'RBAC_ROLE_UPDATE',
+        action_description: `Updated system staff role "${roleNameInput}" (${rolePermissionsInput.length} permissions)`,
+        target_id: editingRole.id,
+        security_level: 'CRITICAL',
+      });
+    } else {
+      const newRoleObj: StaffRoleConfig = {
+        id: 'role_' + Date.now().toString().slice(-4),
+        role_code: roleNameInput.toUpperCase().replace(/\s+/g, '_'),
+        role_name: roleNameInput,
+        department_name: roleDeptInput,
+        security_clearance_level: parseInt(roleClearanceInput) || 3,
+        is_custom: true,
+        permissions: rolePermissionsInput,
+      };
+
+      addRole(newRoleObj);
+
+      addAuditLog({
+        action_code: 'RBAC_ROLE_CREATE',
+        action_description: `Created custom staff role "${roleNameInput}" with Level ${roleClearanceInput} clearance`,
+        target_id: newRoleObj.id,
+        security_level: 'CRITICAL',
+      });
+    }
+
+    setRoleModalOpen(false);
+  };
+
+  const handleDeleteRole = (role: StaffRoleConfig) => {
+    if (!role.is_custom) {
+      alert('Default system roles cannot be deleted.');
+      return;
+    }
+
+    if (confirm(`Are you sure you want to delete custom role "${role.role_name}"?`)) {
+      deleteRole(role.id);
+
+      addAuditLog({
+        action_code: 'RBAC_ROLE_DELETE',
+        action_description: `Deleted custom staff role "${role.role_name}"`,
+        target_id: role.id,
+        security_level: 'CRITICAL',
+      });
+    }
+  };
+
+  const auditColumns: Column<AuditLogItem>[] = [
     {
       key: 'timestamp',
       header: 'Timestamp',
-      render: (item) => <span className="font-mono text-slate-900 font-bold">{item.timestamp}</span>,
+      render: (item) => <span className="font-mono text-slate-900 dark:text-slate-100 font-semibold">{item.timestamp}</span>,
     },
     {
-      key: 'employee_id',
-      header: 'Staff Operator',
+      key: 'actor_name',
+      header: 'Staff Actor',
       render: (item) => (
         <div>
-          <span className="font-bold text-slate-900 block">{item.employee_id}</span>
-          <span className="text-[11px] text-slate-500 font-medium">{item.staff_name}</span>
+          <span className="font-bold text-slate-900 dark:text-slate-100 block">{item.actor_name}</span>
+          <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">{item.actor_email}</span>
         </div>
       ),
     },
     {
       key: 'action_code',
       header: 'Action Code',
-      render: (item) => <span className="font-mono font-bold text-slate-800">{item.action_code}</span>,
+      render: (item) => (
+        <span className="font-mono font-extrabold text-teal-800 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/60 px-2.5 py-1 rounded-lg border border-teal-200 dark:border-teal-800">
+          {item.action_code}
+        </span>
+      ),
     },
     {
       key: 'action_description',
-      header: 'Action Description',
-      render: (item) => <span className="text-slate-700 font-medium">{item.action_description}</span>,
+      header: 'Audit Trail Description',
+      render: (item) => <span className="text-slate-800 dark:text-slate-200 font-medium">{item.action_description}</span>,
     },
     {
       key: 'security_level',
-      header: 'Security Level',
-      align: 'right',
+      header: 'Severity',
       render: (item) => (
         <Badge
           variant={
@@ -143,232 +180,241 @@ export const SettingsPage: React.FC = () => {
 
   return (
     <PageContainer
-      title="Security Governance, RBAC Matrix &amp; Audit Logs"
-      subtitle="Role-Based Access Control (RBAC), Clearance Enforcement &amp; Immutable System Audit Trail"
+      title="Security, System Audit Logs &amp; RBAC Governance"
+      subtitle="Immutable Operational Audit Ledger, Dynamic Staff Roles &amp; Security Clearance Matrix"
     >
-      {/* SUPER ADMIN: STAFF ROLES & PERMISSIONS MATRIX CRUD */}
-      {isSuperAdmin && (
-        <Card className="mb-8">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-100">
-            <div>
-              <div className="flex items-center space-x-2">
-                <ShieldCheck className="w-5 h-5 text-teal-600" />
-                <h3 className="text-base font-extrabold text-slate-900 font-heading">
-                  Staff Role &amp; Permission Matrix Governance
-                </h3>
-              </div>
-              <p className="text-xs text-slate-500 font-medium">Create, edit, and assign fine-grained clearance roles across departments</p>
-            </div>
+      {/* Top Stat Cards Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <StatCard
+          title="TOTAL RECORDED AUDIT LOGS"
+          value={`${auditLogs.length} Records`}
+          change="Immutable Ledger"
+          changeType="positive"
+          icon={<ShieldCheck className="w-5 h-5 text-teal-600 dark:text-teal-400" />}
+          iconBg="bg-teal-50 dark:bg-teal-950/60"
+          description="Crypto-hash verified log chain"
+        />
 
-            <Button variant="primary" size="sm" onClick={() => setCreateRoleModalOpen(true)}>
-              <Plus className="w-4 h-4 mr-1.5" />
-              Create Custom Role
-            </Button>
-          </div>
+        <StatCard
+          title="ACTIVE SYSTEM ROLES"
+          value={`${roles.length} Roles`}
+          change="Level 1 - 5"
+          changeType="neutral"
+          icon={<Key className="w-5 h-5 text-blue-600 dark:text-blue-400" />}
+          iconBg="bg-blue-50 dark:bg-blue-950/60"
+          description="RBAC permission configurations"
+        />
 
-          {/* Roles Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {rolesMatrix.map((role) => (
-              <div
-                key={role.role_code}
-                className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between"
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] font-mono font-bold text-slate-400">
-                      LEVEL {role.security_clearance_level}
-                    </span>
-                    <Badge variant={role.is_custom_role ? 'teal' : 'neutral'}>
-                      {role.is_custom_role ? 'CUSTOM ROLE' : 'SYSTEM ROLE'}
-                    </Badge>
-                  </div>
+        <StatCard
+          title="SUPER ADMIN CLEARANCE"
+          value={`Level ${user?.security_clearance_level || 5}`}
+          change="L5 Super User"
+          changeType="positive"
+          icon={<Lock className="w-5 h-5 text-purple-600 dark:text-purple-400" />}
+          iconBg="bg-purple-50 dark:bg-purple-950/60"
+          description="Full system governance active"
+        />
 
-                  <h4 className="text-sm font-extrabold text-slate-900 font-heading">
-                    {role.role_display_name}
-                  </h4>
-                  <p className="text-[11px] text-slate-500 font-medium">{role.department_name}</p>
+        <StatCard
+          title="SECURITY COMPLIANCE"
+          value="100% Passed"
+          change="TLS 1.3 Strict"
+          changeType="positive"
+          icon={<ShieldCheck className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />}
+          iconBg="bg-emerald-50 dark:bg-emerald-950/60"
+          description="Zero security breaches logged"
+        />
+      </div>
 
-                  <div className="mt-3 font-semibold text-[11px] text-slate-600 space-y-1">
-                    <p>Permissions: <strong className="text-slate-900">{role.permissions.length} Granted</strong></p>
-                  </div>
-                </div>
+      {/* Top Tab Bar Navigation */}
+      <div className="flex items-center space-x-3 mb-6">
+        <button
+          onClick={() => setActiveTab('audit_logs')}
+          className={`px-5 py-2.5 rounded-2xl text-xs font-extrabold flex items-center space-x-2 transition-all shadow-xs ${
+            activeTab === 'audit_logs'
+              ? 'bg-teal-600 text-white shadow-md'
+              : 'bg-white dark:bg-[#151C28] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800'
+          }`}
+        >
+          <ShieldCheck className="w-4 h-4" />
+          <span>Security Audit Log Ledger ({auditLogs.length})</span>
+        </button>
 
-                <div className="mt-4 pt-3 border-t border-slate-200/80 flex items-center justify-between">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      setEditRoleTarget(role);
-                      setEditPermissions(role.permissions);
-                    }}
-                  >
-                    <Edit2 className="w-3.5 h-3.5 mr-1 text-slate-500" />
-                    Edit Matrix
-                  </Button>
+        <button
+          onClick={() => setActiveTab('rbac_roles')}
+          className={`px-5 py-2.5 rounded-2xl text-xs font-extrabold flex items-center space-x-2 transition-all shadow-xs ${
+            activeTab === 'rbac_roles'
+              ? 'bg-teal-600 text-white shadow-md'
+              : 'bg-white dark:bg-[#151C28] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800'
+          }`}
+        >
+          <Key className="w-4 h-4" />
+          <span>Staff Roles &amp; Permissions Matrix ({roles.length})</span>
+        </button>
+      </div>
 
-                  {role.is_custom_role && (
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      onClick={() => deleteRole(role.role_code)}
-                    >
-                      <Trash2 className="w-3.5 h-3.5 mr-1 text-red-500" />
-                      Delete
-                    </Button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
+      {/* TAB 1: IMMUTABLE AUDIT LOG LEDGER */}
+      {activeTab === 'audit_logs' && (
+        <DataTable
+          data={auditLogs}
+          columns={auditColumns}
+          searchPlaceholder="Search audit code, staff actor, description..."
+          pageSize={5}
+          emptyMessage="No audit logs recorded."
+        />
       )}
 
-      {/* IMMUTABLE SYSTEM SECURITY AUDIT LOG LEDGER TABLE */}
-      {canViewAuditLogs && (
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-base font-extrabold text-slate-900 font-heading flex items-center">
-              <Key className="w-5 h-5 text-teal-600 mr-2" />
-              Immutable Security Audit Log Ledger
-            </h3>
+      {/* TAB 2: SUPER ADMIN ROLES & PERMISSIONS MATRIX CRUD */}
+      {activeTab === 'rbac_roles' && (
+        <div className="space-y-6">
+          <Card>
+            <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
+              <div>
+                <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100 font-heading flex items-center">
+                  <Key className="w-5 h-5 text-teal-600 dark:text-teal-400 mr-2" />
+                  Staff Department Roles &amp; Clearance Matrix
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Configure clearance levels (L1 - L5) and fine-grained system permission flags</p>
+              </div>
 
-            <Button variant="outline" size="sm" onClick={handleExportAuditLogs}>
-              <Download className="w-4 h-4 mr-1.5" />
-              Export Audit CSV
-            </Button>
-          </div>
+              {isSuperAdmin ? (
+                <Button variant="primary" size="sm" onClick={handleOpenCreateRole}>
+                  <Plus className="w-4 h-4 mr-1.5" />
+                  Add Custom Role
+                </Button>
+              ) : (
+                <Badge variant="amber">LEVEL 5 READ-ONLY</Badge>
+              )}
+            </div>
 
-          <DataTable
-            data={auditLogs}
-            columns={auditColumns}
-            searchPlaceholder="Search audit action, staff name, employee ID..."
-            pageSize={5}
-            emptyMessage="No security audit log entries recorded."
-          />
+            {/* Roles Grid List */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {roles.map((r) => (
+                <div key={r.id} className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-[10px] font-extrabold px-2.5 py-0.5 rounded bg-teal-100 dark:bg-teal-900/60 text-teal-800 dark:text-teal-300">
+                        CLEARANCE LEVEL {r.security_clearance_level}
+                      </span>
+                      {r.is_custom && (
+                        <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase">CUSTOM ROLE</span>
+                      )}
+                    </div>
+
+                    <h4 className="text-base font-extrabold text-slate-900 dark:text-slate-100 font-heading mt-2">
+                      {r.role_name}
+                    </h4>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">{r.department_name}</p>
+
+                    <div className="mt-4 space-y-1">
+                      <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
+                        GRANTED PERMISSIONS ({r.permissions.length})
+                      </span>
+                      <div className="flex flex-wrap gap-1.5 mt-1">
+                        {r.permissions.map((p) => (
+                          <span key={p} className="text-[10px] font-semibold px-2 py-0.5 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded text-slate-700 dark:text-slate-300">
+                            {p}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {isSuperAdmin && (
+                    <div className="mt-5 pt-3 border-t border-slate-200/80 dark:border-slate-700 flex items-center justify-end space-x-2">
+                      <Button size="sm" variant="outline" onClick={() => handleOpenEditRole(r)}>
+                        Edit Permissions
+                      </Button>
+                      {r.is_custom && (
+                        <Button size="sm" variant="secondary" onClick={() => handleDeleteRole(r)}>
+                          Delete
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </Card>
         </div>
       )}
 
-      {/* CREATE CUSTOM ROLE MODAL */}
+      {/* CREATE / EDIT ROLE MODAL */}
       <Modal
-        isOpen={createRoleModalOpen}
-        onClose={() => setCreateRoleModalOpen(false)}
-        title="Create Custom Staff Role &amp; Permission Assignment"
+        isOpen={roleModalOpen}
+        onClose={() => setRoleModalOpen(false)}
+        title={editingRole ? `Edit Role Matrix — ${editingRole.role_name}` : 'Create Custom Staff Role'}
       >
         <div className="space-y-4 text-xs">
-          <div>
-            <label className="block font-bold text-slate-700 mb-1">Role Title / Display Name *</label>
-            <input
-              type="text"
-              placeholder="e.g. Senior Fraud Investigator"
-              value={newRoleName}
-              onChange={(e) => setNewRoleName(e.target.value)}
-              className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold"
-            />
-          </div>
-
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block font-bold text-slate-700 mb-1">Department Name *</label>
+              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Role Title *</label>
               <input
                 type="text"
-                placeholder="e.g. Risk & Governance"
-                value={newRoleDept}
-                onChange={(e) => setNewRoleDept(e.target.value)}
-                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold"
+                placeholder="e.g. Regional Risk Analyst"
+                value={roleNameInput}
+                onChange={(e) => setRoleNameInput(e.target.value)}
+                className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-slate-900 dark:text-slate-100"
               />
             </div>
 
             <div>
-              <label className="block font-bold text-slate-700 mb-1">Security Clearance Level</label>
-              <select
-                value={newRoleClearance}
-                onChange={(e) => setNewRoleClearance(Number(e.target.value))}
-                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold"
-              >
-                <option value={1}>Level 1 — Read Only Support</option>
-                <option value={2}>Level 2 — Field Operations</option>
-                <option value={3}>Level 3 — Department Lead</option>
-                <option value={4}>Level 4 — Executive Operations</option>
-                <option value={5}>Level 5 — Super Administrator</option>
-              </select>
+              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Department Name *</label>
+              <input
+                type="text"
+                placeholder="e.g. Risk & Compliance"
+                value={roleDeptInput}
+                onChange={(e) => setRoleDeptInput(e.target.value)}
+                className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-slate-900 dark:text-slate-100"
+              />
             </div>
           </div>
 
           <div>
-            <label className="block font-bold text-slate-700 mb-2">Assign System Permissions (RBAC)</label>
-            <div className="space-y-2 max-h-48 overflow-y-auto p-3 bg-slate-50 border border-slate-200 rounded-xl">
-              {ALL_PERMISSIONS.map((perm) => (
-                <label key={perm.key} className="flex items-center space-x-2 font-semibold cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={selectedPermissions.includes(perm.key)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setSelectedPermissions((prev) => [...prev, perm.key]);
-                      } else {
-                        setSelectedPermissions((prev) => prev.filter((k) => k !== perm.key));
-                      }
-                    }}
-                    className="rounded text-teal-600 focus:ring-teal-500"
-                  />
-                  <span>{perm.label}</span>
-                </label>
-              ))}
+            <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Security Clearance Level (1 - 5)</label>
+            <select
+              value={roleClearanceInput}
+              onChange={(e) => setRoleClearanceInput(e.target.value)}
+              className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-slate-900 dark:text-slate-100"
+            >
+              <option value="1">Level 1 — Basic Viewer</option>
+              <option value="2">Level 2 — Customer Service Support</option>
+              <option value="3">Level 3 — Department Specialist / Operations</option>
+              <option value="4">Level 4 — Senior Department Officer</option>
+              <option value="5">Level 5 — Super Administrator</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block font-bold text-slate-700 dark:text-slate-300 mb-2">Granted System Permission Flags</label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">
+              {ALL_SYSTEM_PERMISSIONS.map((perm) => {
+                const checked = rolePermissionsInput.includes(perm.key);
+                return (
+                  <label key={perm.key} className="flex items-center space-x-2 text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => handleTogglePermissionCheckbox(perm.key)}
+                      className="rounded text-teal-600 focus:ring-teal-500"
+                    />
+                    <span>{perm.label}</span>
+                  </label>
+                );
+              })}
             </div>
           </div>
 
-          <div className="flex justify-end space-x-3 pt-3 border-t border-slate-100">
-            <Button variant="outline" onClick={() => setCreateRoleModalOpen(false)}>
+          <div className="flex justify-end space-x-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+            <Button variant="outline" onClick={() => setRoleModalOpen(false)}>
               Cancel
             </Button>
-            <Button variant="primary" disabled={!newRoleName.trim() || !newRoleDept.trim()} onClick={handleCreateRoleSubmit}>
-              Create Role &amp; Save Permission Matrix
+            <Button variant="primary" disabled={!roleNameInput.trim()} onClick={handleSaveRole}>
+              Save Role Matrix &amp; Record Audit
             </Button>
           </div>
         </div>
       </Modal>
-
-      {/* EDIT ROLE MATRIX MODAL */}
-      {editRoleTarget && (
-        <Modal
-          isOpen={Boolean(editRoleTarget)}
-          onClose={() => setEditRoleTarget(null)}
-          title={`Edit Permission Matrix — ${editRoleTarget.role_display_name}`}
-        >
-          <div className="space-y-4 text-xs">
-            <p className="text-slate-600 font-medium">Modify RBAC permissions for department: <strong>{editRoleTarget.department_name}</strong></p>
-
-            <div className="space-y-2 max-h-56 overflow-y-auto p-3 bg-slate-50 border border-slate-200 rounded-xl">
-              {ALL_PERMISSIONS.map((perm) => (
-                <label key={perm.key} className="flex items-center space-x-2 font-semibold cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={editPermissions.includes(perm.key)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setEditPermissions((prev) => [...prev, perm.key]);
-                      } else {
-                        setEditPermissions((prev) => prev.filter((k) => k !== perm.key));
-                      }
-                    }}
-                    className="rounded text-teal-600 focus:ring-teal-500"
-                  />
-                  <span>{perm.label}</span>
-                </label>
-              ))}
-            </div>
-
-            <div className="flex justify-end space-x-3 pt-3 border-t border-slate-100">
-              <Button variant="outline" onClick={() => setEditRoleTarget(null)}>
-                Cancel
-              </Button>
-              <Button variant="primary" onClick={handleSaveEditPermissions}>
-                Save Updated Matrix &amp; Record Audit Log
-              </Button>
-            </div>
-          </div>
-        </Modal>
-      )}
     </PageContainer>
   );
 };

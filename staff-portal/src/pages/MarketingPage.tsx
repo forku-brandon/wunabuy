@@ -7,163 +7,223 @@ import { StatCard } from '../components/ui/StatCard';
 import { Modal } from '../components/ui/Modal';
 import { DataTable, Column } from '../components/ui/DataTable';
 import { useStaffAuth } from '../stores/staffAuthStore';
+import { formatXAF } from '@wunabuy/utils';
 import {
   Megaphone,
-  Plus,
-  Eye,
-  MousePointerClick,
+  Ticket,
   TrendingUp,
+  Plus,
   Tag,
-  CheckCircle2,
-  Calendar,
 } from 'lucide-react';
 
 interface PromoCampaignItem {
   id: string;
-  campaign_code: string;
-  title: string;
-  target_role: 'BUYER' | 'SELLER' | 'TRANSPORTER';
-  discount_percentage: number;
+  promo_code: string;
+  campaign_name: string;
+  discount_type: 'PERCENTAGE' | 'FLAT_XAF' | 'FREE_DELIVERY';
+  discount_value: string;
+  min_order_amount: number;
+  total_claims: number;
   max_claims: number;
-  claimed_count: number;
-  status: 'ACTIVE' | 'PAUSED' | 'EXPIRED';
-  valid_until: string;
+  is_active: boolean;
+  starts_at: string;
+  expires_at: string;
 }
 
-const MOCK_CAMPAIGNS: PromoCampaignItem[] = [
+const MOCK_PROMO_CAMPAIGNS: PromoCampaignItem[] = [
   {
-    id: 'cmp_101',
-    campaign_code: 'DOUALA-TECH-2026',
-    title: 'Douala Tech Week 10% Discount Promo',
-    target_role: 'BUYER',
-    discount_percentage: 10,
+    id: 'promo_1',
+    promo_code: 'WUNABUY2026',
+    campaign_name: 'Q3 New User Welcome Discount',
+    discount_type: 'FLAT_XAF',
+    discount_value: '2 000 FCFA',
+    min_order_amount: 10000,
+    total_claims: 1420,
+    max_claims: 5000,
+    is_active: true,
+    starts_at: '2026-08-01',
+    expires_at: '2026-09-30',
+  },
+  {
+    id: 'promo_2',
+    promo_code: 'DOUALAFREE',
+    campaign_name: 'Free Delivery Weekend (Akwa Hub)',
+    discount_type: 'FREE_DELIVERY',
+    discount_value: '100% Off Shipping',
+    min_order_amount: 15000,
+    total_claims: 850,
+    max_claims: 1000,
+    is_active: true,
+    starts_at: '2026-08-25',
+    expires_at: '2026-09-05',
+  },
+  {
+    id: 'promo_3',
+    promo_code: 'TECHDEALS15',
+    campaign_name: 'Electronics Flash Clearance',
+    discount_type: 'PERCENTAGE',
+    discount_value: '15% Off',
+    min_order_amount: 50000,
+    total_claims: 320,
     max_claims: 500,
-    claimed_count: 342,
-    status: 'ACTIVE',
-    valid_until: '2026-09-30',
-  },
-  {
-    id: 'cmp_102',
-    campaign_code: 'ZERO-ESCROW-FEE',
-    title: 'Zero Escrow Fee Promotion for Top Sellers',
-    target_role: 'SELLER',
-    discount_percentage: 100,
-    max_claims: 100,
-    claimed_count: 88,
-    status: 'ACTIVE',
-    valid_until: '2026-10-15',
-  },
-  {
-    id: 'cmp_103',
-    campaign_code: 'RIDER-BONUS-5K',
-    title: 'Rider 5,000 FCFA Bonus for 20 Deliveries/Week',
-    target_role: 'TRANSPORTER',
-    discount_percentage: 15,
-    max_claims: 200,
-    claimed_count: 200,
-    status: 'EXPIRED',
-    valid_until: '2026-08-31',
+    is_active: false,
+    starts_at: '2026-07-01',
+    expires_at: '2026-07-31',
   },
 ];
 
 export const MarketingPage: React.FC = () => {
-  const { user, addAuditLog, hasPermission } = useStaffAuth();
-  const [campaigns, setCampaigns] = useState<PromoCampaignItem[]>(MOCK_CAMPAIGNS);
+  const { addAuditLog, hasPermission } = useStaffAuth();
+  const [campaigns, setCampaigns] = useState<PromoCampaignItem[]>(MOCK_PROMO_CAMPAIGNS);
+  
+  // Create Modal
   const [createModalOpen, setCreateModalOpen] = useState(false);
-
-  const [title, setTitle] = useState('');
-  const [code, setCode] = useState('');
-  const [targetRole, setTargetRole] = useState<'BUYER' | 'SELLER' | 'TRANSPORTER'>('BUYER');
-  const [discount, setDiscount] = useState('10');
+  const [newCode, setNewCode] = useState('');
+  const [newName, setNewName] = useState('');
+  const [newDiscValue, setNewDiscValue] = useState('');
+  const [newMinOrder, setNewMinOrder] = useState('10000');
 
   const canManageMarketing = hasPermission('manage_marketing');
 
-  const handleCreateCampaign = () => {
-    if (!title.trim() || !code.trim()) return;
+  const handleCreatePromo = () => {
+    if (!newCode.trim() || !newName.trim() || !newDiscValue.trim()) return;
 
-    const newCampaign: PromoCampaignItem = {
-      id: 'cmp_' + Date.now().toString().slice(-4),
-      campaign_code: code.toUpperCase(),
-      title,
-      target_role: targetRole,
-      discount_percentage: Number(discount),
-      max_claims: 500,
-      claimed_count: 0,
-      status: 'ACTIVE',
-      valid_until: '2026-12-31',
+    const newPromo: PromoCampaignItem = {
+      id: 'promo_' + Date.now(),
+      promo_code: newCode.toUpperCase(),
+      campaign_name: newName,
+      discount_type: 'FLAT_XAF',
+      discount_value: newDiscValue,
+      min_order_amount: parseInt(newMinOrder) || 10000,
+      total_claims: 0,
+      max_claims: 1000,
+      is_active: true,
+      starts_at: new Date().toISOString().slice(0, 10),
+      expires_at: '2026-12-31',
     };
 
-    setCampaigns((prev) => [newCampaign, ...prev]);
-
     addAuditLog({
-      action_code: 'MARKETING_CAMPAIGN_CREATE',
-      action_description: `Created promo campaign ${newCampaign.campaign_code} (${newCampaign.title})`,
-      target_id: newCampaign.id,
+      action_code: 'MARKETING_PROMO_CREATE',
+      action_description: `Created new promo campaign ${newPromo.promo_code} (${newPromo.campaign_name})`,
+      target_id: newPromo.id,
       security_level: 'INFO',
     });
 
+    setCampaigns((prev) => [newPromo, ...prev]);
+
     setCreateModalOpen(false);
-    setTitle('');
-    setCode('');
+    setNewCode('');
+    setNewName('');
+    setNewDiscValue('');
+  };
+
+  const handleTogglePromoStatus = (id: string) => {
+    setCampaigns((prev) =>
+      prev.map((item) => {
+        if (item.id === id) {
+          const nextActive = !item.is_active;
+
+          addAuditLog({
+            action_code: nextActive ? 'MARKETING_PROMO_ACTIVATE' : 'MARKETING_PROMO_DEACTIVATE',
+            action_description: `${nextActive ? 'Activated' : 'Deactivated'} promo campaign ${item.promo_code}`,
+            target_id: item.id,
+            security_level: 'INFO',
+          });
+
+          return { ...item, is_active: nextActive };
+        }
+        return item;
+      })
+    );
   };
 
   const columns: Column<PromoCampaignItem>[] = [
     {
-      key: 'campaign_code',
-      header: 'Promo Code',
-      render: (item) => <span className="font-mono font-bold text-slate-900">{item.campaign_code}</span>,
-    },
-    {
-      key: 'title',
-      header: 'Campaign Title',
+      key: 'promo_code',
+      header: 'Promo Voucher Code',
       render: (item) => (
-        <div>
-          <span className="font-bold text-slate-900 block">{item.title}</span>
-          <span className="text-[11px] text-slate-500 font-medium">Target: {item.target_role}</span>
-        </div>
-      ),
-    },
-    {
-      key: 'discount_percentage',
-      header: 'Discount / Incentive',
-      render: (item) => <span className="font-bold text-slate-900">{item.discount_percentage}% Fee Discount</span>,
-    },
-    {
-      key: 'claimed_count',
-      header: 'Claims Progress',
-      render: (item) => (
-        <span className="font-semibold text-slate-700">
-          {item.claimed_count} / {item.max_claims} Claims
+        <span className="font-mono font-extrabold text-teal-800 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/60 px-2.5 py-1 rounded-lg border border-teal-200 dark:border-teal-800">
+          {item.promo_code}
         </span>
       ),
     },
     {
-      key: 'status',
+      key: 'campaign_name',
+      header: 'Campaign Name / Type',
+      render: (item) => (
+        <div>
+          <span className="font-bold text-slate-900 dark:text-slate-100 block">{item.campaign_name}</span>
+          <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Type: {item.discount_type}</span>
+        </div>
+      ),
+    },
+    {
+      key: 'discount_value',
+      header: 'Discount Benefit',
+      render: (item) => <span className="font-bold text-slate-900 dark:text-slate-100">{item.discount_value}</span>,
+    },
+    {
+      key: 'min_order_amount',
+      header: 'Min Spend',
+      render: (item) => <span className="font-bold text-slate-800 dark:text-slate-200">{formatXAF(item.min_order_amount)}</span>,
+    },
+    {
+      key: 'total_claims',
+      header: 'Claims Progress',
+      render: (item) => (
+        <div>
+          <span className="font-bold text-slate-900 dark:text-slate-100 block">
+            {item.total_claims} / {item.max_claims}
+          </span>
+          <div className="w-24 bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 mt-1 overflow-hidden">
+            <div
+              className="bg-teal-600 h-full rounded-full"
+              style={{ width: `${Math.min(100, (item.total_claims / item.max_claims) * 100)}%` }}
+            />
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: 'is_active',
       header: 'Status',
       render: (item) => (
-        <Badge variant={item.status === 'ACTIVE' ? 'success' : 'neutral'}>
-          {item.status}
+        <Badge variant={item.is_active ? 'success' : 'neutral'}>
+          {item.is_active ? 'ACTIVE' : 'EXPIRED / PAUSED'}
         </Badge>
       ),
     },
     {
-      key: 'valid_until',
-      header: 'Expiry Date',
-      render: (item) => <span className="font-mono text-slate-900 font-semibold">{item.valid_until}</span>,
+      key: 'actions',
+      header: 'Actions',
+      align: 'right',
+      render: (item) => (
+        <div className="flex items-center justify-end space-x-2">
+          {canManageMarketing && (
+            <Button
+              size="sm"
+              variant={item.is_active ? 'outline' : 'primary'}
+              onClick={() => handleTogglePromoStatus(item.id)}
+            >
+              {item.is_active ? 'Pause' : 'Activate'}
+            </Button>
+          )}
+        </div>
+      ),
     },
   ];
 
   return (
     <PageContainer
-      title="Marketing &amp; Promotional Campaigns Engine"
-      subtitle="Broadcast Banner Promotions, Merchant Commission Discounts &amp; Transporter Delivery Incentives"
+      title="Marketing Banners &amp; Promo Voucher Center"
+      subtitle="Configure Platform Vouchers, Referral Coupons, Merchant Sponsored Ads &amp; Campaign Yield"
       action={
-        canManageMarketing && (
+        canManageMarketing ? (
           <Button variant="primary" size="sm" onClick={() => setCreateModalOpen(true)}>
             <Plus className="w-4 h-4 mr-1.5" />
-            Create Campaign Banner
+            Create Promo Voucher
           </Button>
-        )
+        ) : undefined
       }
     >
       {/* Top Stat Cards Grid */}
@@ -171,41 +231,41 @@ export const MarketingPage: React.FC = () => {
         <StatCard
           title="ACTIVE PROMO CAMPAIGNS"
           value="2 Campaigns"
-          change="Live Banners"
+          change="Live Vouchers"
           changeType="positive"
-          icon={<Megaphone className="w-5 h-5 text-teal-600" />}
-          iconBg="bg-teal-50"
-          description="Broadcasting across mobile apps"
+          icon={<Megaphone className="w-5 h-5 text-teal-600 dark:text-teal-400" />}
+          iconBg="bg-teal-50 dark:bg-teal-950/60"
+          description="Active customer discount codes"
         />
 
         <StatCard
-          title="TOTAL PROMO CLAIMS"
-          value="630 Claims"
-          change="+24% this week"
+          title="TOTAL CLAIMS REDEEMED"
+          value="2,270 Claims"
+          change="35.4% Conversion"
           changeType="positive"
-          icon={<Tag className="w-5 h-5 text-amber-600" />}
-          iconBg="bg-amber-50"
-          description="Vouchers redeemed by buyers/sellers"
+          icon={<Ticket className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />}
+          iconBg="bg-emerald-50 dark:bg-emerald-950/60"
+          description="Vouchers redeemed at checkout"
         />
 
         <StatCard
-          title="BANNER IMPRESSIONS"
-          value="142,500 Views"
-          change="Douala & Yaoundé"
+          title="CAMPAIGN ATTRIBUTED GMV"
+          value={formatXAF(18400000)}
+          change="Q3 Yield"
           changeType="positive"
-          icon={<Eye className="w-5 h-5 text-blue-600" />}
-          iconBg="bg-blue-50"
-          description="App homepage hero banner views"
+          icon={<TrendingUp className="w-5 h-5 text-blue-600 dark:text-blue-400" />}
+          iconBg="bg-blue-50 dark:bg-blue-950/60"
+          description="Gross volume generated by promos"
         />
 
         <StatCard
-          title="CONVERSION CTR"
-          value="8.4%"
-          change="High Engagement"
-          changeType="positive"
-          icon={<TrendingUp className="w-5 h-5 text-emerald-600" />}
-          iconBg="bg-emerald-50"
-          description="Click-through rate to store pages"
+          title="DISCOUNT SUBSIDY YIELD"
+          value={formatXAF(3420000)}
+          change="Platform Cost"
+          changeType="neutral"
+          icon={<Tag className="w-5 h-5 text-purple-600 dark:text-purple-400" />}
+          iconBg="bg-purple-50 dark:bg-purple-950/60"
+          description="Total promo subsidy invested"
         />
       </div>
 
@@ -213,61 +273,69 @@ export const MarketingPage: React.FC = () => {
       <DataTable
         data={campaigns}
         columns={columns}
-        searchPlaceholder="Search promo code or campaign title..."
+        searchPlaceholder="Search promo code, campaign name..."
         pageSize={5}
         emptyMessage="No promo campaigns found."
       />
 
-      {/* CREATE CAMPAIGN MODAL */}
+      {/* CREATE NEW PROMO MODAL */}
       <Modal
         isOpen={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
-        title="Create Promotional Banner Campaign"
+        title="Create New Platform Promo Voucher"
       >
         <div className="space-y-4 text-xs">
-          <div>
-            <label className="block font-bold text-slate-700 mb-1">Campaign Title *</label>
-            <input
-              type="text"
-              placeholder="e.g. Douala Tech Week 10% Discount"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold"
-            />
-          </div>
-
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block font-bold text-slate-700 mb-1">Promo Code *</label>
+              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Voucher Code *</label>
               <input
                 type="text"
-                placeholder="e.g. TECH2026"
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold uppercase"
+                placeholder="e.g. WUNASALE20"
+                value={newCode}
+                onChange={(e) => setNewCode(e.target.value)}
+                className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-mono uppercase font-bold text-slate-900 dark:text-slate-100"
               />
             </div>
 
             <div>
-              <label className="block font-bold text-slate-700 mb-1">Target Role</label>
-              <select
-                value={targetRole}
-                onChange={(e: any) => setTargetRole(e.target.value)}
-                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold"
-              >
-                <option value="BUYER">BUYER — Mobile App Shoppers</option>
-                <option value="SELLER">SELLER — Store Merchants</option>
-                <option value="TRANSPORTER">TRANSPORTER — Delivery Drivers</option>
-              </select>
+              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Discount Amount (FCFA) *</label>
+              <input
+                type="text"
+                placeholder="e.g. 2500 FCFA"
+                value={newDiscValue}
+                onChange={(e) => setNewDiscValue(e.target.value)}
+                className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-slate-900 dark:text-slate-100"
+              />
             </div>
           </div>
 
-          <div className="flex justify-end space-x-3 pt-3 border-t border-slate-100">
+          <div>
+            <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Campaign Title *</label>
+            <input
+              type="text"
+              placeholder="e.g. Douala Tech Weekend Special"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-slate-900 dark:text-slate-100"
+            />
+          </div>
+
+          <div>
+            <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Minimum Order Spend (XAF)</label>
+            <input
+              type="number"
+              value={newMinOrder}
+              onChange={(e) => setNewMinOrder(e.target.value)}
+              className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-mono font-bold text-slate-900 dark:text-slate-100"
+            />
+          </div>
+
+          <div className="flex justify-end space-x-3 pt-3 border-t border-slate-100 dark:border-slate-800">
             <Button variant="outline" onClick={() => setCreateModalOpen(false)}>
               Cancel
             </Button>
-            <Button variant="primary" disabled={!title.trim() || !code.trim()} onClick={handleCreateCampaign}>
-              Create Campaign &amp; Log Audit
+            <Button variant="primary" disabled={!newCode.trim() || !newName.trim() || !newDiscValue.trim()} onClick={handleCreatePromo}>
+              Publish Voucher &amp; Log Audit
             </Button>
           </div>
         </div>

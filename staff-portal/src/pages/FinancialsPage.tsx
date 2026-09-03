@@ -11,15 +11,9 @@ import { formatXAF } from '@wunabuy/utils';
 import {
   Wallet,
   ArrowUpRight,
-  ArrowDownLeft,
   Lock,
   Download,
-  CheckCircle2,
-  AlertTriangle,
-  Building2,
   Smartphone,
-  ShieldCheck,
-  Search,
 } from 'lucide-react';
 
 interface PayoutTransactionItem {
@@ -137,15 +131,15 @@ export const FinancialsPage: React.FC = () => {
     {
       key: 'reference_code',
       header: 'Payout Ref',
-      render: (item) => <span className="font-mono font-bold text-slate-900">{item.reference_code}</span>,
+      render: (item) => <span className="font-mono font-bold text-slate-900 dark:text-slate-100">{item.reference_code}</span>,
     },
     {
       key: 'entity_name',
       header: 'Payee Merchant / Rider',
       render: (item) => (
         <div>
-          <span className="font-bold text-slate-900 block">{item.entity_name}</span>
-          <span className="text-[11px] text-slate-500 font-medium">{item.entity_type}</span>
+          <span className="font-bold text-slate-900 dark:text-slate-100 block">{item.entity_name}</span>
+          <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">{item.entity_type}</span>
         </div>
       ),
     },
@@ -154,22 +148,22 @@ export const FinancialsPage: React.FC = () => {
       header: 'Mobile Money Gateway',
       render: (item) => (
         <div>
-          <span className="font-bold text-slate-800 block">
+          <span className="font-bold text-slate-800 dark:text-slate-200 block">
             {item.payment_method === 'MTN_MOMO' ? 'MTN Mobile Money (*126#)' : 'Orange Money (#150#)'}
           </span>
-          <span className="text-[11px] text-slate-400 font-medium">{item.account_number}</span>
+          <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">{item.account_number}</span>
         </div>
       ),
     },
     {
       key: 'amount',
       header: 'Gross Amount',
-      render: (item) => <span className="font-bold text-slate-900">{formatXAF(item.amount)}</span>,
+      render: (item) => <span className="font-bold text-slate-900 dark:text-slate-100">{formatXAF(item.amount)}</span>,
     },
     {
       key: 'net_payout',
       header: 'Net Payout (Fee 3.5%)',
-      render: (item) => <span className="font-bold text-slate-900">{formatXAF(item.net_payout)}</span>,
+      render: (item) => <span className="font-bold text-slate-900 dark:text-slate-100">{formatXAF(item.net_payout)}</span>,
     },
     {
       key: 'status',
@@ -203,7 +197,7 @@ export const FinancialsPage: React.FC = () => {
               Authorize Payout
             </Button>
           ) : (
-            <span className="text-[11px] font-mono text-slate-400 font-semibold">
+            <span className="text-[11px] font-mono text-slate-400 dark:text-slate-500 font-semibold">
               {item.status === 'PROCESSED' ? 'Reconciled' : 'Under Investigation'}
             </span>
           )}
@@ -230,8 +224,8 @@ export const FinancialsPage: React.FC = () => {
           value={formatXAF(86350000)}
           change="MTN & Orange"
           changeType="positive"
-          icon={<Wallet className="w-5 h-5 text-teal-600" />}
-          iconBg="bg-teal-50"
+          icon={<Wallet className="w-5 h-5 text-teal-600 dark:text-teal-400" />}
+          iconBg="bg-teal-50 dark:bg-teal-950/60"
           description="Total funds processed in Cameroon"
         />
 
@@ -240,8 +234,8 @@ export const FinancialsPage: React.FC = () => {
           value={formatXAF(22850000)}
           change="48h Protection"
           changeType="neutral"
-          icon={<Lock className="w-5 h-5 text-purple-600" />}
-          iconBg="bg-purple-50"
+          icon={<Lock className="w-5 h-5 text-purple-600 dark:text-purple-400" />}
+          iconBg="bg-purple-50 dark:bg-purple-950/60"
           description="Protected funds in escrow pool"
         />
 
@@ -250,8 +244,8 @@ export const FinancialsPage: React.FC = () => {
           value={formatXAF(4820000)}
           change="3.5% Standard Fee"
           changeType="positive"
-          icon={<ArrowUpRight className="w-5 h-5 text-emerald-600" />}
-          iconBg="bg-emerald-50"
+          icon={<ArrowUpRight className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />}
+          iconBg="bg-emerald-50 dark:bg-emerald-950/60"
           description="Platform operational revenue"
         />
 
@@ -260,8 +254,8 @@ export const FinancialsPage: React.FC = () => {
           value="1 High-Value"
           change="Action Required"
           changeType="warning"
-          icon={<Smartphone className="w-5 h-5 text-amber-600" />}
-          iconBg="bg-amber-50"
+          icon={<Smartphone className="w-5 h-5 text-amber-600 dark:text-amber-400" />}
+          iconBg="bg-amber-50 dark:bg-amber-950/60"
           description="Awaiting staff security PIN authorization"
         />
       </div>
@@ -283,21 +277,21 @@ export const FinancialsPage: React.FC = () => {
           title={`Authorize Mobile Money Payout — ${authorizeTarget.reference_code}`}
         >
           <div className="space-y-4 text-xs">
-            <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+            <div className="p-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-slate-500 uppercase">PAYEE MERCHANT</span>
-                <span className="font-mono text-slate-900 font-bold">{authorizeTarget.payment_method}</span>
+                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">PAYEE MERCHANT</span>
+                <span className="font-mono text-slate-900 dark:text-slate-100 font-bold">{authorizeTarget.payment_method}</span>
               </div>
-              <h4 className="text-base font-bold text-slate-900 mt-1">{authorizeTarget.entity_name}</h4>
-              <p className="text-[11px] text-slate-500 mt-0.5">Account: {authorizeTarget.account_number}</p>
-              <div className="mt-3 pt-3 border-t border-slate-200 flex items-center justify-between text-xs font-bold">
-                <span>Net Disbursal Amount:</span>
-                <span className="text-sm font-extrabold text-slate-900">{formatXAF(authorizeTarget.net_payout)}</span>
+              <h4 className="text-base font-bold text-slate-900 dark:text-slate-100 mt-1">{authorizeTarget.entity_name}</h4>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Account: {authorizeTarget.account_number}</p>
+              <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between text-xs font-bold">
+                <span className="text-slate-700 dark:text-slate-300">Net Disbursal Amount:</span>
+                <span className="text-sm font-extrabold text-slate-900 dark:text-slate-100">{formatXAF(authorizeTarget.net_payout)}</span>
               </div>
             </div>
 
             <div>
-              <label className="block font-bold text-slate-700 mb-1">
+              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
                 Enter Staff Security PIN (L{user?.security_clearance_level} Authorization) *
               </label>
               <input
@@ -306,11 +300,11 @@ export const FinancialsPage: React.FC = () => {
                 value={securityPin}
                 onChange={(e) => setSecurityPin(e.target.value)}
                 placeholder="Enter 6-digit staff security PIN..."
-                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-center text-sm font-mono font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-slate-400"
+                className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-center text-sm font-mono font-bold tracking-widest text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-400"
               />
             </div>
 
-            <div className="flex justify-end space-x-3 pt-3 border-t border-slate-100">
+            <div className="flex justify-end space-x-3 pt-3 border-t border-slate-100 dark:border-slate-800">
               <Button variant="outline" onClick={() => setAuthorizeTarget(null)}>
                 Cancel
               </Button>
