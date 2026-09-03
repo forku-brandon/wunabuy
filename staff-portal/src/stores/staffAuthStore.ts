@@ -359,16 +359,21 @@ export function useStaffAuth() {
         cleanId.includes(p.phone.replace(/\s+/g, ''))
     );
 
-    if (matched || cleanId.includes('@wunabuy.com') || cleanId.length >= 6) {
+    if (matched) {
       return {
         success: true,
-        message: `OTP Security Code sent via SMS/Email to ${identifier}. (Demo Security Code: 654321)`,
+        message: `OTP Security Code sent to ${matched.full_name} (${matched.email || matched.phone}). Enter OTP 654321 to authenticate.`,
+      };
+    } else if (cleanId.includes('@wunabuy.com') || cleanId.length >= 6) {
+      return {
+        success: true,
+        message: `OTP Security Code sent via SMS/Email to ${identifier}. Enter OTP 654321 to authenticate.`,
       };
     }
 
     return {
       success: false,
-      message: 'Staff identity not registered. Please use corporate @wunabuy.com email or employee phone.',
+      message: 'Staff identity not registered. Please select or enter a corporate @wunabuy.com email or employee phone.',
     };
   };
 

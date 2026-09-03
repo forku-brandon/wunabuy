@@ -2,10 +2,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStaffAuth } from '../stores/staffAuthStore';
 import { Button } from '../components/ui/Button';
-import { ShieldCheck, Mail, ArrowRight, ArrowLeft, KeyRound, Sparkles, RefreshCw, Lock } from 'lucide-react';
+import { ShieldCheck, Mail, ArrowRight, ArrowLeft, KeyRound, Sparkles, RefreshCw, Lock, UserCheck } from 'lucide-react';
 
 export const AuthPage: React.FC = () => {
-  const { isAuthenticated, requestOTP, verifyOTP, loginWithPassword } = useStaffAuth();
+  const { isAuthenticated, requestOTP, verifyOTP, loginWithPassword, staffMembers = [] } = useStaffAuth();
   const navigate = useNavigate();
 
   const [authMode, setAuthMode] = useState<'otp' | 'password'>('otp');
@@ -187,7 +187,25 @@ export const AuthPage: React.FC = () => {
             <form onSubmit={handleRequestOTP} className="space-y-5">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
-                  Corporate Email or Employee Phone *
+                  Select Registered Staff Account
+                </label>
+                <div className="relative mb-2">
+                  <UserCheck className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-teal-600 z-10" />
+                  <select
+                    value={identifier}
+                    onChange={(e) => setIdentifier(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2.5 text-xs bg-teal-50/50 border border-teal-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 font-bold text-slate-900"
+                  >
+                    {staffMembers.map((staff) => (
+                      <option key={staff.id} value={staff.email || staff.phone}>
+                        {staff.full_name} ({staff.staff_department_role} - L{staff.security_clearance_level})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <label className="block text-[11px] font-bold text-slate-500 mb-1 uppercase tracking-wider">
+                  Or Type Corporate Email / Phone Manually
                 </label>
                 <div className="relative">
                   <Mail className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -293,7 +311,25 @@ export const AuthPage: React.FC = () => {
           <form onSubmit={handlePasswordLogin} className="space-y-5">
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
-                Corporate Email or Phone *
+                Select Registered Staff Account
+              </label>
+              <div className="relative mb-2">
+                <UserCheck className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-teal-600 z-10" />
+                <select
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 text-xs bg-teal-50/50 border border-teal-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 font-bold text-slate-900"
+                >
+                  {staffMembers.map((staff) => (
+                    <option key={staff.id} value={staff.email || staff.phone}>
+                      {staff.full_name} ({staff.staff_department_role} - L{staff.security_clearance_level})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <label className="block text-[11px] font-bold text-slate-500 mb-1 uppercase tracking-wider">
+                Or Type Corporate Email / Phone Manually
               </label>
               <div className="relative">
                 <Mail className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
