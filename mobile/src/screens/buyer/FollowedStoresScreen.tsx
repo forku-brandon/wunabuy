@@ -103,41 +103,45 @@ export const FollowedStoresScreen = ({ navigation }: any) => {
             />
           }
           renderItem={({ item }) => (
-            <Card style={styles.storeCard}>
-              {/* Store Header Row */}
-              <View style={styles.storeHeader}>
-                <Image source={{ uri: item.avatar_url }} style={styles.storeAvatar} />
+            <TouchableOpacity
+              activeOpacity={0.9}
+              onPress={() => navigation.navigate('StoreDetail', { store: item, storeId: item.id })}
+            >
+              <Card style={styles.storeCard}>
+                {/* Store Header Row */}
+                <View style={styles.storeHeader}>
+                  <Image source={{ uri: item.avatar_url }} style={styles.storeAvatar} />
 
-                <View style={styles.storeMeta}>
-                  <View style={styles.nameRow}>
-                    <Text variant="bodyLarge" bold numberOfLines={1} style={{ flex: 1 }}>
-                      {item.name}
+                  <View style={styles.storeMeta}>
+                    <View style={styles.nameRow}>
+                      <Text variant="bodyLarge" bold numberOfLines={1} style={{ flex: 1 }}>
+                        {item.name}
+                      </Text>
+                      {item.is_verified && (
+                        <Ionicons name="checkmark-circle" size={16} color={colors.primary[500]} style={{ marginLeft: 4 }} />
+                      )}
+                    </View>
+
+                    <View style={styles.ratingRow}>
+                      <Ionicons name="star" size={13} color="#F59E0B" />
+                      <Text variant="caption" bold style={{ marginLeft: 3 }}>
+                        {item.rating_avg}
+                      </Text>
+                      <Text variant="caption" secondary style={{ marginLeft: 2 }}>
+                        ({item.total_reviews} reviews) • {item.followers_count} followers
+                      </Text>
+                    </View>
+
+                    <Text variant="caption" secondary numberOfLines={1} style={{ marginTop: 2 }}>
+                      📍 {item.location}
                     </Text>
-                    {item.is_verified && (
-                      <Ionicons name="checkmark-circle" size={16} color={colors.primary[500]} style={{ marginLeft: 4 }} />
-                    )}
                   </View>
 
-                  <View style={styles.ratingRow}>
-                    <Ionicons name="star" size={13} color="#F59E0B" />
-                    <Text variant="caption" bold style={{ marginLeft: 3 }}>
-                      {item.rating_avg}
-                    </Text>
-                    <Text variant="caption" secondary style={{ marginLeft: 2 }}>
-                      ({item.total_reviews} reviews) • {item.followers_count} followers
-                    </Text>
-                  </View>
-
-                  <Text variant="caption" secondary numberOfLines={1} style={{ marginTop: 2 }}>
-                    📍 {item.location}
-                  </Text>
-                </View>
-
-                {/* Follow / Unfollow Action */}
-                <TouchableOpacity
-                  activeOpacity={0.8}
-                  onPress={() => handleToggleFollow(item)}
-                  style={[
+                  {/* Follow / Unfollow Action */}
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    onPress={() => handleToggleFollow(item)}
+                    style={[
                     styles.followingBtn,
                     { borderColor: theme.border, backgroundColor: isDark ? colors.neutral[800] : colors.neutral[100] },
                   ]}
@@ -188,6 +192,7 @@ export const FollowedStoresScreen = ({ navigation }: any) => {
                 ))}
               </ScrollView>
             </Card>
+          </TouchableOpacity>
           )}
         />
       )}

@@ -324,34 +324,40 @@ export const ProductDetailScreen = ({ route, navigation }: any) => {
           </View>
 
           {/* ── Verified Store Card ───────────────────────────────────────── */}
-          <Card style={styles.storeCard}>
-            <View style={styles.storeRow}>
-              <View style={[styles.storeIconCircle, { backgroundColor: colors.primary[50] }]}>
-                <Ionicons name="storefront" size={20} color={colors.primary[500]} />
-              </View>
-              <View style={styles.storeInfo}>
-                <View style={styles.storeTitleRow}>
-                  <Text variant="bodyMedium" bold numberOfLines={1}>
-                    {product.store?.store_name ?? 'Douala Tech Hub (Akwa)'}
-                  </Text>
-                  <Ionicons name="checkmark-circle" size={16} color={colors.primary[500]} style={{ marginLeft: 4 }} />
+          <TouchableOpacity
+            activeOpacity={0.88}
+            onPress={() =>
+              navigation.navigate('StoreDetail', {
+                store: product.store,
+                storeId: product.store?.id || 'store_101',
+              })
+            }
+          >
+            <Card style={styles.storeCard}>
+              <View style={styles.storeRow}>
+                <View style={[styles.storeIconCircle, { backgroundColor: colors.primary[50] }]}>
+                  <Ionicons name="storefront" size={20} color={colors.primary[500]} />
                 </View>
-                <Text variant="caption" secondary numberOfLines={1}>
-                  Official Verified Merchant • 99.4% Fulfillment Rate
-                </Text>
-              </View>
+                <View style={styles.storeInfo}>
+                  <View style={styles.storeTitleRow}>
+                    <Text variant="bodyMedium" bold numberOfLines={1}>
+                      {product.store?.store_name ?? 'Douala Tech Hub (Akwa)'}
+                    </Text>
+                    <Ionicons name="checkmark-circle" size={16} color={colors.primary[500]} style={{ marginLeft: 4 }} />
+                  </View>
+                  <Text variant="caption" secondary numberOfLines={1}>
+                    Official Verified Merchant • 99.4% Fulfillment Rate
+                  </Text>
+                </View>
 
-              <TouchableOpacity
-                activeOpacity={0.8}
-                style={[styles.visitStoreBtn, { borderColor: colors.primary[500] }]}
-                onPress={() => setToastMessage('Store profile view opened.')}
-              >
-                <Text variant="caption" bold color={colors.primary[500]}>
-                  Visit
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </Card>
+                <View style={[styles.visitStoreBtn, { borderColor: colors.primary[500] }]}>
+                  <Text variant="caption" bold color={colors.primary[500]}>
+                    Visit
+                  </Text>
+                </View>
+              </View>
+            </Card>
+          </TouchableOpacity>
 
           {/* ── 48H Escrow & Express Delivery Banner ───────────────────────── */}
           <View

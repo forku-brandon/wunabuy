@@ -55,6 +55,7 @@ export type RootStackParamList = {
   Refunds: undefined;
   TransactionHistory: undefined;
   StoreAnalytics: undefined;
+  StoreDetail: { storeId?: string; storeName?: string; store?: any } | undefined;
 };
 
 
