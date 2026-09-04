@@ -183,7 +183,6 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
   const [scannerMode, setScannerMode] = useState<'package' | 'permit' | 'merchant'>('package');
   const [isScanningProcess, setIsScanningProcess] = useState(false);
 
-  const handleSimulateScan = () => {
   const handleBarCodeScanned = ({ type, data }: { type: string; data: string }) => {
     if (scanned || isScanningProcess) return;
     setScanned(true);
@@ -194,16 +193,12 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
       setIsScannerOpen(false);
 
       if (scannerMode === 'package') {
-        setToastMessage('📦 Package QR Code #WB-2026-9842 verified! Syncing account status.');
         setToastMessage(`⚡ Live Package QR #${data} verified! Waybill synced with active trip.`);
       } else if (scannerMode === 'permit') {
-        setToastMessage('💳 Douala Council Fleet Permit scanned & account status updated!');
         setToastMessage(`⚡ Live Driver Permit #${data} scanned! Douala fleet verification active.`);
       } else {
-        setToastMessage('🏪 Merchant Store QR scanned! Checked in at Douala Tech Hub.');
         setToastMessage(`⚡ Live Store QR #${data} scanned! Checked in at merchant counter.`);
       }
-    }, 1200);
     }, 600);
   };
 
@@ -629,7 +624,6 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
               </TouchableOpacity>
             </View>
 
-            {/* Viewfinder Mockup */}
             {/* Live Camera Viewfinder */}
             <View style={styles.viewfinderBox}>
               {permission?.granted ? (
@@ -665,24 +659,9 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
               <View style={styles.viewfinderCornerBL} />
               <View style={styles.viewfinderCornerBR} />
 
-              <Ionicons name="qr-code-outline" size={64} color={colors.primary[500]} />
-              <Text variant="caption" bold color="#FFFFFF" style={{ marginTop: spacing.sm, textAlign: 'center' }}>
-                {scannerMode === 'package'
-                  ? 'Align Waybill Barcode or Package QR inside reticle'
-                  : scannerMode === 'permit'
-                  ? 'Align Douala Council Permit or Driver License'
-                  : 'Align Store Check-in QR code'}
-              </Text>
-            </View>
               {/* Live Laser Scanner Line */}
               <View style={styles.laserLine} />
 
-            {/* Instruction Card */}
-            <Card style={{ marginTop: spacing.md }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <Ionicons name="information-circle-outline" size={20} color={colors.primary[600]} />
-                <Text variant="bodyMedium" bold style={{ flex: 1 }}>
-                  Automatic Account &amp; Order Sync
               {/* Torch Flashlight Toggle */}
               {permission?.granted && (
                 <TouchableOpacity
@@ -711,11 +690,20 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
                   {scanned ? 'QR / BARCODE DETECTED!' : 'LIVE CAMERA SCANNER ACTIVE'}
                 </Text>
               </View>
+            </View>
+
+            {/* Instruction Card */}
+            <Card style={{ marginTop: spacing.md }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Ionicons name="information-circle-outline" size={20} color={colors.primary[600]} />
+                <Text variant="bodyMedium" bold style={{ flex: 1 }}>
+                  Automatic Account &amp; Order Sync
+                </Text>
+              </View>
               <Text variant="caption" secondary style={{ marginTop: 4 }}>
                 Scanning instant codes updates your account verification status, store check-in timestamp, and package handover records directly in real time.
               </Text>
             </Card>
-            </View>
 
             {scanned && (
               <TouchableOpacity
@@ -793,8 +781,6 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
               variant="primary"
               size="large"
               loading={isScanningProcess}
-              onPress={handleSimulateScan}
-              style={{ marginTop: spacing.lg, marginBottom: spacing.xl }}
               onPress={() => handleSimulateScan()}
               style={{ marginTop: spacing.lg, marginBottom: spacing.xl, backgroundColor: colors.primary[500] }}
             />
