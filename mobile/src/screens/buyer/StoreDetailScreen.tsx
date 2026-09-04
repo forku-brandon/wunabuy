@@ -180,15 +180,6 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
 
   const isOwnStore = storeId === 'store_1' || storeId === 'store_101' || !passedStore;
 
-  const storeInfo: FollowedStoreData & {
-    tagline?: string;
-    landmarkDirections?: string;
-    primaryPhone?: string;
-    secondaryPhone?: string;
-    operatingHours?: string;
-    riderPickupInstructions?: string;
-    description?: string;
-  } = {
   const storeInfo: ExtendedStoreData = {
     ...SAMPLE_STORE_DATA,
     id: storeId,
