@@ -322,12 +322,6 @@ export const SellerProfileScreen = ({ navigation }: any) => {
               <Text variant="bodyLarge" bold color={colors.primary[700]}>
                 Store Profile &amp; Rider Specs
               </Text>
-              <View style={styles.kycVerifiedBadge}>
-                <Ionicons name="checkmark-circle" size={10} color={colors.primary[600]} style={{ marginRight: 2 }} />
-                <Text variant="caption" bold color={colors.primary[600]} style={{ fontSize: 9 }}>
-                  LIVE PROFILE
-                </Text>
-              </View>
             </View>
             <Text variant="caption" secondary numberOfLines={1} style={{ marginTop: 2 }}>
               📍 {address || 'Quartier Akwa, Douala'} • {category || 'Electronics'}
