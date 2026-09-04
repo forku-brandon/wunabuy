@@ -2,8 +2,8 @@ import { UserRole } from '@wunabuy/types';
 
 export type AuthStackParamList = {
   Welcome: undefined;
-  Login: undefined;
-  VerifyOTP: { phone: string };
+  Login: { mode?: 'register' | 'login' } | undefined;
+  VerifyOTP: { phone: string; mode?: 'register' | 'login' };
   Register: { phone: string };
 };
 

@@ -76,11 +76,13 @@ const ONBOARDING_SLIDES: SlideItem[] = [
 
 export interface WalkthroughCarouselProps {
   onComplete: () => void;
+  onGetStarted?: () => void;
   onSkip?: () => void;
 }
 
 export const WalkthroughCarousel: React.FC<WalkthroughCarouselProps> = ({
   onComplete,
+  onGetStarted,
   onSkip,
 }) => {
   const insets = useSafeAreaInsets();
@@ -99,6 +101,8 @@ export const WalkthroughCarousel: React.FC<WalkthroughCarouselProps> = ({
   const handleNext = () => {
     if (activeIndex < ONBOARDING_SLIDES.length - 1) {
       flatListRef.current?.scrollToIndex({ index: activeIndex + 1 });
+    } else if (onGetStarted) {
+      onGetStarted();
     } else {
       onComplete();
     }

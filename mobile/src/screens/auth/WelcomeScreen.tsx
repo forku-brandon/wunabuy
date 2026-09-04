@@ -6,16 +6,22 @@ import { useOnboardingStore } from '../../stores/onboarding.store';
 export const WelcomeScreen = ({ navigation }: any) => {
   const { setHasCompletedTutorial } = useOnboardingStore();
 
-  const handleComplete = () => {
+  const handleGetStarted = () => {
     setHasCompletedTutorial(true);
-    navigation.navigate('Login');
+    navigation.navigate('Login', { mode: 'register' });
+  };
+
+  const handleLogin = () => {
+    setHasCompletedTutorial(true);
+    navigation.navigate('Login', { mode: 'login' });
   };
 
   return (
     <ScreenContainer scrollable={false} padded={false}>
       <WalkthroughCarousel
-        onComplete={handleComplete}
-        onSkip={handleComplete}
+        onGetStarted={handleGetStarted}
+        onComplete={handleLogin}
+        onSkip={handleGetStarted}
       />
     </ScreenContainer>
   );

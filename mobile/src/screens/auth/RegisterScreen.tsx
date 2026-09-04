@@ -72,10 +72,10 @@ export const RegisterScreen = ({ route }: any) => {
       <View style={styles.contentBox}>
         <View style={styles.header}>
           <Text variant="h1" bold align="center" style={styles.title}>
-            Enter Your Details
+            Complete Your Profile
           </Text>
           <Text variant="bodyMedium" secondary align="center" style={styles.subtitle}>
-            Welcome to Wunabuy! Enter your name to start buying safely with 48h escrow protection.
+            Enter your name and optional delivery address to finish setting up your account.
           </Text>
         </View>
 
@@ -101,7 +101,7 @@ export const RegisterScreen = ({ route }: any) => {
         />
 
         <Button
-          title="Complete & Go to Home →"
+          title="Complete Registration & Log In →"
           variant="primary"
           loading={loading}
           onPress={handleSubmit}

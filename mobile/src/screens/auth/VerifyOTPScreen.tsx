@@ -13,6 +13,7 @@ import { UserRole, UserStatus } from '@wunabuy/types';
 export const VerifyOTPScreen = ({ navigation, route }: any) => {
   const { t } = useTranslation();
   const phone = route.params?.phone ?? '+237670000000';
+  const mode: 'register' | 'login' = route.params?.mode ?? 'login';
   const insets = useSafeAreaInsets();
   const { setAuth } = useAuthStore();
 
@@ -40,37 +41,46 @@ export const VerifyOTPScreen = ({ navigation, route }: any) => {
     setError('');
 
     try {
-      // Authenticate user directly for the account linked to this phone number
-      const authenticatedUser = {
-        id: 'user_' + phone.replace(/[^0-9]/g, ''),
-        phone: phone,
-        email: 'user@wunabuy.com',
-        full_name: 'Jean Dupont',
-        role: UserRole.BUYER,
-        status: UserStatus.ACTIVE,
-        avatar_url: null,
-        is_phone_verified: true,
-        default_address: {
-          id: 'addr_default',
-          label: 'Home',
-          latitude: 4.0510564,
-          longitude: 9.7678687,
-          address_text: 'Rue Joss, Akwa',
-          city: 'Douala',
-          is_default: true,
-        },
-        available_roles: [UserRole.BUYER],
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
+      if (mode === 'register') {
+        // Phone number verified -> Move to user profile setup (name & address)
+        setLoading(false);
+        setToastMessage('Phone number verified!');
+        setTimeout(() => {
+          navigation.navigate('Register', { phone });
+        }, 400);
+      } else {
+        // Login mode -> Authenticate existing user directly
+        const authenticatedUser = {
+          id: 'user_' + phone.replace(/[^0-9]/g, ''),
+          phone: phone,
+          email: 'user@wunabuy.com',
+          full_name: 'Jean Dupont',
+          role: UserRole.BUYER,
+          status: UserStatus.ACTIVE,
+          avatar_url: null,
+          is_phone_verified: true,
+          default_address: {
+            id: 'addr_default',
+            label: 'Home',
+            latitude: 4.0510564,
+            longitude: 9.7678687,
+            address_text: 'Rue Joss, Akwa',
+            city: 'Douala',
+            is_default: true,
+          },
+          available_roles: [UserRole.BUYER],
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
 
-      const accessToken = '1|sanctum_token_access_mock_' + Date.now();
-      const refreshToken = 'sanctum_token_refresh_mock_' + Date.now();
+        const accessToken = '1|sanctum_token_access_mock_' + Date.now();
+        const refreshToken = 'sanctum_token_refresh_mock_' + Date.now();
 
-      await SecureTokenService.setTokens(accessToken, refreshToken);
-      setAuth(authenticatedUser, accessToken, refreshToken);
-      setLoading(false);
-      setToastMessage('Phone verified! Logged into account.');
+        await SecureTokenService.setTokens(accessToken, refreshToken);
+        setAuth(authenticatedUser, accessToken, refreshToken);
+        setLoading(false);
+        setToastMessage('Phone verified! Logged into account.');
+      }
     } catch (err: any) {
       setLoading(false);
       setError(err?.message || 'Invalid verification code. Please check and try again.');

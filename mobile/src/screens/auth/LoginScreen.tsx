@@ -5,8 +5,9 @@ import { normalizePhone, validatePhoneNumber } from '@wunabuy/utils';
 import { spacing, colors, borderRadius } from '@wunabuy/design-tokens';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-export const LoginScreen = ({ navigation }: any) => {
+export const LoginScreen = ({ navigation, route }: any) => {
   const insets = useSafeAreaInsets();
+  const mode: 'register' | 'login' = route.params?.mode ?? 'login';
   const [phone, setPhone] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -42,7 +43,7 @@ export const LoginScreen = ({ navigation }: any) => {
       setToastMessage('OTP verification code sent!');
       setTimeout(() => {
         setLoading(false);
-        navigation.navigate('VerifyOTP', { phone: normalized });
+        navigation.navigate('VerifyOTP', { phone: normalized, mode });
       }, 500);
     } catch (err: any) {
       setLoading(false);
@@ -50,20 +51,24 @@ export const LoginScreen = ({ navigation }: any) => {
     }
   };
 
+  const isRegister = mode === 'register';
+
   return (
     <ScreenContainer contentContainerStyle={{ ...styles.container, paddingBottom: Math.max(insets.bottom + spacing.xl, spacing['3xl']) }}>
       <View style={styles.contentBox}>
         <View style={styles.header}>
           <Text variant="h1" bold align="center" style={styles.title}>
-            Enter Phone Number
+            {isRegister ? 'Create Your Account' : 'Welcome Back'}
           </Text>
           <Text variant="bodyMedium" secondary align="center" style={styles.subtitle}>
-            Enter your mobile number to log in or create your Wunabuy escrow account.
+            {isRegister
+              ? 'Enter your mobile phone number to receive a 6-digit OTP verification code.'
+              : 'Enter your registered mobile phone number to log into your account.'}
           </Text>
         </View>
 
         <Input
-          label="Mobile Phone Number"
+          label="Mobile Phone Number *"
           placeholder="670 123 456 or +237 6XX XXX XXX"
           keyboardType="phone-pad"
           value={phone}
