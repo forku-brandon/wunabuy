@@ -37,6 +37,7 @@ export interface SellerOrder {
   delivery_method?: 'wunabuy_transporter' | 'in_house_rider';
   transporter_name?: string;
   transporter_phone?: string;
+  pickup_pin?: string; // 5-digit security PIN sent to rider for handover verification
   decline_reason?: string;
   dispute_reason?: string;
 }
@@ -181,6 +182,7 @@ const INITIAL_SELLER_ORDERS: SellerOrder[] = [
     delivery_method: 'wunabuy_transporter',
     transporter_name: 'Jean-Pierre Kamga (Bike 🏍️)',
     transporter_phone: '+237 670 998 877',
+    pickup_pin: '84920',
     created_at: new Date(Date.now() - 120 * 60 * 1000).toISOString(),
     acceptance_expires_at: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
   },
@@ -400,20 +402,21 @@ export const useSellerStore = create<SellerState>()(
 
       markOrderReady: (orderId, deliveryMethod, driverPhone) => {
         set((state) => ({
-          orders: state.orders.map((o) =>
-            o.id === orderId
-              ? {
-                  ...o,
-                  status: 'ready_for_pickup',
-                  delivery_method: deliveryMethod,
-                  transporter_phone: driverPhone,
-                  transporter_name:
-                    deliveryMethod === 'wunabuy_transporter'
-                      ? 'Wunabuy Express Rider (Assigned)'
-                      : 'Store In-House Rider',
-                }
-              : o
-          ),
+          orders: state.orders.map((o) => {
+            if (o.id !== orderId) return o;
+            const generatedPin = o.pickup_pin || Math.floor(10000 + Math.random() * 90000).toString();
+            return {
+              ...o,
+              status: 'ready_for_pickup',
+              delivery_method: deliveryMethod,
+              transporter_phone: driverPhone,
+              pickup_pin: generatedPin,
+              transporter_name:
+                deliveryMethod === 'wunabuy_transporter'
+                  ? 'Wunabuy Express Rider (Assigned)'
+                  : 'Store In-House Rider',
+            };
+          }),
         }));
       },
 

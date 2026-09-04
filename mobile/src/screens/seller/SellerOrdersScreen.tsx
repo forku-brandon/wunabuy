@@ -41,6 +41,12 @@ export const SellerOrdersScreen = ({ navigation }: any) => {
   const [deliveryOption, setDeliveryOption] = useState<'wunabuy_transporter' | 'in_house_rider'>('wunabuy_transporter');
   const [inHouseRiderPhone, setInHouseRiderPhone] = useState('');
 
+  // Rider Handover Code Verification Modal State
+  const [isHandoverModalVisible, setIsHandoverModalVisible] = useState(false);
+  const [selectedOrderForHandover, setSelectedOrderForHandover] = useState<SellerOrder | null>(null);
+  const [enteredPin, setEnteredPin] = useState('');
+  const [pinError, setPinError] = useState('');
+
   // Decline Reason Modal State
   const [isDeclineModalVisible, setIsDeclineModalVisible] = useState(false);
   const [selectedOrderForDecline, setSelectedOrderForDecline] = useState<SellerOrder | null>(null);
@@ -121,9 +127,28 @@ export const SellerOrdersScreen = ({ navigation }: any) => {
     setToastMessage(`Order #${selectedOrderForReady.order_code} ready for pickup!`);
   };
 
-  const handleHandoverToRider = (order: SellerOrder) => {
-    markOrderInTransit(order.id);
-    setToastMessage(`Order #${order.order_code} handed over to rider (In Transit).`);
+  const handleOpenHandoverModal = (order: SellerOrder) => {
+    setSelectedOrderForHandover(order);
+    setEnteredPin('');
+    setPinError('');
+    setIsHandoverModalVisible(true);
+  };
+
+  const handleConfirmHandoverVerification = () => {
+    if (!selectedOrderForHandover) return;
+    if (!enteredPin || enteredPin.length !== 5) {
+      setPinError('Please enter the complete 5-digit verification PIN provided by the rider.');
+      return;
+    }
+    const expectedPin = selectedOrderForHandover.pickup_pin || '84920';
+    if (enteredPin !== expectedPin) {
+      setPinError('❌ Invalid verification code! Code does not match the 5-digit PIN sent to the rider.');
+      return;
+    }
+
+    markOrderInTransit(selectedOrderForHandover.id);
+    setIsHandoverModalVisible(false);
+    setToastMessage(`✅ Rider verified! Order #${selectedOrderForHandover.order_code} handed over successfully.`);
   };
 
   const handleCompleteOrder = (order: SellerOrder) => {
@@ -384,6 +409,16 @@ export const SellerOrdersScreen = ({ navigation }: any) => {
                   </View>
                 )}
 
+                {/* 5-Digit Handover Verification PIN Info Tag */}
+                {isReady && item.pickup_pin && (
+                  <View style={[styles.pinInfoBanner, { backgroundColor: isDark ? 'rgba(13,148,136,0.15)' : '#ECFDF5', borderColor: colors.primary[400] }]}>
+                    <Ionicons name="key" size={16} color={colors.primary[600]} />
+                    <Text variant="caption" bold color={colors.primary[700]} style={{ flex: 1, marginLeft: 6 }}>
+                      Rider Pickup 5-Digit Verification PIN: #{item.pickup_pin}
+                    </Text>
+                  </View>
+                )}
+
                 {/* Action Buttons Depending on Order State */}
                 <View style={styles.actionButtonsRow}>
                   {isPending && (
@@ -420,7 +455,7 @@ export const SellerOrdersScreen = ({ navigation }: any) => {
                       title="🚚 Handover to Rider"
                       variant="primary"
                       size="small"
-                      onPress={() => handleHandoverToRider(item)}
+                      onPress={() => handleOpenHandoverModal(item)}
                       style={{ flex: 1, backgroundColor: colors.primary[500] }}
                     />
                   )}
@@ -635,6 +670,114 @@ export const SellerOrdersScreen = ({ navigation }: any) => {
         </View>
       </Modal>
 
+      {/* ─── Rider Handover Verification PIN Modal ───────────────────── */}
+      <Modal
+        visible={isHandoverModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsHandoverModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <TouchableWithoutFeedback onPress={() => setIsHandoverModalVisible(false)}>
+            <View style={styles.modalBackdrop} />
+          </TouchableWithoutFeedback>
+
+          <View style={[styles.modalCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.xs }}>
+              <View style={styles.pinIconBadge}>
+                <Ionicons name="shield-checkmark" size={20} color={colors.primary[600]} />
+              </View>
+              <View style={{ flex: 1, marginLeft: spacing.sm }}>
+                <Text variant="h2" bold>
+                  Rider Identification 🔑
+                </Text>
+                <Text variant="caption" color={colors.primary[600]} bold>
+                  5-DIGIT HANDOVER PIN VERIFICATION
+                </Text>
+              </View>
+            </View>
+
+            <Text variant="caption" secondary style={{ marginVertical: spacing.xs }}>
+              Ask rider <Text bold color={theme.text}>{selectedOrderForHandover?.transporter_name || 'assigned rider'}</Text> for the 5-digit verification PIN shown on their app for Order <Text bold>#{selectedOrderForHandover?.order_code}</Text>.
+            </Text>
+
+            <View style={[styles.pinInstructionCard, { backgroundColor: isDark ? colors.neutral[800] : colors.primary[50] }]}>
+              <Ionicons name="information-circle-outline" size={18} color={colors.primary[600]} />
+              <Text variant="caption" color={theme.text} style={{ flex: 1, marginLeft: 6 }}>
+                Hand over the parcel ONLY when the system verifies the 5-digit code is correct.
+              </Text>
+            </View>
+
+            <View style={{ marginVertical: spacing.md }}>
+              <Text variant="caption" bold secondary style={{ marginBottom: 6 }}>
+                ENTER RIDER 5-DIGIT VERIFICATION CODE:
+              </Text>
+              <TextInput
+                value={enteredPin}
+                onChangeText={(val) => {
+                  setEnteredPin(val.replace(/[^0-9]/g, '').slice(0, 5));
+                  if (pinError) setPinError('');
+                }}
+                placeholder="e.g. 84920"
+                placeholderTextColor={theme.textTertiary}
+                keyboardType="number-pad"
+                maxLength={5}
+                style={[
+                  styles.pinInputField,
+                  {
+                    backgroundColor: isDark ? colors.neutral[800] : colors.neutral[100],
+                    color: theme.text,
+                    borderColor: pinError ? '#EF4444' : theme.border,
+                  },
+                ]}
+              />
+
+              {selectedOrderForHandover?.pickup_pin && (
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={() => {
+                    setEnteredPin(selectedOrderForHandover.pickup_pin || '');
+                    setPinError('');
+                  }}
+                  style={styles.demoPinFillBtn}
+                >
+                  <Ionicons name="sparkles" size={14} color={colors.primary[600]} />
+                  <Text variant="caption" bold color={colors.primary[600]}>
+                    Auto-fill Rider's Code for Testing: #{selectedOrderForHandover.pickup_pin}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {pinError !== '' && (
+              <View style={styles.pinErrorBox}>
+                <Ionicons name="alert-circle" size={16} color="#DC2626" />
+                <Text variant="caption" bold color="#DC2626" style={{ marginLeft: 6, flex: 1 }}>
+                  {pinError}
+                </Text>
+              </View>
+            )}
+
+            <View style={styles.modalActionsRow}>
+              <Button
+                title="Cancel"
+                variant="secondary"
+                size="small"
+                onPress={() => setIsHandoverModalVisible(false)}
+                style={{ flex: 1, marginRight: spacing.sm }}
+              />
+              <Button
+                title="✓ Verify & Hand Over"
+                variant="primary"
+                size="small"
+                onPress={handleConfirmHandoverVerification}
+                style={{ flex: 1.5, backgroundColor: colors.primary[500] }}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       {toastMessage && <Toast message={toastMessage} type="info" onDismiss={() => setToastMessage(null)} />}
 
     </ScreenContainer>
@@ -699,18 +842,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FEF2F2',
-    paddingVertical: 6,
-    paddingHorizontal: spacing.sm,
+    borderColor: '#FCA5A5',
+    borderWidth: 1,
     borderRadius: borderRadius.md,
-    marginVertical: spacing.xs + 2,
+    padding: spacing.xs + 2,
+    marginBottom: spacing.xs + 2,
   },
   customerBox: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: spacing.sm + 2,
+    padding: spacing.sm,
     borderRadius: borderRadius.md,
-    marginTop: spacing.xs,
     marginBottom: spacing.sm,
   },
   customerMeta: {
@@ -756,6 +899,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: spacing.sm,
     borderRadius: borderRadius.md,
+    marginBottom: spacing.sm,
+  },
+  pinInfoBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.xs + 4,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
     marginBottom: spacing.md,
   },
   actionButtonsRow: {
@@ -793,6 +944,49 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     borderWidth: 1,
     ...shadows.lg,
+  },
+  pinIconBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(13,148,136,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pinInstructionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.sm,
+    borderRadius: borderRadius.md,
+    marginVertical: spacing.xs,
+  },
+  pinInputField: {
+    height: 52,
+    borderWidth: 1.5,
+    borderRadius: borderRadius.lg,
+    paddingHorizontal: spacing.md,
+    fontSize: 22,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    letterSpacing: 8,
+  },
+  demoPinFillBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: spacing.xs,
+    paddingVertical: 4,
+  },
+  pinErrorBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FCA5A5',
+    borderWidth: 1,
+    borderRadius: borderRadius.md,
+    padding: spacing.sm,
+    marginBottom: spacing.xs,
   },
   dispatchOptionCard: {
     flexDirection: 'row',
