@@ -1,14 +1,33 @@
 # Software Requirements Specification (SRS)
 # Wunabuy — Multi-Sided E-Commerce & Web Staff Operations Platform
 
-**Document Version:** 2.7 (Notifications Center, Support Chat, 3-Color Brand Palette & Backend Technical Specs v2.7)  
-**Date:** September 3, 2026  
+**Document Version:** 2.8 (Mobile Live Camera Barcode Scanning, Cameroon Onboarding v2.8, Multi-Image Gallery, Monorepo Shared Packages)  
+**Date:** September 4, 2026  
 **Status:** Approved / In Production Use  
-**Companion Documents:** Wunabuy PRD v2.7, Wunabuy Backend Tech Spec v2.7  
+**Companion Documents:** Wunabuy PRD v2.8, Wunabuy Frontend Tech Spec v2.8, Wunabuy Backend Tech Spec v2.7  
 
 ---
 
-## 🚀 Key Staff Portal v2.7 Architecture & Feature Specifications (September 2026)
+## 🚀 Key Mobile & Architecture v2.8 Specifications (September 2026)
+
+- **Seller Live Camera Barcode Scanner (`AddEditProductScreen.tsx`)**:
+  - Hardware camera feed via `expo-camera` supporting real-time `onBarcodeScanned` sensor callback across EAN-13, EAN-8, UPC-A, UPC-E, QR, Code 128, and Code 39 barcode formats.
+  - Features hardware torch flashlight toggle button (**Torch ON/OFF**), laser reticle viewfinder, scanner status pulse indicator, and automated product catalog field population (Title, Category, Price in FCFA, Stock, Quality Tier, Description, Image).
+
+- **Outstanding Onboarding Experience v2.8 (`OnboardingScreen.tsx`)**:
+  - Redesigned 3-slider carousel tailored specifically for Cameroon / Central-West Africa:
+    - **Slide 1 (100% Safe Shopping - Escrow Trust)**: *"No Worries. Your Money is Safe."* - Custom pure escrow diagram illustrating Buyer → Escrow → Seller protection with zero mobile frame clutter.
+    - **Slide 2 (Track Your Delivery Live)**: *"Track Your Order Live Across Douala & Yaoundé"* - Rebranded delivery rider illustration (Wunabuy branding) with full-bleed dimmed background.
+    - **Slide 3 (Shop Directly from Verified Stores)**: *"Buy Directly from Top Local Stores"* - Rebranded store discovery illustration matching Wunabuy brand palette.
+  - Manual touch/swipe gesture controls (auto-slide disabled for user reading comfort), bottom active dot indicators, dynamic primary action button (`Next` / `Get Started →`), and direct `Log In` link.
+
+- **Multi-Image Product Gallery Modal (`ProductImageGalleryModal.tsx`)**:
+  - Full-screen interactive image gallery for multi-photo product listings with pinch/zoom support, image counter badge, and thumbnail navigation.
+
+- **Monorepo Shared Package Suite (`packages/`)**:
+  - `@wunabuy/design-tokens`: Emerald Teal (`#0D9488`) & Amber Gold (`#F59E0B`) palette, typography scale, 4px grid spacing, shadows, borders, themes.
+  - `@wunabuy/types`: Domain model TypeScript contracts (Auth, Commerce, Order, Delivery, Chat, Wallet, KYC, API responses).
+  - `@wunabuy/utils`: Localized helper utilities (`formatXAF`, `formatPhone` for +237, Haversine GPS `calculateDistance`, date/time relative formatting).
 
 - **System Notifications & Operational Alerts Center (`NotificationsPage.tsx`, `notificationsStore.ts`, `Header.tsx`)**:
   - **Dedicated Route (`/notifications`)**: Centralized system notifications ledger with unread counter, telemetry KPI cards (Total Alerts, Unread, Critical, Payouts), category tabs (`PAYOUT`, `KYC`, `DISPUTE`, `LOGISTICS`, `HR`, `SYSTEM`), priority filters, real-time text search, and direct operational target action links.

@@ -31,11 +31,15 @@ It connects three user groups through a single escrow-protected ecosystem:
 | 🏪 **Sellers (Store Owners)** | Digitize storefronts, manage inventory, receive guaranteed payouts after verified delivery |
 | 🚚 **Transport Providers** | Accept delivery jobs, navigate with GPS, earn transparent mileage-based fees |
 
-An internal **Staff Portal (v2.6)** provides operational dashboards across 7 departments (Executive, HR, Finance, Compliance, Operations, Support, Marketing) with Persona Switcher ACL Security Guard (`switch_staff_personas`), Per-Account Auth Persistence, Active Bilingual (EN/FR) i18n Language Engine, Production API Service Adapter Layer, 18-flag RBAC, Granular Field-Level ACL Controls, SearchableSelect Primitives, Staff Account CRUD Provisioning, and Dual 2-Factor OTP / Password Authentication.
+An internal **Staff Portal (v2.7)** provides operational dashboards across 7 departments with Persona Switcher ACL Security Guard (`switch_staff_personas`), Per-Account Auth Persistence, Active Bilingual (EN/FR) i18n Language Engine, Production API Service Adapter Layer, 18-flag RBAC, Granular Field-Level ACL Controls, Staff Account CRUD Provisioning, and System Notifications Center.
+
+The **Mobile App (v2.8)** features an outstanding 3-slider onboarding experience tailored for African markets ("No Worries. Your Money is Safe." escrow trust slider, live GPS tracking slider, verified stores slider with manual touch control), live camera barcode scanning (`expo-camera` in `AddEditProductScreen.tsx` with hardware torch toggle and instant store catalog auto-fill), and multi-image product gallery modal (`ProductImageGalleryModal.tsx`).
 
 ### Core Value Propositions
 
 - **Escrow-Protected Payments** — Buyer funds are locked until delivery is confirmed via photo proof + buyer digital signature. 48-hour auto-release with dispute protection.
+- **Live Camera Barcode Cataloging** — Sellers can scan physical barcodes (EAN-13, UPC, QR) via real-time camera sensor with torch support to instantly populate product titles, prices in FCFA, categories, and images.
+- **Outstanding Cameroon-Tailored Onboarding** — Welcoming, non-technical onboarding experience with custom pure escrow diagrams and rebranded delivery visuals.
 - **3.5% Platform Commission** — Transparent, configurable marketplace fee deducted before seller wallet credit.
 - **Real-Time GPS Tracking** — Live transporter location updates every 10 seconds via Laravel Reverb WebSockets.
 - **Offline-Resilient Design** — Built for spotty 3G/4G in African urban markets with queued background sync.

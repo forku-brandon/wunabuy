@@ -40,8 +40,7 @@ This PRD defines the product vision, market outcome, launch scope, UI/UX archite
 | 2.4 | September 3, 2026 | Architecture & Engineering Team | Granular Field-Level ACL Controls, SearchableSelect Dropdowns & Table Searchers (v2.4): (1) Field-Level ACL Locks & Badges across `StaffProfilePage.tsx` (allowing avatar picture upload & password changes for all staff, while locking core corporate identity fields for non-admins), `FinancialsPage.tsx` (`approve_payouts`), `KYCPage.tsx` (`approve_kyc`), `DisputesPage.tsx` (`resolve_disputes`), and `LogisticsOpsPage.tsx` (`override_logistics`). (2) Reusable `SearchableSelect.tsx` primitive with live in-built text search bar applied to all form dropdowns. (3) Universal `DataTable.tsx` in-built searcher enabled across all operational data tables. (4) 18-Flag RBAC System Permission Matrix fully synchronized across all 7 corporate staff roles with Level 5 Super Admin override rules. |
 | 2.5 | September 3, 2026 | Architecture & Engineering Team | API Service Adapter Layer & Active Bilingual EN/FR i18n Engine Release (v2.5): (1) Production API Service Client & Endpoint Integration Adapter Layer (`staff-portal/src/services/`) mapping every operational page and store to RESTful backend endpoints (`apiClient.ts`, `authApi.ts`, `staffDirectoryApi.ts`, `kycApi.ts`, `disputesApi.ts`, `financialsApi.ts`, `logisticsApi.ts`, `tasksApi.ts`, `rbacApi.ts`, `auditLogsApi.ts`) with Sanctum Bearer tokens and offline fallback. (2) Active Bilingual Internationalization (i18n) Engine (`LanguageContext.tsx`, `translations.ts`) allowing staff members to seamlessly toggle between English (`EN 🇬🇧`) and French (`FR 🇫🇷`) with persistent browser state. (3) Prominent Header Language Selector pill button in `Header.tsx`. |
 | 2.7 | September 3, 2026 | Architecture & Engineering Team | System Notifications & Operational Alerts Center (`NotificationsPage.tsx`, `notificationsStore.ts`), Header Support Chat routing (`/communications`), Strict 3-Color Brand Palette Unification (Emerald Teal `#0D9488`, Amber Gold `#F59E0B`, White/Dark Slate), and Complete Backend Technical Specifications & API Harmony (`Wunabuy_Backend_Tech_Spec_v1.0.md` v2.7). |
-
-
+| 2.8 | September 4, 2026 | Architecture & Engineering Team | Mobile App UX & Native Capability Release: (1) Outstanding Onboarding Experience (`OnboardingScreen.tsx`) featuring 3 welcoming sliders tailored for Cameroon/African markets (Escrow Trust, Live GPS Delivery, Verified Stores) with manual touch/swipe control, custom pure escrow diagram, rebranded full-bleed background imagery, and removed top bordered pills. (2) Seller Live Camera Barcode Scanner (`AddEditProductScreen.tsx`) powered by `expo-camera` with real-time `onBarcodeScanned` sensor detection (EAN-13/UPC/QR), hardware torch toggle button, reticle laser viewfinder, and instant store catalog auto-fill. (3) Multi-Image Product Gallery Modal (`ProductImageGalleryModal.tsx`). (4) Monorepo Shared Package System (`@wunabuy/design-tokens`, `@wunabuy/types`, `@wunabuy/utils`). |
 
 ---
 
@@ -115,13 +114,13 @@ Wunabuy addresses these challenges through a **mobile-first, offline-resilient a
 
 ## 5. UI/UX Architecture & Screen Specifications (v1.4 Update)
 
-### 5.1 Onboarding & Entry Page (`WelcomeScreen` & `WalkthroughCarousel`)
-- **Branding Header**: Official Wunabuy logo (`assets/icon.png`), brand title `Wunabuy`, tagline `ESCROW MARKETPLACE`, and top-right "Skip" action.
-- **Contextual Feature Illustration Cards**:
-  - **Slide 1**: `100% ESCROW PROTECTION` badge | `🔒 48h Escrow Guarantee` pill | `shield-checkmark-sharp` icon in Emerald Teal (`#0D9488`).
-  - **Slide 2**: `VERIFIED LOCAL MERCHANTS` badge | `🏬 100% Verified Stores` pill | `storefront-sharp` icon in Royal Blue (`#2563EB`).
-  - **Slide 3**: `REAL-TIME LIVE GPS` badge | `📍 Live GPS Tracking` pill | `location-sharp` icon in Warm Amber (`#F59E0B`).
-- **Pill Pagination & Action Controls**: Dynamic active-pill pagination indicator, primary `Continue →` / `Get Started →` button, and direct `Log In` link.
+### 5.1 Onboarding & Entry Page (`OnboardingScreen.tsx` & `WelcomeScreen`)
+- **Visual Design & Localization**: Outstanding 3-slider presentation designed for African emerging markets (Cameroon), featuring welcoming, non-technical copy, full-bleed dimmed background imagery, and brand color alignment (Emerald Teal `#0D9488` & Amber Gold `#F59E0B`). Top bordered pills have been removed for a clean layout.
+- **Interactive Carousel Sliders (Manual Touch Control)**:
+  - **Slide 1 (100% Safe Shopping - Escrow Trust)**: *"No Worries. Your Money is Safe."* - Custom pure escrow diagram illustrating Buyer → Escrow → Seller protection with zero mobile frame clutter.
+  - **Slide 2 (Track Your Delivery Live)**: *"Track Your Order Live Across Douala & Yaoundé"* - Rebranded delivery rider illustration (Wunabuy branding) with full-bleed dimmed background so white typography remains legible.
+  - **Slide 3 (Shop Directly from Verified Stores)**: *"Buy Directly from Top Local Stores"* - Rebranded store discovery illustration matching Wunabuy brand palette.
+- **Swipe & Action Controls**: Manual touch/swipe gesture controls (auto-slide disabled for user reading comfort), bottom active dot indicators, dynamic primary action button (`Next` / `Get Started →`), and direct `Log In` link.
 
 ### 5.2 Direct OTP Authentication & Registration Flow
 - **OTP Verification (`VerifyOTPScreen`)**: Entering 6-digit OTP code authenticates the user directly for that mobile number via `SecureTokenService` and navigates straight into their account feed on the Home Screen without redundant pre-auth role friction.

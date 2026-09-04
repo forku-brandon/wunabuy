@@ -26,9 +26,10 @@ npx expo start
 ### 1. Buyer Workspace (`BuyerApp`)
 | Screen | File | Highlights |
 |---|---|---|
+| **Onboarding** | `OnboardingScreen.tsx` | Outstanding 3-slider design tailored for African markets (Escrow Trust, Live GPS Delivery, Verified Stores), non-technical copy ("No Worries. Your Money is Safe."), pure escrow diagram, full-bleed dimmed background art, and touch gesture controls |
 | **Home** | `HomeScreen.tsx` | AppBar (`☰`, `🔍`, `🔔`, `🛒`), `HeroCarousel` (4.5s auto-scroll), `PartnersCarousel`, circular `CategoryChip` avatars, 2-column verified products grid |
 | **Search** | `SearchScreen.tsx` | Category filter bar, search query filter, price/distance radius bottom sheet |
-| **Product Detail** | `ProductDetailScreen.tsx` | 92% width hero gallery, floating action bar (`❤️`, share, cart), 2-col related recommendations, sticky stepper & dual CTA bottom bar |
+| **Product Detail** | `ProductDetailScreen.tsx` | 92% width hero gallery with `ProductImageGalleryModal.tsx` multi-photo preview, floating action bar (`❤️`, share, cart), 2-col related recommendations, sticky stepper & dual CTA bottom bar |
 | **Cart** | `BuyerCartScreen.tsx` | Item list with steppers, dynamic backend promo banner with 6s timeout, checkout CTA |
 | **Checkout** | `CheckoutPaymentScreen.tsx` | Dual payment tabs: In-app Wallet Balance vs Mobile Money (MTN `*126#` / Orange `#150*50#`) |
 | **Order Tracking** | `OrderTrackingScreen.tsx` | Real-time rider GPS marker, polyline route, ETA countdown, call/chat triggers |
@@ -46,7 +47,7 @@ npx expo start
 |---|---|---|
 | **Dashboard** | `SellerDashboardScreen.tsx` | Top AppBar with same-line actions, Subtitle Stack, Emerald Teal balance card with 1-tap account ID copy, Top Services 4x2 grid, Auto-Slide Sales Tips carousel, interactive store products catalog with quick-view modal and stock steppers, hidden-by-default KYC banner |
 | **Products** | `SellerProductsScreen.tsx` | 2-column store catalog, active/paused switch, real-time `[ − 1 + ]` stock steppers, low-stock warning badges ($\le 5$ units) |
-| **Add/Edit Product** | `AddEditProductScreen.tsx` | 5-photo upload grid, category horizontal selector, quality tier chips, and `BarcodeScannerModal` (EAN-13 presets) |
+| **Add/Edit Product** | `AddEditProductScreen.tsx` | 5-photo upload grid, category horizontal selector, quality tier chips, and **Live Camera Barcode Scanner** (`expo-camera` real-time EAN-13/UPC/QR sensor detection, hardware torch toggle, laser reticle, instant store catalog auto-fill) |
 | **Store Analytics** | `StoreAnalyticsScreen.tsx` | Revenue telemetry, available vs 48H escrow split, weekly Sales Velocity bar graph, key store KPIs, top products table, and PDF report export |
 | **Orders Queue** | `SellerOrdersScreen.tsx` | 2-hour auto-cancel countdown timer (`⏳ 01:45:00`), Dual Delivery Dispatch Modal (Express Transporter vs In-House Rider), step-by-step lifecycle actions |
 | **Store Wallet** | `SellerWalletScreen.tsx` | Available & Escrow balances, privacy eye toggle (`👁`), instant Mobile Money payout modal, `RecentTransactionsWidget` |

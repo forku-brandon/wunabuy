@@ -1,17 +1,21 @@
 # Wunabuy — Frontend Technical Specification
-### Version 2.0 | September 2, 2026
+### Version 2.8 | September 4, 2026
 
-> **Resolved Decisions (September 2, 2026):**
+> **Resolved Decisions (September 4, 2026):**
+> - **Live Camera Barcode Scanner**: Integrated `expo-camera` in `AddEditProductScreen.tsx` with real-time `onBarcodeScanned` sensor callback (EAN-13, EAN-8, UPC-A, UPC-E, QR, Code 128/39), hardware torch toggle (**Torch ON/OFF**), laser reticle viewfinder, scanner status pulse, and automated product catalog auto-fill.
+> - **Outstanding Onboarding Experience v2.8**: Redesigned `OnboardingScreen.tsx` with 3 welcoming sliders tailored for Cameroon/African markets (100% Escrow Protection: "No Worries. Your Money is Safe.", Live GPS Tracking across Douala & Yaoundé, Verified Stores). Features manual touch/swipe control, custom pure escrow diagram, rebranded full-bleed background imagery, and removed top bordered pills.
+> - **Multi-Image Product Gallery Modal**: `ProductImageGalleryModal.tsx` supporting full-screen zoom, image counter badge, and thumbnail navigation.
+> - **Monorepo Shared Package Architecture**: `@wunabuy/design-tokens` (Teal `#0D9488` / Amber `#F59E0B` palette, typography, shadows, borders, themes), `@wunabuy/types` (exhaustive domain contracts), and `@wunabuy/utils` (XAF currency formatters, +237 phone validators, Haversine GPS distance, order status helpers).
 > - Real-time: Laravel 13 + Laravel Reverb (all Supabase references removed)
 > - Dynamic Key-Based Workspace Isolation (`RootNavigator`): `key={isAuthenticated ? 'auth_workspace_' + activeRole : 'unauth_root'}` ensuring complete stack remount and strict role boundary isolation
 > - Smart Role Access Redirection: Automatic checking of `user.role` or `user.available_roles` for "Become a Seller" / "Become a Transporter", opening Dashboard if access granted or Welcome onboarding if not granted
-> - Recent Transactions Architecture: `RecentTransactionsWidget.tsx` (clean white/dark card widget) & `TransactionHistoryScreen.tsx` (dedicated history screen with search input, time filter pills `7 Days`, `15 Days`, `1 Month`, `Custom Date`, date grouping, PDF statement export)
+> - Recent Transactions Architecture: `RecentTransactionsWidget.tsx` & `TransactionHistoryScreen.tsx` (dedicated history screen with search input, time filter pills `7 Days`, `15 Days`, `1 Month`, `Custom Date`, date grouping, PDF statement export)
 > - Store Analytics Engine: `StoreAnalyticsScreen.tsx` (revenue telemetry, available vs 48H escrow split, weekly sales velocity bar graph, KPI grid, top products ranking)
-> - QR & Barcode Scanners: `QRScannerModal` in Transporter Job Feed (3 modes) and `BarcodeScannerModal` in Product Registration (`AddEditProductScreen.tsx`)
+> - QR Scanner Modal: `QRScannerModal` in Transporter Job Feed (3 modes)
 > - Universal Auto-Dismiss Toast: `Toast.tsx` with smooth `Animated` opacity fade-in (250ms) and automatic 3000ms fade-out auto-dismiss
 > - Brand Palette Harmonization: Full unification across Buyer, Seller, and Transporter screens using Emerald Teal (`#0D9488` / `#0F766E`) and Warm Amber (`#F59E0B`)
-> - Navigation: React Navigation 6.x + Expo SDK 54
-> - Staff Portal: TanStack Router + shadcn/ui + Tailwind CSS
+> - Navigation: React Navigation 6.x + Expo SDK 51
+> - Staff Portal: React 18 + Vite 5 + TanStack Router + shadcn/ui + Tailwind CSS
 > - Auth: Laravel Sanctum opaque Bearer tokens (not JWT)
 > - Currency: XAF-only for Phase 1 (Cameroon market)
 > - Dark mode: Full support across light and dark theme stores
