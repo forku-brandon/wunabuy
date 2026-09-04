@@ -232,11 +232,10 @@ export const BuyerCartScreen = ({ navigation }: any) => {
                 </View>
               )}
 
-              {/* Delivery Fee Section - Amount moved DOWNWARD to prevent grid exit */}
-              <View style={styles.deliverySectionBox}>
-                <View style={styles.deliveryHeaderRow}>
+              <View style={styles.summaryRow}>
+                <View style={styles.deliveryLabelRow}>
                   <Text variant="bodyMedium" secondary>
-                    Delivery Option
+                    Delivery
                   </Text>
                   <TouchableOpacity
                     activeOpacity={0.7}
@@ -245,83 +244,20 @@ export const BuyerCartScreen = ({ navigation }: any) => {
                   >
                     <Ionicons name="pencil" size={12} color={colors.primary[600]} />
                     <Text variant="caption" bold color={colors.primary[600]} style={{ marginLeft: 3, fontSize: 11 }}>
-                      Change Option
+                      Edit
                     </Text>
                   </TouchableOpacity>
                 </View>
-
-                {/* Downward Amount & Option Card (Grid Safe) */}
-                <TouchableOpacity
-                  activeOpacity={0.8}
-                  onPress={() => setIsDeliveryModalOpen(true)}
-                  style={[
-                    styles.deliveryAmountBlock,
-                    {
-                      backgroundColor:
-                        deliveryMethod === 'self_pickup'
-                          ? isDark
-                            ? 'rgba(16,185,129,0.15)'
-                            : '#ECFDF5'
-                          : isDark
-                          ? colors.neutral[800]
-                          : '#F0FDFA',
-                      borderColor: deliveryMethod === 'self_pickup' ? colors.semantic.success[500] : colors.primary[300],
-                    },
-                  ]}
-                >
-                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 8 }}>
-                      <Ionicons
-                        name={deliveryMethod === 'self_pickup' ? 'walk' : 'bicycle'}
-                        size={16}
-                        color={deliveryMethod === 'self_pickup' ? colors.semantic.success[700] : colors.primary[600]}
-                      />
-                      <Text
-                        variant="bodyMedium"
-                        bold
-                        color={deliveryMethod === 'self_pickup' ? colors.semantic.success[700] : theme.text}
-                        style={{ marginLeft: 6 }}
-                        numberOfLines={1}
-                      >
-                        {deliveryMethod === 'self_pickup' ? 'Self-Pickup / Personal Courier' : 'Wunabuy Express Transporter'}
-                      </Text>
-                    </View>
-
-                    <View
-                      style={[
-                        styles.amountPillBadge,
-                        {
-                          backgroundColor:
-                            deliveryMethod === 'self_pickup'
-                              ? '#D1FAE5'
-                              : '#CCFBF1',
-                        },
-                      ]}
-                    >
-                      <Text
-                        variant="bodyMedium"
-                        bold
-                        color={deliveryMethod === 'self_pickup' ? colors.semantic.success[700] : colors.primary[700]}
-                      >
-                        {deliveryMethod === 'self_pickup' ? '0 FCFA (Free)' : formatXAF(shippingFee)}
-                      </Text>
-                    </View>
-                  </View>
+                <TouchableOpacity activeOpacity={0.8} onPress={() => setIsDeliveryModalOpen(true)}>
+                  <Text
+                    variant="bodyLarge"
+                    bold
+                    color={deliveryMethod === 'self_pickup' ? colors.semantic.success[700] : theme.text}
+                  >
+                    {deliveryMethod === 'self_pickup' ? '0 FCFA (Self-Pickup)' : formatXAF(shippingFee)}
+                  </Text>
                 </TouchableOpacity>
               </View>
-
-              {/* Sleek Self Pickup Code Pill */}
-              {deliveryMethod === 'self_pickup' && (
-                <View style={[styles.selfPickupBanner, { backgroundColor: isDark ? 'rgba(13,148,136,0.15)' : '#F0FDFA', borderColor: colors.primary[300] }]}>
-                  <Ionicons name="key" size={14} color={colors.primary[600]} />
-                  <Text variant="caption" bold color={colors.primary[700]} style={{ marginLeft: 6 }}>
-                    Personal Rider PIN: #{pickupPin}
-                  </Text>
-                  <Text variant="caption" secondary style={{ marginLeft: 'auto', fontSize: 11 }}>
-                    Store Pickup
-                  </Text>
-                </View>
-              )}
 
               <View style={styles.divider} />
 
@@ -368,9 +304,12 @@ export const BuyerCartScreen = ({ navigation }: any) => {
 
           <View style={[styles.modalCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
             <View style={styles.modalHeaderRow}>
-              <Text variant="h2" bold>
-                Delivery Options
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Ionicons name="car-sport" size={20} color={colors.primary[600]} style={{ marginRight: 6 }} />
+                <Text variant="h2" bold>
+                  Delivery & Pickup Option
+                </Text>
+              </View>
               <TouchableOpacity
                 activeOpacity={0.7}
                 onPress={() => setIsDeliveryModalOpen(false)}
@@ -400,17 +339,18 @@ export const BuyerCartScreen = ({ navigation }: any) => {
               <View style={styles.optionRadioCircle}>
                 {deliveryMethod === 'wunabuy_transporter' && <View style={styles.optionRadioInner} />}
               </View>
-              <View style={{ flex: 1, marginLeft: spacing.sm }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Text variant="bodyMedium" bold color={deliveryMethod === 'wunabuy_transporter' ? colors.primary[600] : theme.text}>
-                    🏍️ Wunabuy Express Transporter
-                  </Text>
-                  <Text variant="bodyMedium" bold color={colors.primary[600]}>
-                    1 500 FCFA
-                  </Text>
-                </View>
+              <View style={{ flex: 1, marginLeft: spacing.sm, marginRight: spacing.xs }}>
+                <Text variant="bodyLarge" bold color={deliveryMethod === 'wunabuy_transporter' ? colors.primary[600] : theme.text}>
+                  🏍️ Wunabuy Express Transporter
+                </Text>
                 <Text variant="caption" secondary style={{ marginTop: 2 }}>
                   Standard platform rider dispatch with live GPS tracking
+                </Text>
+              </View>
+              {/* Grid-Safe Amount Badge */}
+              <View style={[styles.modalAmountBadge, { backgroundColor: '#CCFBF1' }]}>
+                <Text variant="bodyMedium" bold color={colors.primary[700]}>
+                  {formatXAF(1500)}
                 </Text>
               </View>
             </TouchableOpacity>
@@ -436,44 +376,104 @@ export const BuyerCartScreen = ({ navigation }: any) => {
               <View style={styles.optionRadioCircle}>
                 {deliveryMethod === 'self_pickup' && <View style={styles.optionRadioInner} />}
               </View>
-              <View style={{ flex: 1, marginLeft: spacing.sm }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Text variant="bodyMedium" bold color={deliveryMethod === 'self_pickup' ? colors.primary[600] : theme.text}>
-                    🚶 Personal Courier / Self-Pickup
-                  </Text>
-                  <Text variant="bodyMedium" bold color={colors.semantic.success[700]}>
-                    0 FCFA (Free)
-                  </Text>
-                </View>
+              <View style={{ flex: 1, marginLeft: spacing.sm, marginRight: spacing.xs }}>
+                <Text variant="bodyLarge" bold color={deliveryMethod === 'self_pickup' ? colors.semantic.success[700] : theme.text}>
+                  🚶 Personal Courier / Self-Pickup
+                </Text>
                 <Text variant="caption" secondary style={{ marginTop: 2 }}>
                   Send your rider or pick up at store using 5-digit PIN
                 </Text>
               </View>
+              {/* Grid-Safe Amount Badge */}
+              <View style={[styles.modalAmountBadge, { backgroundColor: '#D1FAE5' }]}>
+                <Text variant="bodyMedium" bold color={colors.semantic.success[700]}>
+                  0 FCFA (Free)
+                </Text>
+              </View>
             </TouchableOpacity>
 
-            {/* If Self-Pickup Selected: Sleek Card */}
+            {/* If Self-Pickup Selected: Detailed Seller Store Address & Rider PIN Card */}
             {deliveryMethod === 'self_pickup' && (
-              <View style={[styles.pickupDetailsCard, { backgroundColor: isDark ? colors.neutral[800] : '#ECFDF5' }]}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <Ionicons name="key" size={16} color={colors.primary[600]} />
-                    <Text variant="caption" bold color={colors.primary[700]} style={{ marginLeft: 4 }}>
-                      RIDER PIN:
-                    </Text>
-                  </View>
-                  <Text variant="h2" bold color={colors.primary[600]} style={{ letterSpacing: 2 }}>
+              <View style={[styles.pickupDetailsCard, { backgroundColor: isDark ? colors.neutral[800] : '#ECFDF5', borderColor: colors.primary[400] }]}>
+                {/* Rider Verification PIN Header */}
+                <View style={styles.pinCardHeader}>
+                  <Ionicons name="key" size={18} color={colors.primary[600]} />
+                  <Text variant="caption" bold color={colors.primary[700]} style={{ marginLeft: 6 }}>
+                    YOUR PERSONAL RIDER VERIFICATION PIN
+                  </Text>
+                </View>
+
+                <View style={styles.pinBadgeContainer}>
+                  <Text variant="h1" bold color={colors.primary[600]} style={{ letterSpacing: 4 }}>
                     #{pickupPin}
                   </Text>
                 </View>
 
-                <Text variant="caption" secondary style={{ fontSize: 11, marginTop: 4 }}>
-                  📍 Douala Tech Hub — Rue Joss, Akwa (+237 670 123 456)
+                <Text variant="caption" secondary style={{ fontSize: 11, marginBottom: spacing.xs }}>
+                  Give code <Text bold color={theme.text}>#{pickupPin}</Text> to your courier to present at the store counter upon arrival.
                 </Text>
+
+                {/* Detailed Seller Store Address Specs */}
+                <View style={[styles.storeSpecsBox, { backgroundColor: isDark ? colors.neutral[900] : '#FFFFFF', borderColor: theme.border }]}>
+                  <Text variant="caption" bold color={colors.primary[600]} style={{ marginBottom: 4 }}>
+                    🏬 DETAILED STORE PICKUP LOCATION:
+                  </Text>
+
+                  <View style={styles.specRow}>
+                    <Ionicons name="storefront-outline" size={14} color={theme.textSecondary} style={{ marginRight: 6 }} />
+                    <Text variant="caption" bold color={theme.text}>
+                      Store Name:
+                    </Text>
+                    <Text variant="caption" secondary style={{ marginLeft: 4, flex: 1 }}>
+                      Douala Tech Hub (Akwa Branch)
+                    </Text>
+                  </View>
+
+                  <View style={styles.specRow}>
+                    <Ionicons name="location-outline" size={14} color={theme.textSecondary} style={{ marginRight: 6 }} />
+                    <Text variant="caption" bold color={theme.text}>
+                      Physical Address:
+                    </Text>
+                    <Text variant="caption" secondary style={{ marginLeft: 4, flex: 1 }}>
+                      Rue Joss, Quartier Akwa, Douala, Cameroon
+                    </Text>
+                  </View>
+
+                  <View style={styles.specRow}>
+                    <Ionicons name="compass-outline" size={14} color={theme.textSecondary} style={{ marginRight: 6 }} />
+                    <Text variant="caption" bold color={theme.text}>
+                      Landmark Directions:
+                    </Text>
+                    <Text variant="caption" secondary style={{ marginLeft: 4, flex: 1 }}>
+                      Opposite Place du Gouvernement, Next to Akwa Mall (1st Floor, Suite 104)
+                    </Text>
+                  </View>
+
+                  <View style={styles.specRow}>
+                    <Ionicons name="call-outline" size={14} color={theme.textSecondary} style={{ marginRight: 6 }} />
+                    <Text variant="caption" bold color={theme.text}>
+                      Store Contacts:
+                    </Text>
+                    <Text variant="caption" bold color={colors.primary[600]} style={{ marginLeft: 4, flex: 1 }}>
+                      +237 670 123 456 / +237 699 876 543
+                    </Text>
+                  </View>
+
+                  <View style={styles.specRow}>
+                    <Ionicons name="time-outline" size={14} color={theme.textSecondary} style={{ marginRight: 6 }} />
+                    <Text variant="caption" bold color={theme.text}>
+                      Operating Hours:
+                    </Text>
+                    <Text variant="caption" secondary style={{ marginLeft: 4, flex: 1 }}>
+                      Mon - Sat: 8:00 AM - 6:30 PM
+                    </Text>
+                  </View>
+                </View>
               </View>
             )}
 
             <Button
-              title="Save Preference"
+              title="Save Preference & Confirm ✓"
               variant="primary"
               onPress={() => setIsDeliveryModalOpen(false)}
               style={{ marginTop: spacing.md, backgroundColor: colors.primary[500] }}
@@ -560,25 +560,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  deliverySectionBox: {
-    marginVertical: spacing.xs,
-  },
-  deliveryHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: spacing.xs,
-  },
-  deliveryAmountBlock: {
-    padding: spacing.sm,
-    borderRadius: borderRadius.lg,
-    borderWidth: 1,
-  },
-  amountPillBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: borderRadius.md,
-  },
   deliveryLabelRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -663,6 +644,37 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.xl,
     borderWidth: 1,
     borderColor: colors.primary[300],
+  },
+  pinCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
+  },
+  pinBadgeContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: spacing.xs,
+    paddingVertical: spacing.xs,
+    backgroundColor: '#CCFBF1',
+    borderRadius: borderRadius.lg,
+  },
+  storeSpecsBox: {
+    padding: spacing.sm,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    marginTop: spacing.xs,
+    gap: 6,
+  },
+  specRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  modalAmountBadge: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xxs + 2,
+    borderRadius: borderRadius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   pickupPinHeader: {
     flexDirection: 'row',
