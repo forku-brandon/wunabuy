@@ -34,7 +34,7 @@ export interface SellerOrder {
   status: SellerOrderStatus;
   created_at: string;
   acceptance_expires_at: string; // ISO 8601 string (2 hours from creation)
-  delivery_method?: 'wunabuy_transporter' | 'in_house_rider';
+  delivery_method?: 'wunabuy_transporter' | 'in_house_rider' | 'self_pickup';
   transporter_name?: string;
   transporter_phone?: string;
   pickup_pin?: string; // 5-digit security PIN sent to rider for handover verification

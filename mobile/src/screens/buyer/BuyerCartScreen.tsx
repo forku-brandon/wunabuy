@@ -1,12 +1,12 @@
 import React, { useState, useCallback } from 'react';
-import { View, FlatList, StyleSheet, TouchableOpacity, TextInput, RefreshControl } from 'react-native';
+import { View, FlatList, StyleSheet, TouchableOpacity, TextInput, RefreshControl, Modal, TouchableWithoutFeedback } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScreenContainer, Text, Card, Button, Badge, EmptyState } from '../../components/ui';
 import { CartItemCard } from '../../components/cart/CartItemCard';
 import { useCartStore } from '../../stores/cart.store';
 import { useThemeStore } from '../../stores/theme.store';
-import { spacing, colors, borderRadius } from '@wunabuy/design-tokens';
+import { spacing, colors, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { Address } from '@wunabuy/types';
 import { formatXAF } from '@wunabuy/utils';
 import { PromotionsService } from '../../services/api';
@@ -30,6 +30,11 @@ export const BuyerCartScreen = ({ navigation }: any) => {
   const [promoCode, setPromoCode] = useState('');
   const [appliedDiscount, setAppliedDiscount] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Delivery & Pickup Choice State (User Request #10)
+  const [deliveryMethod, setDeliveryMethod] = useState<'wunabuy_transporter' | 'self_pickup'>('wunabuy_transporter');
+  const [isDeliveryModalOpen, setIsDeliveryModalOpen] = useState(false);
+  const [pickupPin] = useState('84920'); // 5-digit verification code for personal rider
 
   // Dynamic Backend Promotion / Free Delivery notification (Hidden by default)
   const [backendPromo, setBackendPromo] = useState<{
@@ -74,12 +79,15 @@ export const BuyerCartScreen = ({ navigation }: any) => {
 
   const subtotal = getSubtotal();
   const itemCount = getItemCount();
-  const shippingFee = 1500; // Standard delivery fee
+  const shippingFee = deliveryMethod === 'self_pickup' ? 0 : 1500;
   const total = Math.max(0, subtotal - appliedDiscount + shippingFee);
 
   const handleProceedToPayment = () => {
     navigation.navigate('CheckoutPayment', {
       subtotal,
+      deliveryFee: shippingFee,
+      deliveryMethod,
+      pickupPin,
       addressId: deliveryAddress.id,
     });
   };
@@ -223,13 +231,46 @@ export const BuyerCartScreen = ({ navigation }: any) => {
               </View>
 
               <View style={styles.summaryRow}>
-                <Text variant="bodyMedium" secondary>
-                  Delivery Fee
-                </Text>
-                <Text variant="bodyLarge" bold color={colors.semantic.success[700]}>
-                  Free
-                </Text>
+                <View style={styles.deliveryLabelRow}>
+                  <Text variant="bodyMedium" secondary>
+                    Delivery Fee
+                  </Text>
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={() => setIsDeliveryModalOpen(true)}
+                    style={styles.editDeliveryBtn}
+                  >
+                    <Ionicons name="pencil" size={13} color={colors.primary[600]} />
+                    <Text variant="caption" bold color={colors.primary[600]} style={{ marginLeft: 3 }}>
+                      Edit
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+                <TouchableOpacity activeOpacity={0.8} onPress={() => setIsDeliveryModalOpen(true)}>
+                  <Text
+                    variant="bodyLarge"
+                    bold
+                    color={deliveryMethod === 'self_pickup' ? colors.semantic.success[700] : theme.text}
+                  >
+                    {deliveryMethod === 'self_pickup' ? '0 FCFA (Self-Pickup)' : formatXAF(shippingFee)}
+                  </Text>
+                </TouchableOpacity>
               </View>
+
+              {/* Self Pickup Info Banner */}
+              {deliveryMethod === 'self_pickup' && (
+                <View style={[styles.selfPickupBanner, { backgroundColor: isDark ? 'rgba(13,148,136,0.15)' : '#F0FDFA', borderColor: colors.primary[400] }]}>
+                  <Ionicons name="key-outline" size={16} color={colors.primary[600]} />
+                  <View style={{ flex: 1, marginLeft: 6 }}>
+                    <Text variant="caption" bold color={colors.primary[700]}>
+                      Personal Courier / Self-Pickup (Rider Code: #{pickupPin})
+                    </Text>
+                    <Text variant="caption" secondary style={{ fontSize: 11, marginTop: 1 }}>
+                      Store: Douala Tech Hub (Akwa) • Bypasses Wunabuy Rider
+                    </Text>
+                  </View>
+                </View>
+              )}
 
               <View style={styles.summaryRow}>
                 <Text variant="bodyMedium" secondary>
@@ -262,6 +303,164 @@ export const BuyerCartScreen = ({ navigation }: any) => {
           </>
         }
       />
+
+      {/* ─── Delivery Method Selection Modal (User Request #10) ─────────── */}
+      <Modal
+        visible={isDeliveryModalOpen}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setIsDeliveryModalOpen(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <TouchableWithoutFeedback onPress={() => setIsDeliveryModalOpen(false)}>
+            <View style={styles.modalBackdrop} />
+          </TouchableWithoutFeedback>
+
+          <View style={[styles.modalCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
+            <View style={styles.modalHeaderRow}>
+              <View style={styles.modalHeaderTitleBox}>
+                <Ionicons name="car-sport-outline" size={22} color={colors.primary[600]} />
+                <Text variant="h2" bold style={{ marginLeft: spacing.xs }}>
+                  Delivery & Pickup Option
+                </Text>
+              </View>
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => setIsDeliveryModalOpen(false)}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Ionicons name="close" size={20} color={theme.textSecondary} />
+              </TouchableOpacity>
+            </View>
+
+            <Text variant="caption" secondary style={{ marginBottom: spacing.md, lineHeight: 18 }}>
+              Select how your items should be dispatched or picked up from the merchant's store.
+            </Text>
+
+            {/* Option 1: Wunabuy Express Transporter */}
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={() => setDeliveryMethod('wunabuy_transporter')}
+              style={[
+                styles.deliveryOptionCard,
+                {
+                  borderColor: deliveryMethod === 'wunabuy_transporter' ? colors.primary[500] : theme.border,
+                  backgroundColor:
+                    deliveryMethod === 'wunabuy_transporter'
+                      ? isDark
+                        ? colors.neutral[800]
+                        : '#F0FDFA'
+                      : 'transparent',
+                },
+              ]}
+            >
+              <View style={styles.optionRadioCircle}>
+                {deliveryMethod === 'wunabuy_transporter' && <View style={styles.optionRadioInner} />}
+              </View>
+              <View style={{ flex: 1, marginLeft: spacing.sm }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Text variant="bodyMedium" bold color={deliveryMethod === 'wunabuy_transporter' ? colors.primary[600] : theme.text}>
+                    🏍️ Book Wunabuy Express Transporter
+                  </Text>
+                  <Text variant="bodyMedium" bold color={colors.primary[600]}>
+                    1 500 FCFA
+                  </Text>
+                </View>
+                <Text variant="caption" secondary style={{ marginTop: 2 }}>
+                  Platform dispatches verified nearby rider with live GPS tracking directly to your address.
+                </Text>
+              </View>
+            </TouchableOpacity>
+
+            {/* Option 2: Self Pickup / Personal Courier */}
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={() => setDeliveryMethod('self_pickup')}
+              style={[
+                styles.deliveryOptionCard,
+                {
+                  borderColor: deliveryMethod === 'self_pickup' ? colors.primary[500] : theme.border,
+                  backgroundColor:
+                    deliveryMethod === 'self_pickup'
+                      ? isDark
+                        ? colors.neutral[800]
+                        : '#F0FDFA'
+                      : 'transparent',
+                  marginTop: spacing.sm,
+                },
+              ]}
+            >
+              <View style={styles.optionRadioCircle}>
+                {deliveryMethod === 'self_pickup' && <View style={styles.optionRadioInner} />}
+              </View>
+              <View style={{ flex: 1, marginLeft: spacing.sm }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Text variant="bodyMedium" bold color={deliveryMethod === 'self_pickup' ? colors.primary[600] : theme.text}>
+                    🚶 Send Someone / Self Pickup
+                  </Text>
+                  <Text variant="bodyMedium" bold color={colors.semantic.success[700]}>
+                    0 FCFA (FREE)
+                  </Text>
+                </View>
+                <Text variant="caption" secondary style={{ marginTop: 2 }}>
+                  Send your own personal rider or pickup in person. Generates a 5-digit verification PIN.
+                </Text>
+              </View>
+            </TouchableOpacity>
+
+            {/* If Self-Pickup Selected: Display Rider Code & Store Instructions */}
+            {deliveryMethod === 'self_pickup' && (
+              <View style={[styles.pickupDetailsCard, { backgroundColor: isDark ? colors.neutral[800] : '#ECFDF5' }]}>
+                <View style={styles.pickupPinHeader}>
+                  <Ionicons name="key" size={18} color={colors.primary[600]} />
+                  <Text variant="caption" bold color={colors.primary[700]} style={{ marginLeft: 6 }}>
+                    YOUR PERSONAL RIDER VERIFICATION PIN:
+                  </Text>
+                </View>
+                <View style={styles.pinBadgeRow}>
+                  <Text variant="h1" bold color={colors.primary[600]} style={{ letterSpacing: 3 }}>
+                    #{pickupPin}
+                  </Text>
+                </View>
+
+                <View style={styles.storeDetailRow}>
+                  <Ionicons name="location-outline" size={14} color={theme.textSecondary} />
+                  <Text variant="caption" bold style={{ marginLeft: 4 }}>
+                    Pickup Store Address:
+                  </Text>
+                </View>
+                <Text variant="caption" secondary style={{ marginLeft: 18, marginBottom: 4 }}>
+                  Douala Tech Hub — Rue Joss, Akwa, Douala
+                </Text>
+
+                <View style={styles.storeDetailRow}>
+                  <Ionicons name="call-outline" size={14} color={theme.textSecondary} />
+                  <Text variant="caption" bold style={{ marginLeft: 4 }}>
+                    Store Contact Phone:
+                  </Text>
+                </View>
+                <Text variant="caption" secondary style={{ marginLeft: 18, marginBottom: 6 }}>
+                  +237 670 123 456
+                </Text>
+
+                <View style={styles.pinNoticeBox}>
+                  <Ionicons name="information-circle" size={14} color={colors.primary[700]} />
+                  <Text variant="caption" color={colors.primary[800]} style={{ marginLeft: 4, flex: 1, fontSize: 11 }}>
+                    Give code <Text bold>#{pickupPin}</Text> to your personal rider. The seller will verify this 5-digit code before handing over the parcel.
+                  </Text>
+                </View>
+              </View>
+            )}
+
+            <Button
+              title="Confirm Delivery Choice ✓"
+              variant="primary"
+              onPress={() => setIsDeliveryModalOpen(false)}
+              style={{ marginTop: spacing.md, backgroundColor: colors.primary[500] }}
+            />
+          </View>
+        </View>
+      </Modal>
     </ScreenContainer>
   );
 };
@@ -341,6 +540,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  deliveryLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  editDeliveryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: spacing.xs,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    backgroundColor: '#CCFBF1',
+    borderRadius: borderRadius.sm,
+  },
+  selfPickupBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.sm,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    marginVertical: spacing.xs,
+  },
   divider: {
     height: 1,
     backgroundColor: 'rgba(148, 163, 184, 0.2)',
@@ -349,5 +569,85 @@ const styles = StyleSheet.create({
   checkoutBtn: {
     height: 52,
     marginBottom: spacing.xl,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  modalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalCard: {
+    borderTopLeftRadius: borderRadius['2xl'],
+    borderTopRightRadius: borderRadius['2xl'],
+    borderWidth: 1,
+    padding: spacing.lg,
+    paddingBottom: spacing['2xl'],
+    ...shadows.lg,
+  },
+  modalHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.xs,
+  },
+  modalHeaderTitleBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  deliveryOptionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.md,
+    borderRadius: borderRadius.xl,
+    borderWidth: 1.5,
+  },
+  optionRadioCircle: {
+    width: 20,
+    height: 20,
+    borderRadius: borderRadius.full,
+    borderWidth: 2,
+    borderColor: colors.primary[500],
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  optionRadioInner: {
+    width: 10,
+    height: 10,
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.primary[500],
+  },
+  pickupDetailsCard: {
+    marginTop: spacing.md,
+    padding: spacing.md,
+    borderRadius: borderRadius.xl,
+    borderWidth: 1,
+    borderColor: colors.primary[300],
+  },
+  pickupPinHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  pinBadgeRow: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: spacing.xs,
+    paddingVertical: spacing.xs,
+    backgroundColor: '#CCFBF1',
+    borderRadius: borderRadius.lg,
+  },
+  storeDetailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.xs,
+  },
+  pinNoticeBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F0FDFA',
+    padding: spacing.xs + 2,
+    borderRadius: borderRadius.md,
+    marginTop: spacing.xs,
   },
 });

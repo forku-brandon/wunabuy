@@ -11,13 +11,18 @@ import { useThemeStore } from '../../stores/theme.store';
 import { OrdersService } from '../../services/api';
 
 export const CheckoutPaymentScreen = ({ route, navigation }: any) => {
-  const { subtotal = 185000 } = route.params || {};
+  const {
+    subtotal = 185000,
+    deliveryFee = 1500,
+    deliveryMethod = 'wunabuy_transporter',
+    pickupPin = '84920',
+  } = route.params || {};
+
   const { theme, isDark } = useThemeStore();
   const user = useAuthStore((state) => state.user);
   const clearCart = useCartStore((state) => state.clearCart);
 
   const commission = Math.round(subtotal * 0.035);
-  const deliveryFee = 1500;
   const totalAmount = subtotal + commission + deliveryFee;
 
   // Mock available wallet balance
@@ -65,6 +70,8 @@ export const CheckoutPaymentScreen = ({ route, navigation }: any) => {
             provider,
             phone: accountPhone,
             paymentMethod: 'Mobile Money',
+            deliveryMethod,
+            pickupPin,
           });
         }, 3000);
       } else if (selectedMethod === PaymentMethod.WALLET) {
@@ -89,6 +96,8 @@ export const CheckoutPaymentScreen = ({ route, navigation }: any) => {
             provider: 'Wunabuy Wallet',
             phone: user?.phone ?? accountPhone,
             paymentMethod: 'Wallet Balance',
+            deliveryMethod,
+            pickupPin,
           });
         }, 1200);
       }
@@ -136,6 +145,22 @@ export const CheckoutPaymentScreen = ({ route, navigation }: any) => {
           </Text>
         </View>
       </Card>
+
+      {/* Self-Pickup Info Card */}
+      {deliveryMethod === 'self_pickup' && (
+        <View style={[styles.selfPickupCheckoutCard, { backgroundColor: isDark ? 'rgba(13,148,136,0.15)' : '#F0FDFA', borderColor: colors.primary[400] }]}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+            <Ionicons name="walk" size={18} color={colors.primary[600]} />
+            <Text variant="bodyMedium" bold color={colors.primary[700]} style={{ marginLeft: 6 }}>
+              Self-Pickup / Personal Courier Active
+            </Text>
+            <Badge label="0 FCFA FEE" variant="success" size="small" style={{ marginLeft: 'auto' }} />
+          </View>
+          <Text variant="caption" secondary style={{ lineHeight: 18 }}>
+            Rider verification code <Text bold color={colors.primary[600]}>#{pickupPin}</Text> will be active upon payment. Platform transporter dispatch is bypassed.
+          </Text>
+        </View>
+      )}
 
       {/* Payment Method Selector Tabs */}
       <Text variant="caption" bold color={theme.textSecondary} style={styles.label}>
@@ -411,6 +436,12 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     borderRadius: borderRadius.full,
     marginTop: 2,
+  },
+  selfPickupCheckoutCard: {
+    padding: spacing.md,
+    borderRadius: borderRadius.xl,
+    borderWidth: 1.5,
+    marginBottom: spacing.md,
   },
   label: {
     marginBottom: spacing.xs,
