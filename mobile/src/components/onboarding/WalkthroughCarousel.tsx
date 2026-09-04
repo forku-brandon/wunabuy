@@ -9,7 +9,6 @@ import {
   TouchableOpacity,
   StatusBar,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { Text, Button } from '../ui';
@@ -37,7 +36,7 @@ const ONBOARDING_SLIDES: SlideItem[] = [
     id: '1',
     badge: '100% ESCROW GUARANTEE',
     badgeColor: '#0D9488',
-    badgeBg: 'rgba(13, 148, 136, 0.2)',
+    badgeBg: 'rgba(13, 148, 136, 0.25)',
     title: 'Your Money Stays Safe\nUntil Delivery Is Verified',
     subtitle:
       'Payments are held securely in 48-hour escrow. Merchants only receive funds after you receive, inspect, and sign for your order.',
@@ -47,7 +46,7 @@ const ONBOARDING_SLIDES: SlideItem[] = [
     id: '2',
     badge: 'VERIFIED LOCAL STORES',
     badgeColor: '#3B82F6',
-    badgeBg: 'rgba(59, 130, 246, 0.2)',
+    badgeBg: 'rgba(59, 130, 246, 0.25)',
     title: 'Shop Directly From\nVerified Local Stores',
     subtitle:
       'Browse thousands of electronics, fashion items, food, and home goods from KYC-verified store owners in your city.',
@@ -57,7 +56,7 @@ const ONBOARDING_SLIDES: SlideItem[] = [
     id: '3',
     badge: 'REAL-TIME LIVE GPS',
     badgeColor: '#F59E0B',
-    badgeBg: 'rgba(245, 158, 11, 0.2)',
+    badgeBg: 'rgba(245, 158, 11, 0.25)',
     title: 'Track Your Delivery\nLive to Your Doorstep',
     subtitle:
       'Watch your transport provider in real-time with 10-second GPS breadcrumb updates from pickup to final hand-off.',
@@ -100,9 +99,9 @@ export const WalkthroughCarousel: React.FC<WalkthroughCarouselProps> = ({
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#0B1017" translucent />
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
 
-      {/* Main Full-Bleed Slide Carousel */}
+      {/* Main Full-Screen 100% Background Slide Carousel */}
       <FlatList
         ref={flatListRef}
         data={ONBOARDING_SLIDES}
@@ -119,14 +118,14 @@ export const WalkthroughCarousel: React.FC<WalkthroughCarouselProps> = ({
         })}
         renderItem={({ item }) => (
           <View style={styles.slideContainer}>
-            {/* Immersive Hero Image Background */}
-            <Image source={item.image} style={styles.heroImage} resizeMode="cover" />
+            {/* Full-Screen 100% Height Hero Background Image */}
+            <Image source={item.image} style={styles.heroImageFull} resizeMode="cover" />
 
-            {/* Top Subtle Vignette Gradient Overlay */}
-            <View style={styles.topVignette} />
+            {/* Subtle Vignette Overlay across Entire Screen */}
+            <View style={styles.dimVignetteOverlay} />
 
-            {/* Bottom Dark Gradient Overlay Sheet */}
-            <View style={styles.gradientOverlay}>
+            {/* Dimmed Dark Overlay Sheet Behind Text Content */}
+            <View style={styles.textDimmedOverlaySheet}>
               <View style={styles.slideContentBox}>
                 {/* Floating Context Badge */}
                 <View style={[styles.badgePill, { backgroundColor: item.badgeBg, borderColor: item.badgeColor }]}>
@@ -142,7 +141,7 @@ export const WalkthroughCarousel: React.FC<WalkthroughCarouselProps> = ({
                 </Text>
 
                 {/* Subtitle Description */}
-                <Text variant="bodyLarge" color="rgba(255, 255, 255, 0.8)" style={styles.slideSubtitle}>
+                <Text variant="bodyLarge" color="rgba(255, 255, 255, 0.88)" style={styles.slideSubtitle}>
                   {item.subtitle}
                 </Text>
               </View>
@@ -151,7 +150,7 @@ export const WalkthroughCarousel: React.FC<WalkthroughCarouselProps> = ({
         )}
       />
 
-      {/* Floating Header (Absolute Overlay) */}
+      {/* Floating Header (Absolute Overlay on Top) */}
       <View style={[styles.floatingHeader, { paddingTop: Math.max(insets.top + spacing.xs, spacing.md) }]}>
         <View style={styles.logoBadgePill}>
           <Image source={WUNABUY_LOGO} style={styles.logoIcon} resizeMode="contain" />
@@ -178,7 +177,7 @@ export const WalkthroughCarousel: React.FC<WalkthroughCarouselProps> = ({
         )}
       </View>
 
-      {/* Fixed Bottom Action Sheet Controls */}
+      {/* Fixed Bottom Action Controls (Absolute Overlay on Bottom with Safe Area Insets) */}
       <View style={[styles.bottomControlsSection, { paddingBottom: Math.max(insets.bottom + spacing.md, spacing.xl) }]}>
         {/* Sleek Horizontal Pill Indicators */}
         <View style={styles.paginationDotsRow}>
@@ -212,7 +211,7 @@ export const WalkthroughCarousel: React.FC<WalkthroughCarouselProps> = ({
           style={styles.secondaryLoginLink}
           hitSlop={{ top: 12, bottom: 12, left: 20, right: 20 }}
         >
-          <Text variant="bodyMedium" align="center" color="rgba(255, 255, 255, 0.75)">
+          <Text variant="bodyMedium" align="center" color="rgba(255, 255, 255, 0.85)">
             Already have an account?{' '}
             <Text variant="bodyMedium" bold color={colors.primary[400]}>
               Log In
@@ -243,9 +242,9 @@ const styles = StyleSheet.create({
   logoBadgePill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(15, 23, 42, 0.75)',
+    backgroundColor: 'rgba(11, 16, 23, 0.75)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderColor: 'rgba(255, 255, 255, 0.18)',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
     borderRadius: borderRadius.full,
@@ -259,13 +258,13 @@ const styles = StyleSheet.create({
   logoTagDivider: {
     width: 1,
     height: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
     marginHorizontal: 2,
   },
   skipBtn: {
-    backgroundColor: 'rgba(15, 23, 42, 0.65)',
+    backgroundColor: 'rgba(11, 16, 23, 0.65)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
+    borderColor: 'rgba(255, 255, 255, 0.15)',
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.xs,
     borderRadius: borderRadius.full,
@@ -276,38 +275,33 @@ const styles = StyleSheet.create({
     position: 'relative',
     backgroundColor: '#0B1017',
   },
-  heroImage: {
+  heroImageFull: {
     width: SCREEN_WIDTH,
-    height: SCREEN_HEIGHT * 0.62,
+    height: SCREEN_HEIGHT,
     position: 'absolute',
     top: 0,
     left: 0,
   },
-  topVignette: {
+  dimVignetteOverlay: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    height: 140,
-    backgroundColor: 'rgba(11, 16, 23, 0.45)',
+    bottom: 0,
+    backgroundColor: 'rgba(11, 16, 23, 0.25)',
   },
-  gradientOverlay: {
+  textDimmedOverlaySheet: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
     height: SCREEN_HEIGHT * 0.52,
-    backgroundColor: '#0B1017',
+    backgroundColor: 'rgba(11, 16, 23, 0.88)',
     justifyContent: 'flex-start',
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing['2xl'],
+    paddingTop: spacing.xl,
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: -10 },
-    shadowOpacity: 0.5,
-    shadowRadius: 20,
-    elevation: 20,
   },
   slideContentBox: {
     width: '100%',
@@ -349,7 +343,7 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: 20,
     paddingHorizontal: spacing.xl,
-    backgroundColor: '#0B1017',
+    backgroundColor: 'rgba(11, 16, 23, 0.92)',
   },
   paginationDotsRow: {
     flexDirection: 'row',
@@ -368,7 +362,7 @@ const styles = StyleSheet.create({
   },
   inactiveDotPill: {
     width: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
   },
   primaryCtaPillBtn: {
     borderRadius: borderRadius.full,
