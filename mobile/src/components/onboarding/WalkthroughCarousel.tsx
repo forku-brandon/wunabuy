@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
 import { Text, Button } from '../ui';
@@ -82,6 +83,7 @@ export const WalkthroughCarousel: React.FC<WalkthroughCarouselProps> = ({
   onComplete,
   onSkip,
 }) => {
+  const insets = useSafeAreaInsets();
   const { theme, isDark } = useThemeStore();
   const [activeIndex, setActiveIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
@@ -104,8 +106,8 @@ export const WalkthroughCarousel: React.FC<WalkthroughCarouselProps> = ({
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      {/* Top Header with Official Wunabuy Logo */}
-      <View style={styles.topHeader}>
+      {/* Top Header with Official Wunabuy Logo & Safe Area Inset */}
+      <View style={[styles.topHeader, { paddingTop: Math.max(insets.top + spacing.xs, spacing.md) }]}>
         <View style={styles.logoRow}>
           <Image source={WUNABUY_LOGO} style={styles.logoImage} resizeMode="contain" />
           <View style={styles.brandTitleCol}>
@@ -156,7 +158,7 @@ export const WalkthroughCarousel: React.FC<WalkthroughCarouselProps> = ({
               <View style={[styles.outerRing, { backgroundColor: item.iconBg }]}>
                 {/* Central Feature Icon */}
                 <View style={[styles.iconCircle, { backgroundColor: item.iconColor }]}>
-                  <Ionicons name={item.iconName} size={48} color={colors.neutral[0]} />
+                  <Ionicons name={item.iconName} size={42} color={colors.neutral[0]} />
                 </View>
               </View>
 
@@ -189,8 +191,8 @@ export const WalkthroughCarousel: React.FC<WalkthroughCarouselProps> = ({
         )}
       />
 
-      {/* Footer Navigation & CTA */}
-      <View style={styles.footer}>
+      {/* Elevated Bottom Footer Navigation & CTA (with Safe Area Bottom Inset Guard) */}
+      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom + spacing.lg, spacing['2xl']) }]}>
         {/* Pagination Dots */}
         <View style={styles.pagination}>
           {ONBOARDING_SLIDES.map((_, index) => (
@@ -219,8 +221,13 @@ export const WalkthroughCarousel: React.FC<WalkthroughCarouselProps> = ({
           style={styles.mainCtaBtn}
         />
 
-        {/* Quick Log In Option */}
-        <TouchableOpacity activeOpacity={0.8} onPress={onComplete} style={styles.loginLink}>
+        {/* Quick Log In Option Elevated Above Phone Navigation Bar */}
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={onComplete}
+          style={styles.loginLink}
+          hitSlop={{ top: 12, bottom: 12, left: 20, right: 20 }}
+        >
           <Text variant="bodyMedium" align="center" secondary>
             Already have an account?{' '}
             <Text variant="bodyMedium" bold color={colors.primary[500]}>
@@ -271,27 +278,27 @@ const styles = StyleSheet.create({
   },
   illustrationBox: {
     width: SCREEN_WIDTH - 48,
-    height: 250,
+    height: 210,
     borderRadius: borderRadius['2xl'],
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.xl,
+    marginBottom: spacing.lg,
     position: 'relative',
     overflow: 'hidden',
   },
   outerRing: {
-    width: 130,
-    height: 130,
-    borderRadius: 65,
+    width: 110,
+    height: 110,
+    borderRadius: 55,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   iconCircle: {
-    width: 86,
-    height: 86,
-    borderRadius: 43,
+    width: 76,
+    height: 76,
+    borderRadius: 38,
     alignItems: 'center',
     justifyContent: 'center',
     ...shadows.md,
@@ -316,23 +323,22 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.full,
   },
   title: {
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
     paddingHorizontal: spacing.sm,
-    lineHeight: 30,
+    lineHeight: 28,
   },
   subtitle: {
     paddingHorizontal: spacing.md,
-    lineHeight: 24,
+    lineHeight: 22,
   },
   footer: {
     paddingHorizontal: spacing.xl,
-    paddingBottom: spacing.xl,
   },
   pagination: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
   },
   dot: {
     height: 8,
@@ -340,9 +346,10 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
   },
   mainCtaBtn: {
-    marginBottom: spacing.md,
+    marginBottom: spacing.xs,
   },
   loginLink: {
-    paddingVertical: spacing.xs,
+    paddingVertical: spacing.sm,
+    marginTop: spacing.xs,
   },
 });
