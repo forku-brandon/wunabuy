@@ -156,7 +156,7 @@ export const TransporterActiveTripScreen = ({ route, navigation }: any) => {
         {/* Dispatch Order Specs Card */}
         <Card style={styles.dispatchCard}>
           <View style={styles.dispatchHeaderRow}>
-            <View style={{ flex: 1, marginRight: spacing.xs }}>
+            <View style={{ flex: 1, marginRight: spacing.sm }}>
               <Text variant="caption" secondary bold>
                 ITEMS TO TRANSPORT
               </Text>
@@ -164,75 +164,111 @@ export const TransporterActiveTripScreen = ({ route, navigation }: any) => {
                 📦 {itemsSummary}
               </Text>
             </View>
-            <View style={{ alignItems: 'flex-end', minWidth: 90 }}>
-              <Text variant="caption" secondary bold>
-                DRIVER PAYOUT
+            <View style={styles.payoutBadgePillContainer}>
+              <Text variant="caption" secondary bold style={{ fontSize: 10 }}>
+                PAYOUT
               </Text>
-              <Text variant="h2" bold color={colors.primary[600]}>
-                {formatXAF(deliveryFee)}
-              </Text>
+              <View style={styles.payoutPillBadge}>
+                <Text variant="bodyLarge" bold color={colors.primary[600]}>
+                  {formatXAF(deliveryFee)}
+                </Text>
+              </View>
             </View>
           </View>
 
-
-          {/* Location Focus Info */}
-          {currentStage <= 2 ? (
-            <View style={[styles.locationBox, { backgroundColor: isDark ? colors.neutral[800] : colors.primary[50], borderColor: colors.primary[500] }]}>
+          {/* Emphasized Route Addresses with Active Stage Highlight */}
+          <View style={styles.routeSectionContainer}>
+            {/* 1. Store Pickup Location */}
+            <View
+              style={[
+                styles.locationBox,
+                {
+                  backgroundColor: currentStage <= 2 ? (isDark ? 'rgba(13,148,136,0.15)' : '#F0FDFA') : (isDark ? colors.neutral[800] : colors.neutral[50]),
+                  borderColor: currentStage <= 2 ? colors.primary[500] : theme.border,
+                  borderWidth: currentStage <= 2 ? 2 : 1,
+                },
+              ]}
+            >
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Text variant="caption" bold color={colors.primary[600]}>
-                  🏬 PICKUP MERCHANT STORE
-                </Text>
-                <Badge label="STAGE 1 & 2" variant="primary" size="small" />
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Ionicons name="storefront" size={16} color={colors.primary[600]} />
+                  <Text variant="caption" bold color={colors.primary[700]} style={{ marginLeft: 6 }}>
+                    1. STORE PICKUP LOCATION
+                  </Text>
+                </View>
+                {currentStage <= 2 ? (
+                  <Badge label="ACTIVE STEP" variant="primary" size="small" />
+                ) : (
+                  <Badge label="COMPLETED" variant="success" size="small" />
+                )}
               </View>
-              <Text variant="bodyLarge" bold style={{ marginTop: 2 }}>
+              <Text variant="bodyLarge" bold style={{ marginTop: 4 }}>
                 {storeName}
               </Text>
-              <Text variant="caption" secondary>
-                {storeAddress}
+              <Text variant="bodyMedium" color={theme.textSecondary} style={{ marginTop: 2 }}>
+                📍 {storeAddress}
               </Text>
 
-              <View style={styles.contactActionRow}>
-                <TouchableOpacity
-                  activeOpacity={0.8}
-                  onPress={() => Alert.alert('Calling Store', `Dialing merchant store: ${storePhone}`)}
-                  style={[styles.callBtn, { backgroundColor: isDark ? colors.neutral[700] : 'rgba(13,148,136,0.12)' }]}
-                >
-                  <Ionicons name="call-outline" size={16} color={colors.primary[600]} />
-                  <Text variant="caption" bold color={colors.primary[600]}>
-                    Call Store ({storePhone})
-                  </Text>
-                </TouchableOpacity>
-              </View>
+              {currentStage <= 2 && (
+                <View style={styles.contactActionRow}>
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    onPress={() => Alert.alert('Calling Store', `Dialing merchant store: ${storePhone}`)}
+                    style={[styles.callBtn, { backgroundColor: isDark ? colors.neutral[700] : '#CCFBF1' }]}
+                  >
+                    <Ionicons name="call" size={14} color={colors.primary[700]} />
+                    <Text variant="caption" bold color={colors.primary[700]}>
+                      Call Merchant Store ({storePhone})
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
             </View>
-          ) : (
-            <View style={[styles.locationBox, { backgroundColor: isDark ? colors.neutral[800] : '#ECFDF5', borderColor: '#10B981' }]}>
+
+            {/* 2. Buyer Delivery Destination */}
+            <View
+              style={[
+                styles.locationBox,
+                {
+                  backgroundColor: currentStage > 2 ? (isDark ? 'rgba(16,185,129,0.15)' : '#ECFDF5') : (isDark ? colors.neutral[800] : colors.neutral[50]),
+                  borderColor: currentStage > 2 ? '#10B981' : theme.border,
+                  borderWidth: currentStage > 2 ? 2 : 1,
+                  marginTop: spacing.xs + 2,
+                },
+              ]}
+            >
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Text variant="caption" bold color="#10B981">
-                  🏠 BUYER DROP-OFF DESTINATION
-                </Text>
-                <Badge label="STAGE 3 & 4" variant="success" size="small" />
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Ionicons name="location" size={16} color="#10B981" />
+                  <Text variant="caption" bold color="#10B981" style={{ marginLeft: 6 }}>
+                    2. BUYER DELIVERY DESTINATION
+                  </Text>
+                </View>
+                {currentStage > 2 && <Badge label="ACTIVE STEP" variant="success" size="small" />}
               </View>
-              <Text variant="bodyLarge" bold style={{ marginTop: 2 }}>
-                {buyerName}
+              <Text variant="bodyLarge" bold style={{ marginTop: 4 }}>
+                👤 {buyerName}
               </Text>
-              <Text variant="caption" secondary>
-                {buyerAddress}
+              <Text variant="bodyMedium" color={theme.textSecondary} style={{ marginTop: 2 }}>
+                📍 {buyerAddress}
               </Text>
 
-              <View style={styles.contactActionRow}>
-                <TouchableOpacity
-                  activeOpacity={0.8}
-                  onPress={() => Alert.alert('Calling Buyer', `Dialing customer: ${buyerPhone}`)}
-                  style={[styles.callBtn, { backgroundColor: isDark ? colors.neutral[700] : '#D1FAE5' }]}
-                >
-                  <Ionicons name="call-outline" size={16} color="#10B981" />
-                  <Text variant="caption" bold color="#10B981">
-                    Call Customer ({buyerPhone})
-                  </Text>
-                </TouchableOpacity>
-              </View>
+              {currentStage > 2 && (
+                <View style={styles.contactActionRow}>
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    onPress={() => Alert.alert('Calling Buyer', `Dialing customer: ${buyerPhone}`)}
+                    style={[styles.callBtn, { backgroundColor: isDark ? colors.neutral[700] : '#D1FAE5' }]}
+                  >
+                    <Ionicons name="call" size={14} color="#10B981" />
+                    <Text variant="caption" bold color="#10B981">
+                      Call Customer ({buyerPhone})
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
             </View>
-          )}
+          </View>
 
           {/* Stage 2 Verification PIN Card */}
           {currentStage === 2 && (
@@ -338,11 +374,23 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0,0,0,0.06)',
   },
+  payoutBadgePillContainer: {
+    alignItems: 'flex-end',
+  },
+  payoutPillBadge: {
+    backgroundColor: '#CCFBF1',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
+    borderRadius: borderRadius.md,
+    marginTop: 2,
+  },
+  routeSectionContainer: {
+    marginBottom: spacing.md,
+  },
   locationBox: {
     padding: spacing.md,
     borderRadius: borderRadius.lg,
     borderWidth: 1,
-    marginBottom: spacing.md,
   },
   contactActionRow: {
     marginTop: spacing.sm,

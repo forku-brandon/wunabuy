@@ -328,24 +328,54 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
               <Badge label={`${formatDistance(item.distance_km)} AWAY`} variant="info" size="small" />
             </View>
 
-            {/* Pickup */}
-            <View style={styles.addressBox}>
-              <Text variant="caption" secondary bold>
-                STORE PICKUP
-              </Text>
-              <Text variant="bodyMedium" bold style={{ marginTop: 1 }}>
-                🏬 {item.store.store_name} ({item.pickup_address.address_text})
-              </Text>
-            </View>
+            {/* Detailed Route Timeline Address Card */}
+            <View style={[styles.routeTimelineCard, { backgroundColor: isDark ? colors.neutral[800] : colors.neutral[50], borderColor: theme.border }]}>
+              {/* Pickup Address */}
+              <View style={styles.timelineRow}>
+                <View style={styles.timelineIconCol}>
+                  <View style={[styles.timelineDot, { backgroundColor: '#10B981' }]}>
+                    <Ionicons name="storefront" size={12} color="#FFFFFF" />
+                  </View>
+                  <View style={styles.timelineLine} />
+                </View>
+                <View style={styles.timelineContent}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Text variant="caption" bold color="#059669">
+                      1. STORE PICKUP LOCATION
+                    </Text>
+                    <Badge label="MERCHANT" variant="primary" size="small" />
+                  </View>
+                  <Text variant="bodyLarge" bold style={{ marginTop: 2 }}>
+                    {item.store.store_name}
+                  </Text>
+                  <Text variant="bodyMedium" color={theme.textSecondary} style={{ marginTop: 1, lineHeight: 18 }}>
+                    📍 {item.pickup_address.address_text}, {item.pickup_address.city}
+                  </Text>
+                </View>
+              </View>
 
-            {/* Drop-off */}
-            <View style={styles.addressBox}>
-              <Text variant="caption" secondary bold>
-                BUYER DELIVERY DESTINATION
-              </Text>
-              <Text variant="bodyMedium" bold style={{ marginTop: 1 }}>
-                🏠 {item.delivery_address.address_text}
-              </Text>
+              {/* Drop-off Address */}
+              <View style={[styles.timelineRow, { marginTop: spacing.xs + 2 }]}>
+                <View style={styles.timelineIconCol}>
+                  <View style={[styles.timelineDot, { backgroundColor: '#EF4444' }]}>
+                    <Ionicons name="location" size={12} color="#FFFFFF" />
+                  </View>
+                </View>
+                <View style={styles.timelineContent}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Text variant="caption" bold color="#DC2626">
+                      2. BUYER DELIVERY DESTINATION
+                    </Text>
+                    <Badge label="DOORSTEP" variant="info" size="small" />
+                  </View>
+                  <Text variant="bodyLarge" bold style={{ marginTop: 2 }}>
+                    {item.delivery_address.address_text}
+                  </Text>
+                  <Text variant="bodyMedium" color={theme.textSecondary} style={{ marginTop: 1, lineHeight: 18 }}>
+                    📍 {item.delivery_address.city} • Contact Buyer on Arrival
+                  </Text>
+                </View>
+              </View>
             </View>
 
             <View style={[styles.summaryBox, { backgroundColor: isDark ? colors.neutral[800] : colors.neutral[100] }]}>
@@ -354,11 +384,26 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
               </Text>
             </View>
 
+            {/* Grid-Safe Driver Payout Banner */}
+            <View style={[styles.payoutHighlightBanner, { backgroundColor: isDark ? 'rgba(13,148,136,0.15)' : '#F0FDFA', borderColor: colors.primary[300] }]}>
+              <View style={styles.payoutLabelBox}>
+                <Ionicons name="cash" size={18} color={colors.primary[600]} />
+                <Text variant="caption" bold color={colors.primary[700]} style={{ marginLeft: 4 }}>
+                  DRIVER PAYOUT
+                </Text>
+              </View>
+              <View style={styles.payoutAmountBadge}>
+                <Text variant="bodyLarge" bold color={colors.primary[600]}>
+                  {formatXAF(item.delivery_fee)}
+                </Text>
+              </View>
+            </View>
+
             {/* Map Route Trigger Button */}
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={() => setSelectedMapJob(item)}
-              style={[styles.mapRouteBtn, { backgroundColor: isDark ? 'rgba(13,148,136,0.15)' : colors.primary[50], borderColor: colors.primary[200] }]}
+              style={[styles.mapRouteBtn, { backgroundColor: isDark ? colors.neutral[800] : colors.primary[50], borderColor: colors.primary[200] }]}
             >
               <Ionicons name="map-outline" size={16} color={colors.primary[600]} />
               <Text variant="caption" bold color={colors.primary[600]}>
@@ -366,22 +411,7 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
               </Text>
             </TouchableOpacity>
 
-            {/* Driver Payout Dedicated Banner */}
-            <View style={[styles.payoutHighlightBanner, { backgroundColor: isDark ? colors.neutral[800] : colors.primary[50], borderColor: isDark ? 'rgba(13,148,136,0.3)' : colors.primary[200] }]}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1, marginRight: spacing.xs }}>
-                <Ionicons name="cash-outline" size={18} color={colors.primary[600]} />
-                <Text variant="caption" bold color={colors.primary[600]} numberOfLines={1} style={{ flexShrink: 1 }}>
-                  DRIVER PAYOUT
-                </Text>
-              </View>
-              <Text variant="bodyLarge" bold color={colors.primary[600]} style={{ fontSize: 16 }}>
-                {formatXAF(item.delivery_fee)}
-              </Text>
-            </View>
-
-
-
-            {/* Action Buttons Row (Moved Down below Driver Payout for Maximum Spacing & Flexibility) */}
+            {/* Action Buttons Row */}
             <View style={styles.cardActionGroup}>
               <TouchableOpacity
                 activeOpacity={0.8}
@@ -390,7 +420,7 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
               >
                 <Ionicons name="close-circle-outline" size={18} color="#EF4444" />
                 <Text variant="caption" bold color="#EF4444">
-                  Not Interested
+                  Pass Job
                 </Text>
               </TouchableOpacity>
 
@@ -404,7 +434,6 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
               />
             </View>
           </Card>
-
         )}
       />
 
@@ -480,7 +509,7 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
                 </TouchableOpacity>
 
                 <Button
-                  title={`Accept & Start Ride (${formatXAF(selectedMapJob.delivery_fee)}) ➔`}
+                  title="Accept Job ➔"
                   variant="primary"
                   size="large"
                   onPress={() => handleAcceptJob(selectedMapJob)}
@@ -710,6 +739,38 @@ const styles = StyleSheet.create({
   addressBox: {
     marginBottom: spacing.xs,
   },
+  routeTimelineCard: {
+    padding: spacing.sm + 2,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    marginVertical: spacing.xs,
+  },
+  timelineRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  timelineIconCol: {
+    alignItems: 'center',
+    width: 24,
+    marginRight: spacing.xs,
+    paddingTop: 2,
+  },
+  timelineDot: {
+    width: 20,
+    height: 20,
+    borderRadius: borderRadius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  timelineLine: {
+    width: 2,
+    height: 28,
+    backgroundColor: 'rgba(148,163,184,0.3)',
+    marginVertical: 2,
+  },
+  timelineContent: {
+    flex: 1,
+  },
   summaryBox: {
     padding: spacing.xs + 2,
     borderRadius: borderRadius.md,
@@ -722,14 +783,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    minHeight: 44,
-    borderRadius: borderRadius.md,
+    padding: spacing.sm + 2,
+    borderRadius: borderRadius.lg,
     borderWidth: 1,
-    marginTop: spacing.xs + 2,
-    marginBottom: spacing.xs,
-    overflow: 'hidden',
+    marginVertical: spacing.xs,
+  },
+  payoutLabelBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    marginRight: spacing.xs,
+  },
+  payoutAmountBadge: {
+    backgroundColor: '#CCFBF1',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: borderRadius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   cardActionGroup: {
