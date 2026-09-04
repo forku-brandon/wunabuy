@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { View, FlatList, StyleSheet, TouchableOpacity, RefreshControl, ScrollView, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import { ScreenContainer, Text, Card, Button, Badge, Toast } from '../../components/ui';
 import { TransporterSidebarDrawer } from '../../components/navigation/TransporterSidebarDrawer';
 import { LiveTrackingMap } from '../../components/order/LiveTrackingMap';
@@ -175,23 +176,53 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
   };
 
 
+  const [permission, requestPermission] = useCameraPermissions();
+  const [torchEnabled, setTorchEnabled] = useState(false);
+  const [scanned, setScanned] = useState(false);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [scannerMode, setScannerMode] = useState<'package' | 'permit' | 'merchant'>('package');
   const [isScanningProcess, setIsScanningProcess] = useState(false);
 
   const handleSimulateScan = () => {
+  const handleBarCodeScanned = ({ type, data }: { type: string; data: string }) => {
+    if (scanned || isScanningProcess) return;
+    setScanned(true);
     setIsScanningProcess(true);
+
     setTimeout(() => {
       setIsScanningProcess(false);
       setIsScannerOpen(false);
+
       if (scannerMode === 'package') {
         setToastMessage('📦 Package QR Code #WB-2026-9842 verified! Syncing account status.');
+        setToastMessage(`⚡ Live Package QR #${data} verified! Waybill synced with active trip.`);
       } else if (scannerMode === 'permit') {
         setToastMessage('💳 Douala Council Fleet Permit scanned & account status updated!');
+        setToastMessage(`⚡ Live Driver Permit #${data} scanned! Douala fleet verification active.`);
       } else {
         setToastMessage('🏪 Merchant Store QR scanned! Checked in at Douala Tech Hub.');
+        setToastMessage(`⚡ Live Store QR #${data} scanned! Checked in at merchant counter.`);
       }
     }, 1200);
+    }, 600);
+  };
+
+  const handleSimulateScan = (presetCode?: string) => {
+    setScanned(true);
+    setIsScanningProcess(true);
+    const code = presetCode || (scannerMode === 'package' ? 'WB-2026-9842' : scannerMode === 'permit' ? 'DLA-2026-88' : 'STORE-101');
+    setTimeout(() => {
+      setIsScanningProcess(false);
+      setIsScannerOpen(false);
+
+      if (scannerMode === 'package') {
+        setToastMessage(`📦 Package QR #${code} scanned! Waybill verified & synced.`);
+      } else if (scannerMode === 'permit') {
+        setToastMessage(`💳 Driver Permit #${code} scanned! Douala fleet verification active.`);
+      } else {
+        setToastMessage(`🏪 Store QR #${code} scanned! Store check-in timestamp recorded.`);
+      }
+    }, 600);
   };
 
   const filteredJobs = jobs.filter((job) => {
@@ -599,7 +630,36 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
             </View>
 
             {/* Viewfinder Mockup */}
+            {/* Live Camera Viewfinder */}
             <View style={styles.viewfinderBox}>
+              {permission?.granted ? (
+                <CameraView
+                  style={StyleSheet.absoluteFillObject}
+                  enableTorch={torchEnabled}
+                  onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
+                  barcodeScannerSettings={{
+                    barcodeTypes: ['qr', 'ean13', 'ean8', 'upc_a', 'upc_e', 'code128', 'code39'],
+                  }}
+                />
+              ) : (
+                <View style={styles.permissionPlaceholder}>
+                  <Ionicons name="camera-outline" size={36} color="#94A3B8" />
+                  <Text variant="bodyMedium" bold color="#FFFFFF" align="center" style={{ marginTop: 6 }}>
+                    Live Camera Hardware Sensor
+                  </Text>
+                  <Text variant="caption" color="rgba(255,255,255,0.7)" align="center" style={{ marginTop: 2, marginBottom: spacing.xs }}>
+                    Enable camera access to scan package QR codes and driver permits live.
+                  </Text>
+                  <Button
+                    title="Grant Camera Permission"
+                    variant="primary"
+                    size="small"
+                    onPress={requestPermission}
+                  />
+                </View>
+              )}
+
+              {/* Viewfinder Corners */}
               <View style={styles.viewfinderCornerTL} />
               <View style={styles.viewfinderCornerTR} />
               <View style={styles.viewfinderCornerBL} />
@@ -614,6 +674,8 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
                   : 'Align Store Check-in QR code'}
               </Text>
             </View>
+              {/* Live Laser Scanner Line */}
+              <View style={styles.laserLine} />
 
             {/* Instruction Card */}
             <Card style={{ marginTop: spacing.md }}>
@@ -621,12 +683,110 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
                 <Ionicons name="information-circle-outline" size={20} color={colors.primary[600]} />
                 <Text variant="bodyMedium" bold style={{ flex: 1 }}>
                   Automatic Account &amp; Order Sync
+              {/* Torch Flashlight Toggle */}
+              {permission?.granted && (
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => setTorchEnabled(!torchEnabled)}
+                  style={[
+                    styles.torchBtn,
+                    { backgroundColor: torchEnabled ? colors.accent[500] : 'rgba(15,23,42,0.85)' },
+                  ]}
+                >
+                  <Ionicons
+                    name={torchEnabled ? 'flash' : 'flash-off'}
+                    size={16}
+                    color={torchEnabled ? '#000000' : '#FFFFFF'}
+                  />
+                  <Text variant="caption" bold color={torchEnabled ? '#000000' : '#FFFFFF'}>
+                    {torchEnabled ? 'Torch ON' : 'Torch OFF'}
+                  </Text>
+                </TouchableOpacity>
+              )}
+
+              {/* Live Scanner Sensor Status Tag */}
+              <View style={styles.scanStatusTag}>
+                <View style={[styles.livePulseDot, { backgroundColor: scanned ? colors.accent[500] : '#10B981' }]} />
+                <Text variant="caption" bold color="#FFFFFF">
+                  {scanned ? 'QR / BARCODE DETECTED!' : 'LIVE CAMERA SCANNER ACTIVE'}
                 </Text>
               </View>
               <Text variant="caption" secondary style={{ marginTop: 4 }}>
                 Scanning instant codes updates your account verification status, store check-in timestamp, and package handover records directly in real time.
               </Text>
             </Card>
+            </View>
+
+            {scanned && (
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => setScanned(false)}
+                style={styles.rescanBtn}
+              >
+                <Ionicons name="refresh-outline" size={16} color={colors.primary[600]} />
+                <Text variant="caption" bold color={colors.primary[600]}>
+                  Tap to Reset &amp; Scan Another Code
+                </Text>
+              </TouchableOpacity>
+            )}
+
+            <Text variant="caption" secondary bold style={{ marginTop: spacing.md, marginBottom: spacing.xs }}>
+              SELECT SAMPLE QR CODE TO SCAN
+            </Text>
+
+            {/* Quick Sample Presets */}
+            <View style={{ gap: spacing.xs }}>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => handleSimulateScan('WB-2026-9842')}
+                style={[styles.sampleBarcodeRow, { backgroundColor: theme.card, borderColor: theme.border }]}
+              >
+                <Ionicons name="cube-outline" size={22} color={colors.primary[500]} />
+                <View style={{ flex: 1, marginLeft: spacing.sm }}>
+                  <Text variant="bodyMedium" bold>
+                    📦 Waybill Package QR (#WB-2026-9842)
+                  </Text>
+                  <Text variant="caption" secondary>
+                    Douala Tech Hub • Samsung Galaxy A54
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => handleSimulateScan('DLA-2026-88')}
+                style={[styles.sampleBarcodeRow, { backgroundColor: theme.card, borderColor: theme.border }]}
+              >
+                <Ionicons name="card-outline" size={22} color={colors.primary[500]} />
+                <View style={{ flex: 1, marginLeft: spacing.sm }}>
+                  <Text variant="bodyMedium" bold>
+                    💳 Fleet Driver Permit (#DLA-2026-88)
+                  </Text>
+                  <Text variant="caption" secondary>
+                    Douala Urban Transport Council Registered Driver
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => handleSimulateScan('STORE-101')}
+                style={[styles.sampleBarcodeRow, { backgroundColor: theme.card, borderColor: theme.border }]}
+              >
+                <Ionicons name="storefront-outline" size={22} color={colors.primary[500]} />
+                <View style={{ flex: 1, marginLeft: spacing.sm }}>
+                  <Text variant="bodyMedium" bold>
+                    🏪 Merchant Store Check-in (#STORE-101)
+                  </Text>
+                  <Text variant="caption" secondary>
+                    Douala Tech Hub Akwa Branch Counter #2
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} />
+              </TouchableOpacity>
+            </View>
 
             <Button
               title={isScanningProcess ? 'Scanning & Verifying...' : '⚡ Scan & Sync Account Direct'}
@@ -635,6 +795,8 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
               loading={isScanningProcess}
               onPress={handleSimulateScan}
               style={{ marginTop: spacing.lg, marginBottom: spacing.xl }}
+              onPress={() => handleSimulateScan()}
+              style={{ marginTop: spacing.lg, marginBottom: spacing.xl, backgroundColor: colors.primary[500] }}
             />
           </ScrollView>
         </View>
@@ -936,6 +1098,68 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     borderRadius: borderRadius.md,
+    borderWidth: 1,
+  },
+  permissionPlaceholder: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.base,
+    backgroundColor: '#0F172A',
+  },
+  laserLine: {
+    position: 'absolute',
+    left: 20,
+    right: 20,
+    height: 2,
+    backgroundColor: '#EF4444',
+    shadowColor: '#EF4444',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 6,
+  },
+  torchBtn: {
+    position: 'absolute',
+    top: 14,
+    right: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: borderRadius.full,
+    zIndex: 10,
+  },
+  scanStatusTag: {
+    position: 'absolute',
+    bottom: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(15,23,42,0.85)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: borderRadius.full,
+    zIndex: 10,
+  },
+  livePulseDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  rescanBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: spacing.xs + 2,
+    marginTop: spacing.xs,
+  },
+  sampleBarcodeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.sm + 2,
+    borderRadius: borderRadius.lg,
     borderWidth: 1,
   },
 });

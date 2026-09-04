@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, Alert, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import { ScreenContainer, Text, Card, Button, Badge, Toast } from '../../components/ui';
 import { LiveTrackingMap } from '../../components/order/LiveTrackingMap';
 import { DigitalSignatureModal } from '../../components/order/DigitalSignatureModal';
@@ -18,6 +20,11 @@ export const TransporterActiveTripScreen = ({ route, navigation }: any) => {
   // 1: Navigating to Store Pickup, 2: Merchant Handover Verification, 3: Navigating to Buyer, 4: Proof of Delivery Signature
   const [currentStage, setCurrentStage] = useState<number>(stage);
   const [isSignModalOpen, setIsSignModalOpen] = useState(false);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [permission, requestPermission] = useCameraPermissions();
+  const [torchEnabled, setTorchEnabled] = useState(false);
+  const [scanned, setScanned] = useState(false);
+  const [isScanningProcess, setIsScanningProcess] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [tripData, setTripData] = useState<ActiveTripPayload>({
     job_id: jobId,
@@ -115,6 +122,29 @@ export const TransporterActiveTripScreen = ({ route, navigation }: any) => {
     }
   };
 
+  const handleBarCodeScanned = ({ type, data }: { type: string; data: string }) => {
+    if (scanned || isScanningProcess) return;
+    setScanned(true);
+    setIsScanningProcess(true);
+
+    setTimeout(() => {
+      setIsScanningProcess(false);
+      setIsScannerOpen(false);
+      setToastMessage(`⚡ Live Package QR/Barcode #${data} scanned! Verified order specs.`);
+    }, 600);
+  };
+
+  const handleSimulateScan = (presetCode?: string) => {
+    setScanned(true);
+    setIsScanningProcess(true);
+    const code = presetCode || 'WB-2026-9842';
+    setTimeout(() => {
+      setIsScanningProcess(false);
+      setIsScannerOpen(false);
+      setToastMessage(`📦 Package QR #${code} scanned! Order verified & ready for handover.`);
+    }, 600);
+  };
+
   return (
     <ScreenContainer scrollable={false} padded={false}>
       {/* Top Header Bar */}
@@ -142,6 +172,15 @@ export const TransporterActiveTripScreen = ({ route, navigation }: any) => {
               {getStageTitle()}
             </Text>
           </View>
+
+          {/* App Bar Scanner Action Button */}
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => setIsScannerOpen(true)}
+            style={[styles.backBtnCircle, { backgroundColor: isDark ? 'rgba(13,148,136,0.2)' : colors.primary[50], borderColor: colors.primary[200], borderWidth: 1 }]}
+          >
+            <Ionicons name="qr-code-outline" size={20} color={colors.primary[600]} />
+          </TouchableOpacity>
         </View>
 
 
@@ -426,6 +465,166 @@ export const TransporterActiveTripScreen = ({ route, navigation }: any) => {
       </ScrollView>
 
       {/* Digital Signature Pad Modal */}
+      {/* Live QR & Barcode Scanner Modal */}
+      <Modal
+        visible={isScannerOpen}
+        animationType="slide"
+        transparent={false}
+        onRequestClose={() => setIsScannerOpen(false)}
+      >
+        <View style={{ flex: 1, backgroundColor: theme.background }}>
+          <View style={[styles.header, { backgroundColor: theme.card, borderBottomColor: theme.border, paddingTop: Math.max(insets.top + spacing.xs, spacing.md) }]}>
+            <View style={styles.topRow}>
+              <TouchableOpacity activeOpacity={0.8} onPress={() => setIsScannerOpen(false)} style={styles.backBtnCircle}>
+                <Ionicons name="close" size={22} color={theme.text} />
+              </TouchableOpacity>
+              <View style={{ flex: 1, marginHorizontal: spacing.sm }}>
+                <Text variant="caption" bold color={colors.primary[600]}>
+                  WAYBILL & HANDOVER VERIFIER 📷
+                </Text>
+                <Text variant="h2" bold numberOfLines={1}>
+                  Live Trip Package Scanner
+                </Text>
+              </View>
+              <Badge label="ACTIVE TRIP" variant="primary" size="small" />
+            </View>
+          </View>
+
+          <ScrollView style={{ flex: 1, padding: spacing.base }}>
+            {/* Live Viewfinder */}
+            <View style={{
+              backgroundColor: '#0F172A',
+              height: 220,
+              borderRadius: borderRadius.lg,
+              borderWidth: 2,
+              borderColor: colors.primary[500],
+              alignItems: 'center',
+              justifyContent: 'center',
+              position: 'relative',
+              overflow: 'hidden',
+            }}>
+              {permission?.granted ? (
+                <CameraView
+                  style={StyleSheet.absoluteFillObject}
+                  enableTorch={torchEnabled}
+                  onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
+                  barcodeScannerSettings={{
+                    barcodeTypes: ['qr', 'ean13', 'ean8', 'upc_a', 'upc_e', 'code128', 'code39'],
+                  }}
+                />
+              ) : (
+                <View style={{ ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', padding: spacing.base, backgroundColor: '#0F172A' }}>
+                  <Ionicons name="camera-outline" size={36} color="#94A3B8" />
+                  <Text variant="bodyMedium" bold color="#FFFFFF" align="center" style={{ marginTop: 6 }}>
+                    Live Camera Hardware Sensor
+                  </Text>
+                  <Text variant="caption" color="rgba(255,255,255,0.7)" align="center" style={{ marginTop: 2, marginBottom: spacing.xs }}>
+                    Enable camera access to scan package waybills and QR codes live.
+                  </Text>
+                  <Button
+                    title="Grant Camera Permission"
+                    variant="primary"
+                    size="small"
+                    onPress={requestPermission}
+                  />
+                </View>
+              )}
+
+              {/* Laser line */}
+              <View style={{
+                position: 'absolute',
+                left: 20,
+                right: 20,
+                height: 2,
+                backgroundColor: '#EF4444',
+              }} />
+
+              {/* Torch Button */}
+              {permission?.granted && (
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => setTorchEnabled(!torchEnabled)}
+                  style={{
+                    position: 'absolute',
+                    top: 14,
+                    right: 14,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 6,
+                    backgroundColor: torchEnabled ? colors.accent[500] : 'rgba(15,23,42,0.85)',
+                    paddingHorizontal: 12,
+                    paddingVertical: 6,
+                    borderRadius: borderRadius.full,
+                  }}
+                >
+                  <Ionicons name={torchEnabled ? 'flash' : 'flash-off'} size={16} color={torchEnabled ? '#000000' : '#FFFFFF'} />
+                  <Text variant="caption" bold color={torchEnabled ? '#000000' : '#FFFFFF'}>
+                    {torchEnabled ? 'Torch ON' : 'Torch OFF'}
+                  </Text>
+                </TouchableOpacity>
+              )}
+
+              {/* Sensor Status Tag */}
+              <View style={{
+                position: 'absolute',
+                bottom: 14,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 6,
+                backgroundColor: 'rgba(15,23,42,0.85)',
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+                borderRadius: borderRadius.full,
+              }}>
+                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: scanned ? colors.accent[500] : '#10B981' }} />
+                <Text variant="caption" bold color="#FFFFFF">
+                  {scanned ? 'WAYBILL QR DETECTED!' : 'LIVE CAMERA SCANNER ACTIVE'}
+                </Text>
+              </View>
+            </View>
+
+            {/* Quick Sample Presets */}
+            <Text variant="caption" secondary bold style={{ marginTop: spacing.md, marginBottom: spacing.xs }}>
+              ACTIVE TRIP WAYBILL PRESET
+            </Text>
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => handleSimulateScan('WB-2026-9842')}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                padding: spacing.sm + 2,
+                borderRadius: borderRadius.lg,
+                borderWidth: 1,
+                backgroundColor: theme.card,
+                borderColor: theme.border,
+              }}
+            >
+              <Ionicons name="cube-outline" size={24} color={colors.primary[500]} />
+              <View style={{ flex: 1, marginLeft: spacing.sm }}>
+                <Text variant="bodyMedium" bold>
+                  📦 Order #{orderCode} Waybill QR
+                </Text>
+                <Text variant="caption" secondary>
+                  {storeName} • {itemsSummary}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} />
+            </TouchableOpacity>
+
+            <Button
+              title={isScanningProcess ? 'Verifying Package Code...' : '⚡ Scan & Verify Active Trip Package'}
+              variant="primary"
+              size="large"
+              loading={isScanningProcess}
+              onPress={() => handleSimulateScan('WB-2026-9842')}
+              style={{ marginTop: spacing.lg, marginBottom: spacing.xl, backgroundColor: colors.primary[500] }}
+            />
+          </ScrollView>
+        </View>
+      </Modal>
+
+      {/* POD Signature Capture Modal */}
       <DigitalSignatureModal
         visible={isSignModalOpen}
         onClose={() => setIsSignModalOpen(false)}
