@@ -169,7 +169,7 @@ export const TransporterActiveTripScreen = ({ route, navigation }: any) => {
         <Card style={styles.dispatchCard}>
           <View style={styles.dispatchHeaderRow}>
             <View style={{ flex: 1, marginRight: spacing.sm }}>
-              <Text variant="caption" secondary bold>
+              <Text variant="caption" secondary bold style={{ letterSpacing: 0.5 }}>
                 ITEM TO TRANSPORT
               </Text>
               <Text variant="bodyLarge" bold color={colors.primary[500]} style={{ marginTop: 2 }}>
@@ -206,8 +206,8 @@ export const TransporterActiveTripScreen = ({ route, navigation }: any) => {
                 },
               ]}
             >
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: spacing.xs }}>
                   <Ionicons name="storefront" size={16} color={colors.primary[600]} />
                   <Text variant="caption" bold color={colors.primary[700]} style={{ marginLeft: 6 }}>
                     1. MERCHANT PICKUP LOCATION
@@ -221,7 +221,7 @@ export const TransporterActiveTripScreen = ({ route, navigation }: any) => {
               </View>
 
               {/* Store Name & Address */}
-              <Text variant="bodyLarge" bold style={{ marginTop: 6 }}>
+              <Text variant="bodyLarge" bold style={{ marginTop: 4 }}>
                 🏬 {storeName}
               </Text>
               <Text variant="bodyMedium" color={theme.textSecondary} style={{ marginTop: 2 }}>
@@ -233,13 +233,24 @@ export const TransporterActiveTripScreen = ({ route, navigation }: any) => {
                 <View style={styles.specDetailRow}>
                   <Ionicons name="compass-outline" size={14} color={colors.primary[600]} style={{ marginRight: 6 }} />
                   <Text variant="caption" bold color={theme.text}>
-                    Landmark Directions:
+                    Landmarks:
                   </Text>
                   <Text variant="caption" secondary style={{ marginLeft: 4, flex: 1 }}>
                     {storeLandmark}
                   </Text>
                 </View>
               )}
+
+              {/* Store Phone Contacts Row */}
+              <View style={styles.specDetailRow}>
+                <Ionicons name="call-outline" size={14} color={colors.primary[600]} style={{ marginRight: 6 }} />
+                <Text variant="caption" bold color={theme.text}>
+                  Store Phone:
+                </Text>
+                <Text variant="caption" bold color={colors.primary[600]} style={{ marginLeft: 4, flex: 1 }}>
+                  {storePhone}
+                </Text>
+              </View>
 
               {/* Operating Hours */}
               {storeHours && (
@@ -257,7 +268,7 @@ export const TransporterActiveTripScreen = ({ route, navigation }: any) => {
               {/* Pickup Handover Instructions */}
               {storeHandoverNote && (
                 <View style={[styles.handoverNoteBox, { backgroundColor: isDark ? colors.neutral[900] : '#FFFFFF', borderColor: theme.border }]}>
-                  <Text variant="caption" bold color={colors.primary[700]}>
+                  <Text variant="caption" bold color={colors.primary[700]} style={{ lineHeight: 16 }}>
                     {storeHandoverNote}
                   </Text>
                 </View>
@@ -272,18 +283,18 @@ export const TransporterActiveTripScreen = ({ route, navigation }: any) => {
                 >
                   <Ionicons name="call" size={14} color={colors.primary[700]} />
                   <Text variant="caption" bold color={colors.primary[700]}>
-                    Call Store ({storePhone})
+                    Call Merchant 📞
                   </Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   activeOpacity={0.8}
                   onPress={() => Alert.alert('GPS Navigation', `Opening GPS turn-by-turn directions to: ${storeAddress}`)}
-                  style={[styles.callBtn, { paddingHorizontal: spacing.sm, backgroundColor: isDark ? colors.neutral[700] : colors.neutral[200] }]}
+                  style={[styles.callBtn, { paddingHorizontal: spacing.md, backgroundColor: isDark ? colors.neutral[700] : colors.neutral[200] }]}
                 >
                   <Ionicons name="navigate" size={14} color={theme.text} />
                   <Text variant="caption" bold color={theme.text}>
-                    GPS 🧭
+                    GPS Route 🧭
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -301,8 +312,8 @@ export const TransporterActiveTripScreen = ({ route, navigation }: any) => {
                 },
               ]}
             >
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: spacing.xs }}>
                   <Ionicons name="location" size={16} color="#10B981" />
                   <Text variant="caption" bold color="#10B981" style={{ marginLeft: 6 }}>
                     2. BUYER DELIVERY DESTINATION
@@ -312,7 +323,7 @@ export const TransporterActiveTripScreen = ({ route, navigation }: any) => {
               </View>
 
               {/* Buyer Name & Address */}
-              <Text variant="bodyLarge" bold style={{ marginTop: 6 }}>
+              <Text variant="bodyLarge" bold style={{ marginTop: 4 }}>
                 👤 {buyerName}
               </Text>
               <Text variant="bodyMedium" color={theme.textSecondary} style={{ marginTop: 2 }}>
@@ -324,7 +335,7 @@ export const TransporterActiveTripScreen = ({ route, navigation }: any) => {
                 <View style={styles.specDetailRow}>
                   <Ionicons name="compass-outline" size={14} color="#10B981" style={{ marginRight: 6 }} />
                   <Text variant="caption" bold color={theme.text}>
-                    Landmark Directions:
+                    Landmarks:
                   </Text>
                   <Text variant="caption" secondary style={{ marginLeft: 4, flex: 1 }}>
                     {buyerLandmark}
@@ -332,10 +343,21 @@ export const TransporterActiveTripScreen = ({ route, navigation }: any) => {
                 </View>
               )}
 
+              {/* Customer Phone Row */}
+              <View style={styles.specDetailRow}>
+                <Ionicons name="call-outline" size={14} color="#10B981" style={{ marginRight: 6 }} />
+                <Text variant="caption" bold color={theme.text}>
+                  Customer Phone:
+                </Text>
+                <Text variant="caption" bold color="#10B981" style={{ marginLeft: 4, flex: 1 }}>
+                  {buyerPhone}
+                </Text>
+              </View>
+
               {/* Delivery Drop-off Instructions */}
               {buyerInstructions && (
                 <View style={[styles.handoverNoteBox, { backgroundColor: isDark ? colors.neutral[900] : '#FFFFFF', borderColor: theme.border }]}>
-                  <Text variant="caption" bold color="#059669">
+                  <Text variant="caption" bold color="#059669" style={{ lineHeight: 16 }}>
                     📌 Drop-off Note: {buyerInstructions}
                   </Text>
                 </View>
@@ -350,18 +372,18 @@ export const TransporterActiveTripScreen = ({ route, navigation }: any) => {
                 >
                   <Ionicons name="call" size={14} color="#10B981" />
                   <Text variant="caption" bold color="#10B981">
-                    Call Customer ({buyerPhone})
+                    Call Customer 📞
                   </Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   activeOpacity={0.8}
                   onPress={() => Alert.alert('GPS Navigation', `Opening GPS turn-by-turn directions to buyer: ${buyerAddress}`)}
-                  style={[styles.callBtn, { paddingHorizontal: spacing.sm, backgroundColor: isDark ? colors.neutral[700] : colors.neutral[200] }]}
+                  style={[styles.callBtn, { paddingHorizontal: spacing.md, backgroundColor: isDark ? colors.neutral[700] : colors.neutral[200] }]}
                 >
                   <Ionicons name="navigate" size={14} color={theme.text} />
                   <Text variant="caption" bold color={theme.text}>
-                    GPS 🧭
+                    GPS Route 🧭
                   </Text>
                 </TouchableOpacity>
               </View>
