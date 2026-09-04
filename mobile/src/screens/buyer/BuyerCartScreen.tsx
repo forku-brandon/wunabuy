@@ -210,7 +210,7 @@ export const BuyerCartScreen = ({ navigation }: any) => {
               </TouchableOpacity>
             </View>
 
-            {/* Order Summary Calculation (Matching Mockup Screen 3) */}
+            {/* Order Summary Calculation */}
             <View style={styles.summaryContainer}>
               <View style={styles.summaryRow}>
                 <Text variant="bodyMedium" secondary>
@@ -221,27 +221,29 @@ export const BuyerCartScreen = ({ navigation }: any) => {
                 </Text>
               </View>
 
-              <View style={styles.summaryRow}>
-                <Text variant="bodyMedium" secondary>
-                  Discount
-                </Text>
-                <Text variant="bodyLarge" bold color={colors.semantic.success[700]}>
-                  -{formatXAF(appliedDiscount)}
-                </Text>
-              </View>
+              {appliedDiscount > 0 && (
+                <View style={styles.summaryRow}>
+                  <Text variant="bodyMedium" secondary>
+                    Discount
+                  </Text>
+                  <Text variant="bodyLarge" bold color={colors.semantic.success[700]}>
+                    -{formatXAF(appliedDiscount)}
+                  </Text>
+                </View>
+              )}
 
               <View style={styles.summaryRow}>
                 <View style={styles.deliveryLabelRow}>
                   <Text variant="bodyMedium" secondary>
-                    Delivery Fee
+                    Delivery
                   </Text>
                   <TouchableOpacity
                     activeOpacity={0.7}
                     onPress={() => setIsDeliveryModalOpen(true)}
                     style={styles.editDeliveryBtn}
                   >
-                    <Ionicons name="pencil" size={13} color={colors.primary[600]} />
-                    <Text variant="caption" bold color={colors.primary[600]} style={{ marginLeft: 3 }}>
+                    <Ionicons name="pencil" size={12} color={colors.primary[600]} />
+                    <Text variant="caption" bold color={colors.primary[600]} style={{ marginLeft: 3, fontSize: 11 }}>
                       Edit
                     </Text>
                   </TouchableOpacity>
@@ -257,43 +259,40 @@ export const BuyerCartScreen = ({ navigation }: any) => {
                 </TouchableOpacity>
               </View>
 
-              {/* Self Pickup Info Banner */}
+              {/* Sleek Self Pickup Code Pill */}
               {deliveryMethod === 'self_pickup' && (
-                <View style={[styles.selfPickupBanner, { backgroundColor: isDark ? 'rgba(13,148,136,0.15)' : '#F0FDFA', borderColor: colors.primary[400] }]}>
-                  <Ionicons name="key-outline" size={16} color={colors.primary[600]} />
-                  <View style={{ flex: 1, marginLeft: 6 }}>
-                    <Text variant="caption" bold color={colors.primary[700]}>
-                      Personal Courier / Self-Pickup (Rider Code: #{pickupPin})
-                    </Text>
-                    <Text variant="caption" secondary style={{ fontSize: 11, marginTop: 1 }}>
-                      Store: Douala Tech Hub (Akwa) • Bypasses Wunabuy Rider
-                    </Text>
-                  </View>
+                <View style={[styles.selfPickupBanner, { backgroundColor: isDark ? 'rgba(13,148,136,0.15)' : '#F0FDFA', borderColor: colors.primary[300] }]}>
+                  <Ionicons name="key" size={14} color={colors.primary[600]} />
+                  <Text variant="caption" bold color={colors.primary[700]} style={{ marginLeft: 6 }}>
+                    Personal Rider PIN: #{pickupPin}
+                  </Text>
+                  <Text variant="caption" secondary style={{ marginLeft: 'auto', fontSize: 11 }}>
+                    Store Pickup
+                  </Text>
                 </View>
               )}
-
-              <View style={styles.summaryRow}>
-                <Text variant="bodyMedium" secondary>
-                  Escrow Protection
-                </Text>
-                <Text variant="bodyLarge" bold color={colors.semantic.success[700]}>
-                  Included
-                </Text>
-              </View>
 
               <View style={styles.divider} />
 
               <View style={styles.summaryRow}>
-                <Text variant="h2" bold>
-                  Total
-                </Text>
+                <View>
+                  <Text variant="h2" bold>
+                    Total
+                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
+                    <Ionicons name="shield-checkmark" size={12} color="#10B981" />
+                    <Text variant="caption" color="#10B981" bold style={{ marginLeft: 3, fontSize: 11 }}>
+                      Escrow Protected
+                    </Text>
+                  </View>
+                </View>
                 <Text variant="display" bold color={colors.primary[500]}>
                   {formatXAF(total)}
                 </Text>
               </View>
             </View>
 
-            {/* Bottom Checkout Button (Matching Mockup Screen 3) */}
+            {/* Bottom Checkout Button */}
             <Button
               title="Proceed to Escrow Checkout →"
               variant="primary"
@@ -304,7 +303,7 @@ export const BuyerCartScreen = ({ navigation }: any) => {
         }
       />
 
-      {/* ─── Delivery Method Selection Modal (User Request #10) ─────────── */}
+      {/* ─── Delivery Method Selection Modal ─────────────────────────────── */}
       <Modal
         visible={isDeliveryModalOpen}
         transparent
@@ -318,24 +317,17 @@ export const BuyerCartScreen = ({ navigation }: any) => {
 
           <View style={[styles.modalCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
             <View style={styles.modalHeaderRow}>
-              <View style={styles.modalHeaderTitleBox}>
-                <Ionicons name="car-sport-outline" size={22} color={colors.primary[600]} />
-                <Text variant="h2" bold style={{ marginLeft: spacing.xs }}>
-                  Delivery & Pickup Option
-                </Text>
-              </View>
+              <Text variant="h2" bold>
+                Delivery Options
+              </Text>
               <TouchableOpacity
                 activeOpacity={0.7}
                 onPress={() => setIsDeliveryModalOpen(false)}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
-                <Ionicons name="close" size={20} color={theme.textSecondary} />
+                <Ionicons name="close" size={22} color={theme.textSecondary} />
               </TouchableOpacity>
             </View>
-
-            <Text variant="caption" secondary style={{ marginBottom: spacing.md, lineHeight: 18 }}>
-              Select how your items should be dispatched or picked up from the merchant's store.
-            </Text>
 
             {/* Option 1: Wunabuy Express Transporter */}
             <TouchableOpacity
@@ -360,14 +352,14 @@ export const BuyerCartScreen = ({ navigation }: any) => {
               <View style={{ flex: 1, marginLeft: spacing.sm }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                   <Text variant="bodyMedium" bold color={deliveryMethod === 'wunabuy_transporter' ? colors.primary[600] : theme.text}>
-                    🏍️ Book Wunabuy Express Transporter
+                    🏍️ Wunabuy Express Transporter
                   </Text>
                   <Text variant="bodyMedium" bold color={colors.primary[600]}>
                     1 500 FCFA
                   </Text>
                 </View>
                 <Text variant="caption" secondary style={{ marginTop: 2 }}>
-                  Platform dispatches verified nearby rider with live GPS tracking directly to your address.
+                  Standard platform rider dispatch with live GPS tracking
                 </Text>
               </View>
             </TouchableOpacity>
@@ -386,7 +378,7 @@ export const BuyerCartScreen = ({ navigation }: any) => {
                         ? colors.neutral[800]
                         : '#F0FDFA'
                       : 'transparent',
-                  marginTop: spacing.sm,
+                  marginTop: spacing.xs + 4,
                 },
               ]}
             >
@@ -396,64 +388,41 @@ export const BuyerCartScreen = ({ navigation }: any) => {
               <View style={{ flex: 1, marginLeft: spacing.sm }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                   <Text variant="bodyMedium" bold color={deliveryMethod === 'self_pickup' ? colors.primary[600] : theme.text}>
-                    🚶 Send Someone / Self Pickup
+                    🚶 Personal Courier / Self-Pickup
                   </Text>
                   <Text variant="bodyMedium" bold color={colors.semantic.success[700]}>
-                    0 FCFA (FREE)
+                    0 FCFA (Free)
                   </Text>
                 </View>
                 <Text variant="caption" secondary style={{ marginTop: 2 }}>
-                  Send your own personal rider or pickup in person. Generates a 5-digit verification PIN.
+                  Send your rider or pick up at store using 5-digit PIN
                 </Text>
               </View>
             </TouchableOpacity>
 
-            {/* If Self-Pickup Selected: Display Rider Code & Store Instructions */}
+            {/* If Self-Pickup Selected: Sleek Card */}
             {deliveryMethod === 'self_pickup' && (
               <View style={[styles.pickupDetailsCard, { backgroundColor: isDark ? colors.neutral[800] : '#ECFDF5' }]}>
-                <View style={styles.pickupPinHeader}>
-                  <Ionicons name="key" size={18} color={colors.primary[600]} />
-                  <Text variant="caption" bold color={colors.primary[700]} style={{ marginLeft: 6 }}>
-                    YOUR PERSONAL RIDER VERIFICATION PIN:
-                  </Text>
-                </View>
-                <View style={styles.pinBadgeRow}>
-                  <Text variant="h1" bold color={colors.primary[600]} style={{ letterSpacing: 3 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Ionicons name="key" size={16} color={colors.primary[600]} />
+                    <Text variant="caption" bold color={colors.primary[700]} style={{ marginLeft: 4 }}>
+                      RIDER PIN:
+                    </Text>
+                  </View>
+                  <Text variant="h2" bold color={colors.primary[600]} style={{ letterSpacing: 2 }}>
                     #{pickupPin}
                   </Text>
                 </View>
 
-                <View style={styles.storeDetailRow}>
-                  <Ionicons name="location-outline" size={14} color={theme.textSecondary} />
-                  <Text variant="caption" bold style={{ marginLeft: 4 }}>
-                    Pickup Store Address:
-                  </Text>
-                </View>
-                <Text variant="caption" secondary style={{ marginLeft: 18, marginBottom: 4 }}>
-                  Douala Tech Hub — Rue Joss, Akwa, Douala
+                <Text variant="caption" secondary style={{ fontSize: 11, marginTop: 4 }}>
+                  📍 Douala Tech Hub — Rue Joss, Akwa (+237 670 123 456)
                 </Text>
-
-                <View style={styles.storeDetailRow}>
-                  <Ionicons name="call-outline" size={14} color={theme.textSecondary} />
-                  <Text variant="caption" bold style={{ marginLeft: 4 }}>
-                    Store Contact Phone:
-                  </Text>
-                </View>
-                <Text variant="caption" secondary style={{ marginLeft: 18, marginBottom: 6 }}>
-                  +237 670 123 456
-                </Text>
-
-                <View style={styles.pinNoticeBox}>
-                  <Ionicons name="information-circle" size={14} color={colors.primary[700]} />
-                  <Text variant="caption" color={colors.primary[800]} style={{ marginLeft: 4, flex: 1, fontSize: 11 }}>
-                    Give code <Text bold>#{pickupPin}</Text> to your personal rider. The seller will verify this 5-digit code before handing over the parcel.
-                  </Text>
-                </View>
               </View>
             )}
 
             <Button
-              title="Confirm Delivery Choice ✓"
+              title="Save Preference"
               variant="primary"
               onPress={() => setIsDeliveryModalOpen(false)}
               style={{ marginTop: spacing.md, backgroundColor: colors.primary[500] }}

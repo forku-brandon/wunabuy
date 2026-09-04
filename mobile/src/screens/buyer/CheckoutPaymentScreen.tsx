@@ -123,17 +123,14 @@ export const CheckoutPaymentScreen = ({ route, navigation }: any) => {
           <Ionicons name="arrow-back" size={20} color={theme.text} />
         </TouchableOpacity>
         <Text variant="h1" bold style={styles.title}>
-          Escrow Checkout Payment
-        </Text>
-        <Text variant="bodyMedium" secondary style={styles.subtitle}>
-          Funds stay safely locked in 48-hour escrow protection until delivery is verified.
+          Escrow Payment
         </Text>
       </View>
 
       {/* Payable Amount Summary */}
       <Card style={styles.amountCard}>
         <Text variant="caption" color="rgba(255,255,255,0.85)" bold>
-          TOTAL PAYABLE ESCROW AMOUNT
+          TOTAL PAYABLE
         </Text>
         <Text variant="display" bold color={colors.neutral[0]} style={styles.amountText}>
           {formatXAF(totalAmount)}
@@ -149,16 +146,11 @@ export const CheckoutPaymentScreen = ({ route, navigation }: any) => {
       {/* Self-Pickup Info Card */}
       {deliveryMethod === 'self_pickup' && (
         <View style={[styles.selfPickupCheckoutCard, { backgroundColor: isDark ? 'rgba(13,148,136,0.15)' : '#F0FDFA', borderColor: colors.primary[400] }]}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-            <Ionicons name="walk" size={18} color={colors.primary[600]} />
-            <Text variant="bodyMedium" bold color={colors.primary[700]} style={{ marginLeft: 6 }}>
-              Self-Pickup / Personal Courier Active
-            </Text>
-            <Badge label="0 FCFA FEE" variant="success" size="small" style={{ marginLeft: 'auto' }} />
-          </View>
-          <Text variant="caption" secondary style={{ lineHeight: 18 }}>
-            Rider verification code <Text bold color={colors.primary[600]}>#{pickupPin}</Text> will be active upon payment. Platform transporter dispatch is bypassed.
+          <Ionicons name="walk" size={16} color={colors.primary[600]} />
+          <Text variant="caption" bold color={colors.primary[700]} style={{ marginLeft: 6 }}>
+            Self-Pickup • Personal Rider Code: #{pickupPin}
           </Text>
+          <Badge label="0 FCFA" variant="success" size="small" style={{ marginLeft: 'auto' }} />
         </View>
       )}
 

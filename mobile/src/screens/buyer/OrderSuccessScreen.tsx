@@ -33,7 +33,7 @@ export const OrderSuccessScreen = ({ route, navigation }: any) => {
         Your payment of <Text bold color={colors.primary[500]}>{formatXAF(totalAmount)}</Text> via {provider} ({formatPhone(phone)}) has been received and locked securely in Wunabuy Escrow.
       </Text>
 
-      {/* Main Order Card */}
+      {/* Single Consolidated Order Summary Card */}
       <Card style={styles.orderCard}>
         <View style={styles.cardRow}>
           <Text variant="caption" secondary>
@@ -62,6 +62,17 @@ export const OrderSuccessScreen = ({ route, navigation }: any) => {
           />
         </View>
 
+        {isSelfPickup && (
+          <View style={styles.cardRow}>
+            <Text variant="caption" secondary>
+              RIDER PIN CODE
+            </Text>
+            <Text variant="bodyLarge" bold color={colors.primary[600]} style={{ letterSpacing: 1 }}>
+              #{pickupPin}
+            </Text>
+          </View>
+        )}
+
         <View style={styles.cardRow}>
           <Text variant="caption" secondary>
             MERCHANT STORE
@@ -70,37 +81,16 @@ export const OrderSuccessScreen = ({ route, navigation }: any) => {
             Douala Tech Hub (Akwa)
           </Text>
         </View>
-      </Card>
 
-      {/* Self Pickup 5-Digit Verification PIN Card (User Request #10) */}
-      {isSelfPickup && (
-        <Card style={[styles.selfPickupCard, { backgroundColor: isDark ? colors.neutral[800] : '#ECFDF5', borderColor: colors.primary[400] }]}>
-          <View style={styles.selfPickupHeader}>
-            <Ionicons name="key" size={20} color={colors.primary[600]} />
-            <Text variant="h2" bold color={colors.primary[700]} style={{ marginLeft: 6 }}>
-              Personal Rider PIN: #{pickupPin}
-            </Text>
-          </View>
-          <Text variant="caption" secondary style={{ marginVertical: spacing.xs, lineHeight: 18 }}>
-            Give this 5-digit PIN to your personal rider/courier. The merchant seller will verify this PIN before releasing your order parcel.
-          </Text>
-
+        {isSelfPickup && (
           <View style={[styles.storeAddressBox, { backgroundColor: isDark ? colors.neutral[900] : '#F0FDFA' }]}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
-              <Ionicons name="location" size={14} color={colors.primary[600]} style={{ marginRight: 4 }} />
-              <Text variant="caption" bold color={theme.text}>
-                PICKUP STORE LOCATION:
-              </Text>
-            </View>
-            <Text variant="bodyMedium" bold color={colors.primary[600]}>
-              Douala Tech Hub — Rue Joss, Akwa, Douala
-            </Text>
-            <Text variant="caption" secondary style={{ marginTop: 2 }}>
-              Store Phone: +237 670 123 456
+            <Ionicons name="location" size={14} color={colors.primary[600]} style={{ marginRight: 4 }} />
+            <Text variant="caption" secondary style={{ flex: 1 }}>
+              Pickup at <Text bold color={theme.text}>Douala Tech Hub — Rue Joss, Akwa</Text> (Phone: +237 670 123 456)
             </Text>
           </View>
-        </Card>
-      )}
+        )}
+      </Card>
 
       <Button
         title="Track Order & Delivery Status →"
@@ -150,16 +140,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  selfPickupCard: {
-    marginBottom: spacing.md,
-    borderWidth: 1.5,
-    padding: spacing.md,
-  },
-  selfPickupHeader: {
+  storeAddressBox: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  storeAddressBox: {
     padding: spacing.sm,
     borderRadius: borderRadius.lg,
     marginTop: spacing.xs,
