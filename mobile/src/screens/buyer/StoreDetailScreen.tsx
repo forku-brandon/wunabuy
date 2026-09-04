@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   Image,
   TextInput,
-  FlatList,
   Share,
   Dimensions,
 } from 'react-native';
@@ -17,7 +16,7 @@ import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
 import { useCartStore } from '../../stores/cart.store';
 import { useFollowedStoresStore, FollowedStoreData } from '../../stores/followedStores.store';
-import { formatXAF, formatDistance } from '@wunabuy/utils';
+import { formatXAF } from '@wunabuy/utils';
 import { Product, ProductCategory, QualityTier } from '@wunabuy/types';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -212,7 +211,7 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
 
   return (
     <ScreenContainer scrollable={false} padded={false}>
-      {/* ── Top Header Toolbar ─────────────────────────────────────────────────── */}
+      {/* ── Top Clean Header Toolbar ─────────────────────────────────────────── */}
       <View style={[styles.headerBar, { backgroundColor: theme.card, borderBottomColor: theme.border, paddingTop: insets.top + 6 }]}>
         <TouchableOpacity
           onPress={() => {
@@ -224,51 +223,47 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
           <Ionicons name="arrow-back" size={22} color={theme.text} />
         </TouchableOpacity>
 
-        {/* Store Search Input */}
-        <View style={[styles.headerSearchBox, { backgroundColor: isDark ? colors.neutral[800] : colors.neutral[100] }]}>
-          <Ionicons name="search" size={16} color={theme.textSecondary} style={{ marginRight: 6 }} />
-          <TextInput
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholder={`Search in ${storeInfo.name}...`}
-            placeholderTextColor={theme.textTertiary}
-            style={[styles.headerSearchInput, { color: theme.text }]}
-          />
-          {searchQuery !== '' && (
-            <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <Ionicons name="close-circle" size={16} color={theme.textSecondary} />
-            </TouchableOpacity>
-          )}
+        <View style={styles.headerTitleContainer}>
+          <Text variant="bodyLarge" bold numberOfLines={1}>
+            {storeInfo.name}
+          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <Ionicons name="checkmark-circle" size={14} color={colors.primary[500]} />
+            <Text variant="caption" color={colors.primary[600]} bold style={{ fontSize: 11 }}>
+              Official Verified Store
+            </Text>
+          </View>
         </View>
 
-        {/* Action Buttons: Share & Cart */}
-        <TouchableOpacity onPress={handleShareStore} style={styles.headerBtn}>
-          <Ionicons name="share-social-outline" size={22} color={theme.text} />
-        </TouchableOpacity>
+        <View style={styles.headerActionsRow}>
+          <TouchableOpacity onPress={handleShareStore} style={styles.headerBtn}>
+            <Ionicons name="share-social-outline" size={22} color={theme.text} />
+          </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => navigation.navigate('BuyerCart')} style={styles.headerBtn}>
-          <Ionicons name="cart-outline" size={22} color={theme.text} />
-          {cartCount > 0 && (
-            <View style={styles.cartBadge}>
-              <Text variant="caption" bold color="#FFFFFF" style={{ fontSize: 9 }}>
-                {cartCount}
-              </Text>
-            </View>
-          )}
-        </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('BuyerCart')} style={styles.headerBtn}>
+            <Ionicons name="cart-outline" size={22} color={theme.text} />
+            {cartCount > 0 && (
+              <View style={styles.cartBadge}>
+                <Text variant="caption" bold color="#FFFFFF" style={{ fontSize: 9 }}>
+                  {cartCount}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
       </View>
 
-      {/* ── Main Scrollable Store Body ────────────────────────────────────────── */}
+      {/* ── Main Scrollable Content ──────────────────────────────────────────── */}
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 90 }}>
-        {/* ── Alibaba-Style Hero Cover & Store Identity ──────────────────────── */}
+        {/* ── Store Cover Banner & Profile Card ────────────────────────────── */}
         <View style={styles.heroWrapper}>
           <Image source={{ uri: storeInfo.cover_url }} style={styles.coverImage} resizeMode="cover" />
           <View style={styles.coverOverlay} />
 
-          {/* Floating Store Header Info Card */}
+          {/* Floating Store Profile Card */}
           <View style={[styles.storeProfileCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
             <View style={styles.storeTopRow}>
-              {/* Store Avatar with Gold Verified Ring */}
+              {/* Store Avatar */}
               <View style={styles.avatarWrapper}>
                 <Image source={{ uri: storeInfo.avatar_url }} style={styles.avatarImage} />
                 <View style={styles.verifiedBadgeIcon}>
@@ -276,17 +271,15 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
                 </View>
               </View>
 
-              <View style={{ flex: 1, marginLeft: spacing.md }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
-                  <Text variant="h2" bold numberOfLines={1}>
-                    {storeInfo.name}
-                  </Text>
-                </View>
+              <View style={{ flex: 1, marginLeft: spacing.sm }}>
+                <Text variant="h2" bold numberOfLines={1}>
+                  {storeInfo.name}
+                </Text>
                 <Text variant="caption" secondary numberOfLines={1} style={{ marginTop: 2 }}>
-                  {storeInfo.location}
+                  📍 {storeInfo.location}
                 </Text>
 
-                {/* Seller Credentials Chips */}
+                {/* Seller Badges */}
                 <View style={styles.credentialsRow}>
                   <Badge label="🥇 GOLD SUPPLIER" variant="primary" size="small" />
                   <Badge label="🏬 VERIFIED STORE" variant="success" size="small" />
@@ -294,7 +287,7 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
               </View>
             </View>
 
-            {/* Seller Action Buttons Row */}
+            {/* Seller Action Buttons */}
             <View style={styles.storeActionsRow}>
               <TouchableOpacity
                 activeOpacity={0.85}
@@ -337,57 +330,70 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
               </TouchableOpacity>
             </View>
 
-            {/* Alibaba Store Metrics Grid (Ratings, Response Time, Orders) */}
-            <View style={[styles.metricsGrid, { backgroundColor: isDark ? colors.neutral[800] : colors.neutral[50] }]}>
-              <View style={styles.metricItem}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+            {/* De-cluttered 2x2 Seller Telemetry Grid */}
+            <View style={styles.telemetryGrid}>
+              <View style={[styles.telemetryBox, { backgroundColor: isDark ? colors.neutral[800] : colors.neutral[100] }]}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                   <Ionicons name="star" size={14} color={colors.accent[500]} />
                   <Text variant="bodyMedium" bold>
-                    {storeInfo.rating_avg.toFixed(1)}
+                    {storeInfo.rating_avg.toFixed(1)} / 5.0
                   </Text>
                 </View>
-                <Text variant="caption" secondary style={{ fontSize: 10, marginTop: 2 }}>
+                <Text variant="caption" secondary style={{ fontSize: 11, marginTop: 2 }}>
                   {storeInfo.total_reviews} Reviews
                 </Text>
               </View>
 
-              <View style={styles.metricDivider} />
-
-              <View style={styles.metricItem}>
+              <View style={[styles.telemetryBox, { backgroundColor: isDark ? colors.neutral[800] : colors.neutral[100] }]}>
                 <Text variant="bodyMedium" bold color={colors.primary[600]}>
                   99.4%
                 </Text>
-                <Text variant="caption" secondary style={{ fontSize: 10, marginTop: 2 }}>
-                  On-Time Ships
+                <Text variant="caption" secondary style={{ fontSize: 11, marginTop: 2 }}>
+                  On-Time Shipping Rate
                 </Text>
               </View>
 
-              <View style={styles.metricDivider} />
-
-              <View style={styles.metricItem}>
+              <View style={[styles.telemetryBox, { backgroundColor: isDark ? colors.neutral[800] : colors.neutral[100] }]}>
                 <Text variant="bodyMedium" bold color={colors.semantic.success[500]}>
-                  &lt; 10 mins
+                  &lt; 10 Mins
                 </Text>
-                <Text variant="caption" secondary style={{ fontSize: 10, marginTop: 2 }}>
-                  Response Rate
+                <Text variant="caption" secondary style={{ fontSize: 11, marginTop: 2 }}>
+                  Seller Response Time
                 </Text>
               </View>
 
-              <View style={styles.metricDivider} />
-
-              <View style={styles.metricItem}>
+              <View style={[styles.telemetryBox, { backgroundColor: isDark ? colors.neutral[800] : colors.neutral[100] }]}>
                 <Text variant="bodyMedium" bold>
                   {(storeInfo.followers_count + (following ? 1 : 0)).toLocaleString()}
                 </Text>
-                <Text variant="caption" secondary style={{ fontSize: 10, marginTop: 2 }}>
-                  Followers
+                <Text variant="caption" secondary style={{ fontSize: 11, marginTop: 2 }}>
+                  Store Followers
                 </Text>
               </View>
             </View>
           </View>
         </View>
 
-        {/* ── Alibaba Trade Assurance / Escrow Trust Banner ───────────────────── */}
+        {/* ── Spacious Prominent Store Search Bar ──────────────────────────────── */}
+        <View style={styles.searchSectionWrapper}>
+          <View style={[styles.spaciousSearchBox, { backgroundColor: isDark ? colors.neutral[800] : colors.neutral[100], borderColor: theme.border }]}>
+            <Ionicons name="search" size={18} color={colors.primary[500]} style={{ marginRight: 8 }} />
+            <TextInput
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholder={`Search products inside ${storeInfo.name}...`}
+              placeholderTextColor={theme.textTertiary}
+              style={[styles.spaciousSearchInput, { color: theme.text }]}
+            />
+            {searchQuery !== '' && (
+              <TouchableOpacity onPress={() => setSearchQuery('')}>
+                <Ionicons name="close-circle" size={18} color={theme.textSecondary} />
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+
+        {/* ── Escrow Guarantee Trust Banner ───────────────────────────────────── */}
         <View style={[styles.trustBanner, { backgroundColor: isDark ? 'rgba(13,148,136,0.15)' : '#ECFDF5', borderColor: colors.primary[400] }]}>
           <View style={styles.trustRow}>
             <Ionicons name="shield-checkmark" size={18} color={colors.primary[600]} />
@@ -395,15 +401,15 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
               🔒 Wunabuy 48-Hour Escrow Protection Guaranteed
             </Text>
           </View>
-          <Text variant="caption" secondary style={{ marginTop: 2, fontSize: 11 }}>
-            Your payment is safely held until you inspect and verify parcel delivery in Douala &amp; Yaoundé.
+          <Text variant="caption" secondary style={{ marginTop: 4, fontSize: 11, lineHeight: 16 }}>
+            Funds are locked safely until you inspect and accept your parcel upon delivery in Douala &amp; Yaoundé.
           </Text>
         </View>
 
         {/* ── 4-Tab Navigation Bar ───────────────────────────────────────────── */}
         <View style={[styles.tabBarContainer, { backgroundColor: theme.card, borderBottomColor: theme.border }]}>
           {[
-            { key: 'home', label: '🏠 Store Home' },
+            { key: 'home', label: '🏠 Overview' },
             { key: 'products', label: `🛍️ Catalog (${SAMPLE_STORE_PRODUCTS.length})` },
             { key: 'reviews', label: `⭐ Reviews (${SAMPLE_REVIEWS.length})` },
             { key: 'about', label: 'ℹ️ Store Info' },
@@ -431,7 +437,7 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
           })}
         </View>
 
-        {/* ── TAB 1: STORE HOME ──────────────────────────────────────────────── */}
+        {/* ── TAB 1: OVERVIEW ────────────────────────────────────────────────── */}
         {activeTab === 'home' && (
           <View style={styles.tabContentContainer}>
             {/* Promo Banner Card */}
@@ -450,7 +456,7 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
               </Text>
             </Card>
 
-            {/* Store Story & About Card */}
+            {/* Store Story Card */}
             <Card style={styles.storyCard}>
               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.xs }}>
                 <Ionicons name="ribbon-outline" size={20} color={colors.primary[500]} />
@@ -463,7 +469,7 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
               </Text>
             </Card>
 
-            {/* Featured Products Grid */}
+            {/* Top Selling Products */}
             <View style={styles.sectionHeaderRow}>
               <Text variant="h2" bold>
                 🔥 Top Selling Products
@@ -519,10 +525,10 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
           </View>
         )}
 
-        {/* ── TAB 2: ALL PRODUCTS CATALOG ───────────────────────────────────── */}
+        {/* ── TAB 2: CATALOG ─────────────────────────────────────────────────── */}
         {activeTab === 'products' && (
           <View style={styles.tabContentContainer}>
-            {/* Horizontal Category Filters */}
+            {/* Category Chips */}
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterChipsRow}>
               {['All', 'Electronics', 'Phones', 'Audio', 'Accessories'].map((cat) => {
                 const isSelected = selectedCategoryFilter === cat;
@@ -591,7 +597,7 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
           </View>
         )}
 
-        {/* ── TAB 3: REVIEWS & RATINGS ──────────────────────────────────────── */}
+        {/* ── TAB 3: REVIEWS ─────────────────────────────────────────────────── */}
         {activeTab === 'reviews' && (
           <View style={styles.tabContentContainer}>
             {/* Rating Breakdown Header */}
@@ -631,7 +637,6 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
               </View>
             </Card>
 
-            {/* Customer Review List */}
             <View style={{ gap: spacing.md }}>
               {SAMPLE_REVIEWS.map((rev) => (
                 <Card key={rev.id} style={styles.reviewCard}>
@@ -736,7 +741,7 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
         )}
       </ScrollView>
 
-      {/* ── Sticky Floating Bottom Action Bar ──────────────────────────────────── */}
+      {/* ── Sticky Bottom Action Bar ────────────────────────────────────────── */}
       <View style={[styles.bottomActionBar, { backgroundColor: theme.card, borderTopColor: theme.border, paddingBottom: Math.max(insets.bottom, 12) }]}>
         <TouchableOpacity
           activeOpacity={0.85}
@@ -766,10 +771,19 @@ const styles = StyleSheet.create({
   headerBar: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: spacing.base,
     paddingBottom: spacing.sm,
     borderBottomWidth: 1,
-    gap: spacing.xs,
+  },
+  headerTitleContainer: {
+    flex: 1,
+    marginHorizontal: spacing.sm,
+  },
+  headerActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   headerBtn: {
     width: 38,
@@ -777,19 +791,6 @@ const styles = StyleSheet.create({
     borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  headerSearchBox: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    height: 36,
-    borderRadius: borderRadius.full,
-    paddingHorizontal: spacing.md,
-  },
-  headerSearchInput: {
-    flex: 1,
-    fontSize: 13,
-    paddingVertical: 0,
   },
   cartBadge: {
     position: 'absolute',
@@ -808,17 +809,17 @@ const styles = StyleSheet.create({
   },
   coverImage: {
     width: '100%',
-    height: 140,
+    height: 160,
   },
   coverOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    backgroundColor: 'rgba(0,0,0,0.35)',
   },
   storeProfileCard: {
     marginHorizontal: spacing.base,
-    marginTop: -30,
+    marginTop: -36,
     borderRadius: borderRadius.xl,
-    padding: spacing.md,
+    padding: spacing.base,
     borderWidth: 1,
     ...shadows.md,
   },
@@ -830,10 +831,10 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   avatarImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    borderWidth: 2,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    borderWidth: 2.5,
     borderColor: colors.primary[500],
   },
   verifiedBadgeIcon: {
@@ -846,7 +847,7 @@ const styles = StyleSheet.create({
   credentialsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
     marginTop: 6,
     flexWrap: 'wrap',
   },
@@ -861,7 +862,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    height: 38,
+    height: 42,
     borderRadius: borderRadius.full,
     borderWidth: 1,
   },
@@ -870,35 +871,49 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    height: 38,
+    height: 42,
     borderRadius: borderRadius.full,
     borderWidth: 1,
   },
   callBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
   },
-  metricsGrid: {
+
+  telemetryGrid: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.xs,
-    borderRadius: borderRadius.md,
+    flexWrap: 'wrap',
+    gap: spacing.xs,
     marginTop: spacing.md,
   },
-  metricItem: {
+  telemetryBox: {
+    width: '48.5%',
+    padding: spacing.sm,
+    borderRadius: borderRadius.md,
     alignItems: 'center',
-    flex: 1,
+    justifyContent: 'center',
   },
-  metricDivider: {
-    width: 1,
-    height: 24,
-    backgroundColor: 'rgba(150,150,150,0.3)',
+
+  searchSectionWrapper: {
+    paddingHorizontal: spacing.base,
+    marginTop: spacing.md,
+  },
+  spaciousSearchBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 46,
+    borderRadius: borderRadius.full,
+    paddingHorizontal: spacing.base,
+    borderWidth: 1,
+  },
+  spaciousSearchInput: {
+    flex: 1,
+    fontSize: 14,
+    paddingVertical: 0,
   },
 
   trustBanner: {
