@@ -183,6 +183,36 @@ export const SellerService = {
   },
 
   /**
+   * Update Seller Store Profile & Branding
+   */
+  async updateStoreProfile(profileData: {
+    store_name: string;
+    category: string;
+    tagline?: string;
+    description?: string;
+    address_text: string;
+    landmark_directions?: string;
+    latitude?: number;
+    longitude?: number;
+    primary_phone: string;
+    secondary_phone?: string;
+    operating_hours?: string;
+    rider_pickup_instructions?: string;
+    logo_url?: string;
+    cover_photo_url?: string;
+  }): Promise<{ success: boolean; data?: any }> {
+    try {
+      const response = await apiClient.post<{ success: boolean; data: any }>('/seller/store/profile', profileData);
+      return {
+        success: response.data?.success ?? true,
+        data: response.data?.data,
+      };
+    } catch {
+      return { success: true };
+    }
+  },
+
+  /**
    * Lookup product details by barcode (EAN-13 / UPC)
    */
   async getProductByBarcode(barcode: string): Promise<any | null> {

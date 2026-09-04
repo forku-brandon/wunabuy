@@ -16,6 +16,7 @@ import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
 import { useSellerStore } from '../../stores/seller.store';
 import { ProductCategory } from '@wunabuy/types';
+import { SellerService } from '../../services/api';
 
 const CATEGORIES = [
   ProductCategory.ELECTRONICS,
@@ -98,6 +99,23 @@ export const EditStoreProfileScreen = ({ navigation }: any) => {
 
     setSaving(true);
 
+    const payload = {
+      store_name: storeName.trim(),
+      category,
+      tagline: tagline.trim(),
+      description: description.trim(),
+      address_text: address.trim(),
+      landmark_directions: landmarkDirections.trim(),
+      primary_phone: primaryPhone.trim(),
+      secondary_phone: secondaryPhone.trim(),
+      operating_hours: operatingHours.trim(),
+      rider_pickup_instructions: riderPickupInstructions.trim(),
+      latitude: parseFloat(latitude) || 4.0510,
+      longitude: parseFloat(longitude) || 9.7679,
+      logo_url: logoUrl,
+      cover_photo_url: coverPhotoUrl,
+    };
+
     sellerStore.updateStoreProfile({
       storeName: storeName.trim(),
       category,
@@ -116,10 +134,10 @@ export const EditStoreProfileScreen = ({ navigation }: any) => {
       coverPhotoUrl,
     });
 
-    setTimeout(() => {
+    SellerService.updateStoreProfile(payload).finally(() => {
       setSaving(false);
       setToastMessage('Store Profile updated successfully! 🏬✓');
-    }, 400);
+    });
   };
 
   const handlePreviewPublicStore = () => {

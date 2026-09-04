@@ -1,10 +1,12 @@
 # Wunabuy Backend API Specification & Integration Contract v1.0
 
+**Document Version:** 2.9 (Direct Native Phone Dialer Integration & End-to-End API Receive Points Baseline)  
+**Date:** September 4, 2026  
 **Target Audience:** Backend Engineering Team (Laravel 13 / PostgreSQL / Redis / Sanctum)  
 **Standard:** RESTful JSON API + WebSocket Real-Time Telemetry  
 **Currency Standard:** Central African CFA Franc (`XAF` / `FCFA`)  
 **Locale Default:** French / English Cameroon (`+237` E.164 phone numbers)  
-**Document Status:** 🟢 **APPROVED & SYNCHRONIZED WITH MOBILE APP**
+**Document Status:** 🟢 **APPROVED & SYNCHRONIZED WITH MOBILE APP v2.9**
 
 ---
 

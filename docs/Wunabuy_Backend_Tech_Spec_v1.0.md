@@ -1,6 +1,6 @@
 # Wunabuy — Backend Technical Specification & API Contracts
 
-**Document Version:** 2.9 (Seller Store Profile, Rider Handover PIN & Logistics Specs Baseline)  
+**Document Version:** 2.9 (Direct Native Phone Dialer, Hardware Camera Sensor & API Integration Baseline)  
 **Date:** September 4, 2026  
 **Status:** Approved / In Production Use  
 **Companion Documents:** Wunabuy SRS v2.9, Wunabuy PRD v2.9, Wunabuy Frontend Tech Spec v2.9  
@@ -100,6 +100,11 @@ All REST API endpoints are prefixed under `/api/v1`.
   }
 }
 ```
+
+### 2.4 Phone Number Formatting & Native Phone Dialer Protocol (`tel:`)
+- **Phone Number Format:** E.164 standard (`+2376XXXXXXXX` for Cameroon).
+- **Native Dialer Integration (`tel:`)**: All contact phone fields across mobile applications (Buyer, Seller, Transporter) trigger native system dialer via `Linking.openURL('tel:<cleaned_number>')`.
+- **String Sanitization:** Multi-number fallbacks (e.g. `+237 670 123 456 / +237 699 876 543`) must be split at delimiters (`/`, `,`) taking the primary contact number, stripping whitespace and non-dialable characters (`[^+\d]`) prior to invocation.
 
 ---
 

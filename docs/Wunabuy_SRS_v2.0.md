@@ -1,7 +1,7 @@
 # Software Requirements Specification (SRS)
 # Wunabuy — Multi-Sided E-Commerce & Web Staff Operations Platform
 
-**Document Version:** 2.9 (Seller Store Profile & Branding Architecture, Rider Handover PIN Verification, Self-Pickup Delivery & Logistics Specs)  
+**Document Version:** 2.9 (Direct Native Phone Dialer Integration, Hardware Camera Scanner & Dynamic API Receive Points Baseline)  
 **Date:** September 4, 2026  
 **Status:** Approved / In Production Use  
 **Companion Documents:** Wunabuy PRD v2.9, Wunabuy Frontend Tech Spec v2.9, Wunabuy Backend Tech Spec v2.9  
@@ -9,6 +9,24 @@
 ---
 
 ## 🚀 Key Mobile & Architecture v2.9 Specifications (September 2026)
+
+- **Direct Native Phone Dialer Integration (`Linking.openURL('tel:...')`)**:
+  - System-wide native dialer integration across all call buttons and phone number rows (`TransporterActiveTripScreen.tsx`, `TransporterJobsScreen.tsx`, `StoreDetailScreen.tsx`, `SellerOrdersScreen.tsx`, `BuyerCartScreen.tsx`, `OrderTrackingScreen.tsx`, `LiveTrackingMap.tsx`, `ProfileScreen.tsx`, `EditStoreProfileScreen.tsx`).
+  - Automatic string sanitization for Cameroon (`+237`) and international E.164 formats, stripping non-numeric characters, spaces, and multi-number fallback delimiters (`/`, `,`).
+  - Graceful exception handling for non-cellular devices and web/emulator environments.
+
+- **Dynamic API Service Layer & Endpoint Receive Points**:
+  - Full client-side service layer binding mobile UI actions to backend API contracts:
+    - `SellerService.updateStoreProfile()` -> `POST /api/v1/seller/store/profile`
+    - `AuthService.verifyOTP()` -> `POST /api/v1/auth/verify-otp`
+    - `OrderService.createOrder()` -> `POST /api/v1/orders/checkout`
+    - `TransporterService.updateTripStatus()` -> `PUT /api/v1/transporter/trips/:id/status`
+    - `StoreService.getStoreDetails()` -> `GET /api/v1/stores/:id`
+  - Strict Sanctum Bearer token authorization header propagation (`Authorization: Bearer <token>`) and standardized `{ success, data, meta }` response envelope handling.
+
+- **Transporter Hardware Camera Scanner (`TransporterJobsScreen.tsx`, `TransporterActiveTripScreen.tsx`)**:
+  - Live hardware camera viewfinder powered by `expo-camera` with real-time `onBarcodeScanned` sensor callback.
+  - Flashlight torch toggle button (**Torch ON/OFF**), reticle laser viewfinder, status indicator pulse, and 3-tab mode selector (`📦 Package QR`, `💳 Driver Permit`, `🏪 Store Check-in`).
 
 - **Seller Store Profile & Branding Architecture (`EditStoreProfileScreen.tsx`, `SellerProfileScreen.tsx`, `StoreDetailScreen.tsx`)**:
   - Full merchant profile creation and editing workspace for sellers to configure public store branding.
@@ -58,7 +76,7 @@
   - Enforced Emerald Teal (`#0D9488`) primary, Amber Gold (`#F59E0B`) accent, and Clean White / Obsidian Dark Slate (`bg-[#121824]`) secondary surface colors across all UI components, badges, sidebars, headers, and stat cards.
 
 - **Backend Technical Specifications & API Harmony (`Wunabuy_Backend_Tech_Spec_v1.0.md`)**:
-  - Updated backend technical specifications (v2.7) detailing all Staff API endpoints (`/api/v1/staff/*`), 18-flag RBAC permissions, notifications schema, payroll CNPS tax ledger, and escrow payout disbursal endpoints.
+  - Updated backend technical specifications (v2.9) detailing all Staff API endpoints (`/api/v1/staff/*`), 18-flag RBAC permissions, notifications schema, payroll CNPS tax ledger, and escrow payout disbursal endpoints.
 
 - **Active Bilingual Internationalization (i18n) Engine (`LanguageContext.tsx`, `translations.ts`, `Header.tsx`)**:
   - Instant 1-click language toggling between **English (EN 🇬🇧)** and **French (FR 🇫🇷)** with persistent `localStorage` state.
