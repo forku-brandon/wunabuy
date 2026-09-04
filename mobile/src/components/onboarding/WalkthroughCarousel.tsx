@@ -7,17 +7,20 @@ import {
   ViewToken,
   Image,
   TouchableOpacity,
+  StatusBar,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
-import { useThemeStore } from '../../stores/theme.store';
 import { Text, Button } from '../ui';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-// Official Wunabuy app icon
+// Official Wunabuy app logo & onboarding hero images
 const WUNABUY_LOGO = require('../../../assets/icon.png');
+const HERO_ESCROW = require('../../../assets/onboarding/hero_escrow.jpg');
+const HERO_STORES = require('../../../assets/onboarding/hero_stores.jpg');
+const HERO_DELIVERY = require('../../../assets/onboarding/hero_delivery.jpg');
 
 export interface SlideItem {
   id: string;
@@ -26,51 +29,39 @@ export interface SlideItem {
   badgeBg: string;
   title: string;
   subtitle: string;
-  iconName: React.ComponentProps<typeof Ionicons>['name'];
-  iconColor: string;
-  iconBg: string;
-  secondaryPillText: string;
+  image: any;
 }
 
 const ONBOARDING_SLIDES: SlideItem[] = [
   {
     id: '1',
-    badge: '100% ESCROW PROTECTION',
-    badgeColor: colors.semantic.success[700],
-    badgeBg: colors.semantic.success[50],
-    title: 'Your Money Stays Safe Until Delivery Is Verified',
+    badge: '100% ESCROW GUARANTEE',
+    badgeColor: '#0D9488',
+    badgeBg: 'rgba(13, 148, 136, 0.2)',
+    title: 'Your Money Stays Safe\nUntil Delivery Is Verified',
     subtitle:
       'Payments are held securely in 48-hour escrow. Merchants only receive funds after you receive, inspect, and sign for your order.',
-    iconName: 'shield-checkmark-sharp',
-    iconColor: colors.primary[500],
-    iconBg: colors.primary[50],
-    secondaryPillText: '🔒 48h Escrow Guarantee',
+    image: HERO_ESCROW,
   },
   {
     id: '2',
-    badge: 'VERIFIED LOCAL MERCHANTS',
-    badgeColor: colors.role.seller,
-    badgeBg: '#EFF6FF',
-    title: 'Shop Directly From Verified Local Stores',
+    badge: 'VERIFIED LOCAL STORES',
+    badgeColor: '#3B82F6',
+    badgeBg: 'rgba(59, 130, 246, 0.2)',
+    title: 'Shop Directly From\nVerified Local Stores',
     subtitle:
       'Browse thousands of electronics, fashion items, food, and home goods from KYC-verified store owners in your city.',
-    iconName: 'storefront-sharp',
-    iconColor: colors.role.seller,
-    iconBg: '#DBEAFE',
-    secondaryPillText: '🏬 100% Verified Stores',
+    image: HERO_STORES,
   },
   {
     id: '3',
     badge: 'REAL-TIME LIVE GPS',
-    badgeColor: '#B45309',
-    badgeBg: '#FFFBEB',
-    title: 'Track Your Driver Live to Your Doorstep',
+    badgeColor: '#F59E0B',
+    badgeBg: 'rgba(245, 158, 11, 0.2)',
+    title: 'Track Your Delivery\nLive to Your Doorstep',
     subtitle:
       'Watch your transport provider in real-time with 10-second GPS breadcrumb updates from pickup to final hand-off.',
-    iconName: 'location-sharp',
-    iconColor: colors.accent[500],
-    iconBg: '#FEF3C7',
-    secondaryPillText: '📍 Live GPS Tracking',
+    image: HERO_DELIVERY,
   },
 ];
 
@@ -86,7 +77,6 @@ export const WalkthroughCarousel: React.FC<WalkthroughCarouselProps> = ({
   onSkip,
 }) => {
   const insets = useSafeAreaInsets();
-  const { theme, isDark } = useThemeStore();
   const [activeIndex, setActiveIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
 
@@ -109,33 +99,10 @@ export const WalkthroughCarousel: React.FC<WalkthroughCarouselProps> = ({
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
-      {/* Top Header with Official Wunabuy Logo & Safe Area Inset */}
-      <View style={[styles.topHeader, { paddingTop: Math.max(insets.top + spacing.xs, spacing.md) }]}>
-        <View style={styles.logoRow}>
-          <Image source={WUNABUY_LOGO} style={styles.logoImage} resizeMode="contain" />
-          <View style={styles.brandTitleCol}>
-            <Text variant="h2" bold color={colors.primary[500]}>
-              Wunabuy
-            </Text>
-            <Text variant="caption" secondary style={styles.tagline}>
-              ESCROW MARKETPLACE
-            </Text>
-          </View>
-        </View>
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#0B1017" translucent />
 
-        {onSkip && activeIndex < ONBOARDING_SLIDES.length - 1 && (
-          <Button
-            title="Skip"
-            variant="ghost"
-            size="small"
-            fullWidth={false}
-            onPress={onSkip}
-          />
-        )}
-      </View>
-
-      {/* Main Slide Carousel */}
+      {/* Main Full-Bleed Slide Carousel */}
       <FlatList
         ref={flatListRef}
         data={ONBOARDING_SLIDES}
@@ -145,69 +112,82 @@ export const WalkthroughCarousel: React.FC<WalkthroughCarouselProps> = ({
         showsHorizontalScrollIndicator={false}
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}
+        getItemLayout={(_, index) => ({
+          length: SCREEN_WIDTH,
+          offset: SCREEN_WIDTH * index,
+          index,
+        })}
         renderItem={({ item }) => (
-          <View style={styles.slide}>
-            {/* Contextual Illustration Card */}
-            <View
-              style={[
-                styles.illustrationBox,
-                {
-                  backgroundColor: theme.card,
-                  borderColor: theme.border,
-                },
-                !isDark && shadows.md,
-              ]}
-            >
-              {/* Outer Decorative Ring */}
-              <View style={[styles.outerRing, { backgroundColor: item.iconBg }]}>
-                {/* Central Feature Icon */}
-                <View style={[styles.iconCircle, { backgroundColor: item.iconColor }]}>
-                  <Ionicons name={item.iconName} size={42} color={colors.neutral[0]} />
-                </View>
-              </View>
+          <View style={styles.slideContainer}>
+            {/* Immersive Hero Image Background */}
+            <Image source={item.image} style={styles.heroImage} resizeMode="cover" />
 
-              {/* Floating Context Badges */}
-              <View style={styles.badgeRow}>
+            {/* Top Subtle Vignette Gradient Overlay */}
+            <View style={styles.topVignette} />
+
+            {/* Bottom Dark Gradient Overlay Sheet */}
+            <View style={styles.gradientOverlay}>
+              <View style={styles.slideContentBox}>
+                {/* Floating Context Badge */}
                 <View style={[styles.badgePill, { backgroundColor: item.badgeBg, borderColor: item.badgeColor }]}>
-                  <Text variant="caption" bold color={item.badgeColor}>
+                  <View style={[styles.badgeDot, { backgroundColor: item.badgeColor }]} />
+                  <Text variant="caption" bold color="#FFFFFF" style={styles.badgeText}>
                     {item.badge}
                   </Text>
                 </View>
-              </View>
 
-              <View style={styles.secondaryPillContainer}>
-                <Text variant="caption" bold color={theme.textSecondary}>
-                  {item.secondaryPillText}
+                {/* Overlaid Headline */}
+                <Text variant="h1" bold color="#FFFFFF" style={styles.slideTitle}>
+                  {item.title}
+                </Text>
+
+                {/* Subtitle Description */}
+                <Text variant="bodyLarge" color="rgba(255, 255, 255, 0.8)" style={styles.slideSubtitle}>
+                  {item.subtitle}
                 </Text>
               </View>
             </View>
-
-            {/* Slide Title */}
-            <Text variant="h1" bold align="center" style={styles.title}>
-              {item.title}
-            </Text>
-
-            {/* Slide Subtitle */}
-            <Text variant="bodyLarge" secondary align="center" style={styles.subtitle}>
-              {item.subtitle}
-            </Text>
           </View>
         )}
       />
 
-      {/* Elevated Bottom Footer Navigation & CTA (with Safe Area Bottom Inset Guard) */}
-      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom + spacing.lg, spacing['2xl']) }]}>
-        {/* Pagination Dots */}
-        <View style={styles.pagination}>
+      {/* Floating Header (Absolute Overlay) */}
+      <View style={[styles.floatingHeader, { paddingTop: Math.max(insets.top + spacing.xs, spacing.md) }]}>
+        <View style={styles.logoBadgePill}>
+          <Image source={WUNABUY_LOGO} style={styles.logoIcon} resizeMode="contain" />
+          <Text variant="bodyMedium" bold color="#FFFFFF">
+            Wunabuy
+          </Text>
+          <View style={styles.logoTagDivider} />
+          <Text variant="caption" bold color={colors.primary[400]}>
+            ESCROW
+          </Text>
+        </View>
+
+        {onSkip && activeIndex < ONBOARDING_SLIDES.length - 1 && (
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={onSkip}
+            style={styles.skipBtn}
+            hitSlop={{ top: 12, bottom: 12, left: 16, right: 16 }}
+          >
+            <Text variant="bodyMedium" bold color="rgba(255, 255, 255, 0.9)">
+              Skip
+            </Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {/* Fixed Bottom Action Sheet Controls */}
+      <View style={[styles.bottomControlsSection, { paddingBottom: Math.max(insets.bottom + spacing.md, spacing.xl) }]}>
+        {/* Sleek Horizontal Pill Indicators */}
+        <View style={styles.paginationDotsRow}>
           {ONBOARDING_SLIDES.map((_, index) => (
             <View
               key={index}
               style={[
-                styles.dot,
-                {
-                  backgroundColor: index === activeIndex ? colors.primary[500] : theme.border,
-                  width: index === activeIndex ? 28 : 8,
-                },
+                styles.dotPill,
+                index === activeIndex ? styles.activeDotPill : styles.inactiveDotPill,
               ]}
             />
           ))}
@@ -222,19 +202,19 @@ export const WalkthroughCarousel: React.FC<WalkthroughCarouselProps> = ({
           }
           variant="primary"
           onPress={handleNext}
-          style={styles.mainCtaBtn}
+          style={styles.primaryCtaPillBtn}
         />
 
-        {/* Quick Log In Option Elevated Above Phone Navigation Bar */}
+        {/* Secondary Log In Link (Elevated above bottom phone buttons) */}
         <TouchableOpacity
           activeOpacity={0.8}
           onPress={onComplete}
-          style={styles.loginLink}
+          style={styles.secondaryLoginLink}
           hitSlop={{ top: 12, bottom: 12, left: 20, right: 20 }}
         >
-          <Text variant="bodyMedium" align="center" secondary>
+          <Text variant="bodyMedium" align="center" color="rgba(255, 255, 255, 0.75)">
             Already have an account?{' '}
-            <Text variant="bodyMedium" bold color={colors.primary[500]}>
+            <Text variant="bodyMedium" bold color={colors.primary[400]}>
               Log In
             </Text>
           </Text>
@@ -247,113 +227,157 @@ export const WalkthroughCarousel: React.FC<WalkthroughCarouselProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#0B1017',
   },
-  topHeader: {
+  floatingHeader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 20,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: spacing.base,
-    paddingTop: spacing.xs,
-    height: 60,
+    paddingHorizontal: spacing.lg,
   },
-  logoRow: {
+  logoBadgePill: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: 'rgba(15, 23, 42, 0.75)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.full,
     gap: spacing.xs,
   },
-  logoImage: {
-    width: 38,
-    height: 38,
-    borderRadius: borderRadius.md,
+  logoIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
   },
-  brandTitleCol: {
-    justifyContent: 'center',
+  logoTagDivider: {
+    width: 1,
+    height: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    marginHorizontal: 2,
   },
-  tagline: {
-    fontSize: 9,
-    letterSpacing: 0.8,
-    marginTop: -2,
-  },
-  slide: {
-    width: SCREEN_WIDTH,
-    paddingHorizontal: spacing.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  illustrationBox: {
-    width: SCREEN_WIDTH - 48,
-    height: 210,
-    borderRadius: borderRadius['2xl'],
+  skipBtn: {
+    backgroundColor: 'rgba(15, 23, 42, 0.65)',
     borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.lg,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.full,
+  },
+  slideContainer: {
+    width: SCREEN_WIDTH,
+    height: SCREEN_HEIGHT,
     position: 'relative',
-    overflow: 'hidden',
+    backgroundColor: '#0B1017',
   },
-  outerRing: {
-    width: 110,
-    height: 110,
-    borderRadius: 55,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.sm,
-  },
-  iconCircle: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...shadows.md,
-  },
-  badgeRow: {
+  heroImage: {
+    width: SCREEN_WIDTH,
+    height: SCREEN_HEIGHT * 0.62,
     position: 'absolute',
-    top: spacing.md,
-    left: spacing.md,
+    top: 0,
+    left: 0,
+  },
+  topVignette: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 140,
+    backgroundColor: 'rgba(11, 16, 23, 0.45)',
+  },
+  gradientOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: SCREEN_HEIGHT * 0.52,
+    backgroundColor: '#0B1017',
+    justifyContent: 'flex-start',
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing['2xl'],
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: -10 },
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+    elevation: 20,
+  },
+  slideContentBox: {
+    width: '100%',
   },
   badgePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
     borderRadius: borderRadius.full,
     borderWidth: 1,
-  },
-  secondaryPillContainer: {
-    position: 'absolute',
-    bottom: spacing.md,
-    backgroundColor: 'rgba(15, 23, 42, 0.05)',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.full,
-  },
-  title: {
-    marginBottom: spacing.xs,
-    paddingHorizontal: spacing.sm,
-    lineHeight: 28,
-  },
-  subtitle: {
-    paddingHorizontal: spacing.md,
-    lineHeight: 22,
-  },
-  footer: {
-    paddingHorizontal: spacing.xl,
-  },
-  pagination: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
     marginBottom: spacing.md,
+    gap: 6,
   },
-  dot: {
-    height: 8,
+  badgeDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  badgeText: {
+    fontSize: 11,
+    letterSpacing: 0.8,
+  },
+  slideTitle: {
+    fontSize: 27,
+    lineHeight: 35,
+    marginBottom: spacing.sm,
+    letterSpacing: -0.3,
+  },
+  slideSubtitle: {
+    fontSize: 15,
+    lineHeight: 23,
+  },
+  bottomControlsSection: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    zIndex: 20,
+    paddingHorizontal: spacing.xl,
+    backgroundColor: '#0B1017',
+  },
+  paginationDotsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    marginBottom: spacing.lg,
+    gap: 6,
+  },
+  dotPill: {
+    height: 6,
+    borderRadius: 3,
+  },
+  activeDotPill: {
+    width: 28,
+    backgroundColor: colors.primary[500],
+  },
+  inactiveDotPill: {
+    width: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+  },
+  primaryCtaPillBtn: {
     borderRadius: borderRadius.full,
-    marginHorizontal: 4,
+    height: 54,
+    marginBottom: spacing.md,
+    backgroundColor: colors.primary[500],
+    ...shadows.md,
   },
-  mainCtaBtn: {
-    marginBottom: spacing.xs,
-  },
-  loginLink: {
+  secondaryLoginLink: {
     paddingVertical: spacing.sm,
-    marginTop: spacing.xs,
   },
 });
