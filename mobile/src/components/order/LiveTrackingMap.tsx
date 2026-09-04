@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ViewStyle, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
@@ -28,6 +28,18 @@ export const LiveTrackingMap: React.FC<LiveTrackingMapProps> = ({
   onMessageDriver,
 }) => {
   const { theme, isDark } = useThemeStore();
+
+  const handleCall = () => {
+    if (onCallDriver) {
+      onCallDriver();
+    } else if (driverPhone) {
+      const firstNumber = driverPhone.split('/')[0].split(',')[0].trim();
+      const cleaned = firstNumber.replace(/[^+\d]/g, '');
+      if (cleaned) {
+        Linking.openURL(`tel:${cleaned}`).catch(() => {});
+      }
+    }
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: theme.card, borderColor: theme.border }, style]}>
@@ -120,7 +132,7 @@ export const LiveTrackingMap: React.FC<LiveTrackingMapProps> = ({
         <View style={styles.driverActionsGroup}>
           <TouchableOpacity
             activeOpacity={0.8}
-            onPress={onCallDriver}
+            onPress={handleCall}
             style={[styles.actionCircleBtn, { backgroundColor: colors.semantic.success[50] }]}
           >
             <Ionicons name="call" size={18} color={colors.semantic.success[700]} />

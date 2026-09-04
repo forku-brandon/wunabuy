@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { View, FlatList, StyleSheet, TouchableOpacity, RefreshControl, ScrollView, Modal } from 'react-native';
+import { View, FlatList, StyleSheet, TouchableOpacity, RefreshControl, ScrollView, Modal, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
@@ -397,9 +397,11 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
                   <Text variant="bodyLarge" bold style={{ marginTop: 2 }}>
                     {item.delivery_address.address_text}
                   </Text>
-                  <Text variant="bodyMedium" color={theme.textSecondary} style={{ marginTop: 1, lineHeight: 18 }}>
-                    📍 {item.delivery_address.city} • Contact Buyer on Arrival
-                  </Text>
+                  <TouchableOpacity activeOpacity={0.7} onPress={() => Linking.openURL('tel:+237671234567').catch(() => {})}>
+                    <Text variant="bodyMedium" color={colors.primary[600]} bold style={{ marginTop: 1, lineHeight: 18 }}>
+                      📍 {item.delivery_address.city} • Call Buyer on Arrival 📞
+                    </Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             </View>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView, Alert, Modal } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, Alert, Modal, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
@@ -15,6 +15,17 @@ export const TransporterActiveTripScreen = ({ route, navigation }: any) => {
   const { jobId = 'job_1', stage = 1 } = route.params || {};
   const { theme, isDark } = useThemeStore();
   const insets = useSafeAreaInsets();
+
+  const callPhoneNumber = (phoneNumber: string) => {
+    if (!phoneNumber) return;
+    const firstNumber = phoneNumber.split('/')[0].split(',')[0].trim();
+    const cleaned = firstNumber.replace(/[^+\d]/g, '');
+    if (cleaned) {
+      Linking.openURL(`tel:${cleaned}`).catch(() => {
+        Alert.alert('Call Phone', `Dialing ${phoneNumber}`);
+      });
+    }
+  };
 
   // 1: Navigating to Store Pickup, 2: Merchant Handover Verification, 3: Navigating to Buyer, 4: Proof of Delivery Signature
   const [currentStage, setCurrentStage] = useState<number>(stage);
@@ -316,7 +327,7 @@ export const TransporterActiveTripScreen = ({ route, navigation }: any) => {
               <View style={styles.contactActionRow}>
                 <TouchableOpacity
                   activeOpacity={0.8}
-                  onPress={() => Alert.alert('Calling Merchant Store', `Dialing store counter: ${storePhone}`)}
+                  onPress={() => callPhoneNumber(storePhone)}
                   style={[styles.callBtn, { flex: 1, backgroundColor: isDark ? colors.neutral[700] : '#CCFBF1' }]}
                 >
                   <Ionicons name="call" size={14} color={colors.primary[700]} />
@@ -405,7 +416,7 @@ export const TransporterActiveTripScreen = ({ route, navigation }: any) => {
               <View style={styles.contactActionRow}>
                 <TouchableOpacity
                   activeOpacity={0.8}
-                  onPress={() => Alert.alert('Calling Buyer', `Dialing customer: ${buyerPhone}`)}
+                  onPress={() => callPhoneNumber(buyerPhone)}
                   style={[styles.callBtn, { flex: 1, backgroundColor: isDark ? colors.neutral[700] : '#D1FAE5' }]}
                 >
                   <Ionicons name="call" size={14} color="#10B981" />

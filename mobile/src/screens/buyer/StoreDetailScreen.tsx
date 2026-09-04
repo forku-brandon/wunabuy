@@ -8,6 +8,7 @@ import {
   TextInput,
   Share,
   Dimensions,
+  Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -206,6 +207,17 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
 
   const cartCount = getItemCount();
 
+  const handleCallStore = (phoneNum?: string) => {
+    const raw = phoneNum || storeInfo.primaryPhone || '+237670123456';
+    const firstNumber = raw.split('/')[0].split(',')[0].trim();
+    const cleaned = firstNumber.replace(/[^+\d]/g, '');
+    if (cleaned) {
+      Linking.openURL(`tel:${cleaned}`).catch(() => {
+        setToastMessage(`Calling ${storeInfo.name}...`);
+      });
+    }
+  };
+
   const handleShareStore = async () => {
     try {
       await Share.share({
@@ -348,7 +360,7 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
 
               <TouchableOpacity
                 activeOpacity={0.85}
-                onPress={() => setToastMessage(`Calling ${storeInfo.name}...`)}
+                onPress={() => handleCallStore(storeInfo.primaryPhone)}
                 style={[styles.callBtn, { borderColor: theme.border, backgroundColor: theme.card }]}
               >
                 <Ionicons name="call-outline" size={16} color={theme.text} />
@@ -752,17 +764,17 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
                 </View>
               )}
 
-              <View style={styles.infoRow}>
+              <TouchableOpacity activeOpacity={0.7} onPress={() => handleCallStore(storeInfo.primaryPhone)} style={styles.infoRow}>
                 <Ionicons name="call-outline" size={18} color={colors.primary[500]} />
                 <View style={{ marginLeft: spacing.sm, flex: 1 }}>
                   <Text variant="caption" secondary>
-                    Store Contact Phone Numbers
+                    Store Contact Phone Numbers (Tap to Call 📞)
                   </Text>
                   <Text variant="bodyMedium" bold color={colors.primary[600]}>
                     {storeInfo.primaryPhone} {storeInfo.secondaryPhone ? `/ ${storeInfo.secondaryPhone}` : ''}
                   </Text>
                 </View>
-              </View>
+              </TouchableOpacity>
 
               <View style={styles.infoRow}>
                 <Ionicons name="shield-checkmark-outline" size={18} color={colors.semantic.success[500]} />

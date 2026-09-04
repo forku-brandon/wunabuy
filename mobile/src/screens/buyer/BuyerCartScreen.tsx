@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, FlatList, StyleSheet, TouchableOpacity, TextInput, RefreshControl, Modal, TouchableWithoutFeedback } from 'react-native';
+import { View, FlatList, StyleSheet, TouchableOpacity, TextInput, RefreshControl, Modal, TouchableWithoutFeedback, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScreenContainer, Text, Card, Button, Badge, EmptyState } from '../../components/ui';
@@ -449,15 +449,15 @@ export const BuyerCartScreen = ({ navigation }: any) => {
                     </Text>
                   </View>
 
-                  <View style={styles.specRow}>
-                    <Ionicons name="call-outline" size={14} color={theme.textSecondary} style={{ marginRight: 6 }} />
+                  <TouchableOpacity activeOpacity={0.7} onPress={() => Linking.openURL('tel:+237670123456').catch(() => {})} style={styles.specRow}>
+                    <Ionicons name="call-outline" size={14} color={colors.primary[600]} style={{ marginRight: 6 }} />
                     <Text variant="caption" bold color={theme.text}>
-                      Store Contacts:
+                      Store Contacts (Tap to Call 📞):
                     </Text>
                     <Text variant="caption" bold color={colors.primary[600]} style={{ marginLeft: 4, flex: 1 }}>
                       +237 670 123 456 / +237 699 876 543
                     </Text>
-                  </View>
+                  </TouchableOpacity>
 
                   <View style={styles.specRow}>
                     <Ionicons name="time-outline" size={14} color={theme.textSecondary} style={{ marginRight: 6 }} />

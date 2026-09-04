@@ -10,6 +10,7 @@ import {
   Alert,
   ActivityIndicator,
   TouchableWithoutFeedback,
+  Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -195,12 +196,20 @@ export const ProfileScreen = ({ navigation }: any) => {
                 size="small"
               />
             </View>
-            <View style={styles.userPhoneRow}>
-              <Ionicons name="call-outline" size={12} color={theme.textSecondary} style={{ marginRight: 4 }} />
-              <Text variant="caption" secondary numberOfLines={1}>
-                {formatPhone(user?.phone ?? '+237670123456')}
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => {
+                const p = user?.phone || '+237670123456';
+                const cleaned = p.replace(/[^+\d]/g, '');
+                if (cleaned) Linking.openURL(`tel:${cleaned}`).catch(() => {});
+              }}
+              style={styles.userPhoneRow}
+            >
+              <Ionicons name="call-outline" size={12} color={colors.primary[500]} style={{ marginRight: 4 }} />
+              <Text variant="caption" color={colors.primary[600]} numberOfLines={1}>
+                {formatPhone(user?.phone ?? '+237670123456')} 📞
               </Text>
-            </View>
+            </TouchableOpacity>
           </TouchableOpacity>
         </View>
 

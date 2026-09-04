@@ -10,6 +10,7 @@ import {
   TextInput,
   TouchableWithoutFeedback,
   Alert,
+  Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ScreenContainer, Text, Card, Button, Badge, EmptyState, Toast } from '../../components/ui';
@@ -51,6 +52,17 @@ export const SellerOrdersScreen = ({ navigation }: any) => {
   const [isDeclineModalVisible, setIsDeclineModalVisible] = useState(false);
   const [selectedOrderForDecline, setSelectedOrderForDecline] = useState<SellerOrder | null>(null);
   const [declineReason, setDeclineReason] = useState('Out of Stock');
+
+  const handleCallCustomer = (phoneNum: string) => {
+    if (!phoneNum) return;
+    const firstNumber = phoneNum.split('/')[0].split(',')[0].trim();
+    const cleaned = firstNumber.replace(/[^+\d]/g, '');
+    if (cleaned) {
+      Linking.openURL(`tel:${cleaned}`).catch(() => {
+        setToastMessage(`Dialing ${phoneNum}...`);
+      });
+    }
+  };
 
   const loadOrders = useCallback(async () => {
     try {
@@ -337,7 +349,7 @@ export const SellerOrdersScreen = ({ navigation }: any) => {
                   </View>
                   <TouchableOpacity
                     activeOpacity={0.7}
-                    onPress={() => setToastMessage(`Calling ${item.customer_name} (${item.customer_phone})`)}
+                    onPress={() => handleCallCustomer(item.customer_phone)}
                     style={[styles.callBtn, { borderColor: theme.border }]}
                   >
                     <Ionicons name="call-outline" size={16} color={colors.primary[600]} />
