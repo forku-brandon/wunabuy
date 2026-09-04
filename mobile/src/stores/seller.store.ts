@@ -55,6 +55,20 @@ export interface SellerTransaction {
 interface SellerState {
   storeName: string;
   storePhone: string;
+  category: string;
+  tagline: string;
+  description: string;
+  address: string;
+  landmarkDirections: string;
+  primaryPhone: string;
+  secondaryPhone: string;
+  email: string;
+  operatingHours: string;
+  riderPickupInstructions: string;
+  latitude: number;
+  longitude: number;
+  logoUrl: string;
+  coverPhotoUrl: string;
   isVerified: boolean;
   ratingAvg: number;
   totalReviews: number;
@@ -70,6 +84,9 @@ interface SellerState {
   orders: SellerOrder[];
   products: Product[];
   transactions: SellerTransaction[];
+
+  // Profile Action
+  updateStoreProfile: (profile: Partial<SellerState>) => void;
 
   // Actions
   acceptOrder: (orderId: string) => void;
@@ -370,6 +387,20 @@ export const useSellerStore = create<SellerState>()(
     (set, get) => ({
       storeName: 'Douala Tech Hub',
       storePhone: '+237 670 123 456',
+      category: 'Electronics & Smart Devices',
+      tagline: 'Premier Electronics Importer & Original Smartphone Hub in Douala',
+      description: 'Douala Tech Hub is a certified merchant specializing in authentic smartphones, laptops, wireless audio, and consumer electronics with 100% Escrow Warranty.',
+      address: 'Rue Joss, Quartier Akwa, Douala, Cameroon',
+      landmarkDirections: 'Opposite Place du Gouvernement, Next to Akwa Mall (1st Floor, Suite 104)',
+      primaryPhone: '+237 670 123 456',
+      secondaryPhone: '+237 699 876 543',
+      email: 'contact@doualatechhub.cm',
+      operatingHours: 'Mon - Sat: 8:00 AM - 6:30 PM (Closed Sundays)',
+      riderPickupInstructions: 'Present 5-digit PIN at counter #2. Dedicated motorcycle parking available in rear alley.',
+      latitude: 4.0510,
+      longitude: 9.7679,
+      logoUrl: 'https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=400',
+      coverPhotoUrl: 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=800',
       isVerified: true,
       ratingAvg: 4.9,
       totalReviews: 87,
@@ -383,6 +414,14 @@ export const useSellerStore = create<SellerState>()(
       orders: INITIAL_SELLER_ORDERS,
       products: INITIAL_SELLER_PRODUCTS,
       transactions: INITIAL_SELLER_TRANSACTIONS,
+
+      updateStoreProfile: (partial) => {
+        set((state) => ({
+          ...state,
+          ...partial,
+          storePhone: partial.primaryPhone || partial.storePhone || state.storePhone,
+        }));
+      },
 
       acceptOrder: (orderId) => {
         set((state) => ({

@@ -29,6 +29,8 @@ export const SellerProfileScreen = ({ navigation }: any) => {
   const { user } = useAuthStore();
   const {
     storeName,
+    address,
+    category,
     availableBalance,
     escrowLockedBalance,
     orders,
@@ -300,6 +302,40 @@ export const SellerProfileScreen = ({ navigation }: any) => {
           </View>
         </TouchableOpacity>
 
+        {/* 2b. Store Profile & Rider Pickup Specs Quick Banner Card */}
+        <TouchableOpacity
+          activeOpacity={0.88}
+          onPress={() => navigation.navigate('EditStoreProfile')}
+          style={[
+            styles.storeProfileBannerCard,
+            {
+              backgroundColor: isDark ? colors.neutral[800] : '#ECFDF5',
+              borderColor: colors.primary[400],
+            },
+          ]}
+        >
+          <View style={[styles.storeIconBox, { backgroundColor: colors.primary[500] }]}>
+            <Ionicons name="storefront" size={20} color="#FFFFFF" />
+          </View>
+          <View style={styles.storeBannerTextCol}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Text variant="bodyLarge" bold color={colors.primary[700]}>
+                Store Profile &amp; Rider Specs
+              </Text>
+              <View style={styles.kycVerifiedBadge}>
+                <Ionicons name="checkmark-circle" size={10} color={colors.primary[600]} style={{ marginRight: 2 }} />
+                <Text variant="caption" bold color={colors.primary[600]} style={{ fontSize: 9 }}>
+                  LIVE PROFILE
+                </Text>
+              </View>
+            </View>
+            <Text variant="caption" secondary numberOfLines={1} style={{ marginTop: 2 }}>
+              📍 {address || 'Quartier Akwa, Douala'} • {category || 'Electronics'}
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={colors.primary[500]} />
+        </TouchableOpacity>
+
         {/* 3. Store Order Fulfillment Queue Grid */}
         <Card style={styles.ordersCard}>
           <View style={styles.cardHeaderRow}>
@@ -415,6 +451,13 @@ export const SellerProfileScreen = ({ navigation }: any) => {
         {/* 4. Merchant Management Tools & Services */}
         <Card style={styles.toolsCard}>
           <View style={styles.toolsRow}>
+            <TouchableOpacity onPress={() => navigation.navigate('EditStoreProfile')} style={styles.toolItem}>
+              <Ionicons name="storefront-outline" size={22} color={colors.primary[500]} />
+              <Text variant="caption" style={styles.toolText}>
+                Store Profile
+              </Text>
+            </TouchableOpacity>
+
             <TouchableOpacity onPress={() => navigation.navigate('AddEditProduct')} style={styles.toolItem}>
               <Ionicons name="add-circle-outline" size={22} color={colors.primary[500]} />
               <Text variant="caption" style={styles.toolText}>
@@ -447,13 +490,6 @@ export const SellerProfileScreen = ({ navigation }: any) => {
               <Ionicons name="stats-chart-outline" size={22} color="#6366F1" />
               <Text variant="caption" style={styles.toolText}>
                 Analytics
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity onPress={() => navigation.navigate('NotificationSettings')} style={styles.toolItem}>
-              <Ionicons name="notifications-outline" size={22} color={colors.primary[500]} />
-              <Text variant="caption" style={styles.toolText}>
-                Alerts
               </Text>
             </TouchableOpacity>
           </View>
@@ -915,5 +951,25 @@ const styles = StyleSheet.create({
   },
   modalBtnFlex: {
     flex: 1,
+  },
+  storeProfileBannerCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.md,
+    borderRadius: borderRadius.xl,
+    borderWidth: 1,
+    marginBottom: spacing.md,
+  },
+  storeIconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  storeBannerTextCol: {
+    flex: 1,
+    marginLeft: spacing.sm,
+    marginRight: spacing.xs,
   },
 });

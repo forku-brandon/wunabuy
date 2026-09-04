@@ -16,6 +16,7 @@ import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
 import { useCartStore } from '../../stores/cart.store';
 import { useFollowedStoresStore, FollowedStoreData } from '../../stores/followedStores.store';
+import { useSellerStore } from '../../stores/seller.store';
 import { formatXAF } from '@wunabuy/utils';
 import { Product, ProductCategory, QualityTier } from '@wunabuy/types';
 
@@ -162,14 +163,36 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
   const insets = useSafeAreaInsets();
   const { addItem, getItemCount } = useCartStore();
   const { toggleFollow, isFollowing } = useFollowedStoresStore();
+  const sellerStore = useSellerStore();
 
   const passedStore = route?.params?.store;
   const storeId = route?.params?.storeId || passedStore?.id || 'store_101';
 
-  const storeInfo: FollowedStoreData = {
+  const isOwnStore = storeId === 'store_1' || storeId === 'store_101' || !passedStore;
+
+  const storeInfo: FollowedStoreData & {
+    tagline?: string;
+    landmarkDirections?: string;
+    primaryPhone?: string;
+    secondaryPhone?: string;
+    operatingHours?: string;
+    riderPickupInstructions?: string;
+    description?: string;
+  } = {
     ...SAMPLE_STORE_DATA,
     id: storeId,
-    name: passedStore?.store_name || passedStore?.name || SAMPLE_STORE_DATA.name,
+    name: passedStore?.name || passedStore?.store_name || (isOwnStore ? sellerStore.storeName : SAMPLE_STORE_DATA.name),
+    category: passedStore?.category || (isOwnStore ? sellerStore.category : SAMPLE_STORE_DATA.category),
+    location: passedStore?.location || (isOwnStore ? sellerStore.address : SAMPLE_STORE_DATA.location),
+    avatar_url: passedStore?.avatar_url || (isOwnStore ? sellerStore.logoUrl : SAMPLE_STORE_DATA.avatar_url),
+    cover_url: passedStore?.cover_url || (isOwnStore ? sellerStore.coverPhotoUrl : SAMPLE_STORE_DATA.cover_url),
+    tagline: passedStore?.tagline || (isOwnStore ? sellerStore.tagline : 'Premier Certified Merchant'),
+    description: passedStore?.description || (isOwnStore ? sellerStore.description : 'Certified merchant specializing in authentic products with Escrow warranty.'),
+    landmarkDirections: passedStore?.landmarkDirections || (isOwnStore ? sellerStore.landmarkDirections : 'Opposite Place du Gouvernement, Next to Akwa Mall'),
+    primaryPhone: passedStore?.primaryPhone || (isOwnStore ? sellerStore.primaryPhone : '+237 670 123 456'),
+    secondaryPhone: passedStore?.secondaryPhone || (isOwnStore ? sellerStore.secondaryPhone : '+237 699 876 543'),
+    operatingHours: passedStore?.operatingHours || (isOwnStore ? sellerStore.operatingHours : 'Mon - Sat: 8:00 AM - 6:30 PM'),
+    riderPickupInstructions: passedStore?.riderPickupInstructions || (isOwnStore ? sellerStore.riderPickupInstructions : 'Present 5-digit PIN at counter #2.'),
   };
 
   const following = isFollowing(storeInfo.id);
@@ -673,22 +696,23 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
           <View style={styles.tabContentContainer}>
             <Card style={styles.infoSectionCard}>
               <Text variant="h2" bold style={{ marginBottom: spacing.sm }}>
-                Business Identification &amp; KYC
+                Business Identification &amp; Location
               </Text>
               <View style={styles.infoRow}>
                 <Ionicons name="storefront-outline" size={18} color={colors.primary[500]} />
-                <View style={{ marginLeft: spacing.sm }}>
+                <View style={{ marginLeft: spacing.sm, flex: 1 }}>
                   <Text variant="caption" secondary>
-                    Store Name
+                    Store Name &amp; Category
                   </Text>
                   <Text variant="bodyMedium" bold>
-                    {storeInfo.name}
+                    {storeInfo.name} ({storeInfo.category})
                   </Text>
                 </View>
               </View>
+
               <View style={styles.infoRow}>
                 <Ionicons name="location-outline" size={18} color={colors.primary[500]} />
-                <View style={{ marginLeft: spacing.sm }}>
+                <View style={{ marginLeft: spacing.sm, flex: 1 }}>
                   <Text variant="caption" secondary>
                     Physical Store Address
                   </Text>
@@ -697,9 +721,50 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
                   </Text>
                 </View>
               </View>
+
+              {storeInfo.landmarkDirections && (
+                <View style={styles.infoRow}>
+                  <Ionicons name="compass-outline" size={18} color={colors.primary[500]} />
+                  <View style={{ marginLeft: spacing.sm, flex: 1 }}>
+                    <Text variant="caption" secondary>
+                      Landmark Directions for Drivers &amp; Buyers
+                    </Text>
+                    <Text variant="bodyMedium" bold color={colors.primary[700]}>
+                      {storeInfo.landmarkDirections}
+                    </Text>
+                  </View>
+                </View>
+              )}
+
+              {storeInfo.riderPickupInstructions && (
+                <View style={styles.infoRow}>
+                  <Ionicons name="bicycle-outline" size={18} color={colors.primary[500]} />
+                  <View style={{ marginLeft: spacing.sm, flex: 1 }}>
+                    <Text variant="caption" secondary>
+                      Rider / Personal Courier Pickup Instructions
+                    </Text>
+                    <Text variant="bodyMedium" bold color={colors.semantic.success[700]}>
+                      {storeInfo.riderPickupInstructions}
+                    </Text>
+                  </View>
+                </View>
+              )}
+
+              <View style={styles.infoRow}>
+                <Ionicons name="call-outline" size={18} color={colors.primary[500]} />
+                <View style={{ marginLeft: spacing.sm, flex: 1 }}>
+                  <Text variant="caption" secondary>
+                    Store Contact Phone Numbers
+                  </Text>
+                  <Text variant="bodyMedium" bold color={colors.primary[600]}>
+                    {storeInfo.primaryPhone} {storeInfo.secondaryPhone ? `/ ${storeInfo.secondaryPhone}` : ''}
+                  </Text>
+                </View>
+              </View>
+
               <View style={styles.infoRow}>
                 <Ionicons name="shield-checkmark-outline" size={18} color={colors.semantic.success[500]} />
-                <View style={{ marginLeft: spacing.sm }}>
+                <View style={{ marginLeft: spacing.sm, flex: 1 }}>
                   <Text variant="caption" secondary>
                     KYC Compliance Status
                   </Text>
@@ -712,27 +777,27 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
 
             <Card style={styles.infoSectionCard}>
               <Text variant="h2" bold style={{ marginBottom: spacing.sm }}>
-                Store Fulfillment &amp; Return Policies
+                Store Operating Hours &amp; Policies
               </Text>
               <View style={styles.infoRow}>
                 <Ionicons name="time-outline" size={18} color={colors.primary[500]} />
-                <View style={{ marginLeft: spacing.sm }}>
+                <View style={{ marginLeft: spacing.sm, flex: 1 }}>
                   <Text variant="caption" secondary>
                     Operating Hours
                   </Text>
                   <Text variant="bodyMedium" bold>
-                    Monday – Saturday: 08:00 AM – 07:00 PM (WAT)
+                    {storeInfo.operatingHours || 'Monday – Saturday: 08:00 AM – 06:30 PM'}
                   </Text>
                 </View>
               </View>
               <View style={styles.infoRow}>
                 <Ionicons name="repeat-outline" size={18} color={colors.primary[500]} />
-                <View style={{ marginLeft: spacing.sm }}>
+                <View style={{ marginLeft: spacing.sm, flex: 1 }}>
                   <Text variant="caption" secondary>
                     Escrow Dispute &amp; Return Policy
                   </Text>
                   <Text variant="bodyMedium" bold>
-                    7-Day Return Guarantee for defective or wrong items. Funds locked in escrow until verified.
+                    48-Hour Escrow Protection. Funds locked safely until parcel inspection upon handover.
                   </Text>
                 </View>
               </View>
