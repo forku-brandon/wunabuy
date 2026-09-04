@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   FlatList,
@@ -34,32 +34,32 @@ export interface SlideItem {
 const ONBOARDING_SLIDES: SlideItem[] = [
   {
     id: '1',
-    badge: '100% ESCROW GUARANTEE',
+    badge: '🔒 100% SAFE SHOPPING',
     badgeColor: '#0D9488',
     badgeBg: 'rgba(13, 148, 136, 0.25)',
-    title: 'Your Money Stays Safe\nUntil Delivery Is Verified',
+    title: 'No Scams, No Worries! ✨\nYour Money Is Always Safe',
     subtitle:
-      'Payments are held securely in 48-hour escrow. Merchants only receive funds after you receive, inspect, and sign for your order.',
+      'Shop with complete peace of mind. We hold your payment securely until you receive, inspect, and approve your order at your door.',
     image: HERO_ESCROW,
   },
   {
     id: '2',
-    badge: 'VERIFIED LOCAL STORES',
+    badge: '🏬 TRUSTED LOCAL SHOPS',
     badgeColor: '#3B82F6',
     badgeBg: 'rgba(59, 130, 246, 0.25)',
-    title: 'Shop Directly From\nVerified Local Stores',
+    title: 'Shop From Real Stores ✨\nIn Your Neighborhood',
     subtitle:
-      'Browse thousands of electronics, fashion items, food, and home goods from KYC-verified store owners in your city.',
+      'Discover thousands of genuine phones, electronics, fashion, and home goods from trusted local shop owners in your city.',
     image: HERO_STORES,
   },
   {
     id: '3',
-    badge: 'REAL-TIME LIVE GPS',
+    badge: '📍 LIVE RIDER TRACKING',
     badgeColor: '#F59E0B',
     badgeBg: 'rgba(245, 158, 11, 0.25)',
-    title: 'Track Your Delivery\nLive to Your Doorstep',
+    title: 'Fast Doorstep Delivery ✨\nTracked to Your Gate',
     subtitle:
-      'Watch your transport provider in real-time with 10-second GPS breadcrumb updates from pickup to final hand-off.',
+      'Watch your delivery rider move on a live map in real-time as your package travels directly from the store to your hand.',
     image: HERO_DELIVERY,
   },
 ];
@@ -78,6 +78,19 @@ export const WalkthroughCarousel: React.FC<WalkthroughCarouselProps> = ({
   const insets = useSafeAreaInsets();
   const [activeIndex, setActiveIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
+
+  // Automated Motion Slideshow Effect (Rotates every 4 seconds)
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveIndex((prevIndex) => {
+        const nextIndex = (prevIndex + 1) % ONBOARDING_SLIDES.length;
+        flatListRef.current?.scrollToIndex({ index: nextIndex, animated: true });
+        return nextIndex;
+      });
+    }, 4000);
+
+    return () => clearInterval(timer);
+  }, []);
 
   const onViewableItemsChanged = useRef(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
@@ -182,13 +195,18 @@ export const WalkthroughCarousel: React.FC<WalkthroughCarouselProps> = ({
         {/* Sleek Horizontal Pill Indicators */}
         <View style={styles.paginationDotsRow}>
           {ONBOARDING_SLIDES.map((_, index) => (
-            <View
+            <TouchableOpacity
               key={index}
-              style={[
-                styles.dotPill,
-                index === activeIndex ? styles.activeDotPill : styles.inactiveDotPill,
-              ]}
-            />
+              activeOpacity={0.8}
+              onPress={() => flatListRef.current?.scrollToIndex({ index, animated: true })}
+            >
+              <View
+                style={[
+                  styles.dotPill,
+                  index === activeIndex ? styles.activeDotPill : styles.inactiveDotPill,
+                ]}
+              />
+            </TouchableOpacity>
           ))}
         </View>
 
