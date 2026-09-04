@@ -232,10 +232,11 @@ export const BuyerCartScreen = ({ navigation }: any) => {
                 </View>
               )}
 
-              <View style={styles.summaryRow}>
-                <View style={styles.deliveryLabelRow}>
+              {/* Delivery Fee Section - Amount moved DOWNWARD to prevent grid exit */}
+              <View style={styles.deliverySectionBox}>
+                <View style={styles.deliveryHeaderRow}>
                   <Text variant="bodyMedium" secondary>
-                    Delivery
+                    Delivery Option
                   </Text>
                   <TouchableOpacity
                     activeOpacity={0.7}
@@ -244,18 +245,68 @@ export const BuyerCartScreen = ({ navigation }: any) => {
                   >
                     <Ionicons name="pencil" size={12} color={colors.primary[600]} />
                     <Text variant="caption" bold color={colors.primary[600]} style={{ marginLeft: 3, fontSize: 11 }}>
-                      Edit
+                      Change Option
                     </Text>
                   </TouchableOpacity>
                 </View>
-                <TouchableOpacity activeOpacity={0.8} onPress={() => setIsDeliveryModalOpen(true)}>
-                  <Text
-                    variant="bodyLarge"
-                    bold
-                    color={deliveryMethod === 'self_pickup' ? colors.semantic.success[700] : theme.text}
-                  >
-                    {deliveryMethod === 'self_pickup' ? '0 FCFA (Self-Pickup)' : formatXAF(shippingFee)}
-                  </Text>
+
+                {/* Downward Amount & Option Card (Grid Safe) */}
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => setIsDeliveryModalOpen(true)}
+                  style={[
+                    styles.deliveryAmountBlock,
+                    {
+                      backgroundColor:
+                        deliveryMethod === 'self_pickup'
+                          ? isDark
+                            ? 'rgba(16,185,129,0.15)'
+                            : '#ECFDF5'
+                          : isDark
+                          ? colors.neutral[800]
+                          : '#F0FDFA',
+                      borderColor: deliveryMethod === 'self_pickup' ? colors.semantic.success[500] : colors.primary[300],
+                    },
+                  ]}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 8 }}>
+                      <Ionicons
+                        name={deliveryMethod === 'self_pickup' ? 'walk' : 'bicycle'}
+                        size={16}
+                        color={deliveryMethod === 'self_pickup' ? colors.semantic.success[700] : colors.primary[600]}
+                      />
+                      <Text
+                        variant="bodyMedium"
+                        bold
+                        color={deliveryMethod === 'self_pickup' ? colors.semantic.success[700] : theme.text}
+                        style={{ marginLeft: 6 }}
+                        numberOfLines={1}
+                      >
+                        {deliveryMethod === 'self_pickup' ? 'Self-Pickup / Personal Courier' : 'Wunabuy Express Transporter'}
+                      </Text>
+                    </View>
+
+                    <View
+                      style={[
+                        styles.amountPillBadge,
+                        {
+                          backgroundColor:
+                            deliveryMethod === 'self_pickup'
+                              ? '#D1FAE5'
+                              : '#CCFBF1',
+                        },
+                      ]}
+                    >
+                      <Text
+                        variant="bodyMedium"
+                        bold
+                        color={deliveryMethod === 'self_pickup' ? colors.semantic.success[700] : colors.primary[700]}
+                      >
+                        {deliveryMethod === 'self_pickup' ? '0 FCFA (Free)' : formatXAF(shippingFee)}
+                      </Text>
+                    </View>
+                  </View>
                 </TouchableOpacity>
               </View>
 
@@ -508,6 +559,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  deliverySectionBox: {
+    marginVertical: spacing.xs,
+  },
+  deliveryHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.xs,
+  },
+  deliveryAmountBlock: {
+    padding: spacing.sm,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+  },
+  amountPillBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: borderRadius.md,
   },
   deliveryLabelRow: {
     flexDirection: 'row',
