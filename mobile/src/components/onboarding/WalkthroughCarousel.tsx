@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   FlatList,
@@ -23,9 +23,6 @@ const HERO_DELIVERY = require('../../../assets/onboarding/hero_delivery.jpg');
 
 export interface SlideItem {
   id: string;
-  badge: string;
-  badgeColor: string;
-  badgeBg: string;
   title: string;
   subtitle: string;
   image: any;
@@ -34,19 +31,13 @@ export interface SlideItem {
 const ONBOARDING_SLIDES: SlideItem[] = [
   {
     id: '1',
-    badge: '🔒 100% SAFE SHOPPING',
-    badgeColor: '#0D9488',
-    badgeBg: 'rgba(13, 148, 136, 0.25)',
-    title: 'No Scams, No Worries! ✨\nYour Money Is Always Safe',
+    title: 'No Worries! ✨\nYour Money Is Always Safe',
     subtitle:
       'Shop with complete peace of mind. We hold your payment securely until you receive, inspect, and approve your order at your door.',
     image: HERO_ESCROW,
   },
   {
     id: '2',
-    badge: '🏬 TRUSTED LOCAL SHOPS',
-    badgeColor: '#3B82F6',
-    badgeBg: 'rgba(59, 130, 246, 0.25)',
     title: 'Shop From Real Stores ✨\nIn Your Neighborhood',
     subtitle:
       'Discover thousands of genuine phones, electronics, fashion, and home goods from trusted local shop owners in your city.',
@@ -54,9 +45,6 @@ const ONBOARDING_SLIDES: SlideItem[] = [
   },
   {
     id: '3',
-    badge: '📍 LIVE RIDER TRACKING',
-    badgeColor: '#F59E0B',
-    badgeBg: 'rgba(245, 158, 11, 0.25)',
     title: 'Fast Doorstep Delivery ✨\nTracked to Your Gate',
     subtitle:
       'Watch your delivery rider move on a live map in real-time as your package travels directly from the store to your hand.',
@@ -78,19 +66,6 @@ export const WalkthroughCarousel: React.FC<WalkthroughCarouselProps> = ({
   const insets = useSafeAreaInsets();
   const [activeIndex, setActiveIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
-
-  // Automated Motion Slideshow Effect (Rotates every 4 seconds)
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setActiveIndex((prevIndex) => {
-        const nextIndex = (prevIndex + 1) % ONBOARDING_SLIDES.length;
-        flatListRef.current?.scrollToIndex({ index: nextIndex, animated: true });
-        return nextIndex;
-      });
-    }, 4000);
-
-    return () => clearInterval(timer);
-  }, []);
 
   const onViewableItemsChanged = useRef(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
@@ -140,14 +115,6 @@ export const WalkthroughCarousel: React.FC<WalkthroughCarouselProps> = ({
             {/* Dimmed Dark Overlay Sheet Behind Text Content */}
             <View style={styles.textDimmedOverlaySheet}>
               <View style={styles.slideContentBox}>
-                {/* Floating Context Badge */}
-                <View style={[styles.badgePill, { backgroundColor: item.badgeBg, borderColor: item.badgeColor }]}>
-                  <View style={[styles.badgeDot, { backgroundColor: item.badgeColor }]} />
-                  <Text variant="caption" bold color="#FFFFFF" style={styles.badgeText}>
-                    {item.badge}
-                  </Text>
-                </View>
-
                 {/* Overlaid Headline */}
                 <Text variant="h1" bold color="#FFFFFF" style={styles.slideTitle}>
                   {item.title}
@@ -313,7 +280,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: SCREEN_HEIGHT * 0.52,
+    height: SCREEN_HEIGHT * 0.48,
     backgroundColor: 'rgba(11, 16, 23, 0.88)',
     justifyContent: 'flex-start',
     paddingHorizontal: spacing.xl,
@@ -324,29 +291,9 @@ const styles = StyleSheet.create({
   slideContentBox: {
     width: '100%',
   },
-  badgePill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.full,
-    borderWidth: 1,
-    marginBottom: spacing.md,
-    gap: 6,
-  },
-  badgeDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  badgeText: {
-    fontSize: 11,
-    letterSpacing: 0.8,
-  },
   slideTitle: {
-    fontSize: 27,
-    lineHeight: 35,
+    fontSize: 28,
+    lineHeight: 36,
     marginBottom: spacing.sm,
     letterSpacing: -0.3,
   },
