@@ -1,9 +1,9 @@
 # Wunabuy — Backend Technical Specification & API Contracts
 
-**Document Version:** 2.7 (Production API & Staff Monorepo Baseline)  
-**Date:** September 3, 2026  
+**Document Version:** 2.9 (Seller Store Profile, Rider Handover PIN & Logistics Specs Baseline)  
+**Date:** September 4, 2026  
 **Status:** Approved / In Production Use  
-**Companion Documents:** Wunabuy SRS v2.6, Wunabuy PRD v2.6, Wunabuy Frontend Tech Spec v2.6  
+**Companion Documents:** Wunabuy SRS v2.9, Wunabuy PRD v2.9, Wunabuy Frontend Tech Spec v2.9  
 **Framework:** Laravel 13 (PHP 8.3+)  
 **Frontend Monorepo Targets:** `wunabuy-mobile` (Expo SDK 54), `staff-portal` (Vite + React TS), `@wunabuy/api-client`, `@wunabuy/types`, `@wunabuy/utils`
 
@@ -990,19 +990,48 @@ CREATE TABLE transporter_kyc_submissions (
     reviewed_at TIMESTAMP WITH TIME ZONE NULL
 );
 
+CREATE TABLE stores (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    owner_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    store_name VARCHAR(255) NOT NULL,
+    category VARCHAR(100) NOT NULL,
+    tagline VARCHAR(255) NULL,
+    description TEXT NULL,
+    address_text TEXT NOT NULL,
+    landmark_directions TEXT NULL,
+    location GEOMETRY(Point, 4326),
+    latitude NUMERIC(10, 7) NULL,
+    longitude NUMERIC(10, 7) NULL,
+    primary_phone VARCHAR(30) NOT NULL,
+    secondary_phone VARCHAR(30) NULL,
+    operating_hours VARCHAR(100) NULL,
+    rider_pickup_instructions TEXT NULL,
+    logo_url TEXT NULL,
+    cover_photo_url TEXT NULL,
+    is_verified BOOLEAN DEFAULT FALSE,
+    is_active BOOLEAN DEFAULT TRUE,
+    rating_avg NUMERIC(3, 2) DEFAULT 5.0,
+    total_reviews INTEGER DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE orders (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     order_code VARCHAR(50) UNIQUE NOT NULL,
     customer_id UUID REFERENCES users(id),
-    store_id UUID NOT NULL,
+    store_id UUID NOT NULL REFERENCES stores(id),
     transporter_id UUID NULL,
     status VARCHAR(50) NOT NULL DEFAULT 'paid_escrow',
     payment_method VARCHAR(50) NOT NULL DEFAULT 'momo', -- 'wallet', 'momo', 'card'
+    delivery_method VARCHAR(50) NOT NULL DEFAULT 'wunabuy_transporter', -- 'wunabuy_transporter', 'in_house_rider', 'self_pickup'
+    pickup_pin VARCHAR(5) NULL, -- 5-digit rider handover verification PIN
     subtotal NUMERIC(12, 2) NOT NULL,
-    delivery_fee NUMERIC(12, 2) NOT NULL,
+    delivery_fee NUMERIC(12, 2) NOT NULL DEFAULT 0.00,
     total NUMERIC(12, 2) NOT NULL,
     currency VARCHAR(10) DEFAULT 'XAF',
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 ```
 

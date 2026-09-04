@@ -1,9 +1,9 @@
 # Product Requirements Document (PRD)
 # Wunabuy — Multi-Sided Mobile E-Commerce & Logistics Platform
 
-**Document Version:** 2.0  
+**Document Version:** 2.9  
 **Status:** Revised / Launch-Ready Production Baseline  
-**Date:** September 2, 2026  
+**Date:** September 4, 2026  
 **Author:** Product Management & Engineering Architecture Team  
 **Target Launch:** Q1 2027  
 **File Location:** `wunabuy/docs/Wunabuy_PRD_v1.0.md`
@@ -41,6 +41,7 @@ This PRD defines the product vision, market outcome, launch scope, UI/UX archite
 | 2.5 | September 3, 2026 | Architecture & Engineering Team | API Service Adapter Layer & Active Bilingual EN/FR i18n Engine Release (v2.5): (1) Production API Service Client & Endpoint Integration Adapter Layer (`staff-portal/src/services/`) mapping every operational page and store to RESTful backend endpoints (`apiClient.ts`, `authApi.ts`, `staffDirectoryApi.ts`, `kycApi.ts`, `disputesApi.ts`, `financialsApi.ts`, `logisticsApi.ts`, `tasksApi.ts`, `rbacApi.ts`, `auditLogsApi.ts`) with Sanctum Bearer tokens and offline fallback. (2) Active Bilingual Internationalization (i18n) Engine (`LanguageContext.tsx`, `translations.ts`) allowing staff members to seamlessly toggle between English (`EN 🇬🇧`) and French (`FR 🇫🇷`) with persistent browser state. (3) Prominent Header Language Selector pill button in `Header.tsx`. |
 | 2.7 | September 3, 2026 | Architecture & Engineering Team | System Notifications & Operational Alerts Center (`NotificationsPage.tsx`, `notificationsStore.ts`), Header Support Chat routing (`/communications`), Strict 3-Color Brand Palette Unification (Emerald Teal `#0D9488`, Amber Gold `#F59E0B`, White/Dark Slate), and Complete Backend Technical Specifications & API Harmony (`Wunabuy_Backend_Tech_Spec_v1.0.md` v2.7). |
 | 2.8 | September 4, 2026 | Architecture & Engineering Team | Mobile App UX & Native Capability Release: (1) Outstanding Onboarding Experience (`OnboardingScreen.tsx`) featuring 3 welcoming sliders tailored for Cameroon/African markets (Escrow Trust, Live GPS Delivery, Verified Stores) with manual touch/swipe control, custom pure escrow diagram, rebranded full-bleed background imagery, and removed top bordered pills. (2) Seller Live Camera Barcode Scanner (`AddEditProductScreen.tsx`) powered by `expo-camera` with real-time `onBarcodeScanned` sensor detection (EAN-13/UPC/QR), hardware torch toggle button, reticle laser viewfinder, and instant store catalog auto-fill. (3) Multi-Image Product Gallery Modal (`ProductImageGalleryModal.tsx`). (4) Monorepo Shared Package System (`@wunabuy/design-tokens`, `@wunabuy/types`, `@wunabuy/utils`). |
+| 2.9 | September 4, 2026 | Architecture & Engineering Team | Seller Store Profile Architecture, Rider Handover PIN & Logistics Specs (v2.9): (1) Seller Store Profile Creation & Editing Workspace (`EditStoreProfileScreen.tsx` & `SellerProfileScreen.tsx`) allowing merchants to manage Store Name, Category, Tagline, Bio, Physical Address, Landmark Directions, GPS Coordinates (Lat/Lng), Counter Operating Hours, Contact Phones, Email, Rider Pickup Instructions, Logo, and Banner Cover photos. (2) 5-Digit Handover Security PIN Verification System (`orders.pickup_pin`) generated upon order readiness to authenticate riders before parcel release. (3) Delivery Fee Restructuring & Personal Courier / Self-Pickup Workflow (`BuyerCartScreen.tsx` & `CheckoutPaymentScreen.tsx`) featuring downward summary table, 0 FCFA self-pickup option, embedded store specs inside selection modal. (4) Grid-Safe Route Directions & Logistics Specs across Transporter Active Trip (`TransporterActiveTripScreen.tsx`) and Buyer Order Tracking (`OrderTrackingScreen.tsx`). |
 
 ---
 

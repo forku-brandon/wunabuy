@@ -1,14 +1,32 @@
 # Software Requirements Specification (SRS)
 # Wunabuy — Multi-Sided E-Commerce & Web Staff Operations Platform
 
-**Document Version:** 2.8 (Mobile Live Camera Barcode Scanning, Cameroon Onboarding v2.8, Multi-Image Gallery, Monorepo Shared Packages)  
+**Document Version:** 2.9 (Seller Store Profile & Branding Architecture, Rider Handover PIN Verification, Self-Pickup Delivery & Logistics Specs)  
 **Date:** September 4, 2026  
 **Status:** Approved / In Production Use  
-**Companion Documents:** Wunabuy PRD v2.8, Wunabuy Frontend Tech Spec v2.8, Wunabuy Backend Tech Spec v2.7  
+**Companion Documents:** Wunabuy PRD v2.9, Wunabuy Frontend Tech Spec v2.9, Wunabuy Backend Tech Spec v2.9  
 
 ---
 
-## 🚀 Key Mobile & Architecture v2.8 Specifications (September 2026)
+## 🚀 Key Mobile & Architecture v2.9 Specifications (September 2026)
+
+- **Seller Store Profile & Branding Architecture (`EditStoreProfileScreen.tsx`, `SellerProfileScreen.tsx`, `StoreDetailScreen.tsx`)**:
+  - Full merchant profile creation and editing workspace for sellers to configure public store branding.
+  - Form fields & storage: Store Name, Category, Tagline, Bio / Description, Physical Address, Landmark Directions, GPS Coordinates (Lat/Lng), Counter Operating Hours, Primary & Secondary Contact Phones, Email, Rider Pickup Instructions, Logo, and Banner Cover photos.
+  - Public Store Profile (`StoreDetailScreen.tsx`): Displays store stats, ratings, landmark directions, pickup specs for buyers and drivers, catalog grid, and social/contact actions.
+
+- **Rider Handover Code Verification System (`orders.pickup_pin`)**:
+  - 5-digit security PIN generated automatically when order reaches `ready_for_pickup` status.
+  - Transporters must present or verify this PIN at the merchant counter before parcel release to prevent unauthorized order pickups.
+
+- **Delivery Fee Restructuring & Personal Courier / Self-Pickup Workflow (`BuyerCartScreen.tsx`, `CheckoutPaymentScreen.tsx`)**:
+  - Restructured cart breakdown with downward delivery fee summary row (Base fee + Distance calculation).
+  - 0 FCFA self-pickup option: Allows buyers to collect orders directly from store counter without delivery fees.
+  - Embedded store pickup specs modal detailing store location, operating hours, and counter pickup instructions.
+
+- **Grid-Safe Route Directions & Logistics Specs (`TransporterActiveTripScreen.tsx`, `OrderTrackingScreen.tsx`)**:
+  - Transporter Active Trip: Dedicated 🟢 Merchant Collection Specs card (Landmark directions, counter hours, pickup PIN note, store contacts, `Call Merchant` + `GPS Route` actions) and 🔴 Buyer Destination Specs card (Landmark directions, drop-off note, customer contacts, `Call Customer` + `GPS Route` actions).
+  - Strict layout safety ensuring zero text overflow across all screen sizes and grid containers.
 
 - **Seller Live Camera Barcode Scanner (`AddEditProductScreen.tsx`)**:
   - Hardware camera feed via `expo-camera` supporting real-time `onBarcodeScanned` sensor callback across EAN-13, EAN-8, UPC-A, UPC-E, QR, Code 128, and Code 39 barcode formats.

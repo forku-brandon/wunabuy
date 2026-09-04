@@ -1145,6 +1145,8 @@ CREATE TABLE orders (
     store_id UUID NOT NULL REFERENCES stores(id),
     transporter_id UUID NULL REFERENCES users(id),
     status VARCHAR(50) NOT NULL DEFAULT 'pending_payment',
+    delivery_method VARCHAR(50) NOT NULL DEFAULT 'wunabuy_transporter',
+    pickup_pin VARCHAR(5) NULL,
     subtotal NUMERIC(12, 2) NOT NULL,
     delivery_fee NUMERIC(12, 2) NOT NULL DEFAULT 0,
     commission NUMERIC(12, 2) NOT NULL DEFAULT 0,
@@ -1170,4 +1172,67 @@ CREATE TABLE wallets (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 ```
+
+---
+
+## 12. Store Profile & Rider Handover PIN Endpoints (v2.9)
+
+### 12.1 Seller Store Profile & Branding Update
+- **HTTP Method:** `POST`
+- **Endpoint:** `/api/v1/seller/store/profile`
+- **Headers:** `Authorization: Bearer <sanctum_token>`, `Content-Type: application/json`
+- **Request Body:**
+```json
+{
+  "store_name": "Douala Tech Hub",
+  "category": "Electronics",
+  "tagline": "Premium Gadgets & Smart Electronics",
+  "description": "Authorized dealer for mobile phones, laptops, and original accessories in Douala.",
+  "address_text": "Akwa, Boulevard de la Liberté, Douala",
+  "landmark_directions": "Opposite General Express Voyage, next to UBA Bank Akwa branch.",
+  "latitude": 4.0510,
+  "longitude": 9.7679,
+  "primary_phone": "+237670123456",
+  "secondary_phone": "+237690987654",
+  "operating_hours": "Mon-Sat: 08:00 - 18:00",
+  "rider_pickup_instructions": "Enter counter #2 at the main showroom. Present rider handover PIN to store manager.",
+  "logo_url": "https://storage.wunabuy.com/stores/logo_101.jpg",
+  "cover_photo_url": "https://storage.wunabuy.com/stores/cover_101.jpg"
+}
+```
+- **Response (200 OK):**
+```json
+{
+  "success": true,
+  "data": {
+    "store_id": "store_101",
+    "store_name": "Douala Tech Hub",
+    "updated_at": "2026-09-04T18:30:00Z"
+  }
+}
+```
+
+### 12.2 Handover Security PIN Verification
+- **HTTP Method:** `POST`
+- **Endpoint:** `/api/v1/orders/{id}/verify-handover-pin`
+- **Headers:** `Authorization: Bearer <sanctum_token>`, `Content-Type: application/json`
+- **Request Body:**
+```json
+{
+  "pickup_pin": "58492"
+}
+```
+- **Response (200 OK):**
+```json
+{
+  "success": true,
+  "data": {
+    "order_id": "ord_8849",
+    "verified": true,
+    "status": "in_transit",
+    "message": "Rider handover PIN verified. Order status updated to in_transit."
+  }
+}
+```
+
 
