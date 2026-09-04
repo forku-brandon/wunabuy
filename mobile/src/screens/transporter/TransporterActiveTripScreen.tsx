@@ -25,13 +25,19 @@ export const TransporterActiveTripScreen = ({ route, navigation }: any) => {
     current_stage: stage,
     verification_code: '7842',
     delivery_fee: 1500,
-    items_summary: '1x Samsung Galaxy A54 5G (Package size: Small)',
-    store_name: 'Douala Tech Hub (Akwa)',
-    store_address: 'Rue Joss, Akwa, Douala',
-    store_phone: '+237 670 111 222',
-    buyer_name: 'Sanusi Olamide',
-    buyer_address: 'Boulevard de la Liberté, Bonanjo, Douala',
-    buyer_phone: '+237 690 333 444',
+    items_summary: 'Samsung Galaxy A54 5G (128GB - Factory Sealed)',
+    package_specs: 'Fragile Electronics • Small Box (< 2 kg)',
+    store_name: 'Douala Tech Hub (Akwa Branch)',
+    store_address: 'Rue Joss, Quartier Akwa, Douala, Cameroon',
+    store_landmark_directions: 'Opposite Place du Gouvernement, Next to Akwa Mall (1st Floor, Suite 104)',
+    store_phone: '+237 670 123 456 / +237 699 876 543',
+    store_operating_hours: 'Mon - Sat: 8:00 AM - 6:30 PM',
+    store_handover_instructions: '🔑 Present rider ID & ask merchant for pickup PIN #7842. Package ready at Counter #2.',
+    buyer_name: 'Marie Claire Ngono',
+    buyer_address: 'Boulevard de la Liberté, Quartier Akwa, Douala, Cameroon',
+    buyer_landmark_directions: 'Near BICEC Bank Main Gate, White 2-Story Building with Blue Gate (2nd Floor)',
+    buyer_phone: '+237 671 234 567',
+    buyer_delivery_instructions: 'Ring doorbell at front gate or call buyer on arrival. Buyer will inspect parcel & sign POD.',
   });
 
   useEffect(() => {
@@ -45,11 +51,17 @@ export const TransporterActiveTripScreen = ({ route, navigation }: any) => {
   const orderCode = tripData.order_code;
   const storeName = tripData.store_name;
   const storeAddress = tripData.store_address;
+  const storeLandmark = tripData.store_landmark_directions;
   const storePhone = tripData.store_phone;
+  const storeHours = tripData.store_operating_hours;
+  const storeHandoverNote = tripData.store_handover_instructions;
   const buyerName = tripData.buyer_name;
   const buyerAddress = tripData.buyer_address;
+  const buyerLandmark = tripData.buyer_landmark_directions;
   const buyerPhone = tripData.buyer_phone;
+  const buyerInstructions = tripData.buyer_delivery_instructions;
   const itemsSummary = tripData.items_summary;
+  const packageSpecs = tripData.package_specs;
   const deliveryFee = tripData.delivery_fee;
   const verificationCode = tripData.verification_code;
 
@@ -158,11 +170,16 @@ export const TransporterActiveTripScreen = ({ route, navigation }: any) => {
           <View style={styles.dispatchHeaderRow}>
             <View style={{ flex: 1, marginRight: spacing.sm }}>
               <Text variant="caption" secondary bold>
-                ITEMS TO TRANSPORT
+                ITEM TO TRANSPORT
               </Text>
               <Text variant="bodyLarge" bold color={colors.primary[500]} style={{ marginTop: 2 }}>
                 📦 {itemsSummary}
               </Text>
+              {packageSpecs && (
+                <Text variant="caption" secondary style={{ fontSize: 11, marginTop: 2 }}>
+                  {packageSpecs}
+                </Text>
+              )}
             </View>
             <View style={styles.payoutBadgePillContainer}>
               <Text variant="caption" secondary bold style={{ fontSize: 10 }}>
@@ -178,7 +195,7 @@ export const TransporterActiveTripScreen = ({ route, navigation }: any) => {
 
           {/* Emphasized Route Addresses with Active Stage Highlight */}
           <View style={styles.routeSectionContainer}>
-            {/* 1. Store Pickup Location */}
+            {/* 1. Store Pickup Location (Merchant Collection Specs) */}
             <View
               style={[
                 styles.locationBox,
@@ -193,39 +210,86 @@ export const TransporterActiveTripScreen = ({ route, navigation }: any) => {
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <Ionicons name="storefront" size={16} color={colors.primary[600]} />
                   <Text variant="caption" bold color={colors.primary[700]} style={{ marginLeft: 6 }}>
-                    1. STORE PICKUP LOCATION
+                    1. MERCHANT PICKUP LOCATION
                   </Text>
                 </View>
                 {currentStage <= 2 ? (
                   <Badge label="ACTIVE STEP" variant="primary" size="small" />
                 ) : (
-                  <Badge label="COMPLETED" variant="success" size="small" />
+                  <Badge label="COMPLETED ✓" variant="success" size="small" />
                 )}
               </View>
-              <Text variant="bodyLarge" bold style={{ marginTop: 4 }}>
-                {storeName}
+
+              {/* Store Name & Address */}
+              <Text variant="bodyLarge" bold style={{ marginTop: 6 }}>
+                🏬 {storeName}
               </Text>
               <Text variant="bodyMedium" color={theme.textSecondary} style={{ marginTop: 2 }}>
                 📍 {storeAddress}
               </Text>
 
-              {currentStage <= 2 && (
-                <View style={styles.contactActionRow}>
-                  <TouchableOpacity
-                    activeOpacity={0.8}
-                    onPress={() => Alert.alert('Calling Store', `Dialing merchant store: ${storePhone}`)}
-                    style={[styles.callBtn, { backgroundColor: isDark ? colors.neutral[700] : '#CCFBF1' }]}
-                  >
-                    <Ionicons name="call" size={14} color={colors.primary[700]} />
-                    <Text variant="caption" bold color={colors.primary[700]}>
-                      Call Merchant Store ({storePhone})
-                    </Text>
-                  </TouchableOpacity>
+              {/* Detailed Landmark Directions */}
+              {storeLandmark && (
+                <View style={styles.specDetailRow}>
+                  <Ionicons name="compass-outline" size={14} color={colors.primary[600]} style={{ marginRight: 6 }} />
+                  <Text variant="caption" bold color={theme.text}>
+                    Landmark Directions:
+                  </Text>
+                  <Text variant="caption" secondary style={{ marginLeft: 4, flex: 1 }}>
+                    {storeLandmark}
+                  </Text>
                 </View>
               )}
+
+              {/* Operating Hours */}
+              {storeHours && (
+                <View style={styles.specDetailRow}>
+                  <Ionicons name="time-outline" size={14} color={colors.primary[600]} style={{ marginRight: 6 }} />
+                  <Text variant="caption" bold color={theme.text}>
+                    Counter Hours:
+                  </Text>
+                  <Text variant="caption" secondary style={{ marginLeft: 4, flex: 1 }}>
+                    {storeHours}
+                  </Text>
+                </View>
+              )}
+
+              {/* Pickup Handover Instructions */}
+              {storeHandoverNote && (
+                <View style={[styles.handoverNoteBox, { backgroundColor: isDark ? colors.neutral[900] : '#FFFFFF', borderColor: theme.border }]}>
+                  <Text variant="caption" bold color={colors.primary[700]}>
+                    {storeHandoverNote}
+                  </Text>
+                </View>
+              )}
+
+              {/* Action Buttons for Merchant Collection */}
+              <View style={styles.contactActionRow}>
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => Alert.alert('Calling Merchant Store', `Dialing store counter: ${storePhone}`)}
+                  style={[styles.callBtn, { flex: 1, backgroundColor: isDark ? colors.neutral[700] : '#CCFBF1' }]}
+                >
+                  <Ionicons name="call" size={14} color={colors.primary[700]} />
+                  <Text variant="caption" bold color={colors.primary[700]}>
+                    Call Store ({storePhone})
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => Alert.alert('GPS Navigation', `Opening GPS turn-by-turn directions to: ${storeAddress}`)}
+                  style={[styles.callBtn, { paddingHorizontal: spacing.sm, backgroundColor: isDark ? colors.neutral[700] : colors.neutral[200] }]}
+                >
+                  <Ionicons name="navigate" size={14} color={theme.text} />
+                  <Text variant="caption" bold color={theme.text}>
+                    GPS 🧭
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
 
-            {/* 2. Buyer Delivery Destination */}
+            {/* 2. Buyer Delivery Destination (Doorstep Drop-off Specs) */}
             <View
               style={[
                 styles.locationBox,
@@ -233,7 +297,7 @@ export const TransporterActiveTripScreen = ({ route, navigation }: any) => {
                   backgroundColor: currentStage > 2 ? (isDark ? 'rgba(16,185,129,0.15)' : '#ECFDF5') : (isDark ? colors.neutral[800] : colors.neutral[50]),
                   borderColor: currentStage > 2 ? '#10B981' : theme.border,
                   borderWidth: currentStage > 2 ? 2 : 1,
-                  marginTop: spacing.xs + 2,
+                  marginTop: spacing.md,
                 },
               ]}
             >
@@ -246,27 +310,61 @@ export const TransporterActiveTripScreen = ({ route, navigation }: any) => {
                 </View>
                 {currentStage > 2 && <Badge label="ACTIVE STEP" variant="success" size="small" />}
               </View>
-              <Text variant="bodyLarge" bold style={{ marginTop: 4 }}>
+
+              {/* Buyer Name & Address */}
+              <Text variant="bodyLarge" bold style={{ marginTop: 6 }}>
                 👤 {buyerName}
               </Text>
               <Text variant="bodyMedium" color={theme.textSecondary} style={{ marginTop: 2 }}>
                 📍 {buyerAddress}
               </Text>
 
-              {currentStage > 2 && (
-                <View style={styles.contactActionRow}>
-                  <TouchableOpacity
-                    activeOpacity={0.8}
-                    onPress={() => Alert.alert('Calling Buyer', `Dialing customer: ${buyerPhone}`)}
-                    style={[styles.callBtn, { backgroundColor: isDark ? colors.neutral[700] : '#D1FAE5' }]}
-                  >
-                    <Ionicons name="call" size={14} color="#10B981" />
-                    <Text variant="caption" bold color="#10B981">
-                      Call Customer ({buyerPhone})
-                    </Text>
-                  </TouchableOpacity>
+              {/* Detailed Buyer Landmark Directions */}
+              {buyerLandmark && (
+                <View style={styles.specDetailRow}>
+                  <Ionicons name="compass-outline" size={14} color="#10B981" style={{ marginRight: 6 }} />
+                  <Text variant="caption" bold color={theme.text}>
+                    Landmark Directions:
+                  </Text>
+                  <Text variant="caption" secondary style={{ marginLeft: 4, flex: 1 }}>
+                    {buyerLandmark}
+                  </Text>
                 </View>
               )}
+
+              {/* Delivery Drop-off Instructions */}
+              {buyerInstructions && (
+                <View style={[styles.handoverNoteBox, { backgroundColor: isDark ? colors.neutral[900] : '#FFFFFF', borderColor: theme.border }]}>
+                  <Text variant="caption" bold color="#059669">
+                    📌 Drop-off Note: {buyerInstructions}
+                  </Text>
+                </View>
+              )}
+
+              {/* Action Buttons for Buyer Delivery */}
+              <View style={styles.contactActionRow}>
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => Alert.alert('Calling Buyer', `Dialing customer: ${buyerPhone}`)}
+                  style={[styles.callBtn, { flex: 1, backgroundColor: isDark ? colors.neutral[700] : '#D1FAE5' }]}
+                >
+                  <Ionicons name="call" size={14} color="#10B981" />
+                  <Text variant="caption" bold color="#10B981">
+                    Call Customer ({buyerPhone})
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => Alert.alert('GPS Navigation', `Opening GPS turn-by-turn directions to buyer: ${buyerAddress}`)}
+                  style={[styles.callBtn, { paddingHorizontal: spacing.sm, backgroundColor: isDark ? colors.neutral[700] : colors.neutral[200] }]}
+                >
+                  <Ionicons name="navigate" size={14} color={theme.text} />
+                  <Text variant="caption" bold color={theme.text}>
+                    GPS 🧭
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
 
@@ -393,7 +491,21 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   contactActionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
     marginTop: spacing.sm,
+  },
+  specDetailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.xs,
+  },
+  handoverNoteBox: {
+    padding: spacing.xs + 2,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    marginTop: spacing.xs + 2,
   },
   callBtn: {
     flexDirection: 'row',
