@@ -158,6 +158,16 @@ const SAMPLE_REVIEWS = [
   },
 ];
 
+interface ExtendedStoreData extends FollowedStoreData {
+  tagline?: string;
+  landmarkDirections?: string;
+  primaryPhone?: string;
+  secondaryPhone?: string;
+  operatingHours?: string;
+  riderPickupInstructions?: string;
+  description?: string;
+}
+
 export const StoreDetailScreen = ({ navigation, route }: any) => {
   const { theme, isDark } = useThemeStore();
   const insets = useSafeAreaInsets();
@@ -170,15 +180,7 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
 
   const isOwnStore = storeId === 'store_1' || storeId === 'store_101' || !passedStore;
 
-  const storeInfo: FollowedStoreData & {
-    tagline?: string;
-    landmarkDirections?: string;
-    primaryPhone?: string;
-    secondaryPhone?: string;
-    operatingHours?: string;
-    riderPickupInstructions?: string;
-    description?: string;
-  } = {
+  const storeInfo: ExtendedStoreData = {
     ...SAMPLE_STORE_DATA,
     id: storeId,
     name: passedStore?.name || passedStore?.store_name || (isOwnStore ? sellerStore.storeName : SAMPLE_STORE_DATA.name),
