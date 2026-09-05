@@ -28,6 +28,10 @@ export interface StorePickupTableProps {
   style?: ViewStyle;
 }
 
+const COL1_WIDTH = 160;
+const COL2_WIDTH = 360;
+const TABLE_TOTAL_WIDTH = COL1_WIDTH + COL2_WIDTH;
+
 export const StorePickupTable: React.FC<StorePickupTableProps> = ({
   pickupPin = '84920',
   storeName = 'Douala Tech Hub (Akwa Branch)',
@@ -39,7 +43,6 @@ export const StorePickupTable: React.FC<StorePickupTableProps> = ({
   riderInstructions = 'Present 5-digit PIN at counter #2 for parcel release.',
   latitude = 4.0510,
   longitude = 9.7679,
-  maxHeight = 260,
   style,
 }) => {
   const { theme, isDark } = useThemeStore();
@@ -81,158 +84,168 @@ export const StorePickupTable: React.FC<StorePickupTableProps> = ({
         </Text>
       </View>
 
-      {/* Section Header */}
+      {/* Section Header with Horizontal Scroll Indicator */}
       <View style={styles.tableSectionTitleRow}>
         <Ionicons name="location" size={16} color={colors.primary[600]} />
         <Text variant="caption" bold color={colors.primary[600]} style={{ marginLeft: 6 }}>
           DETAILED STORE PICKUP SPECIFICATIONS:
         </Text>
-        <Text variant="caption" secondary style={{ marginLeft: 'auto', fontSize: 10 }}>
-          Scroll for info ↕
-        </Text>
+
+        <View style={[styles.scrollHintBadge, { backgroundColor: isDark ? colors.neutral[800] : '#E2E8F0' }]}>
+          <Ionicons name="swap-horizontal" size={12} color={colors.primary[600]} style={{ marginRight: 3 }} />
+          <Text variant="caption" bold color={colors.primary[600]} style={{ fontSize: 10 }}>
+            Scroll ↔
+          </Text>
+        </View>
       </View>
 
-      {/* Scrollable Tabular Grid Container */}
-      <View style={[styles.scrollBorderWrapper, { maxHeight, borderColor: isDark ? colors.neutral[700] : colors.neutral[300] }]}>
+      {/* Fully Unfolded Table with Horizontal ScrollView */}
+      <View style={[styles.tableOuterWrapper, { borderColor: isDark ? colors.neutral[700] : colors.neutral[300] }]}>
         <ScrollView
-          nestedScrollEnabled
-          showsVerticalScrollIndicator={true}
+          horizontal
+          showsHorizontalScrollIndicator={true}
           persistentScrollbar={true}
-          contentContainerStyle={styles.tableScrollContent}
+          contentContainerStyle={{ width: TABLE_TOTAL_WIDTH }}
         >
-          {/* Table Header Row */}
-          <View style={[styles.tableHeaderRow, { backgroundColor: isDark ? colors.neutral[800] : '#E2E8F0' }]}>
-            <Text variant="caption" bold style={[styles.cellKeyHeader, { color: theme.textSecondary }]}>
-              SPECIFICATION
-            </Text>
-            <Text variant="caption" bold style={[styles.cellValHeader, { color: theme.textSecondary }]}>
-              DETAILS & DIRECTIONS
-            </Text>
-          </View>
+          <View style={{ width: TABLE_TOTAL_WIDTH }}>
+            {/* Table Header Row */}
+            <View style={[styles.tableHeaderRow, { backgroundColor: isDark ? colors.neutral[800] : '#E2E8F0', borderBottomColor: isDark ? colors.neutral[700] : '#CBD5E1' }]}>
+              <View style={[styles.cellKey, { width: COL1_WIDTH }]}>
+                <Text variant="caption" bold style={{ color: theme.textSecondary, fontSize: 10 }}>
+                  SPECIFICATION
+                </Text>
+              </View>
+              <View style={[styles.cellVal, { width: COL2_WIDTH }]}>
+                <Text variant="caption" bold style={{ color: theme.textSecondary, fontSize: 10 }}>
+                  DETAILS & DIRECTIONS
+                </Text>
+              </View>
+            </View>
 
-          {/* Row 1: Store Name */}
-          <View style={[styles.tableRow, { borderBottomColor: isDark ? colors.neutral[800] : '#F1F5F9' }]}>
-            <View style={styles.cellKey}>
-              <Ionicons name="storefront-outline" size={14} color={colors.primary[600]} style={{ marginRight: 6 }} />
-              <Text variant="caption" bold color={theme.text}>
-                Store Name
-              </Text>
+            {/* Row 1: Store Name */}
+            <View style={[styles.tableRow, { borderBottomColor: isDark ? colors.neutral[800] : '#F1F5F9' }]}>
+              <View style={[styles.cellKey, { width: COL1_WIDTH }]}>
+                <Ionicons name="storefront-outline" size={14} color={colors.primary[600]} style={{ marginRight: 6 }} />
+                <Text variant="caption" bold color={theme.text} numberOfLines={1}>
+                  Store Name
+                </Text>
+              </View>
+              <View style={[styles.cellVal, { width: COL2_WIDTH }]}>
+                <Text variant="caption" bold color={colors.primary[600]}>
+                  {storeName}
+                </Text>
+              </View>
             </View>
-            <View style={styles.cellVal}>
-              <Text variant="caption" bold color={colors.primary[600]}>
-                {storeName}
-              </Text>
-            </View>
-          </View>
 
-          {/* Row 2: Physical Address */}
-          <View style={[styles.tableRow, { borderBottomColor: isDark ? colors.neutral[800] : '#F1F5F9', backgroundColor: isDark ? 'transparent' : '#FAFAFA' }]}>
-            <View style={styles.cellKey}>
-              <Ionicons name="location-outline" size={14} color={colors.primary[600]} style={{ marginRight: 6 }} />
-              <Text variant="caption" bold color={theme.text}>
-                Physical Address
-              </Text>
+            {/* Row 2: Physical Address */}
+            <View style={[styles.tableRow, { borderBottomColor: isDark ? colors.neutral[800] : '#F1F5F9', backgroundColor: isDark ? 'transparent' : '#FAFAFA' }]}>
+              <View style={[styles.cellKey, { width: COL1_WIDTH }]}>
+                <Ionicons name="location-outline" size={14} color={colors.primary[600]} style={{ marginRight: 6 }} />
+                <Text variant="caption" bold color={theme.text} numberOfLines={1}>
+                  Physical Address
+                </Text>
+              </View>
+              <View style={[styles.cellVal, { width: COL2_WIDTH }]}>
+                <Text variant="caption" secondary>
+                  {addressText}
+                </Text>
+              </View>
             </View>
-            <View style={styles.cellVal}>
-              <Text variant="caption" secondary>
-                {addressText}
-              </Text>
-            </View>
-          </View>
 
-          {/* Row 3: Landmark Directions */}
-          <View style={[styles.tableRow, { borderBottomColor: isDark ? colors.neutral[800] : '#F1F5F9' }]}>
-            <View style={styles.cellKey}>
-              <Ionicons name="compass-outline" size={14} color={colors.primary[600]} style={{ marginRight: 6 }} />
-              <Text variant="caption" bold color={theme.text}>
-                Landmarks
-              </Text>
+            {/* Row 3: Landmark Directions */}
+            <View style={[styles.tableRow, { borderBottomColor: isDark ? colors.neutral[800] : '#F1F5F9' }]}>
+              <View style={[styles.cellKey, { width: COL1_WIDTH }]}>
+                <Ionicons name="compass-outline" size={14} color={colors.primary[600]} style={{ marginRight: 6 }} />
+                <Text variant="caption" bold color={theme.text} numberOfLines={1}>
+                  Landmarks
+                </Text>
+              </View>
+              <View style={[styles.cellVal, { width: COL2_WIDTH }]}>
+                <Text variant="caption" secondary>
+                  {landmarkDirections}
+                </Text>
+              </View>
             </View>
-            <View style={styles.cellVal}>
-              <Text variant="caption" secondary>
-                {landmarkDirections}
-              </Text>
-            </View>
-          </View>
 
-          {/* Row 4: Store Contacts (Tap to Call) */}
-          <View style={[styles.tableRow, { borderBottomColor: isDark ? colors.neutral[800] : '#F1F5F9', backgroundColor: isDark ? 'transparent' : '#FAFAFA' }]}>
-            <View style={styles.cellKey}>
-              <Ionicons name="call-outline" size={14} color={colors.primary[600]} style={{ marginRight: 6 }} />
-              <Text variant="caption" bold color={theme.text}>
-                Store Phone
-              </Text>
+            {/* Row 4: Store Contacts (Tap to Call) */}
+            <View style={[styles.tableRow, { borderBottomColor: isDark ? colors.neutral[800] : '#F1F5F9', backgroundColor: isDark ? 'transparent' : '#FAFAFA' }]}>
+              <View style={[styles.cellKey, { width: COL1_WIDTH }]}>
+                <Ionicons name="call-outline" size={14} color={colors.primary[600]} style={{ marginRight: 6 }} />
+                <Text variant="caption" bold color={theme.text} numberOfLines={1}>
+                  Store Phone
+                </Text>
+              </View>
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => handleCall(primaryPhone)}
+                style={[styles.cellVal, { width: COL2_WIDTH }]}
+              >
+                <Text variant="caption" bold color={colors.primary[600]} style={{ textDecorationLine: 'underline' }}>
+                  {contactString} 📞
+                </Text>
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={() => handleCall(primaryPhone)}
-              style={styles.cellVal}
-            >
-              <Text variant="caption" bold color={colors.primary[600]} style={{ textDecorationLine: 'underline' }}>
-                {contactString} 📞
-              </Text>
-            </TouchableOpacity>
-          </View>
 
-          {/* Row 5: Operating Hours */}
-          <View style={[styles.tableRow, { borderBottomColor: isDark ? colors.neutral[800] : '#F1F5F9' }]}>
-            <View style={styles.cellKey}>
-              <Ionicons name="time-outline" size={14} color={colors.primary[600]} style={{ marginRight: 6 }} />
-              <Text variant="caption" bold color={theme.text}>
-                Counter Hours
-              </Text>
+            {/* Row 5: Operating Hours */}
+            <View style={[styles.tableRow, { borderBottomColor: isDark ? colors.neutral[800] : '#F1F5F9' }]}>
+              <View style={[styles.cellKey, { width: COL1_WIDTH }]}>
+                <Ionicons name="time-outline" size={14} color={colors.primary[600]} style={{ marginRight: 6 }} />
+                <Text variant="caption" bold color={theme.text} numberOfLines={1}>
+                  Counter Hours
+                </Text>
+              </View>
+              <View style={[styles.cellVal, { width: COL2_WIDTH }]}>
+                <Text variant="caption" secondary>
+                  {operatingHours}
+                </Text>
+              </View>
             </View>
-            <View style={styles.cellVal}>
-              <Text variant="caption" secondary>
-                {operatingHours}
-              </Text>
-            </View>
-          </View>
 
-          {/* Row 6: GPS Directions (Tap for Maps) */}
-          <View style={[styles.tableRow, { borderBottomColor: isDark ? colors.neutral[800] : '#F1F5F9', backgroundColor: isDark ? 'transparent' : '#FAFAFA' }]}>
-            <View style={styles.cellKey}>
-              <Ionicons name="map-outline" size={14} color={colors.primary[600]} style={{ marginRight: 6 }} />
-              <Text variant="caption" bold color={theme.text}>
-                GPS Location
-              </Text>
+            {/* Row 6: GPS Directions (Tap for Maps) */}
+            <View style={[styles.tableRow, { borderBottomColor: isDark ? colors.neutral[800] : '#F1F5F9', backgroundColor: isDark ? 'transparent' : '#FAFAFA' }]}>
+              <View style={[styles.cellKey, { width: COL1_WIDTH }]}>
+                <Ionicons name="map-outline" size={14} color={colors.primary[600]} style={{ marginRight: 6 }} />
+                <Text variant="caption" bold color={theme.text} numberOfLines={1}>
+                  GPS Location
+                </Text>
+              </View>
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={handleOpenMap}
+                style={[styles.cellVal, { width: COL2_WIDTH }]}
+              >
+                <Text variant="caption" bold color={colors.primary[600]} style={{ textDecorationLine: 'underline' }}>
+                  {latitude.toFixed(4)}° N, {longitude.toFixed(4)}° E (Open Maps 🗺️)
+                </Text>
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={handleOpenMap}
-              style={styles.cellVal}
-            >
-              <Text variant="caption" bold color={colors.primary[600]} style={{ textDecorationLine: 'underline' }}>
-                {latitude.toFixed(4)}° N, {longitude.toFixed(4)}° E (Open Maps 🗺️)
-              </Text>
-            </TouchableOpacity>
-          </View>
 
-          {/* Row 7: Rider Instructions */}
-          <View style={[styles.tableRow, { borderBottomColor: isDark ? colors.neutral[800] : '#F1F5F9' }]}>
-            <View style={styles.cellKey}>
-              <Ionicons name="document-text-outline" size={14} color={colors.primary[600]} style={{ marginRight: 6 }} />
-              <Text variant="caption" bold color={theme.text}>
-                Counter Specs
-              </Text>
+            {/* Row 7: Rider Instructions */}
+            <View style={[styles.tableRow, { borderBottomColor: isDark ? colors.neutral[800] : '#F1F5F9' }]}>
+              <View style={[styles.cellKey, { width: COL1_WIDTH }]}>
+                <Ionicons name="document-text-outline" size={14} color={colors.primary[600]} style={{ marginRight: 6 }} />
+                <Text variant="caption" bold color={theme.text} numberOfLines={1}>
+                  Counter Specs
+                </Text>
+              </View>
+              <View style={[styles.cellVal, { width: COL2_WIDTH }]}>
+                <Text variant="caption" secondary>
+                  {riderInstructions}
+                </Text>
+              </View>
             </View>
-            <View style={styles.cellVal}>
-              <Text variant="caption" secondary>
-                {riderInstructions}
-              </Text>
-            </View>
-          </View>
 
-          {/* Row 8: Verified Merchant Status */}
-          <View style={[styles.tableRow, { borderBottomWidth: 0, backgroundColor: isDark ? 'transparent' : '#FAFAFA' }]}>
-            <View style={styles.cellKey}>
-              <Ionicons name="checkmark-seal-outline" size={14} color={colors.semantic.success[500]} style={{ marginRight: 6 }} />
-              <Text variant="caption" bold color={theme.text}>
-                Verification
-              </Text>
-            </View>
-            <View style={styles.cellVal}>
-              <Badge label="Verified Store 🏬✓" variant="success" size="small" />
+            {/* Row 8: Verified Merchant Status */}
+            <View style={[styles.tableRow, { borderBottomWidth: 0, backgroundColor: isDark ? 'transparent' : '#FAFAFA' }]}>
+              <View style={[styles.cellKey, { width: COL1_WIDTH }]}>
+                <Ionicons name="checkmark-seal-outline" size={14} color={colors.semantic.success[500]} style={{ marginRight: 6 }} />
+                <Text variant="caption" bold color={theme.text} numberOfLines={1}>
+                  Verification
+                </Text>
+              </View>
+              <View style={[styles.cellVal, { width: COL2_WIDTH }]}>
+                <Badge label="Verified Store 🏬✓" variant="success" size="small" />
+              </View>
             </View>
           </View>
         </ScrollView>
@@ -281,45 +294,40 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
     marginTop: 2,
   },
-  scrollBorderWrapper: {
+  scrollHintBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: borderRadius.full,
+    marginLeft: 'auto',
+  },
+  tableOuterWrapper: {
     borderRadius: borderRadius.lg,
     borderWidth: 1,
     overflow: 'hidden',
   },
-  tableScrollContent: {
-    paddingBottom: spacing.xs,
-  },
   tableHeaderRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: spacing.sm,
-    paddingVertical: 6,
+    paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#CBD5E1',
-  },
-  cellKeyHeader: {
-    width: '38%',
-    fontSize: 10,
-  },
-  cellValHeader: {
-    width: '62%',
-    fontSize: 10,
   },
   tableRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs + 2,
+    paddingVertical: spacing.xs + 3,
     borderBottomWidth: 1,
   },
   cellKey: {
-    width: '38%',
     flexDirection: 'row',
     alignItems: 'center',
     paddingRight: spacing.xs,
   },
   cellVal: {
-    width: '62%',
     justifyContent: 'center',
+    paddingRight: spacing.xs,
   },
 });
-
