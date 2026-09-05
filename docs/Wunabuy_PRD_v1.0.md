@@ -3,7 +3,7 @@
 
 **Document Version:** 2.9  
 **Status:** Revised / Launch-Ready Production Baseline  
-**Date:** September 4, 2026  
+**Date:** September 5, 2026  
 **Author:** Product Management & Engineering Architecture Team  
 **Target Launch:** Q1 2027  
 **File Location:** `wunabuy/docs/Wunabuy_PRD_v1.0.md`
