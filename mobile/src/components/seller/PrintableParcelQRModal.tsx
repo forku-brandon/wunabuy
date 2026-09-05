@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   StyleSheet,
@@ -9,10 +9,9 @@ import {
   TouchableWithoutFeedback,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { ScreenContainer, Text, Card, Button, Badge } from '../ui';
+import { Text, Button, Badge } from '../ui';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
-import { formatXAF, formatDate } from '@wunabuy/utils';
 
 export interface PrintableParcelQRModalProps {
   visible: boolean;
@@ -37,37 +36,22 @@ export const PrintableParcelQRModal: React.FC<PrintableParcelQRModalProps> = ({
   order,
 }) => {
   const { theme, isDark } = useThemeStore();
-  const [testScanResult, setTestScanResult] = useState<{
-    matched: boolean;
-    scannedCode: string;
-    assignedCode: string;
-  } | null>(null);
 
   if (!order) return null;
 
   const handlePrintTag = () => {
     Alert.alert(
-      '🖨️ Printing Parcel Waybill Tag',
-      `Shipping Tag for Order #${order.order_code} (PIN: #${order.pickup_pin}) generated successfully.\nLabel sent to store thermal printer & saved to device.`,
+      '🖨️ Printing Parcel QR Code',
+      `QR Code for Order #${order.order_code} (PIN: #${order.pickup_pin}) sent to printer.\nAttached to package for transporter scan verification.`,
       [{ text: 'OK' }]
     );
-  };
-
-  const handleSimulateTransporterScan = (isCorrectParcel: boolean) => {
-    const scannedCode = isCorrectParcel ? order.order_code : 'ORD-MISMATCH-999';
-    const matched = scannedCode === order.order_code;
-    setTestScanResult({
-      matched,
-      scannedCode,
-      assignedCode: order.order_code,
-    });
   };
 
   return (
     <Modal
       visible={visible}
       transparent
-      animationType="slide"
+      animationType="fade"
       onRequestClose={onClose}
     >
       <View style={styles.modalOverlay}>
@@ -81,7 +65,7 @@ export const PrintableParcelQRModal: React.FC<PrintableParcelQRModalProps> = ({
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Ionicons name="qr-code-outline" size={24} color={colors.primary[500]} />
               <Text variant="h2" bold style={{ marginLeft: 8 }}>
-                Parcel Waybill & QR Tag
+                Parcel QR Tag
               </Text>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
@@ -89,147 +73,68 @@ export const PrintableParcelQRModal: React.FC<PrintableParcelQRModalProps> = ({
             </TouchableOpacity>
           </View>
 
-          <ScrollView style={{ maxHeight: 520 }} showsVerticalScrollIndicator={false}>
-            {/* Printable Waybill Shipping Tag Card */}
+          <ScrollView style={{ maxHeight: 440 }} showsVerticalScrollIndicator={false}>
+            {/* Printable Waybill Tag Box */}
             <View style={[styles.waybillCard, { backgroundColor: isDark ? colors.neutral[900] : '#FFFFFF', borderColor: isDark ? colors.neutral[700] : colors.neutral[300] }]}>
-              {/* Header Banner */}
+              {/* Top Banner */}
               <View style={styles.waybillTopBanner}>
                 <Text variant="caption" bold color="#FFFFFF" style={{ letterSpacing: 1 }}>
-                  WUNABUY EXPRESS SHIPPING TAG
+                  PARCEL VERIFICATION QR CODE
                 </Text>
-                <Badge label="ESCROW PROTECTED" variant="success" size="small" />
+                <Badge label="RIDER READY" variant="success" size="small" />
               </View>
 
-              {/* QR Code Graphical Display */}
+              {/* Centered QR Barcode */}
               <View style={styles.qrDisplayBox}>
                 <View style={styles.qrFrame}>
-                  <Ionicons name="qr-code" size={130} color={isDark ? '#FFFFFF' : '#0F172A'} />
+                  <Ionicons name="qr-code" size={160} color={isDark ? '#FFFFFF' : '#0F172A'} />
                 </View>
 
-                {/* Big Verification PIN Pill */}
-                <View style={styles.pinPill}>
+                {/* Big Order Code & PIN Pill */}
+                <View style={styles.codePill}>
                   <Text variant="caption" bold color={colors.primary[700]}>
-                    RIDER VERIFICATION PIN
+                    ORDER CODE: #{order.order_code}
                   </Text>
-                  <Text variant="h1" bold color={colors.primary[600]} style={{ letterSpacing: 4 }}>
+                  <Text variant="h1" bold color={colors.primary[600]} style={{ letterSpacing: 4, marginTop: 2 }}>
                     #{order.pickup_pin}
                   </Text>
                 </View>
               </View>
 
-              {/* Waybill Specs Table */}
-              <View style={[styles.detailsTable, { borderColor: theme.border }]}>
-                <View style={styles.detailRow}>
-                  <Text variant="caption" bold secondary style={styles.colLabel}>ORDER CODE:</Text>
-                  <Text variant="bodyMedium" bold color={colors.primary[600]}>{order.order_code}</Text>
-                </View>
-
-                <View style={styles.detailRow}>
-                  <Text variant="caption" bold secondary style={styles.colLabel}>CONTENTS:</Text>
-                  <Text variant="bodyMedium" bold color={theme.text} style={{ flex: 1 }}>{order.items_summary}</Text>
-                </View>
-
-                <View style={styles.detailRow}>
-                  <Text variant="caption" bold secondary style={styles.colLabel}>RECIPIENT:</Text>
-                  <Text variant="bodyMedium" color={theme.text} style={{ flex: 1 }}>
-                    {order.customer_name} ({order.customer_phone})
-                  </Text>
-                </View>
-
-                <View style={styles.detailRow}>
-                  <Text variant="caption" bold secondary style={styles.colLabel}>TRANSPORTER:</Text>
-                  <Text variant="bodyMedium" bold color={colors.semantic.info[500]} style={{ flex: 1 }}>
+              {/* Rider & Item Info Summary */}
+              <View style={[styles.infoBox, { borderColor: theme.border }]}>
+                <View style={styles.infoRow}>
+                  <Ionicons name="bicycle-outline" size={16} color={colors.primary[500]} style={{ marginRight: 8 }} />
+                  <Text variant="caption" bold secondary style={{ width: 90 }}>RIDER:</Text>
+                  <Text variant="bodyMedium" bold color={theme.text} style={{ flex: 1 }}>
                     {order.transporter_name || 'Wunabuy Express Rider #402'}
                   </Text>
                 </View>
-              </View>
-            </View>
 
-            {/* Transporter Scan Matching Test Section */}
-            <View style={[styles.testSection, { backgroundColor: isDark ? colors.neutral[800] : colors.neutral[100] }]}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.xs }}>
-                <Ionicons name="hardware-chip-outline" size={16} color={colors.primary[600]} />
-                <Text variant="caption" bold color={colors.primary[600]} style={{ marginLeft: 6 }}>
-                  TRANSPORTER SCAN MATCHING TEST:
-                </Text>
-              </View>
-
-              <Text variant="caption" secondary style={{ marginBottom: spacing.sm }}>
-                Simulate how the transporter's scanner compares parcel QR tags on pickup:
-              </Text>
-
-              <View style={{ flexDirection: 'row', gap: spacing.xs }}>
-                <TouchableOpacity
-                  activeOpacity={0.8}
-                  onPress={() => handleSimulateTransporterScan(true)}
-                  style={[styles.testBtn, { backgroundColor: '#D1FAE5', borderColor: colors.semantic.success[500] }]}
-                >
-                  <Text variant="caption" bold color={colors.semantic.success[700]}>
-                    Test Correct Scan Match ✓
+                <View style={styles.infoRow}>
+                  <Ionicons name="cube-outline" size={16} color={colors.primary[500]} style={{ marginRight: 8 }} />
+                  <Text variant="caption" bold secondary style={{ width: 90 }}>PACKAGE:</Text>
+                  <Text variant="bodyMedium" bold color={theme.text} style={{ flex: 1 }}>
+                    {order.items_summary}
                   </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  activeOpacity={0.8}
-                  onPress={() => handleSimulateTransporterScan(false)}
-                  style={[styles.testBtn, { backgroundColor: '#FEE2E2', borderColor: colors.semantic.error[500] }]}
-                >
-                  <Text variant="caption" bold color={colors.semantic.error[600]}>
-                    Test Wrong Item Match ❌
-                  </Text>
-                </TouchableOpacity>
-              </View>
-
-              {/* Test Scan Result Alert Box */}
-              {testScanResult && (
-                <View
-                  style={[
-                    styles.resultAlertBox,
-                    {
-                      backgroundColor: testScanResult.matched ? '#ECFDF5' : '#FEF2F2',
-                      borderColor: testScanResult.matched ? colors.semantic.success[500] : colors.semantic.error[500],
-                    },
-                  ]}
-                >
-                  <Ionicons
-                    name={testScanResult.matched ? 'checkmark-circle' : 'alert-circle'}
-                    size={22}
-                    color={testScanResult.matched ? colors.semantic.success[600] : colors.semantic.error[600]}
-                  />
-                  <View style={{ flex: 1, marginLeft: spacing.xs }}>
-                    <Text
-                      variant="caption"
-                      bold
-                      color={testScanResult.matched ? colors.semantic.success[700] : colors.semantic.error[600]}
-                    >
-                      {testScanResult.matched
-                        ? '✅ PARCEL MATCH CONFIRMED!'
-                        : '❌ WRONG ITEM WARNING!'}
-                    </Text>
-                    <Text variant="caption" color={theme.text} style={{ fontSize: 11, marginTop: 2 }}>
-                      {testScanResult.matched
-                        ? `Scanned tag (${testScanResult.scannedCode}) matches assigned dispatch (${testScanResult.assignedCode}). Right item for Rider #402!`
-                        : `Scanned tag (${testScanResult.scannedCode}) does NOT match assigned dispatch (${testScanResult.assignedCode}). Do NOT pick up this item!`}
-                    </Text>
-                  </View>
                 </View>
-              )}
+              </View>
             </View>
           </ScrollView>
 
-          {/* Action Footer */}
+          {/* Action Footer: Print vs Cancel */}
           <View style={styles.actionFooter}>
             <Button
-              title="🖨️ Print Waybill / Save Tag"
-              variant="primary"
-              onPress={handlePrintTag}
-              style={{ flex: 1, backgroundColor: colors.primary[500] }}
-            />
-            <Button
-              title="Close"
+              title="Cancel"
               variant="secondary"
               onPress={onClose}
-              style={{ width: 90, marginLeft: spacing.sm }}
+              style={{ flex: 1, marginRight: spacing.sm }}
+            />
+            <Button
+              title="Print QR Code 🖨️"
+              variant="primary"
+              onPress={handlePrintTag}
+              style={{ flex: 1.5, backgroundColor: colors.primary[500] }}
             />
           </View>
         </View>
@@ -241,7 +146,7 @@ export const PrintableParcelQRModal: React.FC<PrintableParcelQRModalProps> = ({
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: 'rgba(0,0,0,0.65)',
     justifyContent: 'center',
     padding: spacing.md,
   },
@@ -267,7 +172,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.lg,
     borderWidth: 1,
     padding: spacing.md,
-    marginBottom: spacing.md,
+    marginBottom: spacing.xs,
   },
   waybillTopBanner: {
     flexDirection: 'row',
@@ -275,7 +180,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     backgroundColor: colors.primary[600],
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
+    paddingVertical: spacing.xs + 2,
     borderRadius: borderRadius.md,
     marginBottom: spacing.md,
   },
@@ -284,59 +189,36 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   qrFrame: {
-    padding: spacing.sm,
+    padding: spacing.md,
     backgroundColor: '#FFFFFF',
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1.5,
     borderColor: colors.neutral[300],
-    marginBottom: spacing.sm,
+    marginBottom: spacing.md,
+    ...shadows.sm,
   },
-  pinPill: {
+  codePill: {
     alignItems: 'center',
     backgroundColor: '#ECFDF5',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.sm,
     borderRadius: borderRadius.lg,
     borderWidth: 1,
     borderColor: colors.primary[400],
+    width: '100%',
   },
-  detailsTable: {
+  infoBox: {
     borderTopWidth: 1,
     paddingTop: spacing.sm,
-    gap: spacing.xs,
+    gap: spacing.xs + 2,
   },
-  detailRow: {
+  infoRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  colLabel: {
-    width: 105,
-    fontSize: 11,
-  },
-  testSection: {
-    padding: spacing.md,
-    borderRadius: borderRadius.lg,
-    marginBottom: spacing.md,
-  },
-  testBtn: {
-    flex: 1,
-    paddingVertical: spacing.xs + 2,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
     alignItems: 'center',
-    justifyContent: 'center',
-  },
-  resultAlertBox: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    padding: spacing.sm,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    marginTop: spacing.md,
   },
   actionFooter: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: spacing.xs,
+    marginTop: spacing.md,
   },
 });
