@@ -293,7 +293,7 @@ export const SellerQRScannerModal: React.FC<SellerQRScannerModalProps> = ({
                       </Text>
 
                       <View style={[styles.escrowReleasePill, { backgroundColor: '#ECFDF5', borderColor: colors.semantic.success[500] }]}>
-                        <Ionicons name="shield-checkmark" size={16} color={colors.semantic.success[600]} />
+                        <Ionicons name="shield-checkmark" size={16} color={colors.semantic.success[700]} />
                         <Text variant="caption" bold color={colors.semantic.success[700]} style={{ marginLeft: 6 }}>
                           {formatXAF(verificationResult.order.amountXAF)} Released to Wallet!
                         </Text>
@@ -355,7 +355,7 @@ export const SellerQRScannerModal: React.FC<SellerQRScannerModalProps> = ({
                   /* Error State */
                   <View style={styles.errorCard}>
                     <Ionicons name="alert-circle" size={48} color={colors.semantic.error[500]} />
-                    <Text variant="h3" bold color={colors.semantic.error[600]} style={{ marginTop: spacing.sm }}>
+                    <Text variant="h3" bold color={colors.semantic.error[700]} style={{ marginTop: spacing.sm }}>
                       Verification Failed
                     </Text>
                     <Text variant="bodyMedium" secondary style={{ textAlign: 'center', marginTop: spacing.xs }}>
@@ -476,7 +476,7 @@ export const SellerQRScannerModal: React.FC<SellerQRScannerModalProps> = ({
                     onPress={() => processCodeVerification('INVALID')}
                     style={[styles.samplePill, { backgroundColor: isDark ? colors.neutral[800] : '#FEE2E2' }]}
                   >
-                    <Text variant="caption" bold color={colors.semantic.error[600]}>
+                    <Text variant="caption" bold color={colors.semantic.error[700]}>
                       ❌ Invalid Code
                     </Text>
                   </TouchableOpacity>

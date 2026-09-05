@@ -64,8 +64,8 @@ export const SellerOrdersScreen = ({ navigation }: any) => {
       order_code: order.order_code,
       customer_name: order.customer_name,
       customer_phone: order.customer_phone,
-      items_summary: order.items_summary,
-      total_amount: order.total_amount,
+      items_summary: order.items ? order.items.map((i: any) => `${i.name} x${i.quantity}`).join(', ') : 'Order Package',
+      total_amount: order.total,
       pickup_pin: order.pickup_pin || '84920',
       transporter_name: order.transporter_name || 'Wunabuy Express Rider #402',
     });

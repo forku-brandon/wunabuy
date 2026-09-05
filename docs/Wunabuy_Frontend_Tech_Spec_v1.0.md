@@ -1,7 +1,13 @@
 # Wunabuy — Frontend Technical Specification
-### Version 2.8 | September 4, 2026
+### Version 3.0 | September 5, 2026
 
-> **Resolved Decisions (September 4, 2026):**
+> **Resolved Decisions (September 5, 2026 - v3.0):**
+> - **Interactive Numeric Quantity Input System**: Created `QuantityInputModal.tsx` allowing buyers and sellers to enter exact numeric item quantities directly via interactive modal popups (Alibaba/Aliexpress UX style), resolving duplicate text rendering glitches across Buyer Cart, Product Detail, and Seller Stock Management.
+> - **2D Scrollable Tabular Store Pickup Location Component**: Created `StorePickupTable.tsx` featuring a structured 2-column specification grid (`SPECIFICATION` | `DETAILS & DIRECTIONS`), encapsulated bidirectional scrolling (vertical up/down + horizontal left/right with strict `140px`/`340px` column bounds), tap-to-call store contact links (`tel:`), and Google Maps launching links (`https://maps.google.com/?q=...`). Integrated in `BuyerCartScreen.tsx` and `CheckoutPaymentScreen.tsx`.
+> - **Live Hardware Camera Seller Store QR & PIN Scanner Modal**: Built `SellerQRScannerModal.tsx` launched from the Seller App Bar header, powered by `expo-camera` (`CameraView` & `useCameraPermissions`) with torch flashlight toggle, animated reticle laser scan line, sample test QR barcode pills (`Buyer PIN #84920`, `Dispatch QR #9082`, `Invalid Code`), and instant escrow handover release (`"Confirm Handover & Release Parcel ✓"`).
+> - **Printable Encrypted Parcel QR Shipping Tag Generator**: Built `PrintableParcelQRModal.tsx` for generating high-contrast shipping tags with embedded official **Wunabuy Brand Emblem** in center of QR frame and header. Enhanced security by omitting plaintext PINs (`ENCRYPTED QR • RIDER SCANNER ONLY 🔒`). Clean action controls: `"Print QR Code 🖨️"` and `"Cancel"`.
+> - **Transporter Camera Scanner Code Comparison & Wrong Item Matching**: Enhanced `TransporterActiveTripScreen.tsx` camera barcode scanner to validate scanned package QR tags against assigned pickup trips (`✅ PARCEL MATCH CONFIRMED!` vs `❌ WRONG ITEM WARNING!`).
+> - **Monorepo Utils Stability**: Resolved Babel block-scoping duplicate identifier error in `packages/utils/src/phone.ts` (`normalizePhone`), maintaining 100% clean TypeScript build (`npx tsc --noEmit` zero errors).
 > - **Live Camera Barcode Scanner**: Integrated `expo-camera` in `AddEditProductScreen.tsx` with real-time `onBarcodeScanned` sensor callback (EAN-13, EAN-8, UPC-A, UPC-E, QR, Code 128/39), hardware torch toggle (**Torch ON/OFF**), laser reticle viewfinder, scanner status pulse, and automated product catalog auto-fill.
 > - **Outstanding Onboarding Experience v2.8**: Redesigned `OnboardingScreen.tsx` with 3 welcoming sliders tailored for Cameroon/African markets (100% Escrow Protection: "No Worries. Your Money is Safe.", Live GPS Tracking across Douala & Yaoundé, Verified Stores). Features manual touch/swipe control, custom pure escrow diagram, rebranded full-bleed background imagery, and removed top bordered pills.
 > - **Multi-Image Product Gallery Modal**: `ProductImageGalleryModal.tsx` supporting full-screen zoom, image counter badge, and thumbnail navigation.
@@ -11,7 +17,6 @@
 > - Smart Role Access Redirection: Automatic checking of `user.role` or `user.available_roles` for "Become a Seller" / "Become a Transporter", opening Dashboard if access granted or Welcome onboarding if not granted
 > - Recent Transactions Architecture: `RecentTransactionsWidget.tsx` & `TransactionHistoryScreen.tsx` (dedicated history screen with search input, time filter pills `7 Days`, `15 Days`, `1 Month`, `Custom Date`, date grouping, PDF statement export)
 > - Store Analytics Engine: `StoreAnalyticsScreen.tsx` (revenue telemetry, available vs 48H escrow split, weekly sales velocity bar graph, KPI grid, top products ranking)
-> - QR Scanner Modal: `QRScannerModal` in Transporter Job Feed (3 modes)
 > - Universal Auto-Dismiss Toast: `Toast.tsx` with smooth `Animated` opacity fade-in (250ms) and automatic 3000ms fade-out auto-dismiss
 > - Brand Palette Harmonization: Full unification across Buyer, Seller, and Transporter screens using Emerald Teal (`#0D9488` / `#0F766E`) and Warm Amber (`#F59E0B`)
 > - Navigation: React Navigation 6.x + Expo SDK 51

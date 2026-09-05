@@ -1,9 +1,9 @@
 # Wunabuy — Backend Technical Specification & API Contracts
 
-**Document Version:** 2.9 (Direct Native Phone Dialer, Hardware Camera Sensor & API Integration Baseline)  
-**Date:** September 4, 2026  
+**Document Version:** 3.0 (Quantity Input Popups, Store Pickup Specifications Table, Camera QR Tag Encryption & Verification Baseline)  
+**Date:** September 5, 2026  
 **Status:** Approved / In Production Use  
-**Companion Documents:** Wunabuy SRS v2.9, Wunabuy PRD v2.9, Wunabuy Frontend Tech Spec v2.9  
+**Companion Documents:** Wunabuy SRS v3.0, Wunabuy PRD v3.0, Wunabuy Frontend Tech Spec v3.0  
 **Framework:** Laravel 13 (PHP 8.3+)  
 **Frontend Monorepo Targets:** `wunabuy-mobile` (Expo SDK 54), `staff-portal` (Vite + React TS), `@wunabuy/api-client`, `@wunabuy/types`, `@wunabuy/utils`
 
@@ -888,6 +888,82 @@ When processing `POST /api/v1/seller/wallet/payout`:
 - Computes Net Payout: $\text{Net} = \text{amount} - \text{Fee}$.
 - Dispatches async transfer to MTN MoMo Collection/Disbursement or Orange Money API.
 - Debits store available wallet balance atomically within a database transaction.
+
+### 11.5 Encrypted Parcel QR Barcode & Transporter Verification Engine (v3.0 Baseline)
+
+#### 1. Security Omission Policy (Plaintext PIN Omission)
+To guarantee security during physical logistics handover, plaintext 5-digit verification PINs (`pickup_pin`) and sensitive order numbers are **strictly excluded** from printed physical shipping tags. Physical parcel labels render only an encrypted QR code payload with an embedded Wunabuy logo emblem overlay. Decryption and verification are performed exclusively by the assigned transporter's hardware camera scanner.
+
+#### 2. Encrypted Shipping Tag Payload Generation (`POST /api/v1/seller/orders/{id}/parcel-qr`)
+- **Access:** Authenticated (Seller role, order store owner)
+- **Response Payload:**
+```json
+{
+  "success": true,
+  "data": {
+    "order_id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+    "order_code": "WNB-84920",
+    "rider_name": "Samuel Eto'o",
+    "rider_phone": "+237670123456",
+    "encrypted_payload": "WBN-LOGISTICS-v3|9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d|a8f9c2d1e4b3a7f9",
+    "logo_emblem_url": "https://wunabuy.com/assets/wunabuy-logo-icon.png",
+    "generated_at": "2026-09-05T10:00:00Z"
+  }
+}
+```
+
+#### 3. Transporter Hardware Camera Verification (`POST /api/v1/logistics/compare-qr`)
+- **Access:** Authenticated (Transporter role, assigned trip rider)
+- **Request Body:**
+```json
+{
+  "scanned_payload": "WBN-LOGISTICS-v3|9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d|a8f9c2d1e4b3a7f9",
+  "active_trip_id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d"
+}
+```
+- **Match Response (200 OK):**
+```json
+{
+  "success": true,
+  "data": {
+    "match": true,
+    "status_code": "PARCEL_MATCH_CONFIRMED",
+    "message": "Scanned QR matches assigned pickup parcel.",
+    "order_code": "WNB-84920",
+    "pickup_store": "Douala Tech Hub (Akwa)"
+  }
+}
+```
+- **Mismatch Response (422 Unprocessable Entity / 200 Match False):**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "WRONG_ITEM_MISMATCH",
+    "message": "Scanned tag does not match assigned trip item! Do not collect.",
+    "scanned_order_code": "WNB-99102",
+    "expected_order_code": "WNB-84920"
+  }
+}
+```
+
+#### 4. Store Pickup Location & 2D Specification Schema (`GET /api/v1/stores/{id}/pickup-location`)
+Returns structured 2-column specifications array consumed by the `StorePickupTable` frontend component:
+```json
+{
+  "success": true,
+  "data": {
+    "store_id": "store_99102",
+    "store_name": "Akwa Super Store",
+    "pickup_specs": [
+      { "spec": "STORE LOCATION", "details": "Akwa Main Blvd, Opposite Pharmacie du Centre, Douala" },
+      { "spec": "COUNTER HOURS", "details": "Mon - Sat: 08:00 AM - 07:30 PM (Closed Sundays)" },
+      { "spec": "PICKUP INSTRUCTIONS", "details": "Show order QR code or 5-digit PIN to counter manager Jean." },
+      { "spec": "STORE CONTACT", "details": "+237 670 123 456 / +237 699 876 543" }
+    ]
+  }
+}
+```
 
 ---
 

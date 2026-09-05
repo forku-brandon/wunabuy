@@ -1,12 +1,39 @@
 # Software Requirements Specification (SRS)
 # Wunabuy — Multi-Sided E-Commerce & Web Staff Operations Platform
 
-**Document Version:** 2.9 (Direct Native Phone Dialer Integration, Hardware Camera Scanner & Dynamic API Receive Points Baseline)  
-**Date:** September 4, 2026  
+**Document Version:** 3.0 (Quantity Input Popups, Store Pickup Specifications Table, Camera QR Tag Encryption & Verification Baseline)  
+**Date:** September 5, 2026  
 **Status:** Approved / In Production Use  
-**Companion Documents:** Wunabuy PRD v2.9, Wunabuy Frontend Tech Spec v2.9, Wunabuy Backend Tech Spec v2.9  
+**Companion Documents:** Wunabuy PRD v3.0, Wunabuy Frontend Tech Spec v3.0, Wunabuy Backend Tech Spec v3.0  
 
 ---
+
+## 🚀 Key Mobile & Architecture v3.0 Specifications (September 5, 2026)
+
+- **Interactive Numeric Quantity Input System (`QuantityInputModal.tsx`)**:
+  - Replaced legacy stepper buttons (+/-) with direct numeric popups across Buyer & Seller applications (Alibaba/Aliexpress UX style).
+  - Modal includes item details, direct numerical keypad entry, quick preset buttons (`+1`, `+5`, `+10`, `+20`, `+50`), stock limit validation (`max_quantity`), and instant cart/inventory updates.
+
+- **2D Tabular Store Pickup & Location Component (`StorePickupTable.tsx`)**:
+  - 2-column specifications grid (`SPECIFICATION` | `DETAILS & DIRECTIONS`) embedded in `BuyerCartScreen.tsx` and `CheckoutPaymentScreen.tsx`.
+  - Bidirectional scrolling (vertical up/down + horizontal left/right with strict `140px`/`340px` column width bounds) ensuring zero layout clipping or horizontal overflow.
+  - Native telephone call integration (`Linking.openURL('tel:...')`) for store phone numbers.
+
+- **Live Hardware Camera Seller Store QR & PIN Scanner Modal (`SellerQRScannerModal.tsx`)**:
+  - Hardware camera feed via `expo-camera` supporting real-time `onBarcodeScanned` sensor callback (`CameraView` & `useCameraPermissions`).
+  - Torch flashlight toggle button (**Torch ON/OFF**), reticle laser viewfinder animation, status indicator pulse, and instant escrow handover release upon code scanning or 5-digit PIN entry.
+
+- **Printable Encrypted Parcel QR Shipping Tag Generator (`PrintableParcelQRModal.tsx`)**:
+  - Encrypted QR shipping barcode payload (`ENCRYPTED QR • RIDER SCANNER ONLY 🔒`) generated for sellers upon clicking "Ready to Pick Up".
+  - Centered Wunabuy logo emblem overlay inside the QR code for brand integrity.
+  - Security enhancement: Plaintext PINs (`#84920`) and order numbers removed from printed tags; readable exclusively by assigned transporter hardware camera scanners.
+
+- **Transporter Camera Scanner Code Comparison & Wrong Item Matching (`TransporterActiveTripScreen.tsx`)**:
+  - Real-time scanner comparison validating scanned package QR tags against assigned pickup trips.
+  - Displays instant visual & haptic status feedback (`✅ PARCEL MATCH CONFIRMED!` vs `❌ WRONG ITEM WARNING!`).
+
+- **Monorepo Utils Stability**:
+  - Fixed Babel block-scoping duplicate identifier compilation error in `@wunabuy/utils` (`normalizePhone`).
 
 ## 🚀 Key Mobile & Architecture v2.9 Specifications (September 2026)
 

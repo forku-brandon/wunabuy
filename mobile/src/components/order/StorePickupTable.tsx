@@ -236,7 +236,7 @@ export const StorePickupTable: React.FC<StorePickupTableProps> = ({
               {/* Row 8: Verified Merchant Status */}
               <View style={[styles.tableRow, { borderBottomWidth: 0, backgroundColor: isDark ? 'transparent' : '#FAFAFA' }]}>
                 <View style={[styles.cellKey, { width: COL1_WIDTH }]}>
-                  <Ionicons name="checkmark-seal-outline" size={14} color={colors.semantic.success[500]} style={{ marginRight: 6 }} />
+                  <Ionicons name="checkmark-circle-outline" size={14} color={colors.semantic.success[500]} style={{ marginRight: 6 }} />
                   <Text variant="caption" bold color={theme.text} numberOfLines={1}>
                     Verification
                   </Text>
