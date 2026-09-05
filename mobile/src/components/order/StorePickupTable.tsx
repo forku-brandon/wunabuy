@@ -45,9 +45,9 @@ export const StorePickupTable: React.FC<StorePickupTableProps> = ({
   const { theme, isDark } = useThemeStore();
 
   const handleCall = (phoneNum: string) => {
-    const cleaned = phoneNum.replace(/[^+\d]/g, '');
-    if (cleaned) {
-      Linking.openURL(`tel:${cleaned}`).catch(() => {});
+    const digits = phoneNum.replace(/[^+\d]/g, '');
+    if (digits) {
+      Linking.openURL(`tel:${digits}`).catch(() => {});
     }
   };
 
@@ -322,3 +322,4 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 });
+

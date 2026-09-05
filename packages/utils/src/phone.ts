@@ -8,11 +8,11 @@ export function normalizePhone(phone: string): string {
   if (!phone || typeof phone !== 'string') return '';
   // Split multi-number fallbacks (e.g. "+237 670 123 456 / +237 699 876 543")
   const primaryNumber = phone.split('/')[0].split(',')[0].trim();
-  let cleaned = primaryNumber.replace(/[^+\d]/g, '');
-  if (!cleaned.startsWith('+') && cleaned.length === 9) {
-    cleaned = '+237' + cleaned;
+  const rawDigits = primaryNumber.replace(/[^+\d]/g, '');
+  if (!rawDigits.startsWith('+') && rawDigits.length === 9) {
+    return '+237' + rawDigits;
   }
-  return cleaned;
+  return rawDigits;
 }
 
 /**
