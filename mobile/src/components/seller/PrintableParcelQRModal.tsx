@@ -41,8 +41,8 @@ export const PrintableParcelQRModal: React.FC<PrintableParcelQRModalProps> = ({
 
   const handlePrintTag = () => {
     Alert.alert(
-      '🖨️ Printing Parcel QR Code',
-      `QR Code (PIN: #${order.pickup_pin}) sent to printer.\nAttached to package for transporter scan verification.`,
+      '🖨️ Printing Encrypted Parcel QR Tag',
+      'Encrypted Parcel QR Code tag sent to printer.\nAttached to package for secure transporter scan verification.',
       [{ text: 'OK' }]
     );
   };
@@ -90,13 +90,11 @@ export const PrintableParcelQRModal: React.FC<PrintableParcelQRModalProps> = ({
                   <Ionicons name="qr-code" size={160} color={isDark ? '#FFFFFF' : '#0F172A'} />
                 </View>
 
-                {/* Rider Verification PIN Pill */}
-                <View style={styles.codePill}>
-                  <Text variant="caption" bold color={colors.primary[700]}>
-                    RIDER VERIFICATION PIN
-                  </Text>
-                  <Text variant="h1" bold color={colors.primary[600]} style={{ letterSpacing: 4, marginTop: 2 }}>
-                    #{order.pickup_pin}
+                {/* Encrypted Security Badge */}
+                <View style={styles.securityEncryptedBadge}>
+                  <Ionicons name="lock-closed" size={14} color={colors.primary[600]} />
+                  <Text variant="caption" bold color={colors.primary[700]} style={{ marginLeft: 6 }}>
+                    ENCRYPTED QR • RIDER SCANNER ONLY 🔒
                   </Text>
                 </View>
               </View>
@@ -197,11 +195,13 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     ...shadows.sm,
   },
-  codePill: {
+  securityEncryptedBadge: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: '#ECFDF5',
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs + 2,
     borderRadius: borderRadius.lg,
     borderWidth: 1,
     borderColor: colors.primary[400],
