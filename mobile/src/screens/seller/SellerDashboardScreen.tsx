@@ -594,6 +594,9 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
                           <Ionicons name="remove" size={12} color={theme.text} />
                         </TouchableOpacity>
 
+                        <Text variant="caption" bold style={styles.stockNumberText}>
+                          {product.quantity}
+                        </Text>
                         <TouchableOpacity
                           activeOpacity={0.7}
                           onPress={(e) => {
@@ -775,6 +778,9 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
                         <Ionicons name="remove" size={18} color={theme.text} />
                       </TouchableOpacity>
 
+                      <Text variant="h2" bold style={styles.modalStockValueText}>
+                        {selectedProductForExpand.quantity}
+                      </Text>
                       <TouchableOpacity
                         activeOpacity={0.7}
                         onPress={() => setEditingStockProduct(selectedProductForExpand)}
