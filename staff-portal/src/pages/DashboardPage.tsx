@@ -309,7 +309,7 @@ const SearchableEmployeeSelect: React.FC<SearchableEmployeeSelectProps> = ({
     return (
       p.full_name.toLowerCase().includes(q) ||
       p.department_name.toLowerCase().includes(q) ||
-      p.email.toLowerCase().includes(q) ||
+      (p.email && p.email.toLowerCase().includes(q)) ||
       p.employee_id.toLowerCase().includes(q)
     );
   });

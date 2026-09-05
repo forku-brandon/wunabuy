@@ -21,8 +21,11 @@
     "noFallthroughCasesInSwitch": true,
     "ignoreDeprecations": "5.0",
 
-    /* Path aliases */
+    /* Path aliases & React 18 resolution override */
+    "baseUrl": ".",
     "paths": {
+      "react": ["node_modules/@types/react"],
+      "react-dom": ["node_modules/@types/react-dom"],
       "@/*": ["./src/*"]
     }
   },

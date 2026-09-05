@@ -4,10 +4,11 @@ import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { StatCard } from '../components/ui/StatCard';
-import { Modal } from '../components/ui/Modal';
 import { DataTable, Column } from '../components/ui/DataTable';
+import { DualControlConfirmModal } from '../components/ui/DualControlConfirmModal';
 import { UserRole, UserStatus } from '@wunabuy/types';
 import { useStaffAuth } from '../stores/staffAuthStore';
+import { rateLimiter, maskPhone, sanitizeInput } from '../services/security';
 import {
   Users,
   UserX,
@@ -89,85 +90,107 @@ export const UsersPage: React.FC = () => {
   
   // Interactive Modals
   const [restrictTarget, setRestrictTarget] = useState<DirectoryUserItem | null>(null);
-  const [restrictionReason, setRestrictionReason] = useState('');
 
   const canManageUsers = hasPermission('manage_users');
 
-  const handleToggleRestriction = () => {
-    if (!restrictTarget || !restrictionReason.trim()) return;
+  const handleConfirmRestrictionAction = (reason: string) => {
+    if (!restrictTarget) return;
 
+    // Action Rate Limiting
+    const rateCheck = rateLimiter.checkLimit(`user_status:${restrictTarget.id}`, 3, 60000, 300000);
+    if (!rateCheck.allowed) {
+      alert(`⚠️ Action Rate Limited: Account status update locked. Please retry in ${rateCheck.retryAfterSeconds}s.`);
+      return;
+    }
+
+    const cleanReason = sanitizeInput(reason, 'user_restriction_reason');
     const newStatus = restrictTarget.status === UserStatus.ACTIVE ? UserStatus.SUSPENDED : UserStatus.ACTIVE;
-
-    addAuditLog({
-      action_code: newStatus === UserStatus.SUSPENDED ? 'USER_ACCOUNT_SUSPEND' : 'USER_ACCOUNT_ACTIVATE',
-      action_description: `${newStatus === UserStatus.SUSPENDED ? 'Suspended' : 'Re-activated'} user account ${restrictTarget.full_name} (${restrictTarget.phone}). Reason: ${restrictionReason}`,
-      target_id: restrictTarget.id,
-      security_level: 'WARNING',
-    });
 
     setUsers((prev) =>
       prev.map((u) => (u.id === restrictTarget.id ? { ...u, status: newStatus } : u))
     );
 
+    addAuditLog({
+      action_code: newStatus === UserStatus.SUSPENDED ? 'USER_ACCOUNT_SUSPEND' : 'USER_ACCOUNT_REACTIVATE',
+      action_description: `Updated status of ${restrictTarget.full_name} (${restrictTarget.role}) to ${newStatus}. Reason: "${cleanReason}"`,
+      target_id: restrictTarget.id,
+      security_level: 'CRITICAL',
+    });
+
     setRestrictTarget(null);
-    setRestrictionReason('');
   };
 
   const columns: Column<DirectoryUserItem>[] = [
     {
       key: 'full_name',
-      header: 'Full Name / Phone',
+      header: 'Full Name',
       render: (item) => (
-        <div>
-          <span className="font-bold text-slate-900 dark:text-slate-100 block">{item.full_name}</span>
-          <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">{item.phone}</span>
+        <div className="flex items-center space-x-3">
+          <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-bold text-xs text-slate-700 dark:text-slate-300">
+            {item.full_name.charAt(0)}
+          </div>
+          <div>
+            <span className="font-bold text-slate-900 dark:text-slate-100 block">{item.full_name}</span>
+            <span className="text-[11px] text-slate-500 dark:text-slate-400">{item.email || 'No email registered'}</span>
+          </div>
         </div>
       ),
     },
     {
-      key: 'email',
-      header: 'Email / City',
+      key: 'phone',
+      header: 'Phone (E.164)',
       render: (item) => (
-        <div>
-          <span className="font-bold text-slate-800 dark:text-slate-200 block">{item.email || 'No email attached'}</span>
-          <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">City: {item.city}</span>
+        <div className="font-mono text-xs font-semibold text-slate-700 dark:text-slate-300">
+          {maskPhone(item.phone)}
+          {item.is_phone_verified && <span className="ml-1 text-teal-600 dark:text-teal-400">✓</span>}
         </div>
       ),
     },
     {
       key: 'role',
-      header: 'Account Role',
-      render: (item) => <Badge variant="teal">{item.role}</Badge>,
+      header: 'Role',
+      render: (item) => {
+        const roleUpper = (item.role || '').toUpperCase() as 'BUYER' | 'SELLER' | 'TRANSPORTER' | 'STAFF';
+        const variantMap = {
+          BUYER: 'info',
+          SELLER: 'teal',
+          TRANSPORTER: 'warning',
+          STAFF: 'neutral',
+        } as const;
+        return <Badge variant={variantMap[roleUpper] || 'neutral'} size="sm">{item.role}</Badge>;
+      },
+    },
+    {
+      key: 'city',
+      header: 'City',
+      render: (item) => <span className="text-slate-700 dark:text-slate-300 font-medium">{item.city}</span>,
     },
     {
       key: 'status',
       header: 'Status',
-      render: (item) => (
-        <Badge variant={item.status === UserStatus.ACTIVE ? 'success' : 'error'}>
-          {item.status}
-        </Badge>
-      ),
+      render: (item) => {
+        const statusUpper = (item.status || '').toUpperCase() as 'ACTIVE' | 'SUSPENDED' | 'DEACTIVATED';
+        const variantMap = {
+          ACTIVE: 'success',
+          SUSPENDED: 'error',
+          DEACTIVATED: 'neutral',
+        } as const;
+        return <Badge variant={variantMap[statusUpper] || 'neutral'} size="sm">{item.status}</Badge>;
+      },
     },
     {
-      key: 'registered_at',
-      header: 'Registered Date',
-      render: (item) => <span className="font-mono text-slate-900 dark:text-slate-100 font-semibold">{item.registered_at}</span>,
-    },
-    {
-      key: 'actions',
+      key: 'id',
       header: 'Actions',
-      align: 'right',
       render: (item) => (
-        <div className="flex items-center justify-end space-x-2">
-          {canManageUsers && (
-            <Button
-              size="sm"
-              variant={item.status === UserStatus.ACTIVE ? 'secondary' : 'primary'}
-              onClick={() => setRestrictTarget(item)}
-            >
-              {item.status === UserStatus.ACTIVE ? 'Suspend' : 'Re-activate'}
-            </Button>
-          )}
+        <div>
+          <Button
+            variant={item.status === UserStatus.ACTIVE ? 'outline' : 'primary'}
+            size="sm"
+            disabled={!canManageUsers}
+            onClick={() => setRestrictTarget(item)}
+          >
+            {item.status === UserStatus.ACTIVE ? 'Suspend Access' : 'Reactivate'}
+          </Button>
         </div>
       ),
     },
@@ -175,15 +198,15 @@ export const UsersPage: React.FC = () => {
 
   return (
     <PageContainer
-      title="Platform Users &amp; Global Directory Engine"
-      subtitle="Manage Multi-Sided Marketplace Accounts: Buyers, Store Merchants, Transporter Drivers &amp; System Personnel"
+      title="User Management & Platform Directory"
+      subtitle="Inspect active platform Buyers, Sellers, and Transporters. Modify access status and audit identity compliance."
     >
-      {/* Top Stat Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      {/* Top Telemetry KPI Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <StatCard
           title="TOTAL REGISTERED USERS"
-          value="14,250 Accounts"
-          change="Douala & Yaoundé"
+          value="48,920"
+          change="+12% this month"
           changeType="positive"
           icon={<Users className="w-5 h-5 text-teal-600 dark:text-teal-400" />}
           iconBg="bg-teal-50 dark:bg-teal-950/60"
@@ -230,43 +253,21 @@ export const UsersPage: React.FC = () => {
         emptyMessage="No matching user accounts found."
       />
 
-      {/* ACCOUNT RESTRICTION CONFIRMATION MODAL */}
+      {/* OWASP A06: Dual-Control Confirmation Modal */}
       {restrictTarget && (
-        <Modal
+        <DualControlConfirmModal
           isOpen={Boolean(restrictTarget)}
           onClose={() => setRestrictTarget(null)}
-          title={`Account Restriction — ${restrictTarget.full_name}`}
-        >
-          <div className="space-y-4 text-xs">
-            <div className="p-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl">
-              <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase block">TARGET USER ACCOUNT</span>
-              <h4 className="text-base font-bold text-slate-900 dark:text-slate-100 mt-1">{restrictTarget.full_name}</h4>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Phone: {restrictTarget.phone} • Role: {restrictTarget.role}</p>
-            </div>
-
-            <div>
-              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-                Mandatory Staff Operational Reason *
-              </label>
-              <textarea
-                rows={3}
-                value={restrictionReason}
-                onChange={(e) => setRestrictionReason(e.target.value)}
-                placeholder="Specify reason (e.g. Fraud report, document mismatch, suspicious activity)..."
-                className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-medium text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-400"
-              />
-            </div>
-
-            <div className="flex justify-end space-x-3 pt-3 border-t border-slate-100 dark:border-slate-800">
-              <Button variant="outline" onClick={() => setRestrictTarget(null)}>
-                Cancel
-              </Button>
-              <Button variant="primary" disabled={!restrictionReason.trim()} onClick={handleToggleRestriction}>
-                Confirm Status Update &amp; Log Audit
-              </Button>
-            </div>
-          </div>
-        </Modal>
+          onConfirm={handleConfirmRestrictionAction}
+          title={`Account Status Update — ${restrictTarget.full_name}`}
+          description={`You are updating account status for ${restrictTarget.full_name} (${restrictTarget.role}) to ${
+            restrictTarget.status === UserStatus.ACTIVE ? 'SUSPENDED' : 'ACTIVE'
+          }. Dual-control justification is required.`}
+          confirmWord={restrictTarget.status === UserStatus.ACTIVE ? 'SUSPEND' : 'REACTIVATE'}
+          actionButtonText="Confirm Account Status Change"
+          variant={restrictTarget.status === UserStatus.ACTIVE ? 'danger' : 'primary'}
+          requireReason={true}
+        />
       )}
     </PageContainer>
   );

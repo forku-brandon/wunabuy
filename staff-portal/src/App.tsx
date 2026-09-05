@@ -6,6 +6,10 @@ import { ThemeProvider } from './context/ThemeContext';
 import { LanguageProvider } from './context/LanguageContext';
 import { SidebarNav } from './components/layout/SidebarNav';
 import { Header } from './components/layout/Header';
+import { PermissionGuard } from './components/layout/PermissionGuard';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { useSessionTimeout } from './hooks/useSessionTimeout';
+
 import { AuthPage } from './pages/AuthPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { KYCPage } from './pages/KYCPage';
@@ -34,6 +38,9 @@ const ProtectedLayout: React.FC = () => {
   const { isAuthenticated } = useStaffAuth();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
+  // OWASP A04: Automatic 15-Minute Session Idle Timeout Guard
+  useSessionTimeout();
+
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
@@ -47,19 +54,82 @@ const ProtectedLayout: React.FC = () => {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <Header onToggleMobileSidebar={() => setMobileSidebarOpen(!mobileSidebarOpen)} />
         <Routes>
-          <Route path="/" element={<DashboardPage />} />
+          <Route
+            path="/"
+            element={
+              <PermissionGuard permission="view_dashboard">
+                <DashboardPage />
+              </PermissionGuard>
+            }
+          />
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/profile" element={<StaffProfilePage />} />
           <Route path="/calendar" element={<CalendarPage />} />
           <Route path="/communications" element={<CommunicationsPage />} />
-          <Route path="/hr" element={<HROpsPage />} />
-          <Route path="/kyc" element={<KYCPage />} />
-          <Route path="/disputes" element={<DisputesPage />} />
-          <Route path="/logistics" element={<LogisticsOpsPage />} />
-          <Route path="/financials" element={<FinancialsPage />} />
-          <Route path="/users" element={<UsersPage />} />
-          <Route path="/marketing" element={<MarketingPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
+          <Route
+            path="/hr"
+            element={
+              <PermissionGuard permission="view_hr_ops">
+                <HROpsPage />
+              </PermissionGuard>
+            }
+          />
+          <Route
+            path="/kyc"
+            element={
+              <PermissionGuard permission="view_kyc">
+                <KYCPage />
+              </PermissionGuard>
+            }
+          />
+          <Route
+            path="/disputes"
+            element={
+              <PermissionGuard permission="view_disputes">
+                <DisputesPage />
+              </PermissionGuard>
+            }
+          />
+          <Route
+            path="/logistics"
+            element={
+              <PermissionGuard permission="view_logistics">
+                <LogisticsOpsPage />
+              </PermissionGuard>
+            }
+          />
+          <Route
+            path="/financials"
+            element={
+              <PermissionGuard permission="view_financials">
+                <FinancialsPage />
+              </PermissionGuard>
+            }
+          />
+          <Route
+            path="/users"
+            element={
+              <PermissionGuard permission="manage_users">
+                <UsersPage />
+              </PermissionGuard>
+            }
+          />
+          <Route
+            path="/marketing"
+            element={
+              <PermissionGuard permission="manage_marketing">
+                <MarketingPage />
+              </PermissionGuard>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <PermissionGuard permission="manage_settings">
+                <SettingsPage />
+              </PermissionGuard>
+            }
+          />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
@@ -69,18 +139,20 @@ const ProtectedLayout: React.FC = () => {
 
 export const App: React.FC = () => {
   return (
-    <ThemeProvider>
-      <LanguageProvider>
-        <QueryClientProvider client={queryClient}>
-          <BrowserRouter>
-            <Routes>
-              <Route path="/login" element={<AuthPage />} />
-              <Route path="/*" element={<ProtectedLayout />} />
-            </Routes>
-          </BrowserRouter>
-        </QueryClientProvider>
-      </LanguageProvider>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <LanguageProvider>
+          <QueryClientProvider client={queryClient}>
+            <BrowserRouter>
+              <Routes>
+                <Route path="/login" element={<AuthPage />} />
+                <Route path="/*" element={<ProtectedLayout />} />
+              </Routes>
+            </BrowserRouter>
+          </QueryClientProvider>
+        </LanguageProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 };
 

@@ -74,7 +74,7 @@ export const NotificationsPage: React.FC = () => {
   const getPriorityBadgeVariant = (priority: NotificationPriority) => {
     switch (priority) {
       case 'CRITICAL':
-        return 'danger';
+        return 'error';
       case 'HIGH':
         return 'warning';
       case 'MEDIUM':
@@ -121,19 +121,6 @@ export const NotificationsPage: React.FC = () => {
     <PageContainer
       title="System Notifications & Operational Alerts Center"
       subtitle="Real-time centralized ledger of system alerts, escrow payout authorizations, KYC submissions, and dispute escalations."
-      badge={
-        unreadCount > 0 ? (
-          <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-bold font-mono">
-            <Radio className="w-3.5 h-3.5 animate-pulse text-amber-500" />
-            <span>{unreadCount} UNREAD ALERTS</span>
-          </span>
-        ) : (
-          <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold font-mono">
-            <CheckCheck className="w-3.5 h-3.5 text-emerald-500" />
-            <span>ALL ALERTS ACKNOWLEDGED</span>
-          </span>
-        )
-      }
       action={
         <div className="flex items-center space-x-2">
           {unreadCount > 0 && (

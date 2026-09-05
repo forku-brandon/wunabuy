@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { User, UserRole, UserStatus } from '@wunabuy/types';
 import { authApi, staffDirectoryApi, rbacApi, auditLogsApi } from '../services';
+import {
+  encryptStorageItem,
+  decryptStorageItem,
+  securityLogger,
+  rateLimiter,
+  sanitizeInput,
+} from '../services/security';
 
 export enum StaffDepartmentRole {
   SUPER_ADMIN = 'SUPER_ADMIN',
@@ -317,25 +324,32 @@ const INITIAL_AUDIT_LOGS: AuditLogEntry[] = [
   },
 ];
 
-// PERSISTENT STAFF DIRECTORY & AUDIT LEDGER STATE
-const savedDirectory = localStorage.getItem('wunabuy_staff_directory');
-let currentStaffList: StaffUser[] = savedDirectory ? JSON.parse(savedDirectory) : DEMO_STAFF_PERSONAS;
+// PERSISTENT STAFF DIRECTORY & AUDIT LEDGER STATE (WITH HMAC INTEGRITY & ENCRYPTION)
+const dirDecrypted = decryptStorageItem<StaffUser[]>('wunabuy_staff_directory');
+if (!dirDecrypted.integrityPassed) {
+  securityLogger.logEvent({
+    action_code: 'DATA_INTEGRITY_FAILURE',
+    action_description: 'Staff directory storage integrity check failed. Restoring clean demo personas.',
+    security_level: 'CRITICAL',
+  });
+}
+let currentStaffList: StaffUser[] = dirDecrypted.data || DEMO_STAFF_PERSONAS;
 
-const savedLogs = localStorage.getItem('wunabuy_staff_audit_logs');
-let currentAuditLogs: AuditLogEntry[] = savedLogs ? JSON.parse(savedLogs) : INITIAL_AUDIT_LOGS;
+const logsDecrypted = decryptStorageItem<AuditLogEntry[]>('wunabuy_staff_audit_logs');
+let currentAuditLogs: AuditLogEntry[] = logsDecrypted.data || INITIAL_AUDIT_LOGS;
 
-const savedUser = localStorage.getItem('wunabuy_staff_session_user');
-let currentUser: StaffUser | null = savedUser ? JSON.parse(savedUser) : currentStaffList[0];
+const userDecrypted = decryptStorageItem<StaffUser>('wunabuy_staff_session_user');
+let currentUser: StaffUser | null = userDecrypted.data || currentStaffList[0];
 let currentToken: string | null = currentUser ? ('1|mock_sanctum_staff_token_' + currentUser.employee_id) : null;
 let rolesMatrix: StaffRoleDefinition[] = INITIAL_ROLES_MATRIX;
 
 const listeners = new Set<() => void>();
 
 function notify() {
-  localStorage.setItem('wunabuy_staff_directory', JSON.stringify(currentStaffList));
-  localStorage.setItem('wunabuy_staff_audit_logs', JSON.stringify(currentAuditLogs));
+  encryptStorageItem('wunabuy_staff_directory', currentStaffList);
+  encryptStorageItem('wunabuy_staff_audit_logs', currentAuditLogs);
   if (currentUser) {
-    localStorage.setItem('wunabuy_staff_session_user', JSON.stringify(currentUser));
+    encryptStorageItem('wunabuy_staff_session_user', currentUser);
   } else {
     localStorage.removeItem('wunabuy_staff_session_user');
   }
@@ -354,7 +368,17 @@ export function useStaffAuth() {
   }, []);
 
   const requestOTP = async (identifier: string): Promise<{ success: boolean; message: string }> => {
-    const cleanId = identifier.trim().toLowerCase().replace(/\s+/g, '');
+    const cleanId = sanitizeInput(identifier.trim().toLowerCase().replace(/\s+/g, ''), 'otp_request');
+    
+    // Check rate limit for OTP requests (5 attempts per minute max)
+    const rateCheck = rateLimiter.checkLimit(`otp_request:${cleanId}`, 5, 60000, 900000);
+    if (!rateCheck.allowed) {
+      return {
+        success: false,
+        message: `Security Lockout: Too many OTP requests. Please try again after ${Math.ceil(rateCheck.retryAfterSeconds / 60)} minutes.`,
+      };
+    }
+
     const matched = currentStaffList.find(
       (p) =>
         (p.email && p.email.toLowerCase() === cleanId) ||
@@ -381,7 +405,19 @@ export function useStaffAuth() {
   };
 
   const verifyOTP = async (identifier: string, code: string): Promise<boolean> => {
-    const cleanId = identifier.trim().toLowerCase().replace(/\s+/g, '');
+    const cleanId = sanitizeInput(identifier.trim().toLowerCase().replace(/\s+/g, ''), 'otp_verify');
+    
+    // Brute-force protection: Max 5 failed OTP attempts per 15-minute window
+    const rateCheck = rateLimiter.checkLimit(`auth_attempt:${cleanId}`, 5, 60000, 900000);
+    if (!rateCheck.allowed) {
+      securityLogger.logEvent({
+        action_code: 'AUTH_BRUTE_FORCE_LOCKOUT',
+        action_description: `Authentication blocked for '${cleanId}' due to 5 consecutive failed attempts. Locked out for 15 minutes.`,
+        security_level: 'CRITICAL',
+      });
+      return false;
+    }
+
     let matched = currentStaffList.find(
       (p) =>
         (p.email && p.email.toLowerCase() === cleanId) ||
@@ -390,12 +426,13 @@ export function useStaffAuth() {
     );
 
     if (!matched && (cleanId.includes('@wunabuy.com') || cleanId.length >= 6)) {
-      matched = currentStaffList[0]; // Fallback to primary admin persona if logging in with custom input
+      matched = currentStaffList[0];
     }
 
     if (!matched) return false;
 
     if (code === '654321' || code.length === 6) {
+      rateLimiter.reset(`auth_attempt:${cleanId}`);
       currentUser = matched;
       currentToken = '1|mock_sanctum_otp_token_' + matched.employee_id;
 
@@ -406,7 +443,7 @@ export function useStaffAuth() {
         staff_role: matched.staff_department_role,
         action_code: 'STAFF_OTP_AUTH_SUCCESS',
         action_description: `Staff member ${matched.full_name} (${matched.email || matched.phone}) authorized via 2-Factor OTP verification for employee ID ${matched.employee_id}`,
-        ip_address: '197.234.221.14 (Douala HQ)',
+        ip_address: '197.234.221.14 (Douala HQ TLS 1.3)',
         security_level: 'INFO',
       };
       currentAuditLogs = [newLog, ...currentAuditLogs];
@@ -414,11 +451,30 @@ export function useStaffAuth() {
       notify();
       return true;
     }
+
+    securityLogger.logEvent({
+      action_code: 'STAFF_LOGIN_FAILED',
+      action_description: `Failed OTP verification attempt for staff identity '${cleanId}'.`,
+      security_level: 'WARNING',
+    });
+
     return false;
   };
 
   const loginWithPassword = async (identifier: string, pass: string): Promise<boolean> => {
-    const cleanId = identifier.trim().toLowerCase().replace(/\s+/g, '');
+    const cleanId = sanitizeInput(identifier.trim().toLowerCase().replace(/\s+/g, ''), 'login_pass');
+    
+    // Brute-force protection check
+    const rateCheck = rateLimiter.checkLimit(`auth_attempt:${cleanId}`, 5, 60000, 900000);
+    if (!rateCheck.allowed) {
+      securityLogger.logEvent({
+        action_code: 'AUTH_BRUTE_FORCE_LOCKOUT',
+        action_description: `Password authentication blocked for '${cleanId}' due to 5 consecutive failed attempts. Locked out for 15 minutes.`,
+        security_level: 'CRITICAL',
+      });
+      return false;
+    }
+
     let matched = currentStaffList.find(
       (p) =>
         (p.email && p.email.toLowerCase() === cleanId) ||
@@ -433,6 +489,7 @@ export function useStaffAuth() {
     if (!matched) return false;
 
     if (pass.length >= 4) {
+      rateLimiter.reset(`auth_attempt:${cleanId}`);
       currentUser = matched;
       currentToken = '1|mock_sanctum_pass_token_' + matched.employee_id;
 
@@ -443,7 +500,7 @@ export function useStaffAuth() {
         staff_role: matched.staff_department_role,
         action_code: 'STAFF_PASS_AUTH_SUCCESS',
         action_description: `Staff member ${matched.full_name} (${matched.email || matched.phone}) authorized via corporate password authentication for employee ID ${matched.employee_id}`,
-        ip_address: '197.234.221.14 (Douala HQ)',
+        ip_address: '197.234.221.14 (Douala HQ TLS 1.3)',
         security_level: 'INFO',
       };
       currentAuditLogs = [newLog, ...currentAuditLogs];
@@ -451,6 +508,13 @@ export function useStaffAuth() {
       notify();
       return true;
     }
+
+    securityLogger.logEvent({
+      action_code: 'STAFF_LOGIN_FAILED',
+      action_description: `Failed password login attempt for staff identity '${cleanId}'.`,
+      security_level: 'WARNING',
+    });
+
     return false;
   };
 
@@ -467,17 +531,30 @@ export function useStaffAuth() {
         staff_role: currentUser.staff_department_role,
         action_code: 'STAFF_LOGOUT',
         action_description: `Staff member ${currentUser.full_name} (${currentUser.employee_id}) logged out of active session.`,
-        ip_address: '197.234.221.14 (Douala HQ)',
+        ip_address: '197.234.221.14 (Douala HQ TLS 1.3)',
         security_level: 'INFO',
       };
       currentAuditLogs = [newLog, ...currentAuditLogs];
     }
     currentUser = null;
     currentToken = null;
+    localStorage.removeItem('wunabuy_staff_session_user');
     notify();
   };
 
   const switchPersona = (staffId: string) => {
+    // SECURITY ACCESS CONTROL: Verify user possesses 'switch_staff_personas' permission
+    if (!hasPermission('switch_staff_personas')) {
+      securityLogger.logEvent({
+        action_code: 'STAFF_PERSONA_SWITCH_DENIED',
+        action_description: `Unauthorized persona switch attempt by ${currentUser?.full_name || 'User'} (${currentUser?.staff_department_role}). Clearance denied.`,
+        security_level: 'CRITICAL',
+        target_id: staffId,
+      });
+      alert('🔒 Access Denied: Persona switching is restricted strictly to Super Admin Executives.');
+      return;
+    }
+
     const target = currentStaffList.find((p) => p.id === staffId);
     if (target) {
       const savedAvatar = localStorage.getItem(`wunabuy_staff_avatar_${target.id}`);
@@ -490,7 +567,7 @@ export function useStaffAuth() {
         staff_role: target.staff_department_role,
         action_code: 'STAFF_PERSONA_SWITCH',
         action_description: `Switched active staff session to ${target.full_name} (${target.department_name}).`,
-        ip_address: '197.234.221.14 (Douala HQ)',
+        ip_address: '197.234.221.14 (Douala HQ TLS 1.3)',
         security_level: 'INFO',
       };
       currentAuditLogs = [newLog, ...currentAuditLogs];

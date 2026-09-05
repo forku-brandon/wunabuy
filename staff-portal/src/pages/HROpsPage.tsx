@@ -6,8 +6,10 @@ import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { DataTable, Column } from '../components/ui/DataTable';
 import { Modal } from '../components/ui/Modal';
+import { DualControlConfirmModal } from '../components/ui/DualControlConfirmModal';
 import { SearchableSelect } from '../components/ui/SearchableSelect';
 import { useStaffAuth, StaffUser, StaffDepartmentRole } from '../stores/staffAuthStore';
+import { sanitizeInput, maskPhone, maskEmail } from '../services/security';
 import {
   Users,
   Wallet,
@@ -916,35 +918,21 @@ export const HROpsPage: React.FC = () => {
       </Modal>
 
       {/* MODAL 3: DELETE / REVOKE STAFF ACCOUNT CONFIRMATION */}
-      <Modal
-        isOpen={isDeleteStaffModalOpen}
-        onClose={() => setIsDeleteStaffModalOpen(false)}
-        title="Revoke Corporate Staff Account"
-      >
-        <div className="space-y-4 text-xs font-semibold">
-          <div className="p-4 bg-red-50 dark:bg-red-950/60 rounded-xl text-red-900 dark:text-red-200 flex items-start space-x-3">
-            <ShieldAlert className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
-            <div>
-              <span className="font-extrabold uppercase block font-heading">CRITICAL ACCOUNT DELETION</span>
-              <p className="text-[11px] text-red-800 dark:text-red-300 font-medium">
-                Are you sure you want to revoke access and delete the corporate staff account for{' '}
-                <strong className="font-extrabold text-red-950 dark:text-red-100">{selectedStaff?.full_name}</strong> ({selectedStaff?.employee_id})?
-                This action is logged in the security audit ledger.
-              </p>
-            </div>
-          </div>
-
-          <div className="pt-4 flex items-center justify-end space-x-3">
-            <Button type="button" variant="outline" size="sm" onClick={() => setIsDeleteStaffModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="button" variant="danger" size="sm" onClick={handleConfirmDeleteStaff}>
-              <Trash2 className="w-4 h-4 mr-1.5" />
-              Revoke &amp; Delete Account
-            </Button>
-          </div>
-        </div>
-      </Modal>
+      {selectedStaff && (
+        <DualControlConfirmModal
+          isOpen={isDeleteStaffModalOpen}
+          onClose={() => setIsDeleteStaffModalOpen(false)}
+          onConfirm={(reason) => {
+            handleConfirmDeleteStaff();
+          }}
+          title={`Revoke Staff Account — ${selectedStaff.full_name}`}
+          description={`You are revoking corporate access and deleting employee account ${selectedStaff.full_name} (${selectedStaff.employee_id}). Dual-control operational reason is mandatory.`}
+          confirmWord="REVOKE"
+          actionButtonText="Revoke & Delete Staff Account"
+          variant="danger"
+          requireReason={true}
+        />
+      )}
 
       {/* PRINTABLE PAYSLIP MODAL */}
       <Modal
