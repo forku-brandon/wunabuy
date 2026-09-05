@@ -42,7 +42,7 @@ export const PrintableParcelQRModal: React.FC<PrintableParcelQRModalProps> = ({
   const handlePrintTag = () => {
     Alert.alert(
       '🖨️ Printing Parcel QR Code',
-      `QR Code for Order #${order.order_code} (PIN: #${order.pickup_pin}) sent to printer.\nAttached to package for transporter scan verification.`,
+      `QR Code (PIN: #${order.pickup_pin}) sent to printer.\nAttached to package for transporter scan verification.`,
       [{ text: 'OK' }]
     );
   };
@@ -90,10 +90,10 @@ export const PrintableParcelQRModal: React.FC<PrintableParcelQRModalProps> = ({
                   <Ionicons name="qr-code" size={160} color={isDark ? '#FFFFFF' : '#0F172A'} />
                 </View>
 
-                {/* Big Order Code & PIN Pill */}
+                {/* Rider Verification PIN Pill */}
                 <View style={styles.codePill}>
                   <Text variant="caption" bold color={colors.primary[700]}>
-                    ORDER CODE: #{order.order_code}
+                    RIDER VERIFICATION PIN
                   </Text>
                   <Text variant="h1" bold color={colors.primary[600]} style={{ letterSpacing: 4, marginTop: 2 }}>
                     #{order.pickup_pin}
