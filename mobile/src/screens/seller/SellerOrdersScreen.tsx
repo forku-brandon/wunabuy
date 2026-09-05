@@ -358,7 +358,7 @@ export const SellerOrdersScreen = ({ navigation }: any) => {
 
                 {/* Item List */}
                 <View style={styles.itemsList}>
-                  {item.items.map((prod, idx) => (
+                  {(item.items || []).map((prod, idx) => (
                     <View key={idx} style={styles.itemRow}>
                       <Image source={{ uri: prod.image_url }} style={styles.itemThumbnail} />
                       <View style={styles.itemMeta}>

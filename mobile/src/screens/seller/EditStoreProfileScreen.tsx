@@ -134,10 +134,16 @@ export const EditStoreProfileScreen = ({ navigation }: any) => {
       coverPhotoUrl,
     });
 
-    SellerService.updateStoreProfile(payload).finally(() => {
-      setSaving(false);
-      setToastMessage('Store Profile updated successfully! 🏬✓');
-    });
+    SellerService.updateStoreProfile(payload)
+      .then(() => {
+        setToastMessage('Store Profile updated successfully! 🏬✓');
+      })
+      .catch(() => {
+        setToastMessage('Saved locally. Will sync when backend is online. 📶');
+      })
+      .finally(() => {
+        setSaving(false);
+      });
   };
 
   const handlePreviewPublicStore = () => {

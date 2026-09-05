@@ -399,7 +399,7 @@ export const ProductDetailScreen = ({ route, navigation }: any) => {
 
           {/* ── Color / Variant Selector ──────────────────────────────────── */}
           <Text variant="caption" bold color={theme.textSecondary} style={styles.sectionLabel}>
-            Available Variant: <Text variant="caption" bold color={theme.text}>{availableColors[selectedColor].name}</Text>
+            Available Variant: <Text variant="caption" bold color={theme.text}>{availableColors[selectedColor]?.name || 'Standard'}</Text>
           </Text>
           <View style={styles.colorRow}>
             {availableColors.map((colorObj, idx) => {

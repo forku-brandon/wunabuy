@@ -35,7 +35,7 @@ export const OrderTrackingScreen = ({ route, navigation }: any) => {
   };
 
   const handleCallDriver = () => {
-    Linking.openURL('tel:+237675112233');
+    Linking.openURL('tel:+237675112233').catch(() => {});
   };
 
   const handleMessageDriver = () => {
