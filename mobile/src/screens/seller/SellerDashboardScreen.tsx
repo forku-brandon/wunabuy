@@ -16,6 +16,7 @@ import { KYCStatusBanner } from '../../components/seller/KYCStatusBanner';
 import { SellerSalesTipsCarousel } from '../../components/seller/SellerSalesTipsCarousel';
 import { SellerSidebarDrawer } from '../../components/navigation/SellerSidebarDrawer';
 import { ProductImageGalleryModal } from '../../components/product/ProductImageGalleryModal';
+import { SellerQRScannerModal } from '../../components/seller/SellerQRScannerModal';
 import { KYCStatus, UserRole, Product } from '@wunabuy/types';
 import { formatXAF, formatRelativeTime } from '@wunabuy/utils';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
@@ -49,6 +50,7 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
   const [isGalleryModalVisible, setIsGalleryModalVisible] = useState(false);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [editingStockProduct, setEditingStockProduct] = useState<Product | null>(null);
+  const [isQRScannerVisible, setIsQRScannerVisible] = useState(false);
 
 
   const handleOpenExpandProduct = (product: Product) => {
@@ -152,9 +154,7 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
           <TouchableOpacity
             activeOpacity={0.7}
             style={[styles.iconButton, { backgroundColor: isDark ? colors.neutral[800] : colors.neutral[100] }]}
-            onPress={() => {
-              Alert.alert('Store QR Scanner', 'Scan customer or transporter fulfillment QR codes.');
-            }}
+            onPress={() => setIsQRScannerVisible(true)}
           >
             <Ionicons
               name="scan-outline"
@@ -883,6 +883,11 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
         title="Update Stock Quantity"
         itemName={editingStockProduct?.name}
         unitLabel="units"
+      />
+
+      <SellerQRScannerModal
+        visible={isQRScannerVisible}
+        onClose={() => setIsQRScannerVisible(false)}
       />
     </ScreenContainer>
   );
