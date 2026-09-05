@@ -12,6 +12,7 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
 import { Text } from '../ui/Text';
@@ -43,10 +44,12 @@ export const SellerQRScannerModal: React.FC<SellerQRScannerModalProps> = ({
   onSuccessHandover,
 }) => {
   const { theme, isDark } = useThemeStore();
+  const [permission, requestPermission] = useCameraPermissions();
   const [activeTab, setActiveTab] = useState<'camera' | 'manual'>('camera');
   const [manualCode, setManualCode] = useState('');
   const [isTorchOn, setIsTorchOn] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [scanned, setScanned] = useState(false);
   const [verificationResult, setVerificationResult] = useState<{
     success: boolean;
     order?: VerifiedOrderData;
@@ -85,6 +88,7 @@ export const SellerQRScannerModal: React.FC<SellerQRScannerModalProps> = ({
     setVerificationResult(null);
     setManualCode('');
     setIsVerifying(false);
+    setScanned(false);
     setIsHandedOverSuccess(false);
   };
 
@@ -152,7 +156,13 @@ export const SellerQRScannerModal: React.FC<SellerQRScannerModalProps> = ({
         success: true,
         order,
       });
-    }, 1200);
+    }, 1000);
+  };
+
+  const handleBarCodeScanned = ({ type, data }: { type: string; data: string }) => {
+    if (scanned || isVerifying || verificationResult) return;
+    setScanned(true);
+    processCodeVerification(data);
   };
 
   const handleConfirmHandover = () => {
@@ -365,8 +375,36 @@ export const SellerQRScannerModal: React.FC<SellerQRScannerModalProps> = ({
             {/* CAMERA SCANNER TAB */}
             {!isVerifying && !verificationResult && activeTab === 'camera' && (
               <View style={styles.cameraContainer}>
-                {/* Simulated Live Viewfinder Frame */}
-                <View style={[styles.viewfinderFrame, { backgroundColor: isTorchOn ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.85)' }]}>
+                {/* Live Viewfinder Frame with Real Camera Sensor */}
+                <View style={[styles.viewfinderFrame, { backgroundColor: '#0F172A' }]}>
+                  {permission?.granted ? (
+                    <CameraView
+                      style={StyleSheet.absoluteFillObject}
+                      enableTorch={isTorchOn}
+                      onBarcodeScanned={scanned || isVerifying ? undefined : handleBarCodeScanned}
+                      barcodeScannerSettings={{
+                        barcodeTypes: ['qr', 'ean13', 'ean8', 'upc_a', 'upc_e', 'code128', 'code39'],
+                      }}
+                    />
+                  ) : (
+                    <View style={styles.permissionBox}>
+                      <Ionicons name="camera-outline" size={40} color="#94A3B8" />
+                      <Text variant="bodyMedium" bold color="#FFFFFF" style={{ marginTop: 6 }}>
+                        Camera Permission Required
+                      </Text>
+                      <Text variant="caption" color="rgba(255,255,255,0.7)" style={{ textAlign: 'center', marginVertical: spacing.xs }}>
+                        Grant camera access to scan buyer PINs & QR codes live using your phone camera.
+                      </Text>
+                      <Button
+                        title="Enable Camera Access"
+                        variant="primary"
+                        size="small"
+                        onPress={requestPermission}
+                        style={{ marginTop: spacing.xs, backgroundColor: colors.primary[500] }}
+                      />
+                    </View>
+                  )}
+
                   {/* Corner framing brackets */}
                   <View style={[styles.corner, styles.topLeft]} />
                   <View style={[styles.corner, styles.topRight]} />
@@ -384,26 +422,23 @@ export const SellerQRScannerModal: React.FC<SellerQRScannerModalProps> = ({
                     ]}
                   />
 
-                  {/* Viewfinder Center Target Icon */}
-                  <View style={styles.targetCenterIcon}>
-                    <Ionicons name="qr-code-outline" size={64} color="rgba(255,255,255,0.3)" />
-                  </View>
-
-                  {/* Flashlight / Torch Toggle */}
-                  <TouchableOpacity
-                    activeOpacity={0.8}
-                    onPress={() => setIsTorchOn(!isTorchOn)}
-                    style={[
-                      styles.torchBtn,
-                      { backgroundColor: isTorchOn ? colors.accent[500] : 'rgba(0,0,0,0.6)' },
-                    ]}
-                  >
-                    <Ionicons
-                      name={isTorchOn ? 'flash' : 'flash-outline'}
-                      size={20}
-                      color="#FFFFFF"
-                    />
-                  </TouchableOpacity>
+                  {/* Flashlight / Torch Toggle (If permission granted) */}
+                  {permission?.granted && (
+                    <TouchableOpacity
+                      activeOpacity={0.8}
+                      onPress={() => setIsTorchOn(!isTorchOn)}
+                      style={[
+                        styles.torchBtn,
+                        { backgroundColor: isTorchOn ? colors.accent[500] : 'rgba(0,0,0,0.6)' },
+                      ]}
+                    >
+                      <Ionicons
+                        name={isTorchOn ? 'flash' : 'flash-outline'}
+                        size={20}
+                        color="#FFFFFF"
+                      />
+                    </TouchableOpacity>
+                  )}
                 </View>
 
                 <Text variant="caption" secondary style={styles.cameraInstruction}>
@@ -562,11 +597,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.2)',
   },
+  permissionBox: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.md,
+    backgroundColor: '#0F172A',
+    zIndex: 2,
+  },
   corner: {
     position: 'absolute',
     width: 24,
     height: 24,
     borderColor: colors.primary[500],
+    zIndex: 3,
   },
   topLeft: {
     top: 12,
@@ -607,10 +651,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.8,
     shadowRadius: 6,
     elevation: 4,
-  },
-  targetCenterIcon: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    zIndex: 4,
   },
   torchBtn: {
     position: 'absolute',
@@ -621,6 +662,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
+    zIndex: 5,
   },
   cameraInstruction: {
     marginTop: spacing.sm,
