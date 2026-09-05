@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Image, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { CartItem } from '@wunabuy/types';
 import { formatXAF } from '@wunabuy/utils';
 import { colors, spacing, borderRadius } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
-import { Text, Card } from '../ui';
+import { Text, Card, QuantityInputModal } from '../ui';
 
 const PLACEHOLDER = require('../../../assets/placeholder_product.png');
 
@@ -23,68 +23,88 @@ export const CartItemCard: React.FC<CartItemCardProps> = ({
   style,
 }) => {
   const { theme, isDark } = useThemeStore();
+  const [modalVisible, setModalVisible] = useState(false);
 
   return (
-    <Card style={[styles.card, style]}>
-      <View style={styles.row}>
-        {/* Product Image Thumbnail */}
-        <Image
-          source={item.image_url ? { uri: item.image_url } : PLACEHOLDER}
-          style={styles.image}
-          resizeMode="cover"
-        />
+    <>
+      <Card style={[styles.card, style]}>
+        <View style={styles.row}>
+          {/* Product Image Thumbnail */}
+          <Image
+            source={item.image_url ? { uri: item.image_url } : PLACEHOLDER}
+            style={styles.image}
+            resizeMode="cover"
+          />
 
-        {/* Info, Price, Trash Icon & Quantity Stepper */}
-        <View style={styles.infoCol}>
-          <View style={styles.headerRow}>
-            <Text variant="bodyLarge" bold numberOfLines={1} style={styles.name}>
-              {item.name}
-            </Text>
-
-            {/* Trash Delete Icon Button */}
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={() => onRemove(item.product_id)}
-              style={styles.trashBtn}
-            >
-              <Ionicons name="trash-outline" size={18} color={theme.placeholder} />
-            </TouchableOpacity>
-          </View>
-
-          <Text variant="caption" secondary style={styles.storeName}>
-            Douala Tech Hub (Akwa)
-          </Text>
-
-          <View style={styles.footerRow}>
-            <Text variant="h3" bold color={colors.primary[500]}>
-              {formatXAF(item.price)}
-            </Text>
-
-            {/* Stepper Pill (Matching Mockup Screen 3) */}
-            <View style={[styles.stepperPill, { backgroundColor: isDark ? colors.neutral[800] : '#F1F5F9' }]}>
-              <TouchableOpacity
-                onPress={() => onUpdateQuantity(item.product_id, item.quantity - 1)}
-                style={styles.stepBtn}
-              >
-                <Text variant="bodyLarge" bold>-</Text>
-              </TouchableOpacity>
-
-              <Text variant="bodyMedium" bold style={styles.qtyText}>
-                {item.quantity}
+          {/* Info, Price, Trash Icon & Quantity Stepper */}
+          <View style={styles.infoCol}>
+            <View style={styles.headerRow}>
+              <Text variant="bodyLarge" bold numberOfLines={1} style={styles.name}>
+                {item.name}
               </Text>
 
+              {/* Trash Delete Icon Button */}
               <TouchableOpacity
-                onPress={() => onUpdateQuantity(item.product_id, item.quantity + 1)}
-                disabled={item.quantity >= item.max_quantity}
-                style={[styles.stepBtn, item.quantity >= item.max_quantity && { opacity: 0.3 }]}
+                activeOpacity={0.8}
+                onPress={() => onRemove(item.product_id)}
+                style={styles.trashBtn}
               >
-                <Text variant="bodyLarge" bold>+</Text>
+                <Ionicons name="trash-outline" size={18} color={theme.placeholder} />
               </TouchableOpacity>
+            </View>
+
+            <Text variant="caption" secondary style={styles.storeName}>
+              Douala Tech Hub (Akwa)
+            </Text>
+
+            <View style={styles.footerRow}>
+              <Text variant="h3" bold color={colors.primary[500]}>
+                {formatXAF(item.price)}
+              </Text>
+
+              {/* Stepper Pill (Clicking number opens Alibaba-style Quantity Modal) */}
+              <View style={[styles.stepperPill, { backgroundColor: isDark ? colors.neutral[800] : '#F1F5F9' }]}>
+                <TouchableOpacity
+                  onPress={() => onUpdateQuantity(item.product_id, item.quantity - 1)}
+                  style={styles.stepBtn}
+                >
+                  <Text variant="bodyLarge" bold>-</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={() => setModalVisible(true)}
+                  style={styles.qtyTouchBtn}
+                >
+                  <Text variant="bodyMedium" bold style={styles.qtyText}>
+                    {item.quantity}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() => onUpdateQuantity(item.product_id, item.quantity + 1)}
+                  disabled={item.quantity >= item.max_quantity}
+                  style={[styles.stepBtn, item.quantity >= item.max_quantity && { opacity: 0.3 }]}
+                >
+                  <Text variant="bodyLarge" bold>+</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </View>
-      </View>
-    </Card>
+      </Card>
+
+      <QuantityInputModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        onConfirm={(newQty) => onUpdateQuantity(item.product_id, newQty)}
+        currentQuantity={item.quantity}
+        minQuantity={1}
+        maxQuantity={item.max_quantity}
+        title="Edit Item Quantity"
+        itemName={item.name}
+      />
+    </>
   );
 };
 
@@ -144,7 +164,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  qtyText: {
+  qtyTouchBtn: {
     paddingHorizontal: spacing.xs + 2,
+    height: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  qtyText: {
+    fontSize: 14,
+    textDecorationLine: 'underline',
   },
 });

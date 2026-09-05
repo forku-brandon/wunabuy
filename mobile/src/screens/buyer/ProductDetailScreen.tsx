@@ -23,7 +23,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ScreenContainer, Text, Badge, Button, Card, Toast } from '../../components/ui';
+import { ScreenContainer, Text, Badge, Button, Card, Toast, QuantityInputModal } from '../../components/ui';
 import { ProductCard } from '../../components/product/ProductCard';
 import { MOCK_PRODUCTS } from '../../services/mockProducts';
 import { useCartStore } from '../../stores/cart.store';
@@ -64,6 +64,7 @@ export const ProductDetailScreen = ({ route, navigation }: any) => {
   const [isGalleryModalVisible, setIsGalleryModalVisible] = useState(false);
   const [selectedColor, setSelectedColor] = useState(0);
   const [quantity, setQuantity] = useState(1);
+  const [qtyModalVisible, setQtyModalVisible] = useState(false);
   const [isDescExpanded, setIsDescExpanded] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -499,9 +500,15 @@ export const ProductDetailScreen = ({ route, navigation }: any) => {
             <Ionicons name="remove" size={18} color={theme.text} />
           </TouchableOpacity>
 
-          <Text variant="bodyLarge" bold style={styles.stepQty}>
-            {quantity}
-          </Text>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => setQtyModalVisible(true)}
+            style={styles.qtyTouchBtn}
+          >
+            <Text variant="bodyLarge" bold style={styles.stepQty}>
+              {quantity}
+            </Text>
+          </TouchableOpacity>
 
           <TouchableOpacity
             onPress={() => setQuantity(quantity + 1)}
@@ -558,6 +565,17 @@ export const ProductDetailScreen = ({ route, navigation }: any) => {
         initialIndex={activeImageIndex}
         productName={product.name}
         onClose={() => setIsGalleryModalVisible(false)}
+      />
+
+      <QuantityInputModal
+        visible={qtyModalVisible}
+        onClose={() => setQtyModalVisible(false)}
+        onConfirm={(newQty) => setQuantity(newQty)}
+        currentQuantity={quantity}
+        minQuantity={1}
+        maxQuantity={product.quantity || 99}
+        title="Enter Order Quantity"
+        itemName={product.name}
       />
     </ScreenContainer>
   );
@@ -899,10 +917,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  stepQty: {
+  qtyTouchBtn: {
     paddingHorizontal: spacing.xs + 2,
+    height: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  stepQty: {
     minWidth: 20,
     textAlign: 'center',
+    textDecorationLine: 'underline',
   },
   addToCartBtn: {
     flex: 1.1,

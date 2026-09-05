@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 
 import { Ionicons } from '@expo/vector-icons';
-import { ScreenContainer, Text, Card, Badge, Avatar } from '../../components/ui';
+import { ScreenContainer, Text, Card, Badge, Avatar, QuantityInputModal } from '../../components/ui';
 import { KYCStatusBanner } from '../../components/seller/KYCStatusBanner';
 import { SellerSalesTipsCarousel } from '../../components/seller/SellerSalesTipsCarousel';
 import { SellerSidebarDrawer } from '../../components/navigation/SellerSidebarDrawer';
@@ -48,6 +48,7 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
   const [isExpandModalVisible, setIsExpandModalVisible] = useState(false);
   const [isGalleryModalVisible, setIsGalleryModalVisible] = useState(false);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [editingStockProduct, setEditingStockProduct] = useState<Product | null>(null);
 
 
   const handleOpenExpandProduct = (product: Product) => {
@@ -593,9 +594,18 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
                           <Ionicons name="remove" size={12} color={theme.text} />
                         </TouchableOpacity>
 
-                        <Text variant="caption" bold style={styles.stockNumberText}>
-                          {product.quantity}
-                        </Text>
+                        <TouchableOpacity
+                          activeOpacity={0.7}
+                          onPress={(e) => {
+                            e.stopPropagation?.();
+                            setEditingStockProduct(product);
+                          }}
+                          style={{ paddingHorizontal: spacing.xs, height: 24, justifyContent: 'center' }}
+                        >
+                          <Text variant="caption" bold style={[styles.stockNumberText, { textDecorationLine: 'underline' }]}>
+                            {product.quantity}
+                          </Text>
+                        </TouchableOpacity>
 
                         <TouchableOpacity
                           activeOpacity={0.7}
@@ -765,9 +775,15 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
                         <Ionicons name="remove" size={18} color={theme.text} />
                       </TouchableOpacity>
 
-                      <Text variant="h2" bold style={styles.modalStockValueText}>
-                        {selectedProductForExpand.quantity}
-                      </Text>
+                      <TouchableOpacity
+                        activeOpacity={0.7}
+                        onPress={() => setEditingStockProduct(selectedProductForExpand)}
+                        style={{ paddingHorizontal: spacing.sm, height: 36, justifyContent: 'center' }}
+                      >
+                        <Text variant="h2" bold style={[styles.modalStockValueText, { textDecorationLine: 'underline' }]}>
+                          {selectedProductForExpand.quantity}
+                        </Text>
+                      </TouchableOpacity>
 
                       <TouchableOpacity
                         activeOpacity={0.7}
@@ -847,6 +863,27 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
           onClose={() => setIsGalleryModalVisible(false)}
         />
       )}
+
+      <QuantityInputModal
+        visible={!!editingStockProduct}
+        onClose={() => setEditingStockProduct(null)}
+        onConfirm={(targetQty) => {
+          if (editingStockProduct) {
+            const delta = targetQty - editingStockProduct.quantity;
+            updateStock(editingStockProduct.id, delta);
+            if (selectedProductForExpand && selectedProductForExpand.id === editingStockProduct.id) {
+              setSelectedProductForExpand({ ...selectedProductForExpand, quantity: targetQty });
+            }
+            setEditingStockProduct(null);
+          }
+        }}
+        currentQuantity={editingStockProduct?.quantity || 0}
+        minQuantity={0}
+        maxQuantity={99999}
+        title="Update Stock Quantity"
+        itemName={editingStockProduct?.name}
+        unitLabel="units"
+      />
     </ScreenContainer>
   );
 };

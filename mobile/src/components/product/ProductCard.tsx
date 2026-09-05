@@ -18,6 +18,7 @@ import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
 import { Text } from '../ui/Text';
 import { Badge } from '../ui/Badge';
+import { QuantityInputModal } from '../ui/QuantityInputModal';
 import { useCartStore } from '../../stores/cart.store';
 import { useFavoritesStore } from '../../stores/favorites.store';
 import { useFootprintStore } from '../../stores/footprint.store';
@@ -46,6 +47,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   const [isGalleryModalVisible, setIsGalleryModalVisible] = useState(false);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
+  const [qtyModalVisible, setQtyModalVisible] = useState(false);
   const [showAddedNotice, setShowAddedNotice] = useState(false);
 
 
@@ -335,9 +337,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                   >
                     <Ionicons name="remove" size={16} color={theme.text} />
                   </TouchableOpacity>
-                  <Text variant="bodyMedium" bold style={styles.stepperText}>
-                    {quantity}
-                  </Text>
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={() => setQtyModalVisible(true)}
+                    style={{ paddingHorizontal: spacing.xs, height: 28, justifyContent: 'center' }}
+                  >
+                    <Text variant="bodyMedium" bold style={[styles.stepperText, { textDecorationLine: 'underline' }]}>
+                      {quantity}
+                    </Text>
+                  </TouchableOpacity>
                   <TouchableOpacity
                     activeOpacity={0.7}
                     onPress={() => setQuantity(quantity + 1)}
@@ -395,6 +403,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         initialIndex={activeImageIndex}
         productName={product.name}
         onClose={() => setIsGalleryModalVisible(false)}
+      />
+
+      <QuantityInputModal
+        visible={qtyModalVisible}
+        onClose={() => setQtyModalVisible(false)}
+        onConfirm={(newQty) => setQuantity(newQty)}
+        currentQuantity={quantity}
+        minQuantity={1}
+        maxQuantity={product.quantity || 99}
+        title="Enter Order Quantity"
+        itemName={product.name}
       />
     </>
   );

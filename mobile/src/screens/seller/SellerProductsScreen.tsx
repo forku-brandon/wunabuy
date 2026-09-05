@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { View, Image, FlatList, StyleSheet, TouchableOpacity, Switch, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { ScreenContainer, Text, Card, Input, Button, Badge, Toast, EmptyState } from '../../components/ui';
+import { ScreenContainer, Text, Card, Input, Button, Badge, Toast, EmptyState, QuantityInputModal } from '../../components/ui';
 import { ProductImageGalleryModal } from '../../components/product/ProductImageGalleryModal';
 import { useSellerStore } from '../../stores/seller.store';
 import { Product, QualityTier } from '@wunabuy/types';
@@ -17,6 +17,7 @@ export const SellerProductsScreen = ({ navigation }: any) => {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [galleryProduct, setGalleryProduct] = useState<Product | null>(null);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
 
   const handleRefresh = useCallback(async () => {
@@ -47,6 +48,14 @@ export const SellerProductsScreen = ({ navigation }: any) => {
     updateStock(product.id, delta);
     const newQty = Math.max(0, product.quantity + delta);
     SellerService.updateStock(product.id, newQty);
+  };
+
+  const handleDirectStockSet = (targetQty: number) => {
+    if (editingProduct) {
+      const delta = targetQty - editingProduct.quantity;
+      handleStockChange(editingProduct, delta);
+      setEditingProduct(null);
+    }
   };
 
   const handleDeleteProduct = (productId: string) => {
@@ -171,9 +180,15 @@ export const SellerProductsScreen = ({ navigation }: any) => {
                           <Ionicons name="remove" size={14} color={theme.text} />
                         </TouchableOpacity>
 
-                        <Text variant="caption" bold style={styles.stepperText}>
-                          {item.quantity}
-                        </Text>
+                        <TouchableOpacity
+                          activeOpacity={0.7}
+                          onPress={() => setEditingProduct(item)}
+                          style={{ paddingHorizontal: spacing.xs, height: 28, justifyContent: 'center' }}
+                        >
+                          <Text variant="caption" bold style={[styles.stepperText, { textDecorationLine: 'underline' }]}>
+                            {item.quantity}
+                          </Text>
+                        </TouchableOpacity>
 
                         <TouchableOpacity
                           activeOpacity={0.7}
@@ -230,6 +245,18 @@ export const SellerProductsScreen = ({ navigation }: any) => {
           onClose={() => setGalleryProduct(null)}
         />
       )}
+
+      <QuantityInputModal
+        visible={!!editingProduct}
+        onClose={() => setEditingProduct(null)}
+        onConfirm={handleDirectStockSet}
+        currentQuantity={editingProduct?.quantity || 0}
+        minQuantity={0}
+        maxQuantity={99999}
+        title="Update Stock Quantity"
+        itemName={editingProduct?.name}
+        unitLabel="units"
+      />
     </ScreenContainer>
   );
 };
