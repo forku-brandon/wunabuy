@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScreenContainer, Text, Card, Button, Badge, EmptyState } from '../../components/ui';
 import { CartItemCard } from '../../components/cart/CartItemCard';
+import { StorePickupTable } from '../../components/order/StorePickupTable';
 import { useCartStore } from '../../stores/cart.store';
 import { useThemeStore } from '../../stores/theme.store';
 import { spacing, colors, borderRadius, shadows } from '@wunabuy/design-tokens';
@@ -392,84 +393,9 @@ export const BuyerCartScreen = ({ navigation }: any) => {
               </View>
             </TouchableOpacity>
 
-            {/* If Self-Pickup Selected: Detailed Seller Store Address & Rider PIN Card */}
+            {/* If Self-Pickup Selected: Tabular Seller Store Address & Rider PIN Table */}
             {deliveryMethod === 'self_pickup' && (
-              <View style={[styles.pickupDetailsCard, { backgroundColor: isDark ? colors.neutral[800] : '#ECFDF5', borderColor: colors.primary[400] }]}>
-                {/* Rider Verification PIN Header */}
-                <View style={styles.pinCardHeader}>
-                  <Ionicons name="key" size={18} color={colors.primary[600]} />
-                  <Text variant="caption" bold color={colors.primary[700]} style={{ marginLeft: 6 }}>
-                    YOUR PERSONAL RIDER VERIFICATION PIN
-                  </Text>
-                </View>
-
-                <View style={styles.pinBadgeContainer}>
-                  <Text variant="h1" bold color={colors.primary[600]} style={{ letterSpacing: 4 }}>
-                    #{pickupPin}
-                  </Text>
-                </View>
-
-                <Text variant="caption" secondary style={{ fontSize: 11, marginBottom: spacing.xs }}>
-                  Give code <Text bold color={theme.text}>#{pickupPin}</Text> to your courier to present at the store counter upon arrival.
-                </Text>
-
-                {/* Detailed Seller Store Address Specs */}
-                <View style={[styles.storeSpecsBox, { backgroundColor: isDark ? colors.neutral[900] : '#FFFFFF', borderColor: theme.border }]}>
-                  <Text variant="caption" bold color={colors.primary[600]} style={{ marginBottom: 4 }}>
-                    🏬 DETAILED STORE PICKUP LOCATION:
-                  </Text>
-
-                  <View style={styles.specRow}>
-                    <Ionicons name="storefront-outline" size={14} color={theme.textSecondary} style={{ marginRight: 6 }} />
-                    <Text variant="caption" bold color={theme.text}>
-                      Store Name:
-                    </Text>
-                    <Text variant="caption" secondary style={{ marginLeft: 4, flex: 1 }}>
-                      Douala Tech Hub (Akwa Branch)
-                    </Text>
-                  </View>
-
-                  <View style={styles.specRow}>
-                    <Ionicons name="location-outline" size={14} color={theme.textSecondary} style={{ marginRight: 6 }} />
-                    <Text variant="caption" bold color={theme.text}>
-                      Physical Address:
-                    </Text>
-                    <Text variant="caption" secondary style={{ marginLeft: 4, flex: 1 }}>
-                      Rue Joss, Quartier Akwa, Douala, Cameroon
-                    </Text>
-                  </View>
-
-                  <View style={styles.specRow}>
-                    <Ionicons name="compass-outline" size={14} color={theme.textSecondary} style={{ marginRight: 6 }} />
-                    <Text variant="caption" bold color={theme.text}>
-                      Landmark Directions:
-                    </Text>
-                    <Text variant="caption" secondary style={{ marginLeft: 4, flex: 1 }}>
-                      Opposite Place du Gouvernement, Next to Akwa Mall (1st Floor, Suite 104)
-                    </Text>
-                  </View>
-
-                  <TouchableOpacity activeOpacity={0.7} onPress={() => Linking.openURL('tel:+237670123456').catch(() => {})} style={styles.specRow}>
-                    <Ionicons name="call-outline" size={14} color={colors.primary[600]} style={{ marginRight: 6 }} />
-                    <Text variant="caption" bold color={theme.text}>
-                      Store Contacts (Tap to Call 📞):
-                    </Text>
-                    <Text variant="caption" bold color={colors.primary[600]} style={{ marginLeft: 4, flex: 1 }}>
-                      +237 670 123 456 / +237 699 876 543
-                    </Text>
-                  </TouchableOpacity>
-
-                  <View style={styles.specRow}>
-                    <Ionicons name="time-outline" size={14} color={theme.textSecondary} style={{ marginRight: 6 }} />
-                    <Text variant="caption" bold color={theme.text}>
-                      Operating Hours:
-                    </Text>
-                    <Text variant="caption" secondary style={{ marginLeft: 4, flex: 1 }}>
-                      Mon - Sat: 8:00 AM - 6:30 PM
-                    </Text>
-                  </View>
-                </View>
-              </View>
+              <StorePickupTable pickupPin={pickupPin} style={{ marginTop: spacing.sm }} />
             )}
 
             <Button

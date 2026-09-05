@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ScreenContainer, Text, Input, Button, Card, Toast, Badge } from '../../components/ui';
+import { StorePickupTable } from '../../components/order/StorePickupTable';
 import { PaymentMethod } from '@wunabuy/types';
 import { formatXAF, generateIdempotencyKey, formatPhone } from '@wunabuy/utils';
 import { useCartStore } from '../../stores/cart.store';
@@ -143,15 +144,9 @@ export const CheckoutPaymentScreen = ({ route, navigation }: any) => {
         </View>
       </Card>
 
-      {/* Self-Pickup Info Card */}
+      {/* If Self-Pickup Selected: Tabular Seller Store Address & Rider PIN Table */}
       {deliveryMethod === 'self_pickup' && (
-        <View style={[styles.selfPickupCheckoutCard, { backgroundColor: isDark ? 'rgba(13,148,136,0.15)' : '#F0FDFA', borderColor: colors.primary[400] }]}>
-          <Ionicons name="walk" size={16} color={colors.primary[600]} />
-          <Text variant="caption" bold color={colors.primary[700]} style={{ marginLeft: 6 }}>
-            Self-Pickup • Personal Rider Code: #{pickupPin}
-          </Text>
-          <Badge label="0 FCFA" variant="success" size="small" style={{ marginLeft: 'auto' }} />
-        </View>
+        <StorePickupTable pickupPin={pickupPin} style={{ marginTop: spacing.sm }} />
       )}
 
       {/* Payment Method Selector Tabs */}
