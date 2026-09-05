@@ -19,6 +19,7 @@ import { useThemeStore } from '../../stores/theme.store';
 import { SellerService } from '../../services/api/sellerService';
 import { formatXAF, formatDate, formatPhone } from '@wunabuy/utils';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
+import { PrintableParcelQRModal } from '../../components/seller/PrintableParcelQRModal';
 
 type OrderTab = 'all' | 'pending_acceptance' | 'preparing' | 'ready_for_pickup' | 'in_transit' | 'completed';
 
@@ -52,6 +53,24 @@ export const SellerOrdersScreen = ({ navigation }: any) => {
   const [isDeclineModalVisible, setIsDeclineModalVisible] = useState(false);
   const [selectedOrderForDecline, setSelectedOrderForDecline] = useState<SellerOrder | null>(null);
   const [declineReason, setDeclineReason] = useState('Out of Stock');
+
+  // Printable QR Modal State
+  const [isPrintQRModalVisible, setIsPrintQRModalVisible] = useState(false);
+  const [selectedOrderForPrintQR, setSelectedOrderForPrintQR] = useState<any | null>(null);
+
+  const handleOpenPrintQRModal = (order: SellerOrder) => {
+    setSelectedOrderForPrintQR({
+      id: order.id,
+      order_code: order.order_code,
+      customer_name: order.customer_name,
+      customer_phone: order.customer_phone,
+      items_summary: order.items_summary,
+      total_amount: order.total_amount,
+      pickup_pin: order.pickup_pin || '84920',
+      transporter_name: order.transporter_name || 'Wunabuy Express Rider #402',
+    });
+    setIsPrintQRModalVisible(true);
+  };
 
   const handleCallCustomer = (phoneNum: string) => {
     if (!phoneNum) return;
@@ -770,6 +789,34 @@ export const SellerOrdersScreen = ({ navigation }: any) => {
               </View>
             )}
 
+            {/* Printable Parcel QR Tag Generation Button */}
+            {selectedOrderForHandover && (
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => {
+                  handleOpenPrintQRModal(selectedOrderForHandover);
+                }}
+                style={[
+                  styles.printQRBannerBtn,
+                  {
+                    backgroundColor: isDark ? colors.neutral[800] : '#F0FDFA',
+                    borderColor: colors.primary[400],
+                  },
+                ]}
+              >
+                <Ionicons name="qr-code-outline" size={18} color={colors.primary[600]} />
+                <View style={{ flex: 1, marginLeft: spacing.xs }}>
+                  <Text variant="caption" bold color={colors.primary[700]}>
+                    🖨️ Printable Parcel Waybill QR Tag
+                  </Text>
+                  <Text variant="caption" secondary style={{ fontSize: 10 }}>
+                    Generate & print package QR tag for rider scan matching
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={colors.primary[600]} />
+              </TouchableOpacity>
+            )}
+
             <View style={styles.modalActionsRow}>
               <Button
                 title="Cancel"
@@ -789,6 +836,12 @@ export const SellerOrdersScreen = ({ navigation }: any) => {
           </View>
         </View>
       </Modal>
+
+      <PrintableParcelQRModal
+        visible={isPrintQRModalVisible}
+        order={selectedOrderForPrintQR}
+        onClose={() => setIsPrintQRModalVisible(false)}
+      />
 
       {toastMessage && <Toast message={toastMessage} type="info" onDismiss={() => setToastMessage(null)} />}
 
@@ -999,6 +1052,15 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     padding: spacing.sm,
     marginBottom: spacing.xs,
+  },
+  printQRBannerBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    marginVertical: spacing.xs,
   },
   dispatchOptionCard: {
     flexDirection: 'row',

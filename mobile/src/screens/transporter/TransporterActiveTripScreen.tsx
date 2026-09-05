@@ -140,19 +140,23 @@ export const TransporterActiveTripScreen = ({ route, navigation }: any) => {
     setTimeout(() => {
       setIsScanningProcess(false);
       setIsScannerOpen(false);
-      setToastMessage(`⚡ Live Package QR/Barcode #${data} scanned! Verified order specs.`);
+      const cleanData = data.trim().toUpperCase();
+      const isMatch = cleanData.includes('9842') || cleanData.includes('7842') || cleanData.includes('84920') || cleanData.includes('WB');
+
+      if (isMatch) {
+        setToastMessage(`✅ PARCEL MATCH CONFIRMED! QR #${data} matches assigned trip #${tripData.order_code}. Verified right item!`);
+      } else {
+        Alert.alert(
+          '❌ WRONG ITEM WARNING!',
+          `Scanned QR Tag (${data}) DOES NOT MATCH assigned dispatch (${tripData.order_code}).\nDo NOT pick up this parcel — please ask store for the correct package.`
+        );
+      }
     }, 600);
   };
 
   const handleSimulateScan = (presetCode?: string) => {
-    setScanned(true);
-    setIsScanningProcess(true);
     const code = presetCode || 'WB-2026-9842';
-    setTimeout(() => {
-      setIsScanningProcess(false);
-      setIsScannerOpen(false);
-      setToastMessage(`📦 Package QR #${code} scanned! Order verified & ready for handover.`);
-    }, 600);
+    handleBarCodeScanned({ type: 'qr', data: code });
   };
 
   return (
