@@ -337,9 +337,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                   >
                     <Ionicons name="remove" size={16} color={theme.text} />
                   </TouchableOpacity>
-                  <Text variant="bodyMedium" bold style={styles.stepperText}>
-                    {quantity}
-                  </Text>
                   <TouchableOpacity
                     activeOpacity={0.7}
                     onPress={() => setQtyModalVisible(true)}

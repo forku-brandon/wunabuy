@@ -500,9 +500,6 @@ export const ProductDetailScreen = ({ route, navigation }: any) => {
             <Ionicons name="remove" size={18} color={theme.text} />
           </TouchableOpacity>
 
-          <Text variant="bodyLarge" bold style={styles.stepQty}>
-            {quantity}
-          </Text>
           <TouchableOpacity
             activeOpacity={0.7}
             onPress={() => setQtyModalVisible(true)}

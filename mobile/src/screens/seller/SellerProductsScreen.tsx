@@ -180,9 +180,6 @@ export const SellerProductsScreen = ({ navigation }: any) => {
                           <Ionicons name="remove" size={14} color={theme.text} />
                         </TouchableOpacity>
 
-                        <Text variant="caption" bold style={styles.stepperText}>
-                          {item.quantity}
-                        </Text>
                         <TouchableOpacity
                           activeOpacity={0.7}
                           onPress={() => setEditingProduct(item)}
