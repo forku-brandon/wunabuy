@@ -112,21 +112,13 @@ export const PrintableParcelQRModal: React.FC<PrintableParcelQRModalProps> = ({
                 </View>
               </View>
 
-              {/* Rider & Item Info Summary */}
+              {/* Rider Info Summary */}
               <View style={[styles.infoBox, { borderColor: theme.border }]}>
                 <View style={styles.infoRow}>
                   <Ionicons name="bicycle-outline" size={16} color={colors.primary[500]} style={{ marginRight: 8 }} />
                   <Text variant="caption" bold secondary style={{ width: 90 }}>RIDER:</Text>
                   <Text variant="bodyMedium" bold color={theme.text} style={{ flex: 1 }}>
                     {order.transporter_name || 'Wunabuy Express Rider #402'}
-                  </Text>
-                </View>
-
-                <View style={styles.infoRow}>
-                  <Ionicons name="cube-outline" size={16} color={colors.primary[500]} style={{ marginRight: 8 }} />
-                  <Text variant="caption" bold secondary style={{ width: 90 }}>PACKAGE:</Text>
-                  <Text variant="bodyMedium" bold color={theme.text} style={{ flex: 1 }}>
-                    {order.items_summary}
                   </Text>
                 </View>
               </View>
