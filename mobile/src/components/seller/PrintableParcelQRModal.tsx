@@ -78,16 +78,29 @@ export const PrintableParcelQRModal: React.FC<PrintableParcelQRModalProps> = ({
             <View style={[styles.waybillCard, { backgroundColor: isDark ? colors.neutral[900] : '#FFFFFF', borderColor: isDark ? colors.neutral[700] : colors.neutral[300] }]}>
               {/* Top Banner */}
               <View style={styles.waybillTopBanner}>
-                <Text variant="caption" bold color="#FFFFFF" style={{ letterSpacing: 1 }}>
-                  PARCEL VERIFICATION QR CODE
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Ionicons name="bag-handle" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
+                  <Text variant="caption" bold color="#FFFFFF" style={{ letterSpacing: 1 }}>
+                    WUNABUY PARCEL QR TAG
+                  </Text>
+                </View>
                 <Badge label="RIDER READY" variant="success" size="small" />
               </View>
 
-              {/* Centered QR Barcode */}
+              {/* Centered QR Barcode with Wunabuy Center Logo Emblem */}
               <View style={styles.qrDisplayBox}>
                 <View style={styles.qrFrame}>
                   <Ionicons name="qr-code" size={160} color={isDark ? '#FFFFFF' : '#0F172A'} />
+
+                  {/* Official Wunabuy Brand Center Logo Emblem */}
+                  <View style={[styles.qrCenterLogoOverlay, { backgroundColor: isDark ? colors.neutral[900] : '#FFFFFF' }]}>
+                    <View style={styles.qrLogoInnerRing}>
+                      <Ionicons name="bag-handle" size={16} color="#FFFFFF" />
+                    </View>
+                    <Text variant="caption" bold color={colors.primary[600]} style={styles.qrBrandText}>
+                      WUNABUY
+                    </Text>
+                  </View>
                 </View>
 
                 {/* Encrypted Security Badge */}
@@ -187,13 +200,41 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   qrFrame: {
+    position: 'relative',
     padding: spacing.md,
     backgroundColor: '#FFFFFF',
     borderRadius: borderRadius.lg,
-    borderWidth: 1.5,
-    borderColor: colors.neutral[300],
+    borderWidth: 2,
+    borderColor: colors.primary[500],
     marginBottom: spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
     ...shadows.sm,
+  },
+  qrCenterLogoOverlay: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: borderRadius.md,
+    borderWidth: 1.5,
+    borderColor: colors.primary[500],
+    ...shadows.sm,
+  },
+  qrLogoInnerRing: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: colors.primary[500],
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  qrBrandText: {
+    fontSize: 9,
+    letterSpacing: 0.5,
+    marginTop: 2,
+    fontWeight: '800',
   },
   securityEncryptedBadge: {
     flexDirection: 'row',
