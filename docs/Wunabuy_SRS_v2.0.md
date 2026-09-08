@@ -1,10 +1,44 @@
 # Software Requirements Specification (SRS)
 # Wunabuy — Multi-Sided E-Commerce & Web Staff Operations Platform
 
-**Document Version:** 3.0 (Quantity Input Popups, Store Pickup Specifications Table, Camera QR Tag Encryption & Verification Baseline)  
-**Date:** September 5, 2026  
+**Document Version:** 3.1 (Staff Operations Portal OWASP Top 10:2025 Enterprise Security Hardening Baseline)  
+**Date:** September 7, 2026  
 **Status:** Approved / In Production Use  
-**Companion Documents:** Wunabuy PRD v3.0, Wunabuy Frontend Tech Spec v3.0, Wunabuy Backend Tech Spec v3.0  
+**Companion Documents:** Wunabuy PRD v3.1, Wunabuy Frontend Tech Spec v3.1, Wunabuy Backend Tech Spec v3.1  
+
+---
+
+## 🔒 Key Staff Operations Portal OWASP Top 10:2025 Specifications (September 7, 2026 - v3.1)
+
+- **Route & Action Access Control Guards (`PermissionGuard.tsx`)**:
+  - Route-level access enforcement across administrative modules (`/financials`, `/hr`, `/users`, `/settings`, `/kyc`, `/disputes`).
+  - Displays authorized 403 Forbidden screen upon access violation and logs security telemetry. Restricts persona switching strictly to Super Admins (`switch_staff_personas`).
+
+- **Security Misconfiguration Baseline (`index.html`)**:
+  - Implemented strict Content Security Policy (`CSP`), `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, and `Permissions-Policy`.
+
+- **Supply Chain Integrity Module (`securitySupplyChain.ts`)**:
+  - Dynamic validator verifying asset origin domains against corporate whitelists and blocking untrusted dynamic script injections.
+
+- **Encrypted Local Storage, HMAC Checksums & 15-Minute Session Idle Timeout (`securityCrypto.ts`, `useSessionTimeout.ts`)**:
+  - Cryptographic encryption of local storage state payloads with SHA-256 HMAC checksums.
+  - Automatic 15-minute idle session auto-logout with modal warning and session teardown. PII data masking (`maskPhone`, `maskEmail`, `maskEmployeeId`).
+
+- **DOM-Safe Input Sanitization & XSS Stripping (`securitySanitizer.ts`)**:
+  - HTML entity escaping and stripping of malicious script tags, iframes, and inline event handlers (`onload`, `onerror`, `onclick`) across search inputs and forms.
+
+- **Dual-Control Authorization & Action Throttling (`DualControlConfirmModal.tsx`, `rateLimiter.ts`)**:
+  - Mandatory dual-control modal requiring confirmation keywords and justification notes for high-risk actions (role deletions, payout disbursals, account suspensions).
+  - Rate limiting utility (`rateLimiter.ts`) throttling action frequency.
+
+- **Brute-Force Lockout Engine**:
+  - 5 consecutive failed login/OTP attempts trigger a 15-minute account lockout with `AUTH_BRUTE_FORCE_LOCKOUT` audit logging.
+
+- **Centralized Security Audit Logger (`securityLogger.ts`)**:
+  - Structured security telemetry logger recording events (`INFO`, `WARNING`, `CRITICAL`) with client IP, timestamp, user context, and action codes.
+
+- **Enterprise React Error Boundary (`ErrorBoundary.tsx`)**:
+  - React Error Boundary wrapping route trees, masking raw stack traces, and presenting single-click session recovery UI.
 
 ---
 
@@ -119,3 +153,13 @@
 - **STF-004:** All sensitive actions and identity input fields SHALL enforce granular field-level ACL guards with visual `Lock` badges.
 - **STF-005:** The application SHALL provide an active bilingual i18n switcher allowing users to switch between English (`en`) and French (`fr`).
 - **STF-006:** Persona switching SHALL be hidden by default for non-admin staff users and restricted strictly via the `switch_staff_personas` ACL permission flag.
+- **STF-007 (A01 Access Control):** Every administrative view (`/financials`, `/hr`, `/users`, `/settings`, `/kyc`, `/disputes`) SHALL be guarded by `PermissionGuard.tsx` and render a 403 Forbidden screen upon unauthorized navigation.
+- **STF-008 (A02 Security Configuration):** The Web Staff Portal SHALL specify HTTP security headers (`CSP`, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `Permissions-Policy`) in `index.html`.
+- **STF-009 (A03 Supply Chain):** External script execution and dynamic module loading SHALL be validated against a corporate domain whitelist via `securitySupplyChain.ts`.
+- **STF-010 (A04 Cryptographic Storage):** Client-side state persistence SHALL encrypt data with HMAC-SHA256 checksum integrity verification and automatically log out idle users after 15 minutes (`useSessionTimeout.ts`).
+- **STF-011 (A05 Injection Prevention):** User input and search strings SHALL be sanitized for HTML entities and malicious DOM scripts via `securitySanitizer.ts` prior to rendering.
+- **STF-012 (A06 Dual Control & Throttling):** High-risk actions (payout disbursals, role deletions, account terminations) SHALL require dual-control authorization confirmation with mandatory justification notes (`DualControlConfirmModal.tsx`) and rate limiting (`rateLimiter.ts`).
+- **STF-013 (A07 Authentication Hardening):** The authentication engine SHALL enforce a 15-minute lockout after 5 consecutive failed login or OTP validation attempts.
+- **STF-014 (A08 Data Integrity):** Frontend state mutations SHALL recalculate SHA-256 HMAC state checksums (`generateStateChecksum`) to prevent local storage tampering.
+- **STF-015 (A09 Security Telemetry):** Security events and clearance violations SHALL automatically generate structured telemetry entries sent to `securityLogger.ts`.
+- **STF-016 (A10 Error Handling):** Unhandled runtime exceptions SHALL be intercepted by `ErrorBoundary.tsx`, presenting user-friendly recovery UI without exposing internal stack traces.

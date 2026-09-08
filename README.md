@@ -31,12 +31,13 @@ It connects three user groups through a single escrow-protected ecosystem:
 | 🏪 **Sellers (Store Owners)** | Digitize storefronts, manage inventory, receive guaranteed payouts after verified delivery |
 | 🚚 **Transport Providers** | Accept delivery jobs, navigate with GPS, earn transparent mileage-based fees |
 
-An internal **Staff Portal (v2.7)** provides operational dashboards across 7 departments with Persona Switcher ACL Security Guard (`switch_staff_personas`), Per-Account Auth Persistence, Active Bilingual (EN/FR) i18n Language Engine, Production API Service Adapter Layer, 18-flag RBAC, Granular Field-Level ACL Controls, Staff Account CRUD Provisioning, and System Notifications Center.
+An internal **Staff Portal (v3.1)** provides operational dashboards across 7 departments with **OWASP Top 10:2025 Enterprise Security Hardening** (Permission Guards `PermissionGuard.tsx`, Strict CSP Headers `index.html`, Asset Origin Whitelisting `securitySupplyChain.ts`, Encrypted Storage & 15-Min Session Idle Auto-Logout `securityCrypto.ts` & `useSessionTimeout.ts`, Input Sanitization & XSS Stripping `securitySanitizer.ts`, Dual-Control Confirmations `DualControlConfirmModal.tsx`, Action Throttling `rateLimiter.ts`, Brute-Force Lockout, HMAC State Integrity Checksums, Security Audit Logger `securityLogger.ts`, and React Error Boundary `ErrorBoundary.tsx`).
 
 The **Mobile App (v3.0)** features an interactive quantity input modal (`QuantityInputModal.tsx`), a 2D tabular store pickup & location component with bidirectional scrolling (`StorePickupTable.tsx`), live camera seller store QR & PIN scanner modal (`SellerQRScannerModal.tsx`), printable encrypted parcel QR shipping tags with central logo emblem (`PrintableParcelQRModal.tsx`), real-time transporter parcel code match verification (`TransporterActiveTripScreen.tsx`), and direct phone dialer integration (`Linking.openURL('tel:...')`).
 
 ### Core Value Propositions
 
+- **OWASP Top 10:2025 Enterprise Security Hardening** — Web Staff Operations Portal hardened against all 10 critical security risk categories with route access guards, CSP, encrypted storage, 15-minute idle session auto-logout, input sanitization, dual-control action authorization, and security audit telemetry.
 - **Escrow-Protected Payments** — Buyer funds are locked until delivery is confirmed via photo proof + buyer digital signature. 48-hour auto-release with dispute protection.
 - **Encrypted Parcel QR Shipping Tags & Rider Code Comparison** — Sellers print branded QR shipping labels containing zero plaintext PINs; assigned riders scan tags with hardware camera sensors to verify parcel matching prior to dispatch.
 - **Interactive Numeric Quantity Input** — Direct numerical popups replace legacy +/- stepper buttons for fast cart & stock adjustments.

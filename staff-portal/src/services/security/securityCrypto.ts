@@ -114,3 +114,4 @@ export function maskEmployeeId(empId: string): string {
 export function maskAmount(amountText: string): string {
   return '•••••• FCFA';
 }
+

@@ -115,3 +115,4 @@ class SecurityLoggerService {
 }
 
 export const securityLogger = SecurityLoggerService.getInstance();
+

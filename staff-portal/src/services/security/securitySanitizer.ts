@@ -58,3 +58,4 @@ export function sanitizeSearchQuery(query: string): string {
   // Remove SQL/Wildcard dangerous characters if any
   return sanitized.replace(/['";\\]/g, '');
 }
+

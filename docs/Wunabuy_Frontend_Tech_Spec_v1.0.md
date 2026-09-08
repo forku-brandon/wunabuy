@@ -1,5 +1,18 @@
 # Wunabuy — Frontend Technical Specification
-### Version 3.0 | September 5, 2026
+### Version 3.1 | September 7, 2026
+
+> **Resolved Decisions (September 7, 2026 - v3.1):**
+> - **Staff Portal OWASP Top 10:2025 Enterprise Security Hardening**: Fully hardened the web staff portal against all 10 OWASP Top 10:2025 vulnerability categories.
+> - **Route & Action Access Control Guards (A01: Broken Access Control)**: Enforced `PermissionGuard.tsx` across all administrative routes (`/financials`, `/hr`, `/users`, `/settings`, `/kyc`, `/disputes`), displaying an authorized 403 Forbidden screen upon violation and logging security telemetry. Persona switching restricted strictly to Super Admins (`switch_staff_personas`).
+> - **Security Misconfiguration Baseline (A02: Security Misconfiguration)**: Hardened `index.html` with strict Content Security Policy (`CSP`), `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, and `Permissions-Policy`.
+> - **Supply Chain & Asset Origin Integrity (A03: Supply Chain Failures)**: Created `securitySupplyChain.ts` validator to verify asset origins against corporate whitelists and block dynamic script execution.
+> - **Encrypted Storage & 15-Minute Idle Timeout (A04: Cryptographic Failures)**: Built `securityCrypto.ts` for obfuscated/encrypted local storage payloads with HMAC checksums, PII data masking (`maskPhone`, `maskEmail`, `maskEmployeeId`), and `useSessionTimeout.ts` hook for automatic 15-minute idle auto-logout.
+> - **DOM-Safe Input Sanitization & XSS Stripping (A05: Injection)**: Created `securitySanitizer.ts` for HTML entity escaping and stripping malicious script/iframe/event-handler tags across search filters and form inputs.
+> - **Dual-Control Authorization & Action Throttling (A06: Insecure Design)**: Created `DualControlConfirmModal.tsx` requiring confirmation keywords and mandatory justification reasons for high-risk actions (payout disbursals, role deletions, account revokings) and `rateLimiter.ts` for action throttling.
+> - **Brute-Force Lockout Protection (A07: Authentication Failures)**: Tracked failed login/OTP attempts (5 failed attempts trigger a 15-minute account lockout with `AUTH_BRUTE_FORCE_LOCKOUT` audit logging).
+> - **HMAC Checksum Integrity (A08: Data Integrity Failures)**: Integrated SHA-256 style HMAC state integrity checksums (`generateStateChecksum`) verifying local storage before parsing.
+> - **Centralized Security Audit Logger (A09: Security Logging Failures)**: Created `securityLogger.ts` capturing security events (`INFO`, `WARNING`, `CRITICAL`) with IP, timestamp, user context, and action codes.
+> - **Enterprise React Error Boundary (A10: Exceptional Conditions)**: Created `ErrorBoundary.tsx` wrapping the application routes, masking raw stack traces, and presenting single-click session recovery UI.
 
 > **Resolved Decisions (September 5, 2026 - v3.0):**
 > - **Interactive Numeric Quantity Input System**: Created `QuantityInputModal.tsx` allowing buyers and sellers to enter exact numeric item quantities directly via interactive modal popups (Alibaba/Aliexpress UX style), resolving duplicate text rendering glitches across Buyer Cart, Product Detail, and Seller Stock Management.

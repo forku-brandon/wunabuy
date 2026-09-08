@@ -1,9 +1,9 @@
 # Wunabuy — Backend Technical Specification & API Contracts
 
-**Document Version:** 3.0 (Quantity Input Popups, Store Pickup Specifications Table, Camera QR Tag Encryption & Verification Baseline)  
-**Date:** September 5, 2026  
+**Document Version:** 3.1 (OWASP Top 10:2025 Enterprise Security Hardening & Staff Operations Baseline)  
+**Date:** September 7, 2026  
 **Status:** Approved / In Production Use  
-**Companion Documents:** Wunabuy SRS v3.0, Wunabuy PRD v3.0, Wunabuy Frontend Tech Spec v3.0  
+**Companion Documents:** Wunabuy SRS v3.1, Wunabuy PRD v3.1, Wunabuy Frontend Tech Spec v3.1  
 **Framework:** Laravel 13 (PHP 8.3+)  
 **Frontend Monorepo Targets:** `wunabuy-mobile` (Expo SDK 54), `staff-portal` (Vite + React TS), `@wunabuy/api-client`, `@wunabuy/types`, `@wunabuy/utils`
 
@@ -25,6 +25,7 @@
 12. [Database Schema & PostGIS Spatial Extensions](#12-database-schema--postgis-spatial-extensions)
 13. [Error Codes & Troubleshooting Matrix](#13-error-codes--troubleshooting-matrix)
 14. [Staff Operations Portal & System Notifications API Specifications](#14-staff-operations-portal--system-notifications-api-specifications)
+15. [OWASP Top 10:2025 Enterprise Security Hardening & API Contracts](#15-owasp-top-102025-enterprise-security-hardening--api-contracts)
 
 ---
 
@@ -1319,6 +1320,77 @@ CREATE TABLE orders (
 
 ---
 
+## 15. OWASP Top 10:2025 Enterprise Security Hardening & API Contracts
+
+The Wunabuy Staff Operations Portal backend is fully aligned with the **OWASP Top 10:2025 Enterprise Security Standard**, enforcing strict API gateway policies, authorization middleware, cryptographic protection, rate limiting, audit logging, and response headers.
+
+### 15.1 OWASP Category Breakdown & Middleware Implementation
+
+| OWASP Vulnerability Category | Backend Guard & Middleware | Technical Architecture & Policy Enforcement |
+|---|---|---|
+| **A01: Broken Access Control** | `EnsureStaffPermission` Middleware | Enforces RBAC permissions per route. Validates `switch_staff_personas`, `view_hr_ops`, `manage_staff_accounts`, `approve_payouts`, `adjudicate_disputes`, `manage_kyc_queues`, `override_logistics`. Returns HTTP `403 Forbidden` with audit log telemetry upon unauthorized access. |
+| **A02: Security Misconfiguration** | Gateway Security Response Headers | Sets `Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' wss: https:; frame-ancestors 'none'; object-src 'none';`, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, and `Permissions-Policy: camera=(), microphone=(), geolocation=()`. |
+| **A03: Supply Chain Failures** | Asset Origin Validator & Integrity Middleware | Verifies subresource integrity hashes and enforces whitelisted corporate CDN domains for dynamic asset loading (`securitySupplyChain.ts`). |
+| **A04: Cryptographic Failures** | Storage Encryption & Idle Session Middleware | Encrypts local state payloads with HMAC-SHA256 signature verification (`X-HMAC-Checksum`), enforces automated 15-minute idle session auto-invalidation (`POST /api/v1/staff/auth/logout`), and masks employee PII (`maskPhone`, `maskEmail`, `maskEmployeeId`). |
+| **A05: Injection** | Input Sanitization & Eloquent Parameterization | Strips script/iframe/event-handler tags from search inputs (`securitySanitizer.ts`), escapes HTML entities, and uses PDO parameter binding for all database queries. |
+| **A06: Insecure Design** | Dual-Control Action Authorization & Throttling | Enforces dual-control confirmation headers (`X-Dual-Control-Reason`, `X-Dual-Control-Word`) for high-risk actions (`DELETE /api/v1/staff/users/:id`, `POST /api/v1/staff/financials/payouts/:id/disburse`). Enforces `rateLimiter.ts` action throttling (max 5 high-risk calls / 60 seconds). |
+| **A07: Authentication Failures** | Brute-Force Lockout Engine | Tracks failed authentication & OTP verification attempts. 5 consecutive failures trigger a 15-minute account lockout with `AUTH_BRUTE_FORCE_LOCKOUT` audit logging. |
+| **A08: Software & Data Integrity Failures** | HMAC State Integrity Checksum Validation | Generates SHA-256 HMAC checksums (`generateStateChecksum`) on frontend state payloads. Backend validates state integrity before processing bulk actions. |
+| **A09: Security Logging & Monitoring** | Centralized Security Telemetry Ingestion API | Ingests frontend security telemetry events (`POST /api/v1/staff/security/logs`) with event severity (`INFO`, `WARNING`, `CRITICAL`), client IP, timestamp, user context, and action codes. |
+| **A10: Exceptional Conditions Handling** | Centralized Exception Handler | Intercepts runtime exceptions, masks raw stack traces, logs error details internally, and returns sanitized error JSON responses (`ERR_SYSTEM_EXCEPTION`). |
+
+---
+
+### 15.2 Security Telemetry Ingestion API Contract
+
+#### 15.2.1 Ingest Frontend Security Event
+- **Endpoint:** `POST /api/v1/staff/security/logs`
+- **Headers:** `Content-Type: application/json`, `Authorization: Bearer <staff_token>`
+- **Request Body:**
+  ```json
+  {
+    "event_type": "UNAUTHORIZED_ROUTE_ACCESS_ATTEMPT",
+    "severity": "WARNING",
+    "action_code": "ACCESS_DENIED_FINANCIALS",
+    "details": "User attempted to access /financials without approve_payouts permission.",
+    "path": "/financials",
+    "user_id": "STF-1002",
+    "client_timestamp": "2026-09-07T12:00:00.000Z"
+  }
+  ```
+- **Success Response (201 Created):**
+  ```json
+  {
+    "success": true,
+    "data": {
+      "log_id": "sec_log_908124",
+      "status": "RECORDED"
+    }
+  }
+  ```
+
+#### 15.2.2 Dual-Control Disbursal Contract Header Verification
+- **Endpoint:** `POST /api/v1/staff/financials/payouts/:id/disburse`
+- **Required Headers:**
+  - `X-Dual-Control-Word: DISBURSE`
+  - `X-Dual-Control-Reason: Verified merchant KYC and bank account details prior to disbursal.`
+- **Success Response (200 OK):**
+  ```json
+  {
+    "success": true,
+    "data": {
+      "payout_id": "pay_9012",
+      "amount": 850000,
+      "currency": "XAF",
+      "status": "DISBURSED",
+      "dual_control_verified": true,
+      "disbursed_at": "2026-09-07T12:05:00Z"
+    }
+  }
+  ```
+
+---
+
 ### Approval Signatures
 
 **Backend Lead Architect:** _Laravel Engineering Team_  
@@ -1326,4 +1398,4 @@ CREATE TABLE orders (
 **Product Manager:** _Agemo Technologies Product Lead_  
 
 ---
-**[End of Backend Technical Specification & API Contracts v2.7]**
+**[End of Backend Technical Specification & API Contracts v3.1]**
