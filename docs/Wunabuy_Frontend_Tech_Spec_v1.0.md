@@ -1,5 +1,13 @@
 # Wunabuy — Frontend Technical Specification
-### Version 3.1 | September 7, 2026
+### Version 3.2 | September 8, 2026
+
+> **Resolved Decisions (September 8, 2026 - v3.2):**
+> - **Production-Ready Hosting & Environment Resolution Strategy**: Built `mobile/src/config/env.ts` providing real-time dynamic resolution: prioritizes `EXPO_PUBLIC_API_URL` from `.env`, automatically loops back to `http://10.0.2.2:8000/api/v1` on Android emulators, uses `http://localhost:8000/api/v1` on iOS simulator / web, and strictly defaults to `https://api.wunabuy.com/api/v1` for production release builds.
+> - **Web Staff Portal API Resolution Harmonization**: Updated `staff-portal/src/services/apiClient.ts` to check `import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1'`.
+> - **Live Mobile Auth & Token Persistence**: Wired `LoginScreen.tsx` and `VerifyOTPScreen.tsx` to live backend OTP endpoints (`/api/v1/auth/otp/send` and `/api/v1/auth/otp/verify`), storing bearer access tokens via `SecureTokenService` and hydrating user state in `useAuthStore`.
+> - **Live Cart Checkout & Escrow Locking**: Wired `CheckoutPaymentScreen.tsx` to `OrdersService.createOrder` to persist orders in PostgreSQL and hold escrow balances, with `/checkout/pay` simulating carrier USSD push prompts (`*126#` for MTN MoMo, `#150*50#` for Orange Money).
+> - **Live Escrow Delivery Confirmation & Dispute Triggers**: Wired `BuyerOrdersScreen.tsx` and `OrderTrackingScreen.tsx` to `confirmDelivery` (releasing escrow with 3.5% commission split) and `fileDispute` (freezing escrow).
+> - **Live Wallet & MoMo Top-Up Engine**: Wired `WalletScreen.tsx` to `WalletService.getWallet`, `fundWallet`, and `withdraw`, displaying live PostgreSQL balances and transactions.
 
 > **Resolved Decisions (September 7, 2026 - v3.1):**
 > - **Staff Portal OWASP Top 10:2025 Enterprise Security Hardening**: Fully hardened the web staff portal against all 10 OWASP Top 10:2025 vulnerability categories.

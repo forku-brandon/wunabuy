@@ -16,17 +16,31 @@ Enterprise Web Application for Wunabuy company personnel, featuring System Notif
 ### 3. 🎨 Strict 3-Color Brand Palette Unification
 - Enforced Emerald Teal (`#0D9488`) primary, Amber Gold (`#F59E0B`) accent, and Clean White / Obsidian Dark Slate (`bg-[#121824]`) secondary surface colors across all UI components, badges, sidebars, headers, and stat cards.
 
-### 4. 🔌 Backend Technical Specifications & API Specifications v2.7 (`Wunabuy_Backend_Tech_Spec_v1.0.md`)
-- Full RESTful API specifications for all 9 staff modules (`/api/v1/staff/*`), 18-flag RBAC permissions, notifications schema, payroll CNPS tax ledger, and escrow payout disbursal endpoints.
+### 4. 🔌 Live Backend API Service Wiring (`apiClient.ts`)
+- Dynamically resolves `VITE_API_URL || VITE_API_BASE_URL || 'http://localhost:8000/api/v1'`.
+- Integrates live KYC review queue (`GET /api/v1/staff/kyc/queue`), dispute legal arbitration (`POST /api/v1/staff/disputes/{id}/adjudicate`), financial payout dual-control PIN authorization, and fleet dispatch overrides against the Laravel 13 backend.
 
 ---
 
-## 🛠️ Local Development & Setup
+## 🛠️ Environment Configuration & Local Setup
 
+### Environment Variables (`.env`)
+```env
+# Local Development: http://localhost:8000/api/v1
+# Production Hosting: https://api.wunabuy.com/api/v1
+VITE_API_URL=http://localhost:8000/api/v1
+
+VITE_REVERB_APP_KEY=wunabuy_reverb_key
+VITE_REVERB_HOST=localhost
+VITE_REVERB_PORT=8080
+VITE_REVERB_SCHEME=http
+```
+
+### Run Staff Portal
 ```bash
 cd staff-portal
 npm install
 npm run dev
 ```
 
-The app will run at `http://localhost:5173`.
+The portal runs locally at `http://localhost:5173`. In production, deploy to `https://staff.wunabuy.com`.

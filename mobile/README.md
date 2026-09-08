@@ -8,14 +8,35 @@ Enterprise React Native application for Wunabuy (Expo SDK 51+, React Native 0.74
 
 ---
 
-## 🚀 Getting Started
+---
 
+## 🚀 Getting Started & Environment Configuration
+
+### 1. Environment Configuration (`.env`)
+The app features centralized, dynamic environment resolution via [`src/config/env.ts`](file:///c:/Users/HP/Desktop/wunabuy%20mobile%20project/wunabuy/mobile/src/config/env.ts):
+
+```env
+# For Local Dev (Web / iOS Simulator): http://localhost:8000/api/v1
+# For Local Dev (Android Emulator):    http://10.0.2.2:8000/api/v1
+# For Physical Device (LAN Wi-Fi):     http://192.168.x.x:8000/api/v1
+# For Production:                      https://api.wunabuy.com/api/v1
+EXPO_PUBLIC_API_URL=http://localhost:8000/api/v1
+
+EXPO_PUBLIC_REVERB_APP_KEY=wunabuy_reverb_key
+EXPO_PUBLIC_REVERB_HOST=localhost
+EXPO_PUBLIC_REVERB_PORT=8080
+EXPO_PUBLIC_REVERB_SCHEME=http
+```
+
+### 2. Live Backend Integration
+- **Auth Flow:** `LoginScreen.tsx` and `VerifyOTPScreen.tsx` communicate directly with `POST /api/v1/auth/otp/send` & `verify`. Sanctum tokens are saved in `SecureTokenService`.
+- **Checkout & Escrow:** `CheckoutPaymentScreen.tsx` submits orders to `POST /api/v1/orders` and initiates MoMo USSD payment push (`POST /api/v1/checkout/pay`).
+- **Orders & Tracking:** `BuyerOrdersScreen.tsx` & `OrderTrackingScreen.tsx` execute live delivery confirmations (`confirmReceipt` -> escrow release with 3.5% commission split) and dispute freezes (`dispute`).
+- **Wallet:** `WalletScreen.tsx` fetches live PostgreSQL balances and processes MTN MoMo/Orange Money top-ups (`POST /api/v1/wallet/fund`).
+
+### 3. Run Mobile App
 ```bash
-# From workspace root
-pnpm install
-
-# Start mobile bundler
-cd mobile
+# From mobile directory
 npx expo start
 ```
 

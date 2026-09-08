@@ -1,10 +1,47 @@
 # Software Requirements Specification (SRS)
 # Wunabuy — Multi-Sided E-Commerce & Web Staff Operations Platform
 
-**Document Version:** 3.1 (Staff Operations Portal OWASP Top 10:2025 Enterprise Security Hardening Baseline)  
-**Date:** September 7, 2026  
+**Document Version:** 3.2 (Enterprise Backend Architecture & Live Full-Stack Wiring Baseline)  
+**Date:** September 8, 2026  
 **Status:** Approved / In Production Use  
-**Companion Documents:** Wunabuy PRD v3.1, Wunabuy Frontend Tech Spec v3.1, Wunabuy Backend Tech Spec v3.1  
+**Companion Documents:** Wunabuy PRD v3.2, Wunabuy Frontend Tech Spec v3.2, Wunabuy Backend Tech Spec v3.2  
+
+---
+
+## 🌐 Enterprise Backend Architecture & Live Full-Stack Wiring Specifications (September 8, 2026 - v3.2)
+
+- **Laravel 13 & PostgreSQL 18 Production Backend Architecture**:
+  - Engineered 23 relational database tables across 15 migrations (`audit_logs`, `staff_tasks`, `wallets`, `wallet_transactions`, `orders`, `order_items`, `transporters`, `disputes`, `seller_kyc_submissions`, `transporter_kyc_submissions`, `addresses`, `reviews`, `notifications`, etc.).
+  - Primary keys standard: RFC 4122 UUID primary keys across all relational entities.
+
+- **Dual-Entry Escrow & Financial Settlement Engine (`EscrowService.php`)**:
+  - Atomic database transactions for checkout escrow fund locks (`balance_available` -> `balance_escrow_locked`).
+  - Automated escrow release on buyer delivery receipt confirmation: automatically deducts 3.5% platform commission, credits net sales to seller wallet, credits delivery fee to transporter, and updates payment state to `released`.
+  - Formal dispute filing freezes funds (`payment_status: frozen`, `status: disputed`).
+  - Compliance arbitration engine enforces three legally binding rulings: `BUYER_REFUND` (100% principal refunded to customer), `SELLER_RELEASE` (released to store minus commission), or `SPLIT_50_50` (50% refund, 50% seller credit).
+
+- **Cameroon Fintech Integration & Mobile Money (`PaymentService.php`)**:
+  - Realistic carrier USSD push simulations (`*126#` for MTN MoMo, `#150*50#` for Orange Money).
+  - Dual-control security PIN authorization for financial payouts above risk thresholds (>= 500,000 XAF).
+  - Instant wallet top-up (`POST /api/v1/wallet/fund`) and withdrawal cash-out (`POST /api/v1/wallet/withdraw`).
+
+- **Spatial Geodesic Logistics & Chain of Custody (`LogisticsService.php`)**:
+  - Pure Haversine spherical trigonometric distance computation eliminating external binary dependencies.
+  - Dynamic delivery fee computation by vehicle category (`BIKE` 1.0x, `CAR` 1.4x, `VAN` 2.0x).
+  - HMAC-SHA256 cryptographically signed parcel custody QR tags (`WB-PARCEL:...`) preventing unauthorized or fraudulent parcel handovers.
+  - Background driver GPS breadcrumb telemetry (`POST /api/v1/transporter/location`) and real-time dispatch overrides.
+
+- **Zero-Code Hosting & Environment Architecture**:
+  - Centralized environment resolution in `mobile/src/config/env.ts` auto-detecting Android Emulator (`10.0.2.2:8000`), iOS Simulator / Web (`localhost:8000`), LAN Wi-Fi (`192.168.x.x`), and Cloud Production (`api.wunabuy.com`).
+  - Web Staff Portal dynamic resolution supporting `VITE_API_URL` and `VITE_API_BASE_URL`.
+  - Environment-driven CORS in `backend/config/cors.php` via `CORS_ALLOWED_ORIGINS`.
+
+- **Live End-to-End Frontend Wiring**:
+  - Mobile authentication (`LoginScreen.tsx` & `VerifyOTPScreen.tsx`) wired to live `POST /api/v1/auth/otp/send` and `verify`, persisting Sanctum Bearer tokens in hardware-backed `SecureTokenService` and hydrating `useAuthStore`.
+  - Cart checkout (`CheckoutPaymentScreen.tsx`) wired to `OrdersService.createOrder` and `payCheckout` (`POST /api/v1/checkout/pay`).
+  - Order tracking and receipt confirmation (`BuyerOrdersScreen.tsx`, `OrderTrackingScreen.tsx`) wired to live escrow release and dispute freeze endpoints.
+  - Mobile wallet (`WalletScreen.tsx`) wired to live balance, transaction ledger, and MTN MoMo / Orange Money top-ups.
+  - Web Staff Portal (`DisputesPage.tsx`, `FinancialsPage.tsx`, `KYCPage.tsx`) wired to live `/api/v1/staff/*` endpoints with dual-control security PIN authorization.
 
 ---
 

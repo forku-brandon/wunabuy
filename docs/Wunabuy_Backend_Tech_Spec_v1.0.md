@@ -1,11 +1,11 @@
 # Wunabuy — Backend Technical Specification & API Contracts
 
-**Document Version:** 3.1 (OWASP Top 10:2025 Enterprise Security Hardening & Staff Operations Baseline)  
-**Date:** September 7, 2026  
+**Document Version:** 3.2 (PostgreSQL 18 Production Implementation & Full-Stack Wiring Baseline)  
+**Date:** September 8, 2026  
 **Status:** Approved / In Production Use  
-**Companion Documents:** Wunabuy SRS v3.1, Wunabuy PRD v3.1, Wunabuy Frontend Tech Spec v3.1  
+**Companion Documents:** Wunabuy SRS v3.2, Wunabuy PRD v3.2, Wunabuy Frontend Tech Spec v3.2  
 **Framework:** Laravel 13 (PHP 8.3+)  
-**Frontend Monorepo Targets:** `wunabuy-mobile` (Expo SDK 54), `staff-portal` (Vite + React TS), `@wunabuy/api-client`, `@wunabuy/types`, `@wunabuy/utils`
+**Frontend Monorepo Targets:** `wunabuy-mobile` (Expo SDK 51+), `staff-portal` (Vite + React TS), `@wunabuy/api-client`, `@wunabuy/types`, `@wunabuy/utils`
 
 ---
 
@@ -22,10 +22,11 @@
 9. [Store & Transporter Onboarding & KYC API Contracts](#9-store--transporter-onboarding--kyc-api-contracts)
 10. [Dynamic Promotions & Cart Banner API Contracts](#10-dynamic-promotions--cart-banner-api-contracts)
 11. [Seller Store & Fulfillment Backend Architecture](#11-seller-store--fulfillment-backend-architecture)
-12. [Database Schema & PostGIS Spatial Extensions](#12-database-schema--postgis-spatial-extensions)
+12. [Database Schema & PostgreSQL 18 Relational Architecture](#12-database-schema--postgis-spatial-extensions)
 13. [Error Codes & Troubleshooting Matrix](#13-error-codes--troubleshooting-matrix)
 14. [Staff Operations Portal & System Notifications API Specifications](#14-staff-operations-portal--system-notifications-api-specifications)
 15. [OWASP Top 10:2025 Enterprise Security Hardening & API Contracts](#15-owasp-top-102025-enterprise-security-hardening--api-contracts)
+16. [Production Deployment & Environment Configuration Guide](#16-production-deployment--environment-configuration-guide)
 
 ---
 
@@ -42,20 +43,22 @@ Wunabuy backend operates as a **Modular Monolith** built on **Laravel 13 (PHP 8.
 │  │ Nginx / API Gateway Ingress                                               │  │
 │  │ - TLS 1.3 termination & HTTPS enforcement                                 │  │
 │  │ - REST API Routing (/api/v1/* and /api/v1/staff/*)                       │  │
+│  │ - Dynamic CORS via CORS_ALLOWED_ORIGINS environment variable              │  │
 │  │ - WebSocket Ingress (/app/* via Laravel Reverb)                           │  │
 │  └─────────────────────────────────────┬─────────────────────────────────────┘  │
 │                                        │                                        │
 │                                        ▼                                        │
 │  ┌───────────────────────────────────────────────────────────────────────────┐  │
 │  │ Laravel 13 Application (Modular Monolith)                                 │  │
-│  │ - Auth, Commerce, Wallet, Escrow, Delivery, Chat, KYC, Staff Modules      │  │
+│  │ - Domain Services: EscrowService, LogisticsService, PaymentService, KYC   │  │
+│  │ - 8 API Controllers, 123 registered routes, standard API envelopes       │  │
 │  │ - Sanctum Token Middleware, Form Requests, Eloquent ORM                   │  │
 │  └─────────────────────────────────────┬─────────────────────────────────────┘  │
 │                                        │                                        │
 │                                        ▼                                        │
 │  ┌───────────────────────────────────────────────────────────────────────────┐  │
 │  │ Operational Data & Event Layer                                            │  │
-│  │ - PostgreSQL 15 + PostGIS (Spatial indexing & JSONB storage)              │  │
+│  │ - PostgreSQL 18 (23 production tables, UUID PKs, Haversine Geodesic)      │  │
 │  │ - Redis 7 (Cache, Session blacklist, Queue backplane)                     │  │
 │  │ - Laravel Reverb (High-performance native WebSockets)                     │  │
 │  └───────────────────────────────────────────────────────────────────────────┘  │
@@ -1391,6 +1394,46 @@ The Wunabuy Staff Operations Portal backend is fully aligned with the **OWASP To
 
 ---
 
+## 16. Production Deployment & Environment Configuration Guide
+
+### 16.1 Zero-Code Environment Switching
+The backend and frontend applications are engineered for instant zero-code environment transitions between Local Development, Staging, and Production Hosting:
+
+| Parameter | Local Development | Staging Server | Production (api.wunabuy.com) |
+|---|---|---|---|
+| `APP_ENV` | `local` | `staging` | `production` |
+| `APP_DEBUG` | `true` | `false` | `false` |
+| `APP_URL` | `http://127.0.0.1:8000` | `https://staging-api.wunabuy.com` | `https://api.wunabuy.com` |
+| `CORS_ALLOWED_ORIGINS` | `http://localhost:5173,http://127.0.0.1:5173,http://localhost:8081` | `https://staging-app.wunabuy.com,https://staging-staff.wunabuy.com` | `https://app.wunabuy.com,https://staff.wunabuy.com` |
+| `SANCTUM_STATEFUL_DOMAINS` | `localhost,127.0.0.1:8000` | `staging-staff.wunabuy.com` | `staff.wunabuy.com` |
+| `REVERB_HOST` | `0.0.0.0` | `staging-api.wunabuy.com` | `api.wunabuy.com` |
+| `REVERB_PORT` | `8080` | `443` | `443` |
+| `REVERB_SCHEME` | `http` | `https` | `https` |
+
+### 16.2 Mobile App Client Resolution Matrix
+The Mobile client (`mobile/src/config/env.ts`) evaluates the environment in real time:
+1. If `EXPO_PUBLIC_API_URL` is set in `mobile/.env`, it takes immediate precedence.
+2. In development mode (`__DEV__`):
+   - Android Emulator automatically maps to `http://10.0.2.2:8000/api/v1`
+   - iOS Simulator / Web bundler maps to `http://localhost:8000/api/v1`
+   - Physical device testing maps to `http://<LAN_IP>:8000/api/v1` via `.env`
+3. In production release builds (`eas build --platform android/ios`), it defaults strictly to `https://api.wunabuy.com/api/v1`.
+
+### 16.3 Production Database Migrations & Verification
+```bash
+# Execute migrations & seeders on PostgreSQL 18
+php artisan migrate --force
+php artisan db:seed --force
+
+# Verify all 123 registered routes
+php artisan route:list
+
+# Health Check
+curl -X GET https://api.wunabuy.com/api/health
+```
+
+---
+
 ### Approval Signatures
 
 **Backend Lead Architect:** _Laravel Engineering Team_  
@@ -1398,4 +1441,4 @@ The Wunabuy Staff Operations Portal backend is fully aligned with the **OWASP To
 **Product Manager:** _Agemo Technologies Product Lead_  
 
 ---
-**[End of Backend Technical Specification & API Contracts v3.1]**
+**[End of Backend Technical Specification & API Contracts v3.2]**

@@ -12,7 +12,7 @@
   <img src="https://img.shields.io/badge/React_Native-0.74+-61DAFB?logo=react&logoColor=white" alt="React Native" />
   <img src="https://img.shields.io/badge/Expo_SDK-51-000020?logo=expo&logoColor=white" alt="Expo" />
   <img src="https://img.shields.io/badge/Laravel-13-FF2D20?logo=laravel&logoColor=white" alt="Laravel" />
-  <img src="https://img.shields.io/badge/PostgreSQL-15_+_PostGIS-4169E1?logo=postgresql&logoColor=white" alt="PostgreSQL" />
+  <img src="https://img.shields.io/badge/PostgreSQL-18-4169E1?logo=postgresql&logoColor=white" alt="PostgreSQL" />
   <img src="https://img.shields.io/badge/TypeScript-5.4-3178C6?logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/License-MIT-green" alt="License" />
 </p>
@@ -21,7 +21,7 @@
 
 ## 🌍 About Wunabuy
 
-Wunabuy is an enterprise multi-sided mobile e-commerce and on-demand logistics platform designed specifically for emerging African markets, launching first in **Yaoundé, Cameroon**.
+Wunabuy is an enterprise multi-sided mobile e-commerce and on-demand logistics platform designed specifically for emerging African markets, launching first in **Yaoundé & Douala, Cameroon**.
 
 It connects three user groups through a single escrow-protected ecosystem:
 
@@ -30,6 +30,8 @@ It connects three user groups through a single escrow-protected ecosystem:
 | 🛒 **Buyers** | Search verified stores, purchase with escrow protection, track deliveries in real-time |
 | 🏪 **Sellers (Store Owners)** | Digitize storefronts, manage inventory, receive guaranteed payouts after verified delivery |
 | 🚚 **Transport Providers** | Accept delivery jobs, navigate with GPS, earn transparent mileage-based fees |
+
+The **Full-Stack Platform (v3.2)** integrates a production **Laravel 13 & PostgreSQL 18** backend engine (23 tables across 15 migrations) with dual-entry escrow settlement (`EscrowService.php`), dynamic logistics with HMAC-SHA256 parcel custody QR tags (`LogisticsService.php`), and Cameroon fintech simulations (`PaymentService.php`). Engineered with **zero-code environment switching** (`mobile/src/config/env.ts` with Android emulator `10.0.2.2`, iOS/Web `localhost`, LAN Wi-Fi, and cloud production `https://api.wunabuy.com/api/v1`) and dynamic CORS origin governance.
 
 An internal **Staff Portal (v3.1)** provides operational dashboards across 7 departments with **OWASP Top 10:2025 Enterprise Security Hardening** (Permission Guards `PermissionGuard.tsx`, Strict CSP Headers `index.html`, Asset Origin Whitelisting `securitySupplyChain.ts`, Encrypted Storage & 15-Min Session Idle Auto-Logout `securityCrypto.ts` & `useSessionTimeout.ts`, Input Sanitization & XSS Stripping `securitySanitizer.ts`, Dual-Control Confirmations `DualControlConfirmModal.tsx`, Action Throttling `rateLimiter.ts`, Brute-Force Lockout, HMAC State Integrity Checksums, Security Audit Logger `securityLogger.ts`, and React Error Boundary `ErrorBoundary.tsx`).
 
