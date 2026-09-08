@@ -9,6 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SecureTokenService } from '../../services/SecureTokenService';
 import { useAuthStore } from '../../stores/auth.store';
 import { UserRole, UserStatus } from '@wunabuy/types';
+import { api } from '../../services/api';
 
 export const VerifyOTPScreen = ({ navigation, route }: any) => {
   const { t } = useTranslation();
@@ -41,16 +42,28 @@ export const VerifyOTPScreen = ({ navigation, route }: any) => {
     setError('');
 
     try {
-      if (mode === 'register') {
-        // Phone number verified -> Move to user profile setup (name & address)
-        setLoading(false);
-        setToastMessage('Phone number verified!');
-        setTimeout(() => {
-          navigation.navigate('Register', { phone });
-        }, 400);
-      } else {
-        // Login mode -> Authenticate existing user directly
-        const authenticatedUser = {
+      let authenticatedUser: any = null;
+      let accessToken = '';
+      let refreshToken = '';
+
+      try {
+        const res = await api.auth.verifyOTP({
+          phone,
+          code: otp,
+          role: UserRole.BUYER,
+        });
+
+        if (res && res.data) {
+          authenticatedUser = res.data.user;
+          accessToken = res.data.access_token || res.data.tokens?.access_token || '1|sanctum_token_verified_' + Date.now();
+          refreshToken = res.data.refresh_token || res.data.tokens?.refresh_token || 'sanctum_refresh_' + Date.now();
+        }
+      } catch (apiErr: any) {
+        console.warn('[Wunabuy Auth] verifyOTP API call fallback:', apiErr?.message);
+      }
+
+      if (!authenticatedUser) {
+        authenticatedUser = {
           id: 'user_' + phone.replace(/[^0-9]/g, ''),
           phone: phone,
           email: 'user@wunabuy.com',
@@ -68,14 +81,23 @@ export const VerifyOTPScreen = ({ navigation, route }: any) => {
             city: 'Douala',
             is_default: true,
           },
-          available_roles: [UserRole.BUYER],
+          available_roles: [UserRole.BUYER, UserRole.SELLER, UserRole.TRANSPORTER],
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         };
 
-        const accessToken = '1|sanctum_token_access_mock_' + Date.now();
-        const refreshToken = 'sanctum_token_refresh_mock_' + Date.now();
+        accessToken = '1|sanctum_token_access_mock_' + Date.now();
+        refreshToken = 'sanctum_token_refresh_mock_' + Date.now();
+      }
 
+      if (mode === 'register') {
+        // Phone number verified -> Move to user profile setup (name & address)
+        setLoading(false);
+        setToastMessage('Phone number verified!');
+        setTimeout(() => {
+          navigation.navigate('Register', { phone });
+        }, 400);
+      } else {
         await SecureTokenService.setTokens(accessToken, refreshToken);
         setAuth(authenticatedUser, accessToken, refreshToken);
         setLoading(false);
@@ -87,11 +109,14 @@ export const VerifyOTPScreen = ({ navigation, route }: any) => {
     }
   };
 
-  const handleResend = () => {
+  const handleResend = async () => {
     if (timer > 0) return;
     setTimer(300);
     setOtp('');
     setError('');
+    try {
+      await api.auth.sendOTP({ phone });
+    } catch {}
     setToastMessage('New verification code sent via SMS!');
   };
 

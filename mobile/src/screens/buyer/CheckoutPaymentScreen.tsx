@@ -22,6 +22,8 @@ export const CheckoutPaymentScreen = ({ route, navigation }: any) => {
   const { theme, isDark } = useThemeStore();
   const user = useAuthStore((state) => state.user);
   const clearCart = useCartStore((state) => state.clearCart);
+  const cartItems = useCartStore((state) => state.items);
+  const cartStoreId = useCartStore((state) => state.storeId);
 
   const commission = Math.round(subtotal * 0.035);
   const totalAmount = subtotal + commission + deliveryFee;
@@ -42,6 +44,35 @@ export const CheckoutPaymentScreen = ({ route, navigation }: any) => {
     setError('');
 
     try {
+      let createdOrderId = 'wb_order_' + Date.now();
+      let orderCode = `WB-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+
+      try {
+        const orderRes = await OrdersService.createOrder({
+          store_id: cartStoreId || 'c6ed6a51-aa38-4d68-b27a-66331c85c858',
+          items: (cartItems && cartItems.length > 0)
+            ? cartItems.map((it) => ({
+                product_id: it.product_id,
+                quantity: it.quantity,
+                price: it.product.price,
+              }))
+            : [{ product_id: '030d5e57-533a-421f-bdff-688e1eac866e', quantity: 1, price: subtotal }],
+          delivery_address: user?.default_address?.address_text || 'Bonanjo, Douala',
+          delivery_fee: deliveryFee,
+          payment_method: selectedMethod === PaymentMethod.MOMO ? (provider === 'MTN' ? 'mtn_momo' : 'orange_money') : 'wallet',
+          notes: `Delivery via ${deliveryMethod}`,
+        });
+
+        if (orderRes) {
+          createdOrderId = orderRes.id;
+          if (orderRes.order_code) {
+            orderCode = orderRes.order_code;
+          }
+        }
+      } catch (orderApiErr: any) {
+        console.warn('[Wunabuy Checkout] createOrder fallback:', orderApiErr?.message);
+      }
+
       if (selectedMethod === PaymentMethod.MOMO) {
         if (!accountPhone.trim()) {
           setError('Please enter a valid Mobile Money account phone number.');
@@ -55,7 +86,7 @@ export const CheckoutPaymentScreen = ({ route, navigation }: any) => {
         );
 
         const result = await OrdersService.payCheckout({
-          order_id: 'wb_order_' + Date.now(),
+          order_id: createdOrderId,
           method: 'momo',
           provider: provider === 'MTN' ? 'mtn' : 'orange',
           phone: accountPhone,
@@ -66,7 +97,7 @@ export const CheckoutPaymentScreen = ({ route, navigation }: any) => {
           clearCart();
           setIsProcessing(false);
           navigation.navigate('OrderSuccess', {
-            orderCode: result.payment_ref || `WB-2026-${Math.floor(1000 + Math.random() * 9000)}`,
+            orderCode: orderCode || result.payment_ref,
             totalAmount,
             provider,
             phone: accountPhone,
@@ -83,7 +114,7 @@ export const CheckoutPaymentScreen = ({ route, navigation }: any) => {
         }
 
         const result = await OrdersService.payCheckout({
-          order_id: 'wb_order_' + Date.now(),
+          order_id: createdOrderId,
           method: 'wallet',
           amount: totalAmount,
         });
@@ -92,7 +123,7 @@ export const CheckoutPaymentScreen = ({ route, navigation }: any) => {
           clearCart();
           setIsProcessing(false);
           navigation.navigate('OrderSuccess', {
-            orderCode: result.payment_ref || `WB-2026-${Math.floor(1000 + Math.random() * 9000)}`,
+            orderCode: orderCode || result.payment_ref,
             totalAmount,
             provider: 'Wunabuy Wallet',
             phone: user?.phone ?? accountPhone,

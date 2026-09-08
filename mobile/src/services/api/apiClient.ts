@@ -2,9 +2,8 @@ import { createWunabuyApiSDK } from '@wunabuy/api-client';
 import { SecureTokenService } from '../SecureTokenService';
 import { useAuthStore } from '../../stores/auth.store';
 
-// Default API Base URL (configurable via EXPO_PUBLIC_API_URL or fallback to production backend)
-export const API_BASE_URL =
-  process.env.EXPO_PUBLIC_API_URL || 'https://api.wunabuy.com/api/v1';
+import { API_BASE_URL } from '../../config/env';
+export { API_BASE_URL };
 
 /**
  * Pre-configured Wunabuy API SDK Singleton for the Mobile Application.

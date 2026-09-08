@@ -118,6 +118,7 @@ Route::prefix('v1')->group(function () {
     Route::get('/wallet/transactions', [WalletController::class, 'getTransactions']);
     Route::get('/wallet/transactions/{id}/status', [WalletController::class, 'checkTransactionStatus']);
     Route::post('/payments/charge', [WalletController::class, 'chargePayment']);
+    Route::post('/checkout/pay', [WalletController::class, 'chargePayment']);
     Route::get('/payments/verify/{ref}', [WalletController::class, 'verifyPayment']);
 
     // ─── STAFF PORTAL (7 DEPARTMENTS) ───

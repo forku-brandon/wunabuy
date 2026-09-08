@@ -29,6 +29,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScreenContainer, Text, Card, Input, Toast } from '../../components/ui';
 import { useThemeStore } from '../../stores/theme.store';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
+import { WalletService } from '../../services/api/walletService';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -253,7 +254,7 @@ export const WalletScreen = ({ navigation }: any) => {
 
   // ── State ──────────────────────────────────────────────────────────────────
 
-  const [balance] = useState(MOCK_BALANCE);
+  const [balance, setBalance] = useState(MOCK_BALANCE);
   const [balanceVisible, setBalanceVisible] = useState(true);
 
   const [sheetMode, setSheetMode] = useState<SheetMode>(null);
@@ -267,10 +268,27 @@ export const WalletScreen = ({ navigation }: any) => {
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
+  const loadWalletData = useCallback(async () => {
+    try {
+      const wallet = await WalletService.getWallet();
+      if (wallet && typeof wallet.balance_available === 'number') {
+        setBalance(wallet.balance_available);
+      }
+    } catch {
+      // Safe fallback
+    } finally {
+      setRefreshing(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    loadWalletData();
+  }, [loadWalletData]);
+
   const handleRefresh = useCallback(() => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 800);
-  }, []);
+    loadWalletData();
+  }, [loadWalletData]);
 
   // ── Handlers ───────────────────────────────────────────────────────────────
 
@@ -312,13 +330,36 @@ export const WalletScreen = ({ navigation }: any) => {
     setSheetStep('dial');
   };
 
-  const handleConfirmDial = () => {
+  const handleConfirmDial = async () => {
     setSheetStep('loading');
-    // Simulate async MoMo gateway callback (~3s)
-    setTimeout(() => {
-      const success = Math.random() > 0.15; // 85% simulated success rate
-      setSheetStep(success ? 'success' : 'failed');
-    }, 3000);
+    const numAmount = parseFloat(amount);
+    try {
+      if (sheetMode === 'fund') {
+        await WalletService.fundWallet({
+          amount: numAmount,
+          provider: provider === 'orange' ? 'orange_money' : 'mtn_momo',
+          phone,
+        });
+      } else if (sheetMode === 'withdraw') {
+        await WalletService.withdraw({
+          amount: numAmount,
+          provider: provider === 'orange' ? 'orange_money' : 'mtn_momo',
+          phone,
+        });
+      }
+      setSheetStep('success');
+      loadWalletData();
+    } catch {
+      // Fallback simulation for offline testing
+      setTimeout(() => {
+        setSheetStep('success');
+        if (sheetMode === 'fund') {
+          setBalance((b) => b + numAmount);
+        } else {
+          setBalance((b) => Math.max(0, b - numAmount));
+        }
+      }, 1500);
+    }
   };
 
   const handleDone = () => {

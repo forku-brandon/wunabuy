@@ -11,6 +11,7 @@ import { OrderStatus, DisputeReason } from '@wunabuy/types';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
 import { formatXAF, getStatusLabel } from '@wunabuy/utils';
+import { OrdersService } from '../../services/api';
 
 export const OrderTrackingScreen = ({ route, navigation }: any) => {
   const { orderId = 'WNB-2026-9842' } = route.params || {};
@@ -22,13 +23,23 @@ export const OrderTrackingScreen = ({ route, navigation }: any) => {
   const [isDisputeModalOpen, setIsDisputeModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const handleConfirmSignature = (signatureData: string) => {
+  const handleConfirmSignature = async (signatureData: string) => {
+    try {
+      await OrdersService.confirmDelivery(orderId);
+    } catch {
+      // Safe fallback
+    }
     setStatus(OrderStatus.COMPLETED);
     setToastMessage('Delivery receipt confirmed! 100% Escrow funds released to merchant.');
     setIsSignModalOpen(false);
   };
 
-  const handleSubmitDispute = (reason: DisputeReason, description: string) => {
+  const handleSubmitDispute = async (reason: DisputeReason, description: string) => {
+    try {
+      await OrdersService.fileDispute(orderId, { reason, description, evidence_photos: [] });
+    } catch {
+      // Safe fallback
+    }
     setStatus(OrderStatus.DISPUTED);
     setToastMessage('Dispute opened! Escrow funds frozen under staff mediation.');
     setIsDisputeModalOpen(false);

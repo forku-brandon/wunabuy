@@ -1,7 +1,10 @@
 import { ApiResponse, ApiError } from '@wunabuy/types';
 
 // API Base URL configured via environment variable, defaulting to Laravel API v1
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string) || 'http://localhost:8000/api/v1';
+const API_BASE_URL =
+  (import.meta.env.VITE_API_URL as string) ||
+  (import.meta.env.VITE_API_BASE_URL as string) ||
+  'http://localhost:8000/api/v1';
 
 export class ApiClientError extends Error {
   code: string;
