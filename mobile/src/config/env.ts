@@ -37,6 +37,6 @@ export const REVERB_CONFIG = {
 };
 
 if (__DEV__) {
-  console.log([Wunabuy Config] API Base URL: \);
-  console.log([Wunabuy Config] Platform: \);
+  console.log(`[Wunabuy Config] API Base URL: ${API_BASE_URL}`);
+  console.log(`[Wunabuy Config] Platform: ${Platform.OS}`);
 }
