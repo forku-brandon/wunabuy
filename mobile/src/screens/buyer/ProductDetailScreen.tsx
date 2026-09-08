@@ -24,8 +24,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScreenContainer, Text, Badge, Button, Card, Toast, QuantityInputModal } from '../../components/ui';
-import { ProductCard } from '../../components/product/ProductCard';
-import { MOCK_PRODUCTS } from '../../services/mockProducts';
+import { ActivityIndicator } from 'react-native';
+import { ProductsService } from '../../services/api';
 import { useCartStore } from '../../stores/cart.store';
 import { formatXAF, formatDistance } from '@wunabuy/utils';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
@@ -34,7 +34,7 @@ import { Product } from '@wunabuy/types';
 import { useFavoritesStore } from '../../stores/favorites.store';
 import { useFootprintStore } from '../../stores/footprint.store';
 import { ProductImageGalleryModal } from '../../components/product/ProductImageGalleryModal';
-
+import { ProductCard } from '../../components/product/ProductCard';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -48,16 +48,38 @@ export const ProductDetailScreen = ({ route, navigation }: any) => {
   const { isFavorite: checkFavorite, toggleFavorite: storeToggleFavorite } = useFavoritesStore();
   const recordFootprint = useFootprintStore((state) => state.recordFootprint);
 
-  // Find product or fallback to first item
-  const product: Product = useMemo(() => {
-    return MOCK_PRODUCTS.find((p) => p.id === productId) || MOCK_PRODUCTS[0];
-  }, [productId]);
-
-  const isFavorited = checkFavorite(product.id);
+  const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
 
   React.useEffect(() => {
-    recordFootprint(product);
-  }, [product, recordFootprint]);
+    let isMounted = true;
+    const fetchProduct = async () => {
+      setLoading(true);
+      try {
+        const data = await ProductsService.getProductById(productId);
+        if (data && isMounted) {
+          setProduct(data);
+          recordFootprint(data);
+          const recs = await ProductsService.getProducts({ category: data.category });
+          if (isMounted) {
+            setRecommendedProducts(recs.filter((p) => p.id !== data.id).slice(0, 4));
+          }
+        }
+      } catch {
+        // Handled
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    if (productId) {
+      fetchProduct();
+    }
+    return () => { isMounted = false; };
+  }, [productId, recordFootprint]);
+
+  const isFavorited = product ? checkFavorite(product.id) : false;
 
   // Gallery and Variant state
   const [activeImageIndex, setActiveImageIndex] = useState(0);
@@ -68,25 +90,25 @@ export const ProductDetailScreen = ({ route, navigation }: any) => {
   const [isDescExpanded, setIsDescExpanded] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-
-  // Recommendations: Related products in the same category (or fallback items) excluding current product
-  const recommendedProducts: Product[] = useMemo(() => {
-    const sameCategory = MOCK_PRODUCTS.filter(
-      (p) => p.id !== product.id && p.category === product.category
-    );
-    if (sameCategory.length >= 2) {
-      return sameCategory.slice(0, 4);
-    }
-    const otherProducts = MOCK_PRODUCTS.filter((p) => p.id !== product.id);
-    return [...sameCategory, ...otherProducts].slice(0, 4);
-  }, [product]);
-
   const availableColors = [
     { name: 'Light Gray', hex: '#CBD5E1' },
     { name: 'Teal Green', hex: '#0D9488' },
     { name: 'Midnight Navy', hex: '#1E293B' },
     { name: 'Amber Gold', hex: '#F59E0B' },
   ];
+
+  if (loading || !product) {
+    return (
+      <ScreenContainer scrollable={false} padded={false}>
+        <View style={{ flex: 1, backgroundColor: theme.background, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color={colors.primary[500]} />
+          <Text variant="bodyMedium" secondary style={{ marginTop: spacing.md }}>
+            Loading product details...
+          </Text>
+        </View>
+      </ScreenContainer>
+    );
+  }
 
   // Handlers
   const handleAddToCart = () => {

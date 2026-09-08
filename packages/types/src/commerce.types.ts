@@ -124,3 +124,38 @@ export interface CartItem {
   /** Maximum allowable quantity based on stock */
   max_quantity: number;
 }
+
+export interface HomeFeedBanner {
+  id: string;
+  badge: string;
+  badgeColor?: string;
+  title: string;
+  subtitle: string;
+  ctaText: string;
+  imageUrl: string;
+}
+
+export interface HomeFeedPartner {
+  id: string;
+  name: string;
+  category: string;
+  iconName: string;
+  iconColor: string;
+  badge: string;
+}
+
+export interface HomeFeedSpecialOffer {
+  eyebrow: string;
+  title: string;
+  subtitle: string;
+  discount_percent: number;
+  image_url: string;
+}
+
+export interface HomeFeedData {
+  hero_banners: HomeFeedBanner[];
+  partners: HomeFeedPartner[];
+  categories: string[];
+  best_sellers: Product[];
+  special_offer?: HomeFeedSpecialOffer;
+}

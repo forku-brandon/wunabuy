@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -20,6 +20,7 @@ import { useFollowedStoresStore, FollowedStoreData } from '../../stores/followed
 import { useSellerStore } from '../../stores/seller.store';
 import { formatXAF } from '@wunabuy/utils';
 import { Product, ProductCategory, QualityTier } from '@wunabuy/types';
+import { ProductsService, api } from '../../services/api';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -181,21 +182,54 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
 
   const isOwnStore = storeId === 'store_1' || storeId === 'store_101' || !passedStore;
 
+  const [storeData, setStoreData] = useState<any>(null);
+  const [storeProducts, setStoreProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchStore = async () => {
+      setLoading(true);
+      try {
+        const res = await api.client.get(`/stores/${storeId}`).catch(() => null);
+        if (res?.data?.data && isMounted) {
+          setStoreData(res.data.data);
+          if (res.data.data.products && Array.isArray(res.data.data.products) && res.data.data.products.length > 0) {
+            setStoreProducts(res.data.data.products);
+          }
+        }
+        const prodRes = await ProductsService.getProducts({ store_id: storeId });
+        if (prodRes && prodRes.length > 0 && isMounted) {
+          setStoreProducts(prodRes);
+        }
+      } catch (err) {
+        console.warn('Failed to load store data:', err);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+    fetchStore();
+    return () => { isMounted = false; };
+  }, [storeId]);
+
   const storeInfo: ExtendedStoreData = {
     ...SAMPLE_STORE_DATA,
     id: storeId,
-    name: passedStore?.name || passedStore?.store_name || (isOwnStore ? sellerStore.storeName : SAMPLE_STORE_DATA.name),
-    category: passedStore?.category || (isOwnStore ? sellerStore.category : SAMPLE_STORE_DATA.category),
-    location: passedStore?.location || (isOwnStore ? sellerStore.address : SAMPLE_STORE_DATA.location),
-    avatar_url: passedStore?.avatar_url || (isOwnStore ? sellerStore.logoUrl : SAMPLE_STORE_DATA.avatar_url),
-    cover_url: passedStore?.cover_url || (isOwnStore ? sellerStore.coverPhotoUrl : SAMPLE_STORE_DATA.cover_url),
-    tagline: passedStore?.tagline || (isOwnStore ? sellerStore.tagline : 'Premier Certified Merchant'),
-    description: passedStore?.description || (isOwnStore ? sellerStore.description : 'Certified merchant specializing in authentic products with Escrow warranty.'),
-    landmarkDirections: passedStore?.landmarkDirections || (isOwnStore ? sellerStore.landmarkDirections : 'Opposite Place du Gouvernement, Next to Akwa Mall'),
-    primaryPhone: passedStore?.primaryPhone || (isOwnStore ? sellerStore.primaryPhone : '+237 670 123 456'),
+    name: storeData?.store_name || passedStore?.name || passedStore?.store_name || (isOwnStore ? sellerStore.storeName : SAMPLE_STORE_DATA.name),
+    category: storeData?.category || passedStore?.category || (isOwnStore ? sellerStore.category : SAMPLE_STORE_DATA.category),
+    location: storeData?.address_text || passedStore?.location || (isOwnStore ? sellerStore.address : SAMPLE_STORE_DATA.location),
+    avatar_url: storeData?.logo_url || passedStore?.avatar_url || (isOwnStore ? sellerStore.logoUrl : SAMPLE_STORE_DATA.avatar_url),
+    cover_url: storeData?.banner_url || passedStore?.cover_url || (isOwnStore ? sellerStore.coverPhotoUrl : SAMPLE_STORE_DATA.cover_url),
+    tagline: storeData?.tagline || passedStore?.tagline || (isOwnStore ? sellerStore.tagline : 'Premier Certified Merchant'),
+    description: storeData?.description || passedStore?.description || (isOwnStore ? sellerStore.description : 'Certified merchant specializing in authentic products with Escrow warranty.'),
+    landmarkDirections: storeData?.landmark || passedStore?.landmarkDirections || (isOwnStore ? sellerStore.landmarkDirections : 'Opposite Place du Gouvernement, Next to Akwa Mall'),
+    primaryPhone: storeData?.phone || passedStore?.primaryPhone || (isOwnStore ? sellerStore.primaryPhone : '+237 670 123 456'),
     secondaryPhone: passedStore?.secondaryPhone || (isOwnStore ? sellerStore.secondaryPhone : '+237 699 876 543'),
-    operatingHours: passedStore?.operatingHours || (isOwnStore ? sellerStore.operatingHours : 'Mon - Sat: 8:00 AM - 6:30 PM'),
-    riderPickupInstructions: passedStore?.riderPickupInstructions || (isOwnStore ? sellerStore.riderPickupInstructions : 'Present 5-digit PIN at counter #2.'),
+    operatingHours: storeData?.counter_hours || passedStore?.operatingHours || (isOwnStore ? sellerStore.operatingHours : 'Mon - Sat: 8:00 AM - 6:30 PM'),
+    riderPickupInstructions: storeData?.rider_instructions || passedStore?.riderPickupInstructions || (isOwnStore ? sellerStore.riderPickupInstructions : 'Present 5-digit PIN at counter #2.'),
+    rating_avg: storeData?.rating_avg ?? (passedStore?.rating_avg ?? SAMPLE_STORE_DATA.rating_avg),
+    total_reviews: storeData?.total_reviews ?? (passedStore?.total_reviews ?? SAMPLE_STORE_DATA.total_reviews),
+    is_verified: storeData?.is_verified ?? (passedStore?.is_verified ?? SAMPLE_STORE_DATA.is_verified),
   };
 
   const following = isFollowing(storeInfo.id);
@@ -238,7 +272,9 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
     setToastMessage(`Added ${product.name} to cart! 🛒`);
   };
 
-  const filteredProducts = SAMPLE_STORE_PRODUCTS.filter((prod) => {
+  const allProducts = storeProducts.length > 0 ? storeProducts : SAMPLE_STORE_PRODUCTS;
+
+  const filteredProducts = allProducts.filter((prod) => {
     const matchesSearch = prod.name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory =
       selectedCategoryFilter === 'All' ||
@@ -447,7 +483,7 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
         <View style={[styles.tabBarContainer, { backgroundColor: theme.card, borderBottomColor: theme.border }]}>
           {[
             { key: 'home', label: '🏠 Overview' },
-            { key: 'products', label: `🛍️ Catalog (${SAMPLE_STORE_PRODUCTS.length})` },
+            { key: 'products', label: `🛍️ Catalog (${allProducts.length})` },
             { key: 'reviews', label: `⭐ Reviews (${SAMPLE_REVIEWS.length})` },
             { key: 'about', label: 'ℹ️ Store Info' },
           ].map((tab) => {
@@ -502,7 +538,7 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
                 </Text>
               </View>
               <Text variant="bodyMedium" secondary style={{ lineHeight: 20 }}>
-                Douala Tech Hub is a premier certified merchant specializing in authentic smartphones, wireless audio, laptops, and original consumer electronics in Akwa, Douala. Serving over 5,000+ satisfied buyers across Cameroon with official brand warranties and escrow guarantee.
+                {storeInfo.description || `${storeInfo.name} is a premier certified merchant specializing in authentic products with official brand warranties and 48-hour escrow guarantee.`}
               </Text>
             </Card>
 
@@ -513,13 +549,13 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
               </Text>
               <TouchableOpacity onPress={() => setActiveTab('products')}>
                 <Text variant="caption" bold color={colors.primary[600]}>
-                  See All ({SAMPLE_STORE_PRODUCTS.length}) ›
+                  See All ({allProducts.length}) ›
                 </Text>
               </TouchableOpacity>
             </View>
 
             <View style={styles.productsGrid}>
-              {SAMPLE_STORE_PRODUCTS.slice(0, 4).map((prod) => (
+              {allProducts.slice(0, 4).map((prod) => (
                 <TouchableOpacity
                   key={prod.id}
                   activeOpacity={0.88}

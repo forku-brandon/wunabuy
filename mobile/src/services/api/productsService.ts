@@ -1,9 +1,9 @@
 import { api } from './apiClient';
-import { Product, ProductCategory, QualityTier } from '@wunabuy/types';
-import { MOCK_PRODUCTS } from '../mockProducts';
+import { Product, ProductCategory, QualityTier, HomeFeedData } from '@wunabuy/types';
 
 export interface ProductQueryFilters {
   category?: string;
+  store_id?: string;
   search?: string;
   min_price?: number;
   max_price?: number;
@@ -11,10 +11,17 @@ export interface ProductQueryFilters {
 }
 
 /**
- * Service to fetch and manage product catalog data via Backend API
- * with graceful offline fallback to local mock data.
+ * Service to fetch and manage product catalog data via Backend API.
  */
 export const ProductsService = {
+  /**
+   * Fetch home marketplace feed (hero banners, partners, categories, best sellers)
+   */
+  async getHomeFeed(): Promise<HomeFeedData> {
+    const response = await api.products.getHomeFeed();
+    return response.data;
+  },
+
   /**
    * Fetch paginated products matching filters
    */
@@ -22,19 +29,19 @@ export const ProductsService = {
     try {
       const response = await api.products.getProducts({
         category: filters?.category && filters.category !== 'All' ? (filters.category as ProductCategory) : undefined,
+        store_id: filters?.store_id,
         search: filters?.search,
         min_price: filters?.min_price,
         max_price: filters?.max_price,
         sort_by: filters?.sort_by,
       });
 
-      if (response && response.data && response.data.length > 0) {
+      if (response && response.data) {
         return response.data;
       }
-      return filterMockProducts(filters);
+      return [];
     } catch {
-      // Offline fallback
-      return filterMockProducts(filters);
+      return [];
     }
   },
 
@@ -47,9 +54,9 @@ export const ProductsService = {
       if (response && response.data) {
         return response.data;
       }
-      return MOCK_PRODUCTS.find((p) => p.id === id) || null;
+      return null;
     } catch {
-      return MOCK_PRODUCTS.find((p) => p.id === id) || null;
+      return null;
     }
   },
 
@@ -69,29 +76,4 @@ export const ProductsService = {
     return response.data;
   },
 };
-
-function filterMockProducts(filters?: ProductQueryFilters): Product[] {
-  let products = [...MOCK_PRODUCTS];
-
-  if (filters?.category && filters.category !== 'All') {
-    products = products.filter((p) => {
-      if (filters.category === 'Skincare' || filters.category === 'Makeup' || filters.category === 'Fragrance') {
-        return p.category === ProductCategory.HEALTH_BEAUTY;
-      }
-      return p.category === filters.category;
-    });
-  }
-
-  if (filters?.search) {
-    const query = filters.search.toLowerCase();
-    products = products.filter(
-      (p) =>
-        p.name.toLowerCase().includes(query) ||
-        p.description.toLowerCase().includes(query) ||
-        p.category.toLowerCase().includes(query)
-    );
-  }
-
-  return products;
-}
 

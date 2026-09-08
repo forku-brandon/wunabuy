@@ -23,62 +23,88 @@ class CommerceController extends Controller
     {
         $products = Product::with('store')
             ->where('is_active', true)
+            ->orderBy('rating_avg', 'desc')
             ->limit(10)
             ->get();
 
         return $this->respondSuccess([
             'hero_banners' => [
                 [
-                    'id' => 'hero_1',
-                    'tag' => '100% ESCROW GUARANTEE',
-                    'title' => 'Shop with Total Peace of Mind',
-                    'subtitle' => 'Your payment is held safely until you inspect & confirm delivery.',
-                    'bg_color' => '#0D9488',
-                    'image_url' => 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=1200&q=80',
-                ]
+                    'id' => 'slide_1',
+                    'badge' => '100% ESCROW GUARANTEE',
+                    'badgeColor' => '#0D9488',
+                    'title' => "Shop Safely, ✨\nBuy Confidently",
+                    'subtitle' => 'Your money stays 100% safe in 48-hour escrow protection until delivery is signed.',
+                    'ctaText' => 'Explore Escrow',
+                    'imageUrl' => 'https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?auto=format&fit=crop&w=800&q=80',
+                ],
+                [
+                    'id' => 'slide_2',
+                    'badge' => 'VERIFIED LOCAL STORES',
+                    'badgeColor' => '#0F766E',
+                    'title' => "Glow Naturally, ✨\nShine Beautifully",
+                    'subtitle' => 'Explore our premium beauty, electronics & verified collection from Douala store owners.',
+                    'ctaText' => 'Shop Now',
+                    'imageUrl' => 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=800&q=80',
+                ],
+                [
+                    'id' => 'slide_3',
+                    'badge' => 'EXPRESS GPS DELIVERY',
+                    'badgeColor' => '#F59E0B',
+                    'title' => "Fast Doorstep ✨\nGPS Delivery",
+                    'subtitle' => 'Track your transport provider live with 10-second GPS breadcrumb updates.',
+                    'ctaText' => 'Track Live',
+                    'imageUrl' => 'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=800&q=80',
+                ],
             ],
             'partners' => [
                 [
                     'id' => 'partner_1',
-                    'name' => 'MTN Mobile Money',
-                    'category' => 'Official MoMo Partner',
-                    'icon_name' => 'phone-portrait-outline',
-                    'icon_color' => '#F59E0B',
+                    'name' => 'MTN MoMo',
+                    'category' => 'Mobile Money Escrow',
+                    'iconName' => 'phone-portrait-outline',
+                    'iconColor' => '#F59E0B',
                     'badge' => '1-Tap Cashout',
-                    'dial_code' => '*126#',
                 ],
                 [
                     'id' => 'partner_2',
                     'name' => 'Orange Money',
                     'category' => 'Mobile Wallet Partner',
-                    'icon_name' => 'wallet-outline',
-                    'icon_color' => '#F97316',
+                    'iconName' => 'wallet-outline',
+                    'iconColor' => '#F97316',
                     'badge' => 'Instant Transfer',
-                    'dial_code' => '#150*50#',
                 ],
                 [
                     'id' => 'partner_3',
                     'name' => 'Flutterwave',
                     'category' => 'PCI-DSS Escrow Gateway',
-                    'icon_name' => 'card-outline',
-                    'icon_color' => '#0D9488',
+                    'iconName' => 'card-outline',
+                    'iconColor' => '#0D9488',
                     'badge' => 'Verified Gateway',
                 ],
                 [
                     'id' => 'partner_4',
+                    'name' => 'DHL Logistics',
+                    'category' => 'Regional Express Freight',
+                    'iconName' => 'airplane-outline',
+                    'iconColor' => '#E11D48',
+                    'badge' => 'Freight Partner',
+                ],
+                [
+                    'id' => 'partner_5',
                     'name' => 'Ecobank Cameroon',
                     'category' => 'Bank Settlement Partner',
-                    'icon_name' => 'business-outline',
-                    'icon_color' => '#2563EB',
+                    'iconName' => 'business-outline',
+                    'iconColor' => '#2563EB',
                     'badge' => 'Bank Partner',
                 ],
             ],
-            'categories' => ['All', 'Smartphones', 'Audio', 'Electronics', 'Fashion', 'Beauty', 'Offers'],
+            'categories' => ['All', 'Electronics', 'Health & Beauty', 'Fashion', 'Food & Groceries', 'Automotive'],
             'best_sellers' => $products,
             'special_offer' => [
                 'eyebrow' => 'Special Offer',
                 'title' => 'Up to 30% Off',
-                'subtitle' => 'On selected verified electronics across Douala',
+                'subtitle' => 'On selected verified products across Douala stores',
                 'discount_percent' => 30,
                 'image_url' => 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=800&q=80',
             ],
@@ -105,9 +131,17 @@ class CommerceController extends Controller
     {
         $query = Product::with('store')->where('is_active', true);
 
+        if ($storeId = $request->query('store_id')) {
+            $query->where('store_id', $storeId);
+        }
+
         if ($cat = $request->query('category')) {
             if ($cat !== 'All') {
-                $query->where('category', $cat);
+                if (in_array(strtolower($cat), ['skincare', 'makeup', 'fragrance', 'haircare', 'tools', 'beauty'])) {
+                    $query->where('category', 'Health & Beauty');
+                } else {
+                    $query->where('category', 'ilike', "%{$cat}%");
+                }
             }
         }
 
@@ -139,7 +173,7 @@ class CommerceController extends Controller
             $query->orderBy('created_at', 'desc');
         }
 
-        $limit = (int) $request->query('limit', 15);
+        $limit = (int) $request->query('limit', 20);
         $products = $query->take($limit)->get();
 
         // Calculate real distance if buyer lat/lng provided
@@ -177,10 +211,7 @@ class CommerceController extends Controller
 
         $product->reviews = $reviews;
 
-        return $this->respondSuccess([
-            'product' => $product,
-            'store' => $product->store,
-        ]);
+        return $this->respondSuccess($product);
     }
 
     /**
@@ -243,7 +274,7 @@ class CommerceController extends Controller
      */
     public function getStore(string $id): JsonResponse
     {
-        $store = (Str::isUuid($id) ? Store::find($id) : null) ?? Store::first();
+        $store = (Str::isUuid($id) ? Store::with('products')->find($id) : null) ?? Store::with('products')->first();
         if (!$store) {
             return $this->respondError('NOT_FOUND', 'Store not found', null, 404);
         }

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Linking } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Linking, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScreenContainer, Text, Card, Button, Badge, Toast } from '../../components/ui';
@@ -7,7 +7,7 @@ import { OrderStatusStepper } from '../../components/order/OrderStatusStepper';
 import { LiveTrackingMap } from '../../components/order/LiveTrackingMap';
 import { DigitalSignatureModal } from '../../components/order/DigitalSignatureModal';
 import { DisputeModal } from '../../components/order/DisputeModal';
-import { OrderStatus, DisputeReason } from '@wunabuy/types';
+import { Order, OrderStatus, DisputeReason } from '@wunabuy/types';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
 import { formatXAF, getStatusLabel } from '@wunabuy/utils';
@@ -18,10 +18,34 @@ export const OrderTrackingScreen = ({ route, navigation }: any) => {
   const insets = useSafeAreaInsets();
   const { theme, isDark } = useThemeStore();
 
+  const [order, setOrder] = useState<Order | null>(null);
   const [status, setStatus] = useState<OrderStatus>(OrderStatus.EN_ROUTE);
+  const [loading, setLoading] = useState(true);
   const [isSignModalOpen, setIsSignModalOpen] = useState(false);
   const [isDisputeModalOpen, setIsDisputeModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchOrder = async () => {
+      setLoading(true);
+      try {
+        const data = await OrdersService.getOrderById(orderId);
+        if (data && isMounted) {
+          setOrder(data);
+          setStatus(data.status);
+        }
+      } catch (err) {
+        console.warn('Failed to fetch order details:', err);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+    if (orderId) {
+      fetchOrder();
+    }
+    return () => { isMounted = false; };
+  }, [orderId]);
 
   const handleConfirmSignature = async (signatureData: string) => {
     try {
@@ -94,8 +118,8 @@ export const OrderTrackingScreen = ({ route, navigation }: any) => {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* Interactive Live GPS Tracking Map Canvas */}
         <LiveTrackingMap
-          driverName="Jean-Paul Mbida"
-          driverPhone="+237 675 112 233"
+          driverName={(order as any)?.transporter?.full_name || (order as any)?.transporter?.name || "Jean-Paul Mbida"}
+          driverPhone={(order as any)?.transporter?.phone || "+237 675 112 233"}
           driverRating="4.9 ★"
           estimatedArrivalMin={8}
           distanceKm={1.8}
@@ -139,18 +163,26 @@ export const OrderTrackingScreen = ({ route, navigation }: any) => {
           </Text>
 
           <View style={styles.itemRow}>
-            <View style={styles.itemThumbPlaceholder}>
-              <Ionicons name="hardware-chip-outline" size={24} color={colors.primary[500]} />
-            </View>
+            {order?.items?.[0]?.image_url ? (
+              <Image
+                source={{ uri: order.items[0].image_url }}
+                style={{ width: 48, height: 48, borderRadius: 8, marginRight: spacing.sm }}
+                resizeMode="cover"
+              />
+            ) : (
+              <View style={styles.itemThumbPlaceholder}>
+                <Ionicons name="hardware-chip-outline" size={24} color={colors.primary[500]} />
+              </View>
+            )}
             <View style={styles.itemTextCol}>
               <Text variant="bodyMedium" bold numberOfLines={1}>
-                Samsung Galaxy A54 5G (128GB)
+                {order?.items?.[0]?.name || 'Ordered Product'}
               </Text>
               <Text variant="caption" secondary>
-                Seller: Douala Tech Hub (Akwa)
+                Seller: {(order as any)?.store?.store_name || 'Verified Merchant Store'}
               </Text>
               <Text variant="bodyLarge" bold color={colors.primary[500]} style={{ marginTop: 2 }}>
-                {formatXAF(188000)}
+                {formatXAF(order?.total ?? 18500)}
               </Text>
             </View>
           </View>

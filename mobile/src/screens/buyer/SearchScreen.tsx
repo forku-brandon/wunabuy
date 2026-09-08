@@ -28,18 +28,17 @@ export const SearchScreen = ({ navigation, route }: any) => {
 
   const displayCategories = [
     'All',
+    ProductCategory.ELECTRONICS,
+    ProductCategory.HEALTH_BEAUTY,
+    ProductCategory.FASHION,
+    ProductCategory.FOOD_GROCERIES,
+    ProductCategory.AUTOMOTIVE,
+    ProductCategory.HOME_GARDEN,
     'Skincare',
     'Makeup',
     'Fragrance',
     'Haircare',
-    'Tools',
     'Offers',
-    ProductCategory.ELECTRONICS,
-    ProductCategory.FASHION,
-    ProductCategory.FOOD_GROCERIES,
-    ProductCategory.HOME_GARDEN,
-    ProductCategory.HEALTH_BEAUTY,
-    ProductCategory.AUTOMOTIVE,
   ];
 
   const executeSearch = useCallback(async () => {

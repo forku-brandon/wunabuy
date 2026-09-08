@@ -9,7 +9,7 @@ export interface PartnerItem {
   id: string;
   name: string;
   category: string;
-  iconName: React.ComponentProps<typeof Ionicons>['name'];
+  iconName: any;
   iconColor: string;
   badge: string;
 }
@@ -57,8 +57,13 @@ const PARTNERS: PartnerItem[] = [
   },
 ];
 
-export const PartnersCarousel: React.FC = () => {
+export interface PartnersCarouselProps {
+  partners?: PartnerItem[];
+}
+
+export const PartnersCarousel: React.FC<PartnersCarouselProps> = ({ partners }) => {
   const { theme, isDark } = useThemeStore();
+  const currentPartners = (partners && partners.length > 0) ? partners : PARTNERS;
 
   return (
     <View style={styles.container}>
@@ -80,7 +85,7 @@ export const PartnersCarousel: React.FC = () => {
 
       <FlatList
         horizontal
-        data={PARTNERS}
+        data={currentPartners}
         keyExtractor={(item) => item.id}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}

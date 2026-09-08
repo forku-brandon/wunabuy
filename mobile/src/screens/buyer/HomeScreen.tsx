@@ -16,7 +16,7 @@ import { HeroCarousel } from '../../components/home/HeroCarousel';
 import { PartnersCarousel } from '../../components/home/PartnersCarousel';
 import { SidebarDrawer } from '../../components/navigation/SidebarDrawer';
 import { EmptyState } from '../../components/ui/EmptyState';
-import { ProductCategory, Product } from '@wunabuy/types';
+import { ProductCategory, Product, HomeFeedData } from '@wunabuy/types';
 import { ProductsService } from '../../services/api';
 import { useCartStore } from '../../stores/cart.store';
 import { useAuthStore } from '../../stores/auth.store';
@@ -30,18 +30,32 @@ export const HomeScreen = ({ navigation }: any) => {
   const itemCount = useCartStore((state) => state.getItemCount());
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [products, setProducts] = useState<Product[]>([]);
+  const [feedData, setFeedData] = useState<HomeFeedData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-  const displayCategories = ['All', 'Skincare', 'Makeup', 'Fragrance', 'Haircare', 'Tools', 'Offers'];
+  const displayCategories = feedData?.categories && feedData.categories.length > 0
+    ? feedData.categories
+    : ['All', 'Electronics', 'Health & Beauty', 'Fashion', 'Food & Groceries', 'Automotive'];
+
+  const loadHomeFeed = useCallback(async () => {
+    try {
+      const feed = await ProductsService.getHomeFeed();
+      if (feed) {
+        setFeedData(feed);
+      }
+    } catch {
+      // Gracefully ignore
+    }
+  }, []);
 
   const loadProducts = useCallback(async (cat: string) => {
     try {
       const data = await ProductsService.getProducts({ category: cat });
       setProducts(data);
     } catch {
-      // ProductsService handles fallback
+      // Keep silent
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -49,13 +63,18 @@ export const HomeScreen = ({ navigation }: any) => {
   }, []);
 
   useEffect(() => {
+    loadHomeFeed();
+  }, [loadHomeFeed]);
+
+  useEffect(() => {
     loadProducts(selectedCategory);
   }, [selectedCategory, loadProducts]);
 
   const handleRefresh = useCallback(() => {
     setRefreshing(true);
+    loadHomeFeed();
     loadProducts(selectedCategory);
-  }, [selectedCategory, loadProducts]);
+  }, [selectedCategory, loadHomeFeed, loadProducts]);
 
   const handleSelectProduct = useCallback(
     (product: Product) => {
@@ -145,11 +164,14 @@ export const HomeScreen = ({ navigation }: any) => {
 
       {/* Hero Banner Slide Carousel */}
       <View style={styles.carouselSection}>
-        <HeroCarousel onPressBanner={() => navigation.navigate('BuyerSearch')} />
+        <HeroCarousel
+          slides={feedData?.hero_banners}
+          onPressBanner={() => navigation.navigate('BuyerSearch')}
+        />
       </View>
 
       {/* Official Partners Manual Slide Carousel (Replaces Search Input Bar) */}
-      <PartnersCarousel />
+      <PartnersCarousel partners={feedData?.partners} />
 
       {/* Shop by Category Circular Avatar Slider (Between Partners & Best Sellers) */}
       <View style={styles.categorySection}>
@@ -195,7 +217,7 @@ export const HomeScreen = ({ navigation }: any) => {
 
       <FlatList
         horizontal
-        data={products}
+        data={feedData?.best_sellers && feedData.best_sellers.length > 0 ? feedData.best_sellers : products}
         keyExtractor={(item) => item.id}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.horizontalScrollContent}

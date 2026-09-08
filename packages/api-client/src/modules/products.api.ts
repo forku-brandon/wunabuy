@@ -5,11 +5,13 @@ import type {
   Product,
   ProductCategory,
   QualityTier,
+  HomeFeedData,
 } from '@wunabuy/types';
 
 export interface ProductFilters {
   search?: string;
-  category?: ProductCategory;
+  category?: ProductCategory | string;
+  store_id?: string;
   lat?: number;
   lng?: number;
   radius_km?: number;
@@ -72,6 +74,14 @@ export function createProductsApi(client: AxiosInstance) {
      */
     getDiscoveryFeed: async (params?: { lat?: number; lng?: number; limit?: number }): Promise<PaginatedResponse<Product>> => {
       const res = await client.get<PaginatedResponse<Product>>('/discovery/feed', { params });
+      return res.data;
+    },
+
+    /**
+     * Fetch aggregated Home Feed (Hero banners, partners, categories, best sellers).
+     */
+    getHomeFeed: async (): Promise<ApiResponse<HomeFeedData>> => {
+      const res = await client.get<ApiResponse<HomeFeedData>>('/home/feed');
       return res.data;
     },
   };

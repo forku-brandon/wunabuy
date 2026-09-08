@@ -32,12 +32,15 @@ export const OrdersService = {
   async getOrders(filters?: { status?: OrderStatus; role?: 'buyer' | 'seller' | 'transporter' }): Promise<Order[]> {
     try {
       const response = await api.orders.getOrders(filters);
-      if (response && response.data && response.data.length > 0) {
-        return response.data;
+      if (response && response.data) {
+        const list = Array.isArray(response.data) ? response.data : (response.data as any)?.orders;
+        if (Array.isArray(list)) {
+          return list;
+        }
       }
-      return getMockOrders(filters?.status);
+      return [];
     } catch {
-      return getMockOrders(filters?.status);
+      return [];
     }
   },
 
@@ -50,9 +53,9 @@ export const OrdersService = {
       if (response && response.data) {
         return response.data;
       }
-      return getMockOrders().find((o) => o.id === id) || null;
+      return null;
     } catch {
-      return getMockOrders().find((o) => o.id === id) || null;
+      return null;
     }
   },
 
@@ -103,91 +106,3 @@ export const OrdersService = {
     return response.data;
   },
 };
-
-function getMockOrders(statusFilter?: OrderStatus): Order[] {
-  const mockOrders: Order[] = [
-    {
-      id: 'wb_order_1',
-      order_code: 'WNB-2026-9842',
-      customer_id: 'user_101',
-      store_id: 'store_101',
-      transporter_id: 'driver_201',
-      status: OrderStatus.EN_ROUTE,
-      items: [
-        {
-          product_id: 'prod_1',
-          name: 'Glow Radiance Serum (10% Niacinamide)',
-          price: 18500,
-          quantity: 1,
-          image_url: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=800&q=80',
-        },
-      ],
-      subtotal: 18500,
-      delivery_fee: 1500,
-      commission: 650,
-      total: 20000,
-      currency: 'XAF',
-      delivery_address: {
-        id: 'addr_1',
-        label: 'Home',
-        latitude: 4.051,
-        longitude: 9.767,
-        address_text: 'Rue Joss, Akwa',
-        city: 'Douala',
-        is_default: true,
-      },
-      payment_method: PaymentMethod.WALLET,
-      payment_ref: 'WNB-ESC-WAL-99812',
-      expires_at: null,
-      disputed_at: null,
-      delivered_at: null,
-      completed_at: null,
-      created_at: new Date(Date.now() - 3600000).toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-    {
-      id: 'wb_order_2',
-      order_code: 'WNB-2026-9411',
-      customer_id: 'user_101',
-      store_id: 'store_101',
-      transporter_id: 'driver_201',
-      status: OrderStatus.DELIVERED,
-      items: [
-        {
-          product_id: 'prod_2',
-          name: 'Hydra Moisturizer Cream',
-          price: 14500,
-          quantity: 2,
-          image_url: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=800&q=80',
-        },
-      ],
-      subtotal: 29000,
-      delivery_fee: 1500,
-      commission: 1015,
-      total: 30500,
-      currency: 'XAF',
-      delivery_address: {
-        id: 'addr_1',
-        label: 'Home',
-        latitude: 4.051,
-        longitude: 9.767,
-        address_text: 'Rue Joss, Akwa',
-        city: 'Douala',
-        is_default: true,
-      },
-      payment_method: PaymentMethod.MOMO,
-      payment_ref: 'WNB-ESC-MOMO-88192',
-      expires_at: null,
-      disputed_at: null,
-      delivered_at: null,
-      completed_at: null,
-      created_at: new Date(Date.now() - 86400000).toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-  ];
-
-  if (statusFilter) {
-    return mockOrders.filter((o) => o.status === statusFilter);
-  }
-  return mockOrders;
-}

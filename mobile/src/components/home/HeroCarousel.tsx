@@ -58,25 +58,27 @@ const HERO_SLIDES: HeroSlide[] = [
 
 export interface HeroCarouselProps {
   onPressBanner: () => void;
+  slides?: HeroSlide[];
 }
 
-export const HeroCarousel: React.FC<HeroCarouselProps> = ({ onPressBanner }) => {
+export const HeroCarousel: React.FC<HeroCarouselProps> = ({ onPressBanner, slides }) => {
   const { theme, isDark } = useThemeStore();
   const [activeIndex, setActiveIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
+  const currentSlides = (slides && slides.length > 0) ? slides : HERO_SLIDES;
 
   // Auto-slide effect every 4.5 seconds
   useEffect(() => {
     const timer = setInterval(() => {
       setActiveIndex((prevIndex) => {
-        const nextIndex = (prevIndex + 1) % HERO_SLIDES.length;
+        const nextIndex = (prevIndex + 1) % currentSlides.length;
         flatListRef.current?.scrollToIndex({ index: nextIndex, animated: true });
         return nextIndex;
       });
     }, 4500);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [currentSlides.length]);
 
   const onViewableItemsChanged = useRef(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
@@ -90,7 +92,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({ onPressBanner }) => 
     <View style={styles.container}>
       <FlatList
         ref={flatListRef}
-        data={HERO_SLIDES}
+        data={currentSlides}
         keyExtractor={(item) => item.id}
         horizontal
         pagingEnabled
@@ -147,7 +149,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({ onPressBanner }) => 
 
       {/* Pagination Indicator Dots */}
       <View style={styles.paginationDots}>
-        {HERO_SLIDES.map((_, index) => (
+        {currentSlides.map((_, index) => (
           <View
             key={index}
             style={[

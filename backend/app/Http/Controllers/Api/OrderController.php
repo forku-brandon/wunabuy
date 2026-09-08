@@ -37,12 +37,22 @@ class OrderController extends Controller
 
         $escrowLockedTotal = $orders->where('payment_status', 'escrow_locked')->sum('total_amount');
 
-        return $this->respondSuccess([
+        return response()->json([
+            'success' => true,
+            'data' => $orders,
             'escrow_summary' => [
                 'total_locked_xaf' => (float) $escrowLockedTotal,
                 'active_escrow_orders_count' => $orders->where('payment_status', 'escrow_locked')->count(),
             ],
-            'orders' => $orders,
+            'meta' => [
+                'pagination' => [
+                    'has_more' => false,
+                    'next_cursor' => null,
+                    'per_page' => 20,
+                ],
+                'timestamp' => now()->toIso8601String(),
+                'request_id' => 'req_' . Str::random(12),
+            ],
         ]);
     }
 

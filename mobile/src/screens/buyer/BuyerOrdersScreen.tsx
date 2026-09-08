@@ -1,8 +1,8 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { View, FlatList, StyleSheet, TouchableOpacity, Image, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ScreenContainer, Text, Card, Badge, Toast } from '../../components/ui';
+import { ScreenContainer, Text, Card, Badge, Toast, EmptyState } from '../../components/ui';
 import { DigitalSignatureModal } from '../../components/order/DigitalSignatureModal';
 import { DisputeModal } from '../../components/order/DisputeModal';
 import { OrderStatus, DisputeReason } from '@wunabuy/types';
@@ -22,43 +22,11 @@ export interface OrderItemData {
   date: string;
 }
 
-const MOCK_ORDERS_DATA: OrderItemData[] = [
-  {
-    id: 'wb_order_1',
-    order_code: 'WNB-2026-9842',
-    store_name: 'Douala Tech Hub (Akwa)',
-    item_name: 'Samsung Galaxy A54 5G (128GB, Awesome Lime)',
-    item_image: 'https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?auto=format&fit=crop&w=800&q=80',
-    total: 188000,
-    status: OrderStatus.EN_ROUTE,
-    date: 'Aug 26, 2026 • 14:30',
-  },
-  {
-    id: 'wb_order_2',
-    order_code: 'WNB-2026-4109',
-    store_name: 'Heritage African Couture',
-    item_name: 'Traditional Bamenda Toghu Handmade Outfit',
-    item_image: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=800&q=80',
-    total: 48000,
-    status: OrderStatus.PAID_ESCROW,
-    date: 'Aug 24, 2026 • 09:15',
-  },
-  {
-    id: 'wb_order_3',
-    order_code: 'WNB-2026-1052',
-    store_name: 'Bonanjo Beauty & Essentials',
-    item_name: 'Organic Shea Glow Skincare Body Butter (250g)',
-    item_image: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=800&q=80',
-    total: 18500,
-    status: OrderStatus.COMPLETED,
-    date: 'Aug 20, 2026 • 16:45',
-  },
-];
-
 export const BuyerOrdersScreen = ({ navigation }: any) => {
   const insets = useSafeAreaInsets();
   const { theme, isDark } = useThemeStore();
-  const [orders, setOrders] = useState<OrderItemData[]>(MOCK_ORDERS_DATA);
+  const [orders, setOrders] = useState<OrderItemData[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedFilter, setSelectedFilter] = useState<string>('All');
   const [activeOrderForModal, setActiveOrderForModal] = useState<OrderItemData | null>(null);
   const [isSignModalOpen, setIsSignModalOpen] = useState(false);
@@ -69,25 +37,28 @@ export const BuyerOrdersScreen = ({ navigation }: any) => {
   const loadOrders = useCallback(async () => {
     try {
       const data = await OrdersService.getOrders();
-      if (data && data.length > 0) {
-        const mapped: OrderItemData[] = data.map((o) => ({
-          id: o.id,
-          order_code: o.order_code,
-          store_name: (o as any).store?.store_name || (o as any).store_name || 'Verified Merchant Store',
-          item_name: o.items?.[0]?.name || 'Verified Product Item',
-          item_image: o.items?.[0]?.image_url || 'https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?auto=format&fit=crop&w=800&q=80',
-          total: o.total,
-          status: o.status,
-          date: new Date(o.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-        }));
-        setOrders(mapped);
-      }
+      const mapped: OrderItemData[] = (data || []).map((o) => ({
+        id: o.id,
+        order_code: o.order_code,
+        store_name: (o as any).store?.store_name || (o as any).store_name || 'Verified Merchant Store',
+        item_name: o.items?.[0]?.name || 'Verified Product Item',
+        item_image: o.items?.[0]?.image_url || 'https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?auto=format&fit=crop&w=800&q=80',
+        total: o.total,
+        status: o.status,
+        date: new Date(o.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      }));
+      setOrders(mapped);
     } catch {
-      // OrdersService handles fallback
+      setOrders([]);
     } finally {
+      setLoading(false);
       setRefreshing(false);
     }
   }, []);
+
+  useEffect(() => {
+    loadOrders();
+  }, [loadOrders]);
 
   const handleRefresh = useCallback(() => {
     setRefreshing(true);
@@ -215,6 +186,26 @@ export const BuyerOrdersScreen = ({ navigation }: any) => {
             tintColor={colors.primary[500]}
             colors={[colors.primary[500]]}
           />
+        }
+        ListEmptyComponent={
+          loading ? (
+            <View style={{ padding: spacing.xl, alignItems: 'center' }}>
+              <Text variant="bodyMedium" secondary>Loading orders...</Text>
+            </View>
+          ) : (
+            <EmptyState
+              title="No Orders Found"
+              description={
+                selectedFilter === 'All'
+                  ? "You haven't placed any orders yet. Start exploring the marketplace!"
+                  : `No orders found with status "${selectedFilter}".`
+              }
+              icon={<Ionicons name="bag-handle-outline" size={48} color={colors.primary[500]} />}
+              actionLabel="Discover Products"
+              onAction={() => navigation.navigate('BuyerHome')}
+              style={{ marginTop: spacing.xl }}
+            />
+          )
         }
         renderItem={({ item }) => (
           <Card style={styles.orderCard}>
