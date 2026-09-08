@@ -1,5 +1,5 @@
 import { api } from './apiClient';
-import { Wallet, Transaction, PayoutRequest, PayoutResponse } from '@wunabuy/types';
+import { Wallet, Transaction, PayoutRequest, PayoutResponse, PayoutDestinationType } from '@wunabuy/types';
 import { WalletFundPayload, WalletFundResponse } from '@wunabuy/api-client';
 
 export interface WalletMetrics {
@@ -98,6 +98,21 @@ export const WalletService = {
         created_at: new Date().toISOString(),
       };
     }
+  },
+
+  /**
+   * Withdraw alias method matching WalletScreen UI
+   */
+  async withdraw(payload: { amount: number; provider: 'mtn' | 'orange'; phone: string }): Promise<PayoutResponse> {
+    return this.withdrawWallet({
+      amount: payload.amount,
+      destination_details: {
+        type: PayoutDestinationType.MOMO,
+        phone: payload.phone,
+        bank_code: null,
+        account_number: payload.phone,
+      },
+    });
   },
 };
 

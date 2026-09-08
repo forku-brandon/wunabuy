@@ -53,10 +53,11 @@ export const VerifyOTPScreen = ({ navigation, route }: any) => {
           role: UserRole.BUYER,
         });
 
-        if (res && res.data) {
-          authenticatedUser = res.data.user;
-          accessToken = res.data.access_token || res.data.tokens?.access_token || '1|sanctum_token_verified_' + Date.now();
-          refreshToken = res.data.refresh_token || res.data.tokens?.refresh_token || 'sanctum_refresh_' + Date.now();
+        if (res) {
+          const authData: any = res.data || res;
+          authenticatedUser = authData.user || authData;
+          accessToken = authData.access_token || authData.tokens?.access_token || '1|sanctum_token_verified_' + Date.now();
+          refreshToken = authData.refresh_token || authData.tokens?.refresh_token || 'sanctum_refresh_' + Date.now();
         }
       } catch (apiErr: any) {
         console.warn('[Wunabuy Auth] verifyOTP API call fallback:', apiErr?.message);

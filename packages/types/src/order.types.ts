@@ -117,7 +117,15 @@ export interface CreateOrderPayload {
   /** Items to include in the order */
   items: { product_id: string; quantity: number }[];
   /** UUID of the selected delivery address */
-  delivery_address_id: string;
+  delivery_address_id?: string;
+  /** Delivery address object or string */
+  delivery_address?: any;
+  /** Store UUID */
+  store_id?: string;
+  /** Delivery fee */
+  delivery_fee?: number;
+  /** Delivery notes */
+  notes?: string;
   /** Selected method of payment */
   payment_method: PaymentMethod;
 }

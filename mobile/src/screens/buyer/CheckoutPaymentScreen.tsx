@@ -54,12 +54,11 @@ export const CheckoutPaymentScreen = ({ route, navigation }: any) => {
             ? cartItems.map((it) => ({
                 product_id: it.product_id,
                 quantity: it.quantity,
-                price: it.product.price,
               }))
-            : [{ product_id: '030d5e57-533a-421f-bdff-688e1eac866e', quantity: 1, price: subtotal }],
+            : [{ product_id: '030d5e57-533a-421f-bdff-688e1eac866e', quantity: 1 }],
           delivery_address: user?.default_address?.address_text || 'Bonanjo, Douala',
           delivery_fee: deliveryFee,
-          payment_method: selectedMethod === PaymentMethod.MOMO ? (provider === 'MTN' ? 'mtn_momo' : 'orange_money') : 'wallet',
+          payment_method: selectedMethod === PaymentMethod.MOMO ? PaymentMethod.MOMO : PaymentMethod.WALLET,
           notes: `Delivery via ${deliveryMethod}`,
         });
 

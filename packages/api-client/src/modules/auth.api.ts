@@ -24,9 +24,27 @@ export function createAuthApi(client: AxiosInstance) {
     },
 
     /**
+     * Send OTP to phone number.
+     */
+    sendOtp: async (payload: { phone: string } | string): Promise<ApiResponse<OTPResponse>> => {
+      const data = typeof payload === 'string' ? { phone: payload } : payload;
+      const res = await client.post<ApiResponse<OTPResponse>>('/auth/otp/send', data);
+      return res.data;
+    },
+    sendOTP: async (payload: { phone: string } | string): Promise<ApiResponse<OTPResponse>> => {
+      const data = typeof payload === 'string' ? { phone: payload } : payload;
+      const res = await client.post<ApiResponse<OTPResponse>>('/auth/otp/send', data);
+      return res.data;
+    },
+
+    /**
      * Verify 6-digit SMS OTP and receive Sanctum tokens.
      */
-    verifyOtp: async (payload: OTPPayload): Promise<ApiResponse<AuthResponse>> => {
+    verifyOtp: async (payload: any): Promise<ApiResponse<AuthResponse>> => {
+      const res = await client.post<ApiResponse<AuthResponse>>('/auth/verify-otp', payload);
+      return res.data;
+    },
+    verifyOTP: async (payload: any): Promise<ApiResponse<AuthResponse>> => {
       const res = await client.post<ApiResponse<AuthResponse>>('/auth/verify-otp', payload);
       return res.data;
     },

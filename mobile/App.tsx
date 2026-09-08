@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
 import { View, ActivityIndicator, StyleSheet, Platform } from 'react-native';
-import { NavigationBar } from 'expo-navigation-bar';
+import * as NavigationBar from 'expo-navigation-bar';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { useThemeStore } from './src/stores/theme.store';
 import './src/i18n'; // Initialize i18next
@@ -28,9 +28,8 @@ const AppContent: React.FC = () => {
   useEffect(() => {
     if (Platform.OS === 'android') {
       try {
-        // 'dark' = dark navigation bar (white soft buttons) for dark mode
-        // 'light' = light navigation bar (dark soft buttons) for light mode
-        NavigationBar.setStyle(isDark ? 'dark' : 'light');
+        NavigationBar.setButtonStyleAsync(isDark ? 'light' : 'dark');
+        NavigationBar.setBackgroundColorAsync(isDark ? '#0f172a' : '#ffffff');
       } catch (e) {
         // Silently ignore if on unsupported environment
       }

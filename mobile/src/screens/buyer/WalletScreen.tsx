@@ -337,13 +337,13 @@ export const WalletScreen = ({ navigation }: any) => {
       if (sheetMode === 'fund') {
         await WalletService.fundWallet({
           amount: numAmount,
-          provider: provider === 'orange' ? 'orange_money' : 'mtn_momo',
+          provider: provider === 'orange' ? 'orange' : 'mtn',
           phone,
         });
       } else if (sheetMode === 'withdraw') {
         await WalletService.withdraw({
           amount: numAmount,
-          provider: provider === 'orange' ? 'orange_money' : 'mtn_momo',
+          provider: provider === 'orange' ? 'orange' : 'mtn',
           phone,
         });
       }
