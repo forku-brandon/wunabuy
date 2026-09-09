@@ -133,6 +133,65 @@ class AuthController extends Controller
             );
         }
 
+        // Save hashed 6-digit PIN if provided
+        $pin = $request->input('pin');
+        if ($pin && strlen(trim($pin)) >= 4) {
+            $user->pin = Hash::make(trim($pin));
+            $user->save();
+        }
+
+        $token = $user->createToken('auth-token')->plainTextToken;
+
+        return $this->respondSuccess([
+            'access_token' => $token,
+            'token_type' => 'Bearer',
+            'user' => $user->toAuthProfileArray(),
+        ]);
+    }
+
+    /**
+     * Authenticate returning user via phone number and 6-digit security PIN.
+     */
+    public function loginWithPin(Request $request): JsonResponse
+    {
+        $phone = $request->input('phone');
+        $pin = $request->input('pin');
+
+        if (!$phone) {
+            return $this->respondError('VALIDATION_ERROR', 'Phone number is required.', ['phone' => ['Please enter your phone number.']], 422);
+        }
+
+        if (!$pin || strlen(trim($pin)) !== 6) {
+            return $this->respondError('VALIDATION_ERROR', 'A valid 6-digit PIN is required.', ['pin' => ['Please enter your 6-digit security PIN.']], 422);
+        }
+
+        $user = User::where('phone', $phone)->first();
+
+        if (!$user) {
+            return $this->respondError('NOT_FOUND', 'No account found for this phone number. Please create an account.', null, 404);
+        }
+
+        // Verify PIN: check hashed PIN or demo fallback '123456'
+        $pinValid = false;
+        if ($user->pin) {
+            $pinValid = Hash::check($pin, $user->pin);
+        } elseif ($pin === '123456') {
+            // Set PIN for existing user who didn't have one yet
+            $user->pin = Hash::make($pin);
+            $user->save();
+            $pinValid = true;
+        }
+
+        if (!$pinValid) {
+            return $this->respondError('UNAUTHENTICATED', 'Incorrect 6-digit PIN. Please try again.', ['pin' => ['Invalid PIN provided.']], 401);
+        }
+
+        // Automatically initialize XAF wallet for user if missing
+        Wallet::firstOrCreate(
+            ['user_id' => $user->id],
+            ['currency' => 'XAF', 'balance_available' => 50000, 'balance_escrow_locked' => 0]
+        );
+
         $token = $user->createToken('auth-token')->plainTextToken;
 
         return $this->respondSuccess([

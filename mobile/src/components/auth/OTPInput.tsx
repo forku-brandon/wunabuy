@@ -14,6 +14,7 @@ export interface OTPInputProps {
   value: string;
   onChangeOTP: (otp: string) => void;
   disabled?: boolean;
+  secureTextEntry?: boolean;
 }
 
 export const OTPInput: React.FC<OTPInputProps> = ({
@@ -21,6 +22,7 @@ export const OTPInput: React.FC<OTPInputProps> = ({
   value,
   onChangeOTP,
   disabled = false,
+  secureTextEntry = false,
 }) => {
   const { theme } = useThemeStore();
   const inputRefs = useRef<(TextInput | null)[]>([]);
@@ -86,6 +88,7 @@ export const OTPInput: React.FC<OTPInputProps> = ({
             ]}
             keyboardType="number-pad"
             maxLength={length} // Allow paste of full code
+            secureTextEntry={secureTextEntry}
             value={digits[index] || ''}
             onChangeText={(text) => handleChangeText(text, index)}
             onKeyPress={(e) => handleKeyPress(e, index)}

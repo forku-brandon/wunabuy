@@ -40,21 +40,17 @@ export const LoginScreen = ({ navigation, route }: any) => {
     setLoading(true);
     setError('');
 
-    try {
-      await api.auth.sendOTP({ phone: normalized });
-      setToastMessage('OTP verification code sent!');
-      setTimeout(() => {
-        setLoading(false);
-        navigation.navigate('VerifyOTP', { phone: normalized, mode });
-      }, 300);
-    } catch (err: any) {
-      console.warn('[Wunabuy Auth] sendOTP:', err?.message);
-      setToastMessage('OTP sent (Demo code: 123456)');
-      setTimeout(() => {
-        setLoading(false);
-        navigation.navigate('VerifyOTP', { phone: normalized, mode });
-      }, 300);
-    }
+    // Seamless bypass of OTP:
+    // If login mode -> directly to PinLogin screen to enter 6-digit PIN
+    // If register mode -> directly to Register screen to setup profile & set 6-digit PIN
+    setTimeout(() => {
+      setLoading(false);
+      if (mode === 'register') {
+        navigation.navigate('Register', { phone: normalized });
+      } else {
+        navigation.navigate('PinLogin', { phone: normalized });
+      }
+    }, 250);
   };
 
   const isRegister = mode === 'register';
@@ -68,7 +64,7 @@ export const LoginScreen = ({ navigation, route }: any) => {
           </Text>
           <Text variant="bodyMedium" secondary align="center" style={styles.subtitle}>
             {isRegister
-              ? 'Enter your mobile phone number to receive a 6-digit OTP verification code.'
+              ? 'Enter your mobile phone number to set up your account and 6-digit PIN.'
               : 'Enter your registered mobile phone number to log into your account.'}
           </Text>
         </View>
@@ -92,7 +88,7 @@ export const LoginScreen = ({ navigation, route }: any) => {
         </TouchableOpacity>
 
         <Button
-          title="Send Verification Code →"
+          title={isRegister ? 'Continue to Registration →' : 'Continue to PIN →'}
           variant="primary"
           loading={loading}
           onPress={handleSubmit}

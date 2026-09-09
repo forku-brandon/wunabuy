@@ -112,9 +112,95 @@ All REST API endpoints are prefixed under `/api/v1`.
 
 ---
 
-## 3. Authentication & Direct OTP Endpoint Contracts
+## 3. Authentication, 6-Digit PIN & Direct OTP Endpoint Contracts
 
-### 3.1 Send 6-Digit SMS OTP
+### 3.1 Register Account with 6-Digit PIN
+- **Endpoint:** `POST /api/v1/auth/register`
+- **Description:** Registers a new user, hashes the 6-digit security PIN via bcrypt, initializes a wallet with 50,000 XAF welcome balance, records default address, issues a Sanctum Bearer token, and returns complete user profile with role permissions.
+- **Request Body:**
+```json
+{
+  "phone": "+237670123456",
+  "full_name": "Jean Dupont",
+  "role": "buyer",
+  "pin": "123456",
+  "address_text": "Boulevard de la Liberté, Bonanjo",
+  "city": "Douala"
+}
+```
+- **Response (200 OK):**
+```json
+{
+  "success": true,
+  "data": {
+    "access_token": "4|sKSY9rrYSLznnAiVt5dh9IYnOLWLjtjoNDRXXCei49f26745",
+    "token_type": "Bearer",
+    "user": {
+      "id": "01a086d2-5032-73f4-8e9d-20b1ffbee61a",
+      "phone": "+237670123456",
+      "email": null,
+      "full_name": "Jean Dupont",
+      "role": "buyer",
+      "status": "active",
+      "avatar_url": null,
+      "is_phone_verified": true,
+      "available_roles": ["buyer"],
+      "permissions": [
+        "browse_catalog",
+        "view_product",
+        "create_order",
+        "cancel_order",
+        "manage_cart",
+        "manage_wallet",
+        "fund_wallet",
+        "withdraw_wallet",
+        "file_dispute",
+        "submit_review",
+        "manage_addresses",
+        "view_orders",
+        "track_delivery"
+      ],
+      "wallet": {
+        "id": "01a086d2-5044-729c-9b7d-d66411032e5e",
+        "balance_available": 50000,
+        "balance_escrow_locked": 0,
+        "currency": "XAF"
+      },
+      "default_address": {
+        "id": "01a086d2-505b-72bf-924e-2329e9689910",
+        "label": "Home",
+        "address_text": "Boulevard de la Liberté, Bonanjo",
+        "city": "Douala",
+        "latitude": 4.0510564,
+        "longitude": 9.7678687,
+        "is_default": true
+      },
+      "store": null,
+      "transporter": null,
+      "created_at": "2026-09-09T15:38:45+00:00",
+      "updated_at": "2026-09-09T15:38:45+00:00"
+    }
+  },
+  "meta": {
+    "timestamp": "2026-09-09T15:38:45+00:00",
+    "request_id": "req_KDThzEZf6nRt"
+  }
+}
+```
+
+### 3.2 Login via 6-Digit PIN (Zero-SMS)
+- **Endpoint:** `POST /api/v1/auth/login-pin`
+- **Description:** Verifies the user's hashed 6-digit PIN against PostgreSQL `users.pin`. Issues Sanctum Bearer token and returns live user profile, permissions, and wallet balance.
+- **Request Body:**
+```json
+{
+  "phone": "+237670123456",
+  "pin": "123456"
+}
+```
+- **Response (200 OK):** Standard auth response envelope with Bearer token, permissions, and eager-loaded wallet.
+
+### 3.3 Send 6-Digit SMS OTP (Future 2FA / Verification)
 - **Endpoint:** `POST /api/v1/auth/otp/send`
 - **Rate Limit:** 5 requests per 10 minutes per IP/Phone.
 - **Request Body:**
@@ -124,47 +210,14 @@ All REST API endpoints are prefixed under `/api/v1`.
   "purpose": "login"
 }
 ```
-- **Response (200 OK):**
-```json
-{
-  "success": true,
-  "data": {
-    "phone": "+237670123456",
-    "otp_sent": true,
-    "expires_in_seconds": 300,
-    "demo_code": "123456"
-  }
-}
-```
 
-### 3.2 Verify OTP & Direct Login
+### 3.4 Verify OTP
 - **Endpoint:** `POST /api/v1/auth/otp/verify`
 - **Request Body:**
 ```json
 {
   "phone": "+237670123456",
   "otp": "123456"
-}
-```
-- **Response (200 OK):**
-```json
-{
-  "success": true,
-  "data": {
-    "access_token": "1|sanctum_token_88492019...",
-    "token_type": "Bearer",
-    "user": {
-      "id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
-      "phone": "+237670123456",
-      "email": "jean.dupont@wunabuy.com",
-      "full_name": "Jean Dupont",
-      "role": "buyer",
-      "status": "active",
-      "avatar_url": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
-      "is_phone_verified": true,
-      "available_roles": ["buyer"]
-    }
-  }
 }
 ```
 

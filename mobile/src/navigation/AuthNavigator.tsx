@@ -4,6 +4,7 @@ import { AuthStackParamList } from './types';
 import { useThemeStore } from '../stores/theme.store';
 import { WelcomeScreen } from '../screens/auth/WelcomeScreen';
 import { LoginScreen } from '../screens/auth/LoginScreen';
+import { PinLoginScreen } from '../screens/auth/PinLoginScreen';
 import { VerifyOTPScreen } from '../screens/auth/VerifyOTPScreen';
 import { RegisterScreen } from '../screens/auth/RegisterScreen';
 
@@ -21,6 +22,7 @@ export const AuthNavigator = () => {
     >
       <Stack.Screen name="Welcome" component={WelcomeScreen} />
       <Stack.Screen name="Login" component={LoginScreen} />
+      <Stack.Screen name="PinLogin" component={PinLoginScreen} />
       <Stack.Screen name="VerifyOTP" component={VerifyOTPScreen} />
       <Stack.Screen name="Register" component={RegisterScreen} />
     </Stack.Navigator>

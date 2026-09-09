@@ -29,10 +29,10 @@ EXPO_PUBLIC_REVERB_SCHEME=http
 ```
 
 ### 2. Live Backend Integration
-- **Auth Flow:** `LoginScreen.tsx` and `VerifyOTPScreen.tsx` communicate directly with `POST /api/v1/auth/otp/send` & `verify`. Sanctum tokens are saved in `SecureTokenService`.
+- **Auth Flow:** Dedicated **6-Digit PIN Authentication** (`PinLoginScreen.tsx` & `RegisterScreen.tsx`) communicating directly with `POST /api/v1/auth/login-pin` & `POST /api/v1/auth/register`. Zero SMS carrier dependency for reliable, instant login. Sanctum Bearer tokens are persisted securely in `SecureTokenService`, and dynamic permissions & eager-loaded user attributes (wallet, address, role profile) are hydrated in `useAuthStore`.
 - **Checkout & Escrow:** `CheckoutPaymentScreen.tsx` submits orders to `POST /api/v1/orders` and initiates MoMo USSD payment push (`POST /api/v1/checkout/pay`).
 - **Orders & Tracking:** `BuyerOrdersScreen.tsx` & `OrderTrackingScreen.tsx` execute live delivery confirmations (`confirmReceipt` -> escrow release with 3.5% commission split) and dispute freezes (`dispute`).
-- **Wallet:** `WalletScreen.tsx` fetches live PostgreSQL balances and processes MTN MoMo/Orange Money top-ups (`POST /api/v1/wallet/fund`).
+- **Wallet & Ledger:** `WalletScreen.tsx` fetches live PostgreSQL balances and transactions (`GET /api/v1/wallet`, `GET /api/v1/wallet/transactions`) and processes MTN MoMo/Orange Money top-ups (`POST /api/v1/wallet/fund`).
 
 ### 3. Run Mobile App
 ```bash

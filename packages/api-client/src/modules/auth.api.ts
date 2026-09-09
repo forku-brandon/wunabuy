@@ -5,6 +5,7 @@ import type {
   OTPResponse,
   RegisterPayload,
   LoginPayload,
+  PinLoginPayload,
   OTPPayload,
   User,
   Address,
@@ -20,6 +21,14 @@ export function createAuthApi(client: AxiosInstance) {
      */
     register: async (payload: RegisterPayload): Promise<ApiResponse<AuthResponse>> => {
       const res = await client.post<ApiResponse<AuthResponse>>('/auth/register', payload);
+      return res.data;
+    },
+
+    /**
+     * Authenticate returning user via phone number and 6-digit security PIN (Zero-SMS login).
+     */
+    loginWithPin: async (payload: PinLoginPayload): Promise<ApiResponse<AuthResponse>> => {
+      const res = await client.post<ApiResponse<AuthResponse>>('/auth/login-pin', payload);
       return res.data;
     },
 

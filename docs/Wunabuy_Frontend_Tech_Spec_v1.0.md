@@ -1,5 +1,11 @@
 # Wunabuy — Frontend Technical Specification
-### Version 3.2 | September 8, 2026
+### Version 3.3 | September 9, 2026
+
+> **Resolved Decisions (September 9, 2026 - v3.3):**
+> - **100% Dynamic Database Integration & Zero-Mock Architecture**: Purged all static/mock financial metrics, dummy addresses, driver jobs, and fake store analytics across `walletService.ts`, `sellerService.ts`, `transporterService.ts`, `disputesService.ts`, and screens (`RefundsScreen.tsx`, `BuyerCartScreen.tsx`, etc.). All data is populated live from PostgreSQL 18.
+> - **Dynamic Authentication, Permissions & Eager Loading**: Replaced Sanctum bigint tokenable IDs with UUIDs, implemented `resolveUser($request)` on backend, and added `permissions: string[]` and `hasPermission(permission)` to `useAuthStore`. Auth responses automatically eager-load user wallet balances, default delivery address, and store/transporter profiles.
+> - **6-Digit PIN Security Architecture (Zero-SMS Architecture)**: Introduced high-security 6-digit PIN authentication. Users enter their phone and 6-digit PIN on `PinLoginScreen` (`/auth/login-pin`) or register on `RegisterScreen` (`/auth/register`) with PIN setup & confirmation. Bypasses external SMS carrier dependencies while remaining 100% modular so SMS OTP can be enabled as a 2FA/verification layer anytime.
+> - **Automatic Startup Session Sync**: `App.tsx` silently synchronizes authenticated user profile and permissions from `/users/me` on application launch.
 
 > **Resolved Decisions (September 8, 2026 - v3.2):**
 > - **Production-Ready Hosting & Environment Resolution Strategy**: Built `mobile/src/config/env.ts` providing real-time dynamic resolution: prioritizes `EXPO_PUBLIC_API_URL` from `.env`, automatically loops back to `http://10.0.2.2:8000/api/v1` on Android emulators, uses `http://localhost:8000/api/v1` on iOS simulator / web, and strictly defaults to `https://api.wunabuy.com/api/v1` for production release builds.

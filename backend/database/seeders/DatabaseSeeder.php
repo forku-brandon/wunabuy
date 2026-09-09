@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 class DatabaseSeeder extends Seeder
@@ -23,6 +24,7 @@ class DatabaseSeeder extends Seeder
                 'full_name' => 'Jean Dupont',
                 'role' => 'buyer',
                 'status' => 'active',
+                'pin' => Hash::make('123456'),
                 'avatar_url' => 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
                 'is_phone_verified' => true,
                 'available_roles' => json_encode(['buyer']),
@@ -37,6 +39,7 @@ class DatabaseSeeder extends Seeder
                 'full_name' => 'Jean Dupont',
                 'role' => 'buyer',
                 'status' => 'active',
+                'pin' => Hash::make('123456'),
                 'avatar_url' => 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
                 'is_phone_verified' => true,
                 'available_roles' => json_encode(['buyer']),
@@ -77,6 +80,7 @@ class DatabaseSeeder extends Seeder
                 'full_name' => 'Paul Eto’o (Express Courier)',
                 'role' => 'transporter',
                 'status' => 'active',
+                'pin' => Hash::make('123456'),
                 'is_phone_verified' => true,
                 'available_roles' => json_encode(['buyer', 'transporter']),
                 'updated_at' => now(),
@@ -90,6 +94,7 @@ class DatabaseSeeder extends Seeder
                 'full_name' => 'Paul Eto’o (Express Courier)',
                 'role' => 'transporter',
                 'status' => 'active',
+                'pin' => Hash::make('123456'),
                 'is_phone_verified' => true,
                 'available_roles' => json_encode(['buyer', 'transporter']),
                 'created_at' => now(),
@@ -309,6 +314,7 @@ class DatabaseSeeder extends Seeder
                     'full_name' => $s['seller_name'],
                     'role' => 'seller',
                     'status' => 'active',
+                    'pin' => Hash::make('123456'),
                     'avatar_url' => $s['logo_url'],
                     'is_phone_verified' => true,
                     'available_roles' => json_encode(['buyer', 'seller']),
@@ -323,6 +329,7 @@ class DatabaseSeeder extends Seeder
                     'full_name' => $s['seller_name'],
                     'role' => 'seller',
                     'status' => 'active',
+                    'pin' => Hash::make('123456'),
                     'avatar_url' => $s['logo_url'],
                     'is_phone_verified' => true,
                     'available_roles' => json_encode(['buyer', 'seller']),

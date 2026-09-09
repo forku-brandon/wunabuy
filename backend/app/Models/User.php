@@ -23,12 +23,14 @@ class User extends Authenticatable
         'is_phone_verified',
         'available_roles',
         'password',
+        'pin',
         'otp',
         'otp_expires_at',
     ];
 
     protected $hidden = [
         'password',
+        'pin',
         'remember_token',
         'otp',
     ];

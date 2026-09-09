@@ -134,12 +134,24 @@ export interface RegisterPayload {
   full_name: string;
   /** Desired role upon registration */
   role: 'buyer' | 'seller' | 'transporter' | string;
+  /** Optional 6-digit security PIN */
+  pin?: string;
   /** Optional delivery address */
   address_text?: string;
   /** Optional city */
   city?: string;
   /** Optional password */
   password?: string;
+}
+
+/**
+ * Payload for logging in via 6-digit security PIN.
+ */
+export interface PinLoginPayload {
+  /** User's phone number */
+  phone: string;
+  /** 6-digit security PIN */
+  pin: string;
 }
 
 /**

@@ -88,16 +88,19 @@ X-Idempotency-Key: <uuid-v4>                 (Required on all mutations: orders,
 
 ## 2. Authentication & User Profile Endpoints
 
-### 2.1 Register / Request OTP
+### 2.1 Register Account with PIN
 `POST /api/v1/auth/register`
 
-- **Description**: Initiates phone registration or login. Generates a 6-digit OTP sent via SMS.
+- **Description**: Registers a new user with phone number, full name, role, optional delivery address, and a secure 6-digit PIN. Automatically creates the user's PostgreSQL record, initializes their wallet (with welcome credit), records their default address, hashes the PIN via bcrypt, and returns an active Sanctum Bearer token with full eager-loaded profile and permissions.
 - **Request Body**:
 ```json
 {
   "phone": "+237670123456",
   "full_name": "Jean Dupont",
-  "role": "buyer"
+  "role": "buyer",
+  "pin": "123456",
+  "address_text": "Boulevard de la Liberté, Bonanjo",
+  "city": "Douala"
 }
 ```
 - **Response `200 OK`**:
@@ -105,20 +108,132 @@ X-Idempotency-Key: <uuid-v4>                 (Required on all mutations: orders,
 {
   "success": true,
   "data": {
-    "user_id": "usr_99812a",
-    "phone": "+237670123456",
-    "otp_sent": true,
-    "expires_in_seconds": 300
+    "access_token": "4|sKSY9rrYSLznnAiVt5dh9IYnOLWLjtjoNDRXXCei49f26745",
+    "token_type": "Bearer",
+    "user": {
+      "id": "01a086d2-5032-73f4-8e9d-20b1ffbee61a",
+      "phone": "+237670123456",
+      "email": null,
+      "full_name": "Jean Dupont",
+      "role": "buyer",
+      "status": "active",
+      "avatar_url": null,
+      "is_phone_verified": true,
+      "available_roles": ["buyer"],
+      "permissions": [
+        "browse_catalog",
+        "view_product",
+        "create_order",
+        "cancel_order",
+        "manage_cart",
+        "manage_wallet",
+        "fund_wallet",
+        "withdraw_wallet",
+        "file_dispute",
+        "submit_review",
+        "manage_addresses",
+        "view_orders",
+        "track_delivery"
+      ],
+      "wallet": {
+        "id": "01a086d2-5044-729c-9b7d-d66411032e5e",
+        "balance_available": 50000,
+        "balance_escrow_locked": 0,
+        "currency": "XAF"
+      },
+      "default_address": {
+        "id": "01a086d2-505b-72bf-924e-2329e9689910",
+        "label": "Home",
+        "address_text": "Boulevard de la Liberté, Bonanjo",
+        "city": "Douala",
+        "latitude": 4.0510564,
+        "longitude": 9.7678687,
+        "is_default": true
+      },
+      "store": null,
+      "transporter": null,
+      "created_at": "2026-09-09T15:38:45+00:00",
+      "updated_at": "2026-09-09T15:38:45+00:00"
+    }
+  },
+  "meta": {
+    "timestamp": "2026-09-09T15:38:45+00:00",
+    "request_id": "req_KDThzEZf6nRt"
   }
 }
 ```
 
 ---
 
-### 2.2 Verify OTP & Issue Tokens
+### 2.2 Login via 6-Digit PIN
+`POST /api/v1/auth/login-pin`
+
+- **Description**: Authenticates returning users via phone number and 6-digit security PIN without requiring external SMS delivery. Verifies bcrypt PIN hash, generates a Sanctum Bearer token, and eager-loads the user's live profile, wallet balances, and role permissions.
+- **Request Body**:
+```json
+{
+  "phone": "+237670123456",
+  "pin": "123456"
+}
+```
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": {
+    "access_token": "5|i3Nf3nvev1HqNrYOwmci2lWX4DeRpWI46B1R0IuL3fa2d5ae",
+    "token_type": "Bearer",
+    "user": {
+      "id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+      "phone": "+237670123456",
+      "email": "jean.dupont@wunabuy.com",
+      "full_name": "Jean Dupont",
+      "role": "buyer",
+      "status": "active",
+      "avatar_url": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
+      "is_phone_verified": true,
+      "available_roles": ["buyer"],
+      "permissions": [
+        "browse_catalog",
+        "view_product",
+        "create_order",
+        "cancel_order",
+        "manage_cart",
+        "manage_wallet",
+        "fund_wallet",
+        "withdraw_wallet",
+        "file_dispute",
+        "submit_review",
+        "manage_addresses",
+        "view_orders",
+        "track_delivery"
+      ],
+      "wallet": {
+        "id": "c1cc5a78-bb8c-4f61-b598-e83cedb0a540",
+        "balance_available": 47500,
+        "balance_escrow_locked": 236000,
+        "currency": "XAF"
+      },
+      "default_address": null,
+      "store": null,
+      "transporter": null,
+      "created_at": "2026-09-08T12:33:33+00:00",
+      "updated_at": "2026-09-09T15:33:06+00:00"
+    }
+  },
+  "meta": {
+    "timestamp": "2026-09-09T15:39:12+00:00",
+    "request_id": "req_PLfAARoDgoUH"
+  }
+}
+```
+
+---
+
+### 2.3 Verify SMS OTP (Future 2FA / Gateway Integration)
 `POST /api/v1/auth/verify-otp`
 
-- **Description**: Verifies the SMS OTP code. Returns a Sanctum Personal Access Token, refresh token, and full User entity including `available_roles`.
+- **Description**: Verifies an SMS OTP code (or demo code `123456`). When SMS gateway is active, can be used as a phone ownership verification checkpoint or second-factor authentication.
 - **Request Body**:
 ```json
 {
@@ -127,40 +242,7 @@ X-Idempotency-Key: <uuid-v4>                 (Required on all mutations: orders,
   "purpose": "login"
 }
 ```
-- **Response `200 OK`**:
-```json
-{
-  "success": true,
-  "data": {
-    "access_token": "1|sanctum_token_string_here...",
-    "refresh_token": "ref_token_string_here...",
-    "token_type": "Bearer",
-    "expires_in": 2592000,
-    "user": {
-      "id": "usr_99812a",
-      "phone": "+237670123456",
-      "email": "jean.dupont@example.com",
-      "full_name": "Jean Dupont",
-      "role": "buyer",
-      "status": "active",
-      "avatar_url": "https://api.wunabuy.com/storage/avatars/usr_99812a.jpg",
-      "is_phone_verified": true,
-      "default_address": {
-        "id": "addr_1",
-        "label": "Home",
-        "latitude": 4.0510,
-        "longitude": 9.7678,
-        "address_text": "Rue Joss, Akwa",
-        "city": "Douala",
-        "is_default": true
-      },
-      "available_roles": ["buyer"],
-      "created_at": "2026-08-20T10:00:00Z",
-      "updated_at": "2026-08-28T12:00:00Z"
-    }
-  }
-}
-```
+- **Response `200 OK`**: Matches standard auth envelope with Bearer token, permissions, and eager-loaded wallet.
 
 ---
 

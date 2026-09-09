@@ -16,12 +16,24 @@ export const RegisterScreen = ({ route }: any) => {
 
   const [fullName, setFullName] = useState('');
   const [addressText, setAddressText] = useState('');
+  const [pin, setPin] = useState('');
+  const [confirmPin, setConfirmPin] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
     if (!fullName.trim() || fullName.trim().length < 2) {
       setError('Please enter your full name (at least 2 characters).');
+      return;
+    }
+
+    if (!pin || pin.length !== 6) {
+      setError('Please enter a complete 6-digit security PIN.');
+      return;
+    }
+
+    if (pin !== confirmPin) {
+      setError('The security PINs do not match. Please check and re-enter.');
       return;
     }
 
@@ -33,6 +45,7 @@ export const RegisterScreen = ({ route }: any) => {
         phone,
         full_name: fullName.trim(),
         role: 'buyer',
+        pin: pin.trim(),
         address_text: addressText.trim() || undefined,
       });
 
@@ -60,7 +73,7 @@ export const RegisterScreen = ({ route }: any) => {
             Complete Your Profile
           </Text>
           <Text variant="bodyMedium" secondary align="center" style={styles.subtitle}>
-            Enter your name and optional delivery address to finish setting up your account.
+            Enter your name, optional delivery address, and set a 6-digit PIN to secure your account.
           </Text>
         </View>
 
@@ -85,8 +98,36 @@ export const RegisterScreen = ({ route }: any) => {
           containerStyle={styles.inputContainer}
         />
 
+        <Input
+          label="Create 6-Digit Security PIN *"
+          placeholder="••••••"
+          keyboardType="number-pad"
+          maxLength={6}
+          secureTextEntry
+          value={pin}
+          onChangeText={(text) => {
+            setError('');
+            setPin(text.replace(/[^0-9]/g, ''));
+          }}
+          containerStyle={styles.inputContainer}
+        />
+
+        <Input
+          label="Confirm 6-Digit Security PIN *"
+          placeholder="••••••"
+          keyboardType="number-pad"
+          maxLength={6}
+          secureTextEntry
+          value={confirmPin}
+          onChangeText={(text) => {
+            setError('');
+            setConfirmPin(text.replace(/[^0-9]/g, ''));
+          }}
+          containerStyle={styles.inputContainer}
+        />
+
         <Button
-          title="Complete Registration & Log In →"
+          title="Create Account & Log In →"
           variant="primary"
           loading={loading}
           onPress={handleSubmit}
