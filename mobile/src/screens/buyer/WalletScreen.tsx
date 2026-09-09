@@ -55,8 +55,6 @@ interface WalletTransaction {
 // Constants & Configuration
 // ─────────────────────────────────────────────────────────────────────────────
 
-const MOCK_BALANCE = 47_500;
-
 /** Provider display configuration — colours, labels, USSD codes. */
 const PROVIDER_CONFIG: Record<
   PaymentProvider,
@@ -79,45 +77,6 @@ const PROVIDER_CONFIG: Record<
     dialCode: '#150*50#',
   },
 };
-
-const MOCK_TRANSACTIONS: WalletTransaction[] = [
-  {
-    id: 'tx001',
-    type: 'credit',
-    amount: 20_000,
-    description: 'Wallet Top-Up via MTN MoMo',
-    provider: 'mtn',
-    date: '27 Aug 2026, 14:02',
-    status: 'completed',
-  },
-  {
-    id: 'tx002',
-    type: 'debit',
-    amount: 8_500,
-    description: 'Escrow Payment — Order #WNB-00412',
-    provider: 'mtn',
-    date: '26 Aug 2026, 09:18',
-    status: 'completed',
-  },
-  {
-    id: 'tx003',
-    type: 'credit',
-    amount: 50_000,
-    description: 'Wallet Top-Up via Orange Money',
-    provider: 'orange',
-    date: '24 Aug 2026, 17:44',
-    status: 'completed',
-  },
-  {
-    id: 'tx004',
-    type: 'debit',
-    amount: 14_000,
-    description: 'Escrow Payment — Order #WNB-00398',
-    provider: 'mtn',
-    date: '22 Aug 2026, 11:30',
-    status: 'completed',
-  },
-];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Utility helpers

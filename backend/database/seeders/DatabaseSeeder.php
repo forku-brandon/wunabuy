@@ -897,6 +897,43 @@ class DatabaseSeeder extends Seeder
         );
 
         // ─────────────────────────────────────────────────────────────────────
+        // 5b. SEED SAMPLE DISPUTES & REFUNDS FOR BUYER
+        // ─────────────────────────────────────────────────────────────────────
+        DB::table('disputes')->updateOrInsert(
+            ['id' => 'd1590001-3a2b-4c5d-8e9f-0123456789ab'],
+            [
+                'id' => 'd1590001-3a2b-4c5d-8e9f-0123456789ab',
+                'order_id' => '9a8b7c6d-5e4f-3a2b-1c0d-9e8f7a6b5c4d',
+                'user_id' => $buyerId,
+                'reason' => 'Screen arrived cracked in transit',
+                'description' => 'Buyer unboxed smartphone package in presence of transporter and discovered spiderweb hairline crack across lower OLED screen panel.',
+                'evidence_photos' => json_encode(['https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?auto=format&fit=crop&w=800&q=80']),
+                'status' => 'pending_review',
+                'refund_amount' => 189500.00,
+                'created_at' => now()->subDays(1),
+                'updated_at' => now()->subDays(1),
+            ]
+        );
+
+        DB::table('disputes')->updateOrInsert(
+            ['id' => 'd1590002-4b3c-5d6e-9f0a-123456789abc'],
+            [
+                'id' => 'd1590002-4b3c-5d6e-9f0a-123456789abc',
+                'order_id' => '8b7c6d5e-4f3a-2b1c-0d9e-8f7a6b5c4d3e',
+                'user_id' => $buyerId,
+                'reason' => 'Wrong product variant dispatched by merchant',
+                'description' => 'Ordered 30ml facial serum bottle, received completely different product formula with missing factory security seal.',
+                'evidence_photos' => json_encode(['https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=800&q=80']),
+                'status' => 'refunded',
+                'refund_amount' => 34200.00,
+                'resolution' => 'Merchant acknowledged incorrect item dispatch. Full refund of 34,200 XAF credited back to Buyer Wallet.',
+                'resolved_at' => now()->subHours(8),
+                'created_at' => now()->subDays(3),
+                'updated_at' => now()->subHours(8),
+            ]
+        );
+
+        // ─────────────────────────────────────────────────────────────────────
         // 5. SEED WALLET TRANSACTIONS
         // ─────────────────────────────────────────────────────────────────────
         $sellerUser = DB::table('users')->where('phone', '+237699112233')->first();
@@ -915,6 +952,8 @@ class DatabaseSeeder extends Seeder
                 'balance_available' => 47500.00,
                 'balance_escrow_locked' => 236000.00,
             ]);
+
+            DB::table('wallet_transactions')->where('wallet_id', $bWallet->id)->delete();
 
             $prefix = sprintf('ba%06x', $index + 1);
             $refSuffix = strtoupper(substr($bWallet->id, 0, 4));
@@ -983,13 +1022,14 @@ class DatabaseSeeder extends Seeder
 
             foreach ($buyerTxs as $tx) {
                 DB::table('wallet_transactions')->updateOrInsert(
-                    ['reference' => $tx['reference']],
+                    ['id' => $tx['id']],
                     array_merge($tx, ['updated_at' => now()])
                 );
             }
         }
 
         if ($sellerWallet) {
+            DB::table('wallet_transactions')->where('wallet_id', $sellerWallet->id)->delete();
             $sellerTxs = [
                 [
                     'id' => 'c1a2c3d4-0001-4000-8000-000000000001',
@@ -1038,6 +1078,7 @@ class DatabaseSeeder extends Seeder
         }
 
         if ($transporterWallet) {
+            DB::table('wallet_transactions')->where('wallet_id', $transporterWallet->id)->delete();
             $transporterTxs = [
                 [
                     'id' => 'd1a2c3d4-0001-4000-8000-000000000001',

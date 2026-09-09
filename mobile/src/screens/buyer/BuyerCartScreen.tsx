@@ -10,24 +10,14 @@ import { useThemeStore } from '../../stores/theme.store';
 import { spacing, colors, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { Address } from '@wunabuy/types';
 import { formatXAF } from '@wunabuy/utils';
-import { PromotionsService } from '../../services/api';
-
-const MOCK_DEFAULT_ADDRESS: Address = {
-  id: 'addr_1',
-  label: 'Home',
-  latitude: 4.0510564,
-  longitude: 9.7678687,
-  address_text: 'Rue Joss, Akwa',
-  city: 'Douala',
-  is_default: true,
-};
+import { PromotionsService, BuyerService } from '../../services/api';
 
 export const BuyerCartScreen = ({ navigation }: any) => {
   const { theme, isDark } = useThemeStore();
   const insets = useSafeAreaInsets();
   const { items, updateQuantity, removeItem, clearCart, getSubtotal, getItemCount } = useCartStore();
 
-  const [deliveryAddress] = useState<Address>(MOCK_DEFAULT_ADDRESS);
+  const [deliveryAddress, setDeliveryAddress] = useState<Address | null>(null);
   const [promoCode, setPromoCode] = useState('');
   const [appliedDiscount, setAppliedDiscount] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
@@ -44,9 +34,13 @@ export const BuyerCartScreen = ({ navigation }: any) => {
     expiresInSeconds?: number;
   } | null>(null);
 
-  const fetchPromotions = useCallback(async () => {
+  const fetchPromotionsAndAddress = useCallback(async () => {
     try {
-      const promoData = await PromotionsService.getCartBanner();
+      const [promoData, addresses] = await Promise.all([
+        PromotionsService.getCartBanner(),
+        BuyerService.getAddresses(),
+      ]);
+
       if (promoData && promoData.show_banner && promoData.headline) {
         setBackendPromo({
           id: promoData.promo_id || 'promo_default',
@@ -54,14 +48,19 @@ export const BuyerCartScreen = ({ navigation }: any) => {
           expiresInSeconds: promoData.auto_dismiss_seconds || 6,
         });
       }
+
+      if (addresses && addresses.length > 0) {
+        const defaultAddr = addresses.find((a) => a.is_default) || addresses[0];
+        setDeliveryAddress(defaultAddr);
+      }
     } catch {
       // Safe fallback
     }
   }, []);
 
   React.useEffect(() => {
-    fetchPromotions();
-  }, [fetchPromotions]);
+    fetchPromotionsAndAddress();
+  }, [fetchPromotionsAndAddress]);
 
   // Auto-dismiss timer when a backend promo is received
   React.useEffect(() => {
@@ -75,8 +74,8 @@ export const BuyerCartScreen = ({ navigation }: any) => {
 
   const handleRefresh = useCallback(() => {
     setRefreshing(true);
-    fetchPromotions().finally(() => setRefreshing(false));
-  }, [fetchPromotions]);
+    fetchPromotionsAndAddress().finally(() => setRefreshing(false));
+  }, [fetchPromotionsAndAddress]);
 
   const subtotal = getSubtotal();
   const itemCount = getItemCount();
@@ -89,7 +88,7 @@ export const BuyerCartScreen = ({ navigation }: any) => {
       deliveryFee: shippingFee,
       deliveryMethod,
       pickupPin,
-      addressId: deliveryAddress.id,
+      addressId: deliveryAddress?.id || 'addr_1',
     });
   };
 

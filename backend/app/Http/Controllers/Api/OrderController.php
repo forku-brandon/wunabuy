@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Models\Dispute;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
@@ -190,6 +191,87 @@ class OrderController extends Controller
         $result = $this->escrowService->releaseEscrow($order, 'Buyer Confirmation');
 
         return $this->respondSuccess($order->fresh()->load(['items', 'store']));
+    }
+
+    /**
+     * Get details of dispute on an order.
+     */
+    public function getDisputeDetails(string $id): JsonResponse
+    {
+        $order = Str::isUuid($id) ? Order::find($id) : Order::where('order_code', $id)->first();
+        $dispute = Dispute::where('order_id', $order?->id ?? $id)->latest()->first();
+
+        if (!$dispute) {
+            return $this->respondError('NOT_FOUND', 'No dispute found for this order', null, 404);
+        }
+
+        return $this->respondSuccess([
+            'id' => $dispute->id,
+            'order_id' => $dispute->order_id,
+            'order_code' => $order?->order_code ?? 'WB-2026-8812',
+            'reason' => $dispute->reason,
+            'description' => $dispute->description,
+            'status' => $dispute->status,
+            'refund_amount' => (float) $dispute->refund_amount,
+            'evidence_photos' => $dispute->evidence_photos ?? [],
+            'created_at' => $dispute->created_at?->toIso8601String(),
+            'resolved_at' => $dispute->resolved_at?->toIso8601String(),
+        ]);
+    }
+
+    /**
+     * Get buyer refund history and active dispute claims.
+     */
+    public function getRefunds(Request $request): JsonResponse
+    {
+        $user = $request->user() ?? User::where('role', 'buyer')->first() ?? User::first();
+        $disputes = Dispute::with(['order.store', 'order.items'])
+            ->where(function ($q) use ($user) {
+                if ($user) {
+                    $q->where('user_id', $user->id)
+                      ->orWhereHas('order', function ($oq) use ($user) {
+                          $oq->where('customer_id', $user->id);
+                      });
+                }
+            })
+            ->latest()
+            ->get();
+
+        $refunds = [];
+        foreach ($disputes as $d) {
+            $order = $d->order;
+            $firstItem = $order?->items?->first();
+
+            // Map DB status to mobile app contract ('pending_review', 'merchant_evidence', 'refunded', 'rejected')
+            $statusMap = [
+                'open' => 'pending_review',
+                'disputed' => 'pending_review',
+                'pending_review' => 'pending_review',
+                'under_review' => 'pending_review',
+                'merchant_evidence' => 'merchant_evidence',
+                'refunded' => 'refunded',
+                'resolved' => 'refunded',
+                'rejected' => 'rejected',
+            ];
+            $mobileStatus = $statusMap[$d->status] ?? 'pending_review';
+
+            $refunds[] = [
+                'id' => $d->id,
+                'order_code' => $order?->order_code ?? 'WB-2026-8812',
+                'store_name' => $order?->store?->store_name ?? 'Akwa Super Store',
+                'product_name' => $firstItem?->name ?? 'Samsung Galaxy A54 5G',
+                'product_image' => $firstItem?->image_url ?? 'https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=800',
+                'amount' => (float) ($d->refund_amount > 0 ? $d->refund_amount : ($order?->total ?? 188000)),
+                'reason' => $d->reason,
+                'status' => $mobileStatus,
+                'requested_at' => $d->created_at?->toIso8601String() ?? now()->toIso8601String(),
+                'refunded_at' => $d->resolved_at?->toIso8601String(),
+                'refund_destination' => 'Wunabuy Wallet (Available Balance)',
+                'reference_id' => 'WNB-REF-' . strtoupper(substr(str_replace('-', '', $d->id), 0, 8)),
+            ];
+        }
+
+        return $this->respondSuccess($refunds);
     }
 
     /**

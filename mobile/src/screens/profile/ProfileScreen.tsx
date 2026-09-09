@@ -16,13 +16,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScreenContainer, Text, Card, Avatar, Toast, Button, Badge } from '../../components/ui';
 import { ProductCard } from '../../components/product/ProductCard';
-import { MOCK_PRODUCTS } from '../../services/mockProducts';
 import { Product, UserRole } from '@wunabuy/types';
 import { useAuthStore } from '../../stores/auth.store';
 import { useThemeStore } from '../../stores/theme.store';
 import { formatPhone, formatXAF } from '@wunabuy/utils';
 import { spacing, colors, borderRadius, shadows } from '@wunabuy/design-tokens';
-import { WalletService, AuthService } from '../../services/api';
+import { WalletService, AuthService, ProductsService } from '../../services/api';
 import * as ImagePicker from 'expo-image-picker';
 
 export const ProfileScreen = ({ navigation }: any) => {
@@ -30,6 +29,7 @@ export const ProfileScreen = ({ navigation }: any) => {
   const { user, activeRole } = useAuthStore();
   const { theme, isDark } = useThemeStore();
   const [walletBalance, setWalletBalance] = useState<number>(0);
+  const [curatedProducts, setCuratedProducts] = useState<Product[]>([]);
   const [isBalanceVisible, setIsBalanceVisible] = useState<boolean>(true);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -39,11 +39,17 @@ export const ProfileScreen = ({ navigation }: any) => {
   const [selectedAvatarUri, setSelectedAvatarUri] = useState<string | null>(null);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState<boolean>(false);
 
-  const loadWallet = useCallback(async () => {
+  const loadProfileData = useCallback(async () => {
     try {
-      const data = await WalletService.getWallet();
-      if (data) {
-        setWalletBalance(data.balance_available);
+      const [walletData, products] = await Promise.all([
+        WalletService.getWallet(),
+        ProductsService.getProducts({ sort_by: 'rating' }),
+      ]);
+      if (walletData) {
+        setWalletBalance(walletData.balance_available);
+      }
+      if (products && products.length > 0) {
+        setCuratedProducts(products);
       }
     } catch {
       // Safe fallback
@@ -53,13 +59,13 @@ export const ProfileScreen = ({ navigation }: any) => {
   }, []);
 
   React.useEffect(() => {
-    loadWallet();
-  }, [loadWallet]);
+    loadProfileData();
+  }, [loadProfileData]);
 
   const handleRefresh = useCallback(() => {
     setRefreshing(true);
-    loadWallet();
-  }, [loadWallet]);
+    loadProfileData();
+  }, [loadProfileData]);
 
   const handleSelectProduct = (product: Product) => {
     navigation.navigate('ProductDetail', { productId: product.id });
@@ -543,7 +549,7 @@ export const ProfileScreen = ({ navigation }: any) => {
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <FlatList
-        data={MOCK_PRODUCTS}
+        data={curatedProducts}
         keyExtractor={(item) => item.id}
         numColumns={2}
         columnWrapperStyle={styles.columnWrapper}

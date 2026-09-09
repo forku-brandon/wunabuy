@@ -61,114 +61,6 @@ export interface ActiveTripPayload {
   buyer_delivery_instructions?: string;
 }
 
-const MOCK_DELIVERY_JOBS: DeliveryJob[] = [
-  {
-    id: 'job_1',
-    order_id: 'ord_101',
-    order_code: 'WB-2026-9842',
-    store: {
-      id: 'store_101',
-      store_name: 'Douala Tech Hub (Akwa)',
-      rating_avg: 4.9,
-      is_verified: true,
-    },
-    pickup_address: {
-      id: 'p_1',
-      label: 'Store Pickup',
-      latitude: 4.0510,
-      longitude: 9.7678,
-      address_text: 'Rue Joss, Akwa',
-      city: 'Douala',
-      is_default: false,
-    },
-    delivery_address: {
-      id: 'd_1',
-      label: 'Buyer Home',
-      latitude: 4.0611,
-      longitude: 9.7863,
-      address_text: 'Boulevard de la Liberté, Bonanjo',
-      city: 'Douala',
-      is_default: true,
-    },
-    items_summary: '1x Samsung Galaxy A54 5G (Package size: Small)',
-    delivery_fee: 1500,
-    currency: 'XAF',
-    distance_km: 2.4,
-    status: 'pending',
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: 'job_2',
-    order_id: 'ord_102',
-    order_code: 'WB-2026-9843',
-    store: {
-      id: 'store_102',
-      store_name: 'Kilo Shop Bonapriso',
-      rating_avg: 4.8,
-      is_verified: true,
-    },
-    pickup_address: {
-      id: 'p_2',
-      label: 'Store Pickup',
-      latitude: 4.0321,
-      longitude: 9.6987,
-      address_text: 'Avenue Njo-Njo, Bonapriso',
-      city: 'Douala',
-      is_default: false,
-    },
-    delivery_address: {
-      id: 'd_2',
-      label: 'Buyer Office',
-      latitude: 4.0450,
-      longitude: 9.7120,
-      address_text: 'Rond-Point Deido',
-      city: 'Douala',
-      is_default: false,
-    },
-    items_summary: '2x Nike Air Force 1 Sneakers (Package size: Medium)',
-    delivery_fee: 2500,
-    currency: 'XAF',
-    distance_km: 1.8,
-    status: 'pending',
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: 'job_3',
-    order_id: 'ord_103',
-    order_code: 'WB-2026-9844',
-    store: {
-      id: 'store_103',
-      store_name: 'Supermarché Mahima (Makepe)',
-      rating_avg: 4.7,
-      is_verified: true,
-    },
-    pickup_address: {
-      id: 'p_3',
-      label: 'Store Pickup',
-      latitude: 4.0810,
-      longitude: 9.7420,
-      address_text: 'Carrefour Makepe BM',
-      city: 'Douala',
-      is_default: false,
-    },
-    delivery_address: {
-      id: 'd_3',
-      label: 'Buyer Home',
-      latitude: 4.0920,
-      longitude: 9.7550,
-      address_text: 'Logbessou Sector 4',
-      city: 'Douala',
-      is_default: false,
-    },
-    items_summary: '1x Philips Blender + 2x Groceries Pack (Medium)',
-    delivery_fee: 1800,
-    currency: 'XAF',
-    distance_km: 3.1,
-    status: 'pending',
-    created_at: new Date().toISOString(),
-  },
-];
-
 export const TransporterService = {
   /**
    * Fetch available dispatch job offers
@@ -182,9 +74,9 @@ export const TransporterService = {
       if (response.data?.success && Array.isArray(response.data.data)) {
         return response.data.data;
       }
-      return MOCK_DELIVERY_JOBS;
+      return [];
     } catch {
-      return MOCK_DELIVERY_JOBS;
+      return [];
     }
   },
 
@@ -442,44 +334,11 @@ export const TransporterService = {
       if (response.data?.success) {
         return response.data;
       }
-      return getMockVerificationResult(code, mode);
-    } catch {
-      return getMockVerificationResult(code, mode);
+      return { success: false, message: response.data?.message || 'Verification failed.' };
+    } catch (err: any) {
+      return { success: false, message: err?.response?.data?.message || 'Verification failed.' };
     }
   },
 };
-
-function getMockVerificationResult(code: string, mode: 'package' | 'driver' | 'store') {
-  if (mode === 'package') {
-    return {
-      success: true,
-      message: `Package Verified! Code: ${code}`,
-      data: {
-        package_id: 'pkg_99182',
-        order_code: 'WNB-2026-9842',
-        item_count: 1,
-        weight_kg: 1.2,
-      },
-    };
-  } else if (mode === 'driver') {
-    return {
-      success: true,
-      message: `Driver Transport Permit Verified! License: ${code}`,
-      data: {
-        driver_name: 'Jean-Paul Nkoum',
-        permit_type: 'Catégorie A & B',
-        expires_at: '2028-12-31',
-      },
-    };
-  }
-  return {
-    success: true,
-    message: `Merchant Store GPS Hub Verified! Hub: ${code}`,
-    data: {
-      store_name: 'Douala Tech Hub (Akwa)',
-      address: 'Rue Joss, Akwa, Douala',
-    },
-  };
-}
 
 

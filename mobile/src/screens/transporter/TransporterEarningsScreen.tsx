@@ -9,14 +9,6 @@ import { useThemeStore } from '../../stores/theme.store';
 import { WalletService, TransporterService } from '../../services/api';
 import { RecentTransactionsWidget } from '../../components/wallet/RecentTransactionsWidget';
 
-const MOCK_TRIP_HISTORY = [
-  { id: 't1', code: 'WB-2026-9842', distance: '2.4 km', fee: 1500, date: 'Today, 14:20', type: 'TRIP_PAYOUT' },
-  { id: 't2', code: 'WB-2026-7731', distance: '3.8 km', fee: 2000, date: 'Today, 11:45', type: 'TRIP_PAYOUT' },
-  { id: 't3', code: 'WB-2026-3390', distance: '1.9 km', fee: 1500, date: 'Yesterday, 16:10', type: 'TRIP_PAYOUT' },
-  { id: 't4', code: 'TIP-2026-004', distance: 'Customer Tip', fee: 500, date: 'Yesterday, 14:00', type: 'CUSTOMER_TIP' },
-  { id: 't5', code: 'CASHOUT-881', distance: 'MTN MoMo (*126#)', fee: -10000, date: '2 days ago', type: 'CASHOUT' },
-];
-
 export const TransporterEarningsScreen = ({ navigation }: any) => {
 
   const { theme, isDark } = useThemeStore();

@@ -14,120 +14,10 @@ import { useThemeStore } from '../../stores/theme.store';
 import { useAuthStore } from '../../stores/auth.store';
 import { AuthService, TransporterService } from '../../services/api';
 
-
-
-const MOCK_DELIVERY_JOBS: DeliveryJob[] = [
-  {
-    id: 'job_1',
-    order_id: 'ord_101',
-    order_code: 'WB-2026-9842',
-    store: {
-      id: 'store_101',
-      store_name: 'Douala Tech Hub (Akwa)',
-      rating_avg: 4.9,
-      is_verified: true,
-    },
-    pickup_address: {
-      id: 'p_1',
-      label: 'Store Pickup',
-      latitude: 4.0510,
-      longitude: 9.7678,
-      address_text: 'Rue Joss, Akwa',
-      city: 'Douala',
-      is_default: false,
-    },
-    delivery_address: {
-      id: 'd_1',
-      label: 'Buyer Home',
-      latitude: 4.0611,
-      longitude: 9.7863,
-      address_text: 'Boulevard de la Liberté, Bonanjo',
-      city: 'Douala',
-      is_default: true,
-    },
-    items_summary: '1x Samsung Galaxy A54 5G (Package size: Small)',
-    delivery_fee: 1500,
-    currency: 'XAF',
-    distance_km: 2.4,
-    status: 'pending',
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: 'job_2',
-    order_id: 'ord_102',
-    order_code: 'WB-2026-5511',
-    store: {
-      id: 'store_103',
-      store_name: 'Heritage African Couture',
-      rating_avg: 5.0,
-      is_verified: true,
-    },
-    pickup_address: {
-      id: 'p_2',
-      label: 'Store Pickup',
-      latitude: 4.0480,
-      longitude: 9.7610,
-      address_text: 'Marché Central, Douala',
-      city: 'Douala',
-      is_default: false,
-    },
-    delivery_address: {
-      id: 'd_2',
-      label: 'Buyer Office',
-      latitude: 4.0520,
-      longitude: 9.7680,
-      address_text: 'Rue Prince Bell, Bali',
-      city: 'Douala',
-      is_default: true,
-    },
-    items_summary: '2x Traditional Embroidered Toghu Garments',
-    delivery_fee: 2500,
-    currency: 'XAF',
-    distance_km: 1.8,
-    status: 'pending',
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: 'job_3',
-    order_id: 'ord_103',
-    order_code: 'WB-2026-3390',
-    store: {
-      id: 'store_104',
-      store_name: 'Kribi Fresh Organic Produce',
-      rating_avg: 4.8,
-      is_verified: true,
-    },
-    pickup_address: {
-      id: 'p_3',
-      label: 'Store Pickup',
-      latitude: 4.0530,
-      longitude: 9.7710,
-      address_text: 'Avenue King Akwa, Douala',
-      city: 'Douala',
-      is_default: false,
-    },
-    delivery_address: {
-      id: 'd_3',
-      label: 'Buyer Residence',
-      latitude: 4.0680,
-      longitude: 9.7920,
-      address_text: 'Camp Yabassi, Douala',
-      city: 'Douala',
-      is_default: true,
-    },
-    items_summary: '1x Organic Fruit Basket & Fresh Juice Crate',
-    delivery_fee: 1800,
-    currency: 'XAF',
-    distance_km: 3.5,
-    status: 'pending',
-    created_at: new Date().toISOString(),
-  },
-];
-
 export const TransporterJobsScreen = ({ navigation }: any) => {
   const { theme, isDark } = useThemeStore();
   const insets = useSafeAreaInsets();
-  const [jobs, setJobs] = useState<DeliveryJob[]>(MOCK_DELIVERY_JOBS);
+  const [jobs, setJobs] = useState<DeliveryJob[]>([]);
   const [activeFilter, setActiveFilter] = useState('all');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedMapJob, setSelectedMapJob] = useState<DeliveryJob | null>(null);
@@ -137,9 +27,9 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
   const loadJobs = useCallback(async () => {
     try {
       const data = await TransporterService.getAvailableJobs(activeFilter);
-      setJobs(data);
+      setJobs(data || []);
     } catch {
-      setJobs(MOCK_DELIVERY_JOBS);
+      setJobs([]);
     }
   }, [activeFilter]);
 

@@ -75,6 +75,8 @@ Route::prefix('v1')->group(function () {
     Route::post('/orders/{id}/confirm', [OrderController::class, 'confirmReceipt']);
     Route::post('/orders/{id}/cancel', [OrderController::class, 'cancel']);
     Route::post('/orders/{id}/dispute', [OrderController::class, 'dispute']);
+    Route::get('/orders/{id}/dispute', [OrderController::class, 'getDisputeDetails']);
+    Route::get('/user/refunds', [OrderController::class, 'getRefunds']);
 
     // ─── SELLER OPERATIONS ───
     Route::get('/seller/dashboard', [SellerController::class, 'dashboard']);

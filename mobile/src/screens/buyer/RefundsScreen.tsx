@@ -9,62 +9,18 @@ import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 
 interface RefundItem extends RefundItemData {}
 
-const MOCK_REFUNDS: RefundItem[] = [
-  {
-    id: 'ref_1',
-    order_code: 'WB-2026-8812',
-    store_name: 'Douala Tech Hub',
-    product_name: 'Samsung Galaxy A54 5G',
-    product_image: 'https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=800',
-    amount: 185000,
-    reason: 'Screen arrived cracked during transit (Escrow Frozen)',
-    status: 'pending_review',
-    requested_at: '2026-08-28T10:30:00Z',
-  },
-  {
-    id: 'ref_2',
-    order_code: 'WB-2026-4421',
-    store_name: 'Heritage African Couture',
-    product_name: 'Handcrafted Traditional Toghu Robe',
-    product_image: 'https://images.unsplash.com/photo-1590736969955-71cc94801759?w=800',
-    amount: 65000,
-    reason: 'Wrong size sent by merchant',
-    status: 'refunded',
-    requested_at: '2026-08-24T14:20:00Z',
-    refunded_at: '2026-08-25T11:00:00Z',
-    refund_destination: 'Wunabuy Wallet (Available Balance)',
-    reference_id: 'WNB-REF-9921-WAL',
-  },
-  {
-    id: 'ref_3',
-    order_code: 'WB-2026-1190',
-    store_name: 'Yaoundé Fresh Foods',
-    product_name: 'Organic Plantain & Ndolé Bundle',
-    product_image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800',
-    amount: 15000,
-    reason: 'Perishable item spoiled due to transport delay',
-    status: 'refunded',
-    requested_at: '2026-08-19T09:15:00Z',
-    refunded_at: '2026-08-19T18:30:00Z',
-    refund_destination: 'Mobile Money (+237 670 123 456)',
-    reference_id: 'WNB-REF-1190-MOMO',
-  },
-];
-
 export const RefundsScreen = ({ navigation }: any) => {
   const { theme, isDark } = useThemeStore();
   const [activeTab, setActiveTab] = useState<'pending' | 'completed'>('pending');
-  const [refunds, setRefunds] = useState<RefundItem[]>(MOCK_REFUNDS);
+  const [refunds, setRefunds] = useState<RefundItem[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
   const loadRefunds = useCallback(async () => {
     try {
       const data = await DisputesService.getRefunds();
-      if (data && data.length > 0) {
-        setRefunds(data);
-      }
+      setRefunds(data || []);
     } catch {
-      // Fallback to initial mock data
+      setRefunds([]);
     } finally {
       setRefreshing(false);
     }

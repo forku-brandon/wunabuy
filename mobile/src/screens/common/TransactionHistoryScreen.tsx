@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { ScreenContainer, Text, Card, Toast, Badge } from '../../components/ui';
 import { colors, spacing, borderRadius } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
-import { MOCK_APP_TRANSACTIONS, TransactionItem } from '../../components/wallet/RecentTransactionsWidget';
+import { TransactionItem } from '../../components/wallet/RecentTransactionsWidget';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { WalletService } from '../../services/api/walletService';

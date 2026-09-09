@@ -1,9 +1,24 @@
 import { apiClient } from './apiClient';
-import { Product } from '@wunabuy/types';
+import { Product, Address } from '@wunabuy/types';
 import { FollowedStoreData } from '../../stores/followedStores.store';
 import { FootprintItem } from '../../stores/footprint.store';
 
 export const BuyerService = {
+  /**
+   * Fetch user delivery addresses
+   */
+  async getAddresses(): Promise<Address[]> {
+    try {
+      const response = await apiClient.get<{ success: boolean; data: Address[] }>('/users/addresses');
+      if (response.data?.success && Array.isArray(response.data.data)) {
+        return response.data.data;
+      }
+      return [];
+    } catch {
+      return [];
+    }
+  },
+
   /**
    * Fetch all stores followed by the authenticated user
    */
