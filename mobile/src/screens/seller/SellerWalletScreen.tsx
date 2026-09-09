@@ -55,7 +55,7 @@ export const SellerWalletScreen = ({ navigation }: any) => {
       if (data) {
         setDashboardMetrics(data);
       }
-      if (Array.isArray(txList) && txList.length > 0) {
+      if (Array.isArray(txList)) {
         setTransactions(txList.map((tx) => ({
           id: tx.id,
           type: tx.type === 'credit' ? 'escrow_release' : tx.amount < -10000 ? 'payout' : 'commission_deduction',
@@ -91,7 +91,8 @@ export const SellerWalletScreen = ({ navigation }: any) => {
   const netPayout = Math.max(0, parsedAmount - telecomFee);
 
   const handleSetAmountPreset = (fraction: number) => {
-    const amount = Math.floor(availableBalance * fraction);
+    const withdrawable = Math.max(0, availableBalance - 100);
+    const amount = Math.floor(withdrawable * fraction);
     setPayoutAmount(String(amount));
   };
 
@@ -100,8 +101,13 @@ export const SellerWalletScreen = ({ navigation }: any) => {
       setToastMessage('Please enter a valid payout amount.');
       return;
     }
-    if (parsedAmount > availableBalance) {
-      setToastMessage('Payout amount exceeds available balance.');
+    const withdrawable = Math.max(0, availableBalance - 100);
+    if (parsedAmount > withdrawable) {
+      if (withdrawable <= 0) {
+        setToastMessage('Your 100 FCFA registration reward cannot be withdrawn. You can spend it on Wunabuy or top up your wallet.');
+      } else {
+        setToastMessage(`Only ${withdrawable.toLocaleString()} XAF is withdrawable. The 100 FCFA registration reward cannot be cashed out.`);
+      }
       return;
     }
 
@@ -120,7 +126,8 @@ export const SellerWalletScreen = ({ navigation }: any) => {
       setToastMessage(`Payout request submitted! Ref: ${refCode}`);
     } catch (err: any) {
       setIsSubmittingPayout(false);
-      setToastMessage('Payout failed. Please check network connection.');
+      const msg = err?.response?.data?.message || err?.message || 'Payout failed. Please check network connection.';
+      setToastMessage(msg);
     }
   };
 

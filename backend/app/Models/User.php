@@ -170,6 +170,8 @@ class User extends Authenticatable
                 'id' => $this->wallet->id,
                 'balance_available' => (float) $this->wallet->balance_available,
                 'balance_escrow_locked' => (float) $this->wallet->balance_escrow_locked,
+                'registration_bonus' => (float) ($this->wallet->registration_bonus ?? 0),
+                'balance_withdrawable' => (float) $this->wallet->withdrawable_balance,
                 'currency' => $this->wallet->currency ?? 'XAF',
             ];
         }

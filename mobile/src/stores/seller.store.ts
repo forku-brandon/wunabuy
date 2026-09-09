@@ -358,44 +358,7 @@ const INITIAL_SELLER_PRODUCTS: Product[] = [
   },
 ];
 
-const INITIAL_SELLER_TRANSACTIONS: SellerTransaction[] = [
-  {
-    id: 'tx_s1',
-    type: 'payout',
-    amount: 150000,
-    status: 'completed',
-    reference: 'WNB-PO-9921-MOMO',
-    description: 'Payout to MTN MoMo (+237 670 123 456)',
-    created_at: '2026-08-28T14:30:00Z',
-  },
-  {
-    id: 'tx_s2',
-    type: 'escrow_release',
-    amount: 185000,
-    status: 'completed',
-    reference: 'WNB-ESC-8812',
-    description: 'Escrow released for Order #WB-2026-5510',
-    created_at: '2026-08-27T18:00:00Z',
-  },
-  {
-    id: 'tx_s3',
-    type: 'commission_deduction',
-    amount: 9250,
-    status: 'completed',
-    reference: 'WNB-COM-8812',
-    description: 'Platform 5% fulfillment fee for Order #WB-2026-5510',
-    created_at: '2026-08-27T18:00:00Z',
-  },
-  {
-    id: 'tx_s4',
-    type: 'escrow_release',
-    amount: 45000,
-    status: 'completed',
-    reference: 'WNB-ESC-7719',
-    description: 'Escrow released for Order #WB-2026-4402',
-    created_at: '2026-08-26T10:15:00Z',
-  },
-];
+const INITIAL_SELLER_TRANSACTIONS: SellerTransaction[] = [];
 
 export const useSellerStore = create<SellerState>()(
   persist(
@@ -421,14 +384,14 @@ export const useSellerStore = create<SellerState>()(
       totalReviews: 87,
       followersCount: 1420,
 
-      availableBalance: 450000,
-      escrowLockedBalance: 235000,
-      totalRevenue: 2850000,
-      totalPaidOut: 2400000,
+      availableBalance: 100,
+      escrowLockedBalance: 0,
+      totalRevenue: 0,
+      totalPaidOut: 0,
 
       orders: INITIAL_SELLER_ORDERS,
       products: INITIAL_SELLER_PRODUCTS,
-      transactions: INITIAL_SELLER_TRANSACTIONS,
+      transactions: [],
 
       updateStoreProfile: (partial) => {
         set((state) => ({

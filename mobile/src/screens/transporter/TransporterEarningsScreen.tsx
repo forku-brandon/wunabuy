@@ -61,19 +61,25 @@ export const TransporterEarningsScreen = ({ navigation }: any) => {
   }, [loadWalletData]);
 
   const handlePresetPercentage = (percentage: number) => {
-    const calc = Math.floor((availablePayout * percentage) / 100);
+    const withdrawable = Math.max(0, availablePayout - 100);
+    const calc = Math.floor((withdrawable * percentage) / 100);
     setWithdrawAmount(calc.toString());
     setError('');
   };
 
   const handleWithdraw = async () => {
     const amount = Number(withdrawAmount);
-    if (!amount || isNaN(amount) || amount < 500) {
-      setError('Minimum payout amount is 500 FCFA.');
+    if (!amount || isNaN(amount) || amount < 100) {
+      setError('Minimum payout amount is 100 FCFA.');
       return;
     }
-    if (amount > availablePayout) {
-      setError('Payout amount exceeds available driver balance.');
+    const withdrawable = Math.max(0, availablePayout - 100);
+    if (amount > withdrawable) {
+      if (withdrawable <= 0) {
+        setError('Your 100 FCFA registration reward cannot be withdrawn. You can spend it on Wunabuy or top up your wallet.');
+      } else {
+        setError(`Only ${formatXAF(withdrawable)} is withdrawable. The 100 FCFA registration reward cannot be cashed out.`);
+      }
       return;
     }
 

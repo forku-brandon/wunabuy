@@ -66,8 +66,15 @@ class PaymentService
         return DB::transaction(function () use ($user, $amount, $phone, $provider) {
             $wallet = $user->wallet ?? Wallet::firstOrCreate(['user_id' => $user->id]);
 
-            if ((float) $wallet->balance_available < $amount) {
-                throw new RuntimeException("Insufficient available balance for withdrawal ({$wallet->balance_available} XAF available, {$amount} XAF requested).");
+            // STRICT SECURITY ENFORCEMENT: Registration rewards cannot be withdrawn
+            $bonus = (float) ($wallet->registration_bonus ?? 0);
+            $withdrawable = max(0, (float) $wallet->balance_available - $bonus);
+
+            if ($withdrawable < $amount) {
+                if ($bonus > 0 && (float) $wallet->balance_available >= $amount) {
+                    throw new RuntimeException("Your 100 FCFA registration reward cannot be withdrawn. It can only be used to purchase items on Wunabuy or combined with top-ups.");
+                }
+                throw new RuntimeException("Insufficient withdrawable balance ({$withdrawable} XAF withdrawable, {$amount} XAF requested).");
             }
 
             // Fee calculation: 1.5% payout fee capped at 500 XAF

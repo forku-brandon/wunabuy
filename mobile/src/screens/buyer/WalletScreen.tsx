@@ -214,6 +214,7 @@ export const WalletScreen = ({ navigation }: any) => {
   // ── State ──────────────────────────────────────────────────────────────────
 
   const [balance, setBalance] = useState(0);
+  const [registrationBonus, setRegistrationBonus] = useState(0);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [balanceVisible, setBalanceVisible] = useState(true);
 
@@ -236,6 +237,7 @@ export const WalletScreen = ({ navigation }: any) => {
       ]);
       if (wallet && typeof wallet.balance_available === 'number') {
         setBalance(wallet.balance_available);
+        setRegistrationBonus(wallet.registration_bonus ?? 0);
       }
       if (Array.isArray(txList)) {
         setTransactions(txList.map((tx) => ({
@@ -296,9 +298,16 @@ export const WalletScreen = ({ navigation }: any) => {
       return;
     }
 
-    if (sheetMode === 'withdraw' && numAmount > balance) {
-      setFormError('Insufficient wallet balance for this withdrawal.');
-      return;
+    if (sheetMode === 'withdraw') {
+      const withdrawable = Math.max(0, balance - registrationBonus);
+      if (withdrawable <= 0) {
+        setFormError('Your 100 FCFA registration reward cannot be withdrawn. You can use it to purchase items on Wunabuy or top up your wallet.');
+        return;
+      }
+      if (numAmount > withdrawable) {
+        setFormError(`Only ${withdrawable.toLocaleString()} XAF is withdrawable. The 100 FCFA registration reward is reserved for purchases.`);
+        return;
+      }
     }
 
     setSheetStep('dial');
@@ -323,16 +332,10 @@ export const WalletScreen = ({ navigation }: any) => {
       }
       setSheetStep('success');
       loadWalletData();
-    } catch {
-      // Fallback simulation for offline testing
-      setTimeout(() => {
-        setSheetStep('success');
-        if (sheetMode === 'fund') {
-          setBalance((b) => b + numAmount);
-        } else {
-          setBalance((b) => Math.max(0, b - numAmount));
-        }
-      }, 1500);
+    } catch (err: any) {
+      const errMsg = err?.response?.data?.message || err?.message || 'Transaction could not be processed.';
+      setFormError(errMsg);
+      setSheetStep('form');
     }
   };
 
@@ -650,19 +653,26 @@ export const WalletScreen = ({ navigation }: any) => {
                 leftIcon={<Ionicons name="cash-outline" size={18} color={theme.placeholder} />}
               />
 
-              {/* Available balance hint (withdraw only) */}
+              {/* Available & Withdrawable balance hint (withdraw only) */}
               {sheetMode === 'withdraw' && (
                 <View
                   style={[
                     styles.availableBalanceRow,
-                    { backgroundColor: isDark ? 'rgba(13,148,136,0.12)' : colors.primary[50] },
+                    { backgroundColor: isDark ? 'rgba(13,148,136,0.12)' : colors.primary[50], flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
                   ]}
                 >
-                  <Text variant="caption" secondary>
-                    Available Balance
-                  </Text>
+                  <View>
+                    <Text variant="caption" secondary>
+                      Available to Cash Out
+                    </Text>
+                    {registrationBonus > 0 ? (
+                      <Text variant="caption" color={colors.primary[600]} style={{ marginTop: 2, fontSize: 11 }}>
+                        🎁 {registrationBonus} FCFA Bonus (Shopping Only)
+                      </Text>
+                    ) : null}
+                  </View>
                   <Text variant="bodyMedium" bold color={colors.primary[500]}>
-                    {formatCurrency(balance)}
+                    {formatCurrency(Math.max(0, balance - registrationBonus))}
                   </Text>
                 </View>
               )}

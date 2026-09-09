@@ -8,6 +8,8 @@ export interface WalletMetrics {
   balance_available: number;
   balance_escrow_locked: number;
   balance_total: number;
+  registration_bonus?: number;
+  balance_withdrawable?: number;
   total_deposited: number;
   total_spent: number;
   is_active: boolean;

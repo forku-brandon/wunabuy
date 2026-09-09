@@ -4,8 +4,12 @@
 export interface Wallet {
   /** Funds currently held in escrow pending order completion */
   balance_escrow: number;
-  /** Funds available for immediate withdrawal or use */
+  /** Funds available for immediate spending or use */
   balance_available: number;
+  /** Promotional registration bonus (non-withdrawable) */
+  registration_bonus?: number;
+  /** Net balance eligible for Mobile Money cashout/withdrawal */
+  balance_withdrawable?: number;
   /** Total lifetime earnings */
   total_earned: number;
   /** Total lifetime payouts */

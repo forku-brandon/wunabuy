@@ -71,10 +71,16 @@ class AuthController extends Controller
             'otp_expires_at' => now()->addMinutes(5),
         ]);
 
-        // Automatically initialize XAF wallet for user if missing
+        // Automatically initialize XAF wallet for user with 100 FCFA registration reward
         Wallet::firstOrCreate(
             ['user_id' => $user->id],
-            ['currency' => 'XAF', 'balance_available' => 50000, 'balance_escrow_locked' => 0]
+            [
+                'currency' => 'XAF',
+                'balance_available' => 100.00,
+                'registration_bonus' => 100.00,
+                'balance_escrow_locked' => 0.00,
+                'is_active' => true,
+            ]
         );
 
         // If delivery address provided, save as default address
@@ -183,7 +189,13 @@ class AuthController extends Controller
         // Automatically initialize XAF wallet for user if missing
         Wallet::firstOrCreate(
             ['user_id' => $user->id],
-            ['currency' => 'XAF', 'balance_available' => 50000, 'balance_escrow_locked' => 0]
+            [
+                'currency' => 'XAF',
+                'balance_available' => 100.00,
+                'registration_bonus' => 100.00,
+                'balance_escrow_locked' => 0.00,
+                'is_active' => true,
+            ]
         );
 
         $token = $user->createToken('auth-token')->plainTextToken;
@@ -236,7 +248,13 @@ class AuthController extends Controller
 
             Wallet::firstOrCreate(
                 ['user_id' => $user->id],
-                ['currency' => 'XAF', 'balance_available' => 50000, 'balance_escrow_locked' => 0]
+                [
+                    'currency' => 'XAF',
+                    'balance_available' => 100.00,
+                    'registration_bonus' => 100.00,
+                    'balance_escrow_locked' => 0.00,
+                    'is_active' => true,
+                ]
             );
         }
 

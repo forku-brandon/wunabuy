@@ -48,7 +48,12 @@ class EscrowService
                 ]);
             }
 
-            // Transfer from available to escrow locked
+            // Transfer from available to escrow locked, consuming registration bonus if applicable
+            $bonus = (float) ($wallet->registration_bonus ?? 0);
+            if ($bonus > 0) {
+                $bonusSpent = min($bonus, $amount);
+                $wallet->registration_bonus = max(0, $bonus - $bonusSpent);
+            }
             $wallet->balance_available = (float) $wallet->balance_available - $amount;
             $wallet->balance_escrow_locked = (float) $wallet->balance_escrow_locked + $amount;
             $wallet->save();

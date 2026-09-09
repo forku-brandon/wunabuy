@@ -31,10 +31,17 @@ class SellerController extends Controller
     public function dashboard(): JsonResponse
     {
         $sellerUser = request()->user() ?? User::where('phone', '+237699112233')->first() ?? User::where('role', 'seller')->first() ?? User::first();
-        $store = ($sellerUser && $sellerUser->store) ? $sellerUser->store : Store::first();
+        $store = $sellerUser?->store;
         $wallet = $sellerUser ? $sellerUser->wallet : null;
 
-        $orders = Order::all();
+        $query = Order::query();
+        if ($store) {
+            $query->where('store_id', $store->id);
+        } else if ($sellerUser && $sellerUser->role === 'seller') {
+            $query->whereRaw('1 = 0');
+        }
+
+        $orders = $query->get();
         $pendingCount = $orders->where('status', 'pending')->count();
         $preparingCount = $orders->where('status', 'preparing')->count();
         $readyCount = $orders->where('status', 'ready_for_pickup')->count();
@@ -55,13 +62,20 @@ class SellerController extends Controller
                 ->sum('amount')
         ) : 0;
 
+        $avail = (float) ($wallet->balance_available ?? 0);
+        $locked = (float) ($wallet->balance_escrow_locked ?? 0);
+        $bonus = (float) ($wallet->registration_bonus ?? 0);
+        $withdrawable = max(0, $avail - $bonus);
+
         return $this->respondSuccess([
-            'store_name' => $store->store_name ?? 'Akwa Super Store',
-            'is_verified' => (bool) ($store->is_verified ?? true),
-            'rating_avg' => (float) ($store->rating_avg ?? 4.85),
-            'total_reviews' => (int) ($store->total_reviews ?? 42),
-            'available_balance' => (float) ($wallet->balance_available ?? 0),
-            'escrow_locked_balance' => (float) ($wallet->balance_escrow_locked ?? 0),
+            'store_name' => $store->store_name ?? ($sellerUser->full_name . "'s Store"),
+            'is_verified' => (bool) ($store->is_verified ?? false),
+            'rating_avg' => (float) ($store->rating_avg ?? 5.0),
+            'total_reviews' => (int) ($store->total_reviews ?? 0),
+            'available_balance' => $avail,
+            'escrow_locked_balance' => $locked,
+            'registration_bonus' => $bonus,
+            'withdrawable_balance' => $withdrawable,
             'total_revenue' => $totalRevenue,
             'total_paid_out' => $totalPaidOut,
             'pending_orders_count' => $pendingCount,
@@ -75,7 +89,16 @@ class SellerController extends Controller
      */
     public function orders(Request $request): JsonResponse
     {
+        $sellerUser = $request->user();
+        $store = $sellerUser?->store;
+        
         $query = Order::with(['items', 'customer']);
+        if ($store) {
+            $query->where('store_id', $store->id);
+        } else if ($sellerUser && $sellerUser->role === 'seller') {
+            return $this->respondSuccess([]);
+        }
+
         if ($status = $request->query('status')) {
             $query->where('status', $status);
         }
@@ -180,14 +203,20 @@ class SellerController extends Controller
      */
     public function requestPayout(Request $request): JsonResponse
     {
-        $sellerUser = User::where('role', 'seller')->first() ?? User::first();
-        $amount = (float) $request->input('amount', 50000);
-        $phone = $request->input('phone', '+237670123456');
+        $sellerUser = $request->user() ?? User::where('role', 'seller')->first() ?? User::first();
+        $amount = (float) $request->input('amount', 0);
+        if ($amount < 100) {
+            return $this->respondError('VALIDATION_ERROR', 'Minimum payout request is 100 XAF.', ['amount' => ['Minimum is 100 XAF.']], 422);
+        }
+        $phone = $request->input('phone', $sellerUser->phone);
         $provider = $request->input('provider', 'mtn');
 
-        $result = $this->paymentService->requestPayout($sellerUser, $amount, $phone, $provider);
-
-        return $this->respondSuccess($result);
+        try {
+            $result = $this->paymentService->requestPayout($sellerUser, $amount, $phone, $provider);
+            return $this->respondSuccess($result);
+        } catch (\RuntimeException $e) {
+            return $this->respondError('WITHDRAWAL_RESTRICTED', $e->getMessage(), ['amount' => [$e->getMessage()]], 422);
+        }
     }
 
     /**

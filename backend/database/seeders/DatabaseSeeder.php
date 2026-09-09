@@ -947,10 +947,10 @@ class DatabaseSeeder extends Seeder
         $sellerWallet = $sellerUser ? DB::table('wallets')->where('user_id', $sellerUser->id)->first() : null;
         $transporterWallet = DB::table('wallets')->where('user_id', $transporterUserId)->first();
 
-        // Seed transactions for all buyer wallets (e.g. Jean Dupont phone +237670123456 and mobile test user)
+        // Seed transactions strictly for the designated demo buyer (Jean Dupont phone +237670123456)
         $buyerWallets = DB::table('wallets')
             ->join('users', 'wallets.user_id', '=', 'users.id')
-            ->where('users.role', 'buyer')
+            ->where('users.phone', '+237670123456')
             ->select('wallets.*')
             ->get();
 

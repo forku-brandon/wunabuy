@@ -264,25 +264,24 @@ class TransporterController extends Controller
      */
     public function getProfile(): JsonResponse
     {
-        $transporter = Transporter::with('user')->first();
-        $user = $transporter?->user ?? User::where('role', 'transporter')->first();
+        $user = request()->user() ?? User::where('role', 'transporter')->first() ?? User::first();
+        $transporter = ($user && $user->transporter) ? $user->transporter : Transporter::where('user_id', $user?->id)->first();
         $wallet = $user ? $user->wallet : null;
 
         $available = (float) ($wallet->balance_available ?? 0);
         $pending = (float) ($wallet->balance_escrow_locked ?? 0);
+        $bonus = (float) ($wallet->registration_bonus ?? 0);
+        $withdrawable = max(0, $available - $bonus);
         $totalEarned = $wallet ? (float) WalletTransaction::where('wallet_id', $wallet->id)->where('type', 'credit')->sum('amount') : 0;
-        if ($totalEarned === 0) {
-            $totalEarned = $available + $pending;
-        }
 
         return $this->respondSuccess([
             'driver_id' => $transporter->id ?? 'DRV-2026-884',
             'full_name' => $user->full_name ?? 'Paul Eto\'o',
             'phone' => $user->phone ?? '+237 670 123 456',
             'avatar_url' => $user->avatar_url ?? null,
-            'rating_avg' => (float) ($transporter->rating_avg ?? 4.95),
-            'completed_deliveries' => (int) ($transporter->completed_trips ?? 248),
-            'is_verified' => (bool) ($transporter->is_verified ?? true),
+            'rating_avg' => (float) ($transporter->rating_avg ?? 5.0),
+            'completed_deliveries' => (int) ($transporter->completed_trips ?? 0),
+            'is_verified' => (bool) ($transporter->is_verified ?? false),
             'vehicle' => [
                 'type' => $transporter->vehicle_type ?? 'Yamaha YBR 125 🏍️',
                 'plate_number' => $transporter->license_plate ?? 'LT-8492-AB',
@@ -292,6 +291,8 @@ class TransporterController extends Controller
             ],
             'earnings' => [
                 'available_cashout' => $available,
+                'withdrawable_cashout' => $withdrawable,
+                'registration_bonus' => $bonus,
                 'pending_escrow' => $pending,
                 'total_lifetime_earned' => $totalEarned,
             ],
@@ -303,51 +304,48 @@ class TransporterController extends Controller
      */
     public function getEarnings(): JsonResponse
     {
-        $transporter = Transporter::with('user')->first();
-        $user = $transporter?->user ?? User::where('role', 'transporter')->first();
+        $user = request()->user() ?? User::where('role', 'transporter')->first() ?? User::first();
+        $transporter = ($user && $user->transporter) ? $user->transporter : Transporter::where('user_id', $user?->id)->first();
         $wallet = $user ? $user->wallet : null;
 
         $available = (float) ($wallet->balance_available ?? 0);
         $pending = (float) ($wallet->balance_escrow_locked ?? 0);
-
-        $txQuery = WalletTransaction::query();
-        if ($wallet) {
-            $txQuery->where('wallet_id', $wallet->id);
-        }
-        $dbTxs = $txQuery->latest('created_at')->take(20)->get();
+        $bonus = (float) ($wallet->registration_bonus ?? 0);
+        $withdrawable = max(0, $available - $bonus);
 
         $txList = [];
         $totalEarned = 0;
         $totalTips = 0;
 
-        foreach ($dbTxs as $tx) {
-            if ($tx->type === 'credit') {
-                $totalEarned += (float) $tx->amount;
-                if (str_contains(strtolower($tx->description ?? ''), 'tip') || str_contains($tx->reference ?? '', 'TIP')) {
-                    $totalTips += (float) $tx->amount;
+        if ($wallet) {
+            $dbTxs = WalletTransaction::where('wallet_id', $wallet->id)->latest('created_at')->take(20)->get();
+            foreach ($dbTxs as $tx) {
+                if ($tx->type === 'credit') {
+                    $totalEarned += (float) $tx->amount;
+                    if (str_contains(strtolower($tx->description ?? ''), 'tip') || str_contains($tx->reference ?? '', 'TIP')) {
+                        $totalTips += (float) $tx->amount;
+                    }
                 }
+
+                $txList[] = [
+                    'id' => $tx->id,
+                    'code' => $tx->description ?? ($tx->reference ?? 'Trip Payout'),
+                    'fee' => (float) $tx->amount,
+                    'distance' => str_contains($tx->type, 'payout') || $tx->amount < 0 ? 'Withdrawal' : 'Completed Trip',
+                    'date' => $tx->created_at?->format('M d, H:i') ?? 'Recently',
+                    'status' => $tx->amount > 0 ? 'credited' : 'cashout',
+                ];
             }
-
-            $txList[] = [
-                'id' => $tx->id,
-                'code' => $tx->description ?? ($tx->reference ?? 'Trip Payout'),
-                'fee' => (float) $tx->amount,
-                'distance' => str_contains($tx->type, 'payout') || $tx->amount < 0 ? 'Withdrawal' : 'Completed Trip',
-                'date' => $tx->created_at?->format('M d, H:i') ?? 'Recently',
-                'status' => $tx->amount > 0 ? 'credited' : 'cashout',
-            ];
-        }
-
-        if ($totalEarned === 0) {
-            $totalEarned = $available + $pending;
         }
 
         return $this->respondSuccess([
             'available_payout' => $available,
+            'withdrawable_payout' => $withdrawable,
+            'registration_bonus' => $bonus,
             'pending_escrow' => $pending,
             'total_earned' => $totalEarned,
             'completed_trips_count' => (int) ($transporter->completed_trips ?? count($txList)),
-            'rating_avg' => (float) ($transporter->rating_avg ?? 4.95),
+            'rating_avg' => (float) ($transporter->rating_avg ?? 5.0),
             'total_tips_xaf' => $totalTips,
             'transactions' => $txList,
         ]);
@@ -358,14 +356,20 @@ class TransporterController extends Controller
      */
     public function withdraw(Request $request): JsonResponse
     {
-        $user = User::where('role', 'transporter')->first() ?? User::first();
-        $amount = (float) $request->input('amount', 20000);
-        $phone = $request->input('phone', '+237670123456');
+        $user = $request->user() ?? User::where('role', 'transporter')->first() ?? User::first();
+        $amount = (float) $request->input('amount', 0);
+        if ($amount < 100) {
+            return $this->respondError('VALIDATION_ERROR', 'Minimum cashout amount is 100 XAF.', ['amount' => ['Minimum is 100 XAF.']], 422);
+        }
+        $phone = $request->input('phone', $user->phone);
         $provider = $request->input('provider', 'mtn');
 
-        $result = $this->paymentService->requestPayout($user, $amount, $phone, $provider);
-
-        return $this->respondSuccess($result);
+        try {
+            $result = $this->paymentService->requestPayout($user, $amount, $phone, $provider);
+            return $this->respondSuccess($result);
+        } catch (\RuntimeException $e) {
+            return $this->respondError('WITHDRAWAL_RESTRICTED', $e->getMessage(), ['amount' => [$e->getMessage()]], 422);
+        }
     }
 
     /**

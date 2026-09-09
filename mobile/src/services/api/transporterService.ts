@@ -270,35 +270,23 @@ export const TransporterService = {
         return response.data.data;
       }
       return {
-        available_payout: 48500,
-        pending_escrow: 12500,
-        total_earned: 384500,
-        completed_trips_count: 248,
-        rating_avg: 4.95,
-        total_tips_xaf: 3500,
-        transactions: [
-          { id: '1', code: 'Trip #WB-2026-9840', fee: 1500, distance: '2.4 km', date: 'Today, 10:30 AM', status: 'credited' },
-          { id: '2', code: 'Trip #WB-2026-9835', fee: 2500, distance: '4.1 km', date: 'Today, 08:15 AM', status: 'credited' },
-          { id: '3', code: 'MTN MoMo Cashout (*126#)', fee: -20000, distance: 'Withdrawal', date: 'Yesterday, 06:45 PM', status: 'cashout' },
-          { id: '4', code: 'Trip #WB-2026-9812', fee: 1800, distance: '3.0 km', date: 'Yesterday, 02:20 PM', status: 'credited' },
-          { id: '5', code: 'Orange Money Cashout (#150#)', fee: -15000, distance: 'Withdrawal', date: 'Aug 28, 2026', status: 'cashout' },
-        ],
+        available_payout: 100,
+        pending_escrow: 0,
+        total_earned: 0,
+        completed_trips_count: 0,
+        rating_avg: 5.0,
+        total_tips_xaf: 0,
+        transactions: [],
       };
     } catch {
       return {
-        available_payout: 48500,
-        pending_escrow: 12500,
-        total_earned: 384500,
-        completed_trips_count: 248,
-        rating_avg: 4.95,
-        total_tips_xaf: 3500,
-        transactions: [
-          { id: '1', code: 'Trip #WB-2026-9840', fee: 1500, distance: '2.4 km', date: 'Today, 10:30 AM', status: 'credited' },
-          { id: '2', code: 'Trip #WB-2026-9835', fee: 2500, distance: '4.1 km', date: 'Today, 08:15 AM', status: 'credited' },
-          { id: '3', code: 'MTN MoMo Cashout (*126#)', fee: -20000, distance: 'Withdrawal', date: 'Yesterday, 06:45 PM', status: 'cashout' },
-          { id: '4', code: 'Trip #WB-2026-9812', fee: 1800, distance: '3.0 km', date: 'Yesterday, 02:20 PM', status: 'credited' },
-          { id: '5', code: 'Orange Money Cashout (#150#)', fee: -15000, distance: 'Withdrawal', date: 'Aug 28, 2026', status: 'cashout' },
-        ],
+        available_payout: 100,
+        pending_escrow: 0,
+        total_earned: 0,
+        completed_trips_count: 0,
+        rating_avg: 5.0,
+        total_tips_xaf: 0,
+        transactions: [],
       };
     }
   },
