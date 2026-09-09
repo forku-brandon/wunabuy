@@ -8,6 +8,7 @@ import { ProductCategory, QualityTier, Product } from '@wunabuy/types';
 import { colors, spacing, borderRadius } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
 import { useSellerStore } from '../../stores/seller.store';
+import { useAuthStore } from '../../stores/auth.store';
 import { formatXAF } from '@wunabuy/utils';
 import { ProductsService } from '../../services/api';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -149,50 +150,81 @@ export const AddEditProductScreen = ({ navigation, route }: any) => {
 
     try {
       if (isEditing && existingProduct) {
-        // UPDATE Product in local store & backend
-        updateProduct(existingProduct.id, {
-          name: name.trim(),
-          description: description.trim(),
-          category,
-          price: Number(price),
-          quantity: Number(quantity),
-          quality_tier: qualityTier,
-          images,
-        });
-
-        ProductsService.updateProduct(existingProduct.id, {
-          name: name.trim(),
-          description: description.trim(),
-          category,
-          price: Number(price),
-          quantity: Number(quantity),
-          quality_tier: qualityTier,
-          images,
-        }).catch(() => {});
+        // UPDATE Product in backend & local store
+        try {
+          const updated = await ProductsService.updateProduct(existingProduct.id, {
+            name: name.trim(),
+            description: description.trim(),
+            category,
+            price: Number(price),
+            quantity: Number(quantity),
+            quality_tier: qualityTier,
+            images,
+          });
+          if (updated) {
+            updateProduct(existingProduct.id, updated);
+          } else {
+            throw new Error('No response');
+          }
+        } catch {
+          updateProduct(existingProduct.id, {
+            name: name.trim(),
+            description: description.trim(),
+            category,
+            price: Number(price),
+            quantity: Number(quantity),
+            quality_tier: qualityTier,
+            images,
+          });
+        }
       } else {
-        // CREATE Product in local store & backend
-        const newProduct: Product = {
-          id: `sp_${Date.now()}`,
-          store_id: 'store_1',
-          name: name.trim(),
-          description: description.trim(),
-          category,
-          price: Number(price),
-          currency: 'XAF',
-          quantity: Number(quantity),
-          quality_tier: qualityTier,
-          images,
-          is_active: true,
-          rating_avg: 5.0,
-          total_reviews: 0,
-          distance_km: null,
-          store: { id: 'store_1', store_name: 'Douala Tech Hub', rating_avg: 5.0, is_verified: true },
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
+        // CREATE Product in backend first to get real backend UUID and store
+        const userStore = useAuthStore.getState().user?.store;
+        try {
+          const created = await ProductsService.createProduct({
+            name: name.trim(),
+            description: description.trim(),
+            category,
+            price: Number(price),
+            currency: 'XAF',
+            quantity: Number(quantity),
+            quality_tier: qualityTier,
+            images,
+            is_active: true,
+          });
 
-        addProduct(newProduct);
-        ProductsService.createProduct(newProduct).catch(() => {});
+          if (created && created.id) {
+            addProduct(created);
+          } else {
+            throw new Error('Fallback');
+          }
+        } catch {
+          const newProduct: Product = {
+            id: `sp_${Date.now()}`,
+            store_id: userStore?.id || 'store_1',
+            name: name.trim(),
+            description: description.trim(),
+            category,
+            price: Number(price),
+            currency: 'XAF',
+            quantity: Number(quantity),
+            quality_tier: qualityTier,
+            images,
+            is_active: true,
+            rating_avg: 5.0,
+            total_reviews: 0,
+            distance_km: null,
+            store: userStore ? {
+              id: userStore.id,
+              store_name: userStore.store_name,
+              rating_avg: (userStore as any).rating_avg ?? 5.0,
+              is_verified: userStore.is_verified,
+            } : { id: 'store_1', store_name: 'Merchant Store', rating_avg: 5.0, is_verified: true },
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          };
+          addProduct(newProduct);
+        }
       }
 
       setToastMessage(isEditing ? 'Product updated successfully!' : 'Product listed into store catalog!');

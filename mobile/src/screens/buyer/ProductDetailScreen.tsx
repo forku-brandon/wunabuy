@@ -112,6 +112,10 @@ export const ProductDetailScreen = ({ route, navigation }: any) => {
 
   // Handlers
   const handleAddToCart = () => {
+    if ((product.quantity ?? 0) <= 0) {
+      setToastMessage('⚠️ This item is currently out of stock.');
+      return;
+    }
     const success = addItemToCart(product, quantity);
     if (!success) {
       setToastMessage('Cart can only contain items from one store. Clear cart to add items from another store.');
@@ -121,6 +125,10 @@ export const ProductDetailScreen = ({ route, navigation }: any) => {
   };
 
   const handleBuyNow = () => {
+    if ((product.quantity ?? 0) <= 0) {
+      setToastMessage('⚠️ This item is currently out of stock.');
+      return;
+    }
     addItemToCart(product, quantity);
     navigation.navigate('BuyerCart');
   };

@@ -84,7 +84,7 @@ class OrderController extends Controller
 
             // Resolve store from items or request
             $storeId = $request->input('store_id');
-            $store = $storeId ? Store::find($storeId) : null;
+            $store = ($storeId && Str::isUuid($storeId)) ? Store::find($storeId) : null;
 
             // Try to get the store from the first product in items
             if (!$store) {
@@ -98,6 +98,10 @@ class OrderController extends Controller
             }
 
             if (!$store) {
+                $store = Store::first();
+            }
+
+            if (!$store) {
                 return $this->respondError('STORE_NOT_FOUND', 'Store not found — please provide a valid store_id', null, 422);
             }
 
@@ -108,6 +112,26 @@ class OrderController extends Controller
             $orderCode = 'WB-' . date('Y') . '-' . rand(1000, 9999);
             $pickupPin = (string) rand(1000, 9999);
 
+            $rawAddress = $request->input('delivery_address');
+            if (is_string($rawAddress)) {
+                $delivAddress = [
+                    'label' => 'Delivery Location',
+                    'address_text' => $rawAddress,
+                    'city' => 'Douala',
+                    'latitude' => 4.0611,
+                    'longitude' => 9.7863,
+                ];
+            } elseif (is_array($rawAddress)) {
+                $delivAddress = $rawAddress;
+            } else {
+                $delivAddress = [
+                    'label' => 'Home',
+                    'address_text' => 'Douala',
+                    'city' => 'Douala',
+                    'latitude' => 4.0611,
+                    'longitude' => 9.7863,
+                ];
+            }
 
             $order = Order::create([
                 'id' => $orderId,
@@ -121,13 +145,7 @@ class OrderController extends Controller
                 'currency' => 'XAF',
                 'payment_method' => $request->input('payment_method', 'mtn_momo'),
                 'payment_status' => 'pending',
-                'delivery_address' => $request->input('delivery_address', [
-                    'label' => 'Home',
-                    'address_text' => 'Douala',
-                    'city' => 'Douala',
-                    'latitude' => 4.0611,
-                    'longitude' => 9.7863,
-                ]),
+                'delivery_address' => $delivAddress,
                 'pickup_pin' => $pickupPin,
                 'notes' => ($request->input('notes') ?? '') . ($idempotencyKey ? " [IDEMPOTENCY:{$idempotencyKey}]" : ''),
             ]);
@@ -143,6 +161,9 @@ class OrderController extends Controller
                 $qty = (int) ($item['quantity'] ?? 1);
                 $lineTotal = $price * $qty;
                 $subtotal += $lineTotal;
+
+                // Decrement stock quantity
+                $product->decrement('quantity', min($qty, $product->quantity));
 
                 OrderItem::create([
                     'id' => (string) Str::uuid(),
@@ -179,8 +200,7 @@ class OrderController extends Controller
     public function show(string $id): JsonResponse
     {
         $order = (Str::isUuid($id) ? Order::with(['items', 'store', 'transporter'])->find($id) : null)
-            ?? Order::where('order_code', $id)->first()
-            ?? Order::with(['items', 'store', 'transporter'])->first();
+            ?? Order::where('order_code', $id)->first();
 
         if (!$order) {
             return $this->respondError('NOT_FOUND', 'Order not found', null, 404);
@@ -194,7 +214,8 @@ class OrderController extends Controller
      */
     public function updateStatus(Request $request, string $id): JsonResponse
     {
-        $order = Str::isUuid($id) ? Order::find($id) : Order::first();
+        $order = (Str::isUuid($id) ? Order::find($id) : null)
+            ?? Order::where('order_code', $id)->first();
         if (!$order) {
             return $this->respondError('NOT_FOUND', 'Order not found', null, 404);
         }
@@ -211,7 +232,8 @@ class OrderController extends Controller
      */
     public function confirmReceipt(string $id): JsonResponse
     {
-        $order = Str::isUuid($id) ? Order::find($id) : Order::first();
+        $order = (Str::isUuid($id) ? Order::find($id) : null)
+            ?? Order::where('order_code', $id)->first();
         if (!$order) {
             return $this->respondError('NOT_FOUND', 'Order not found', null, 404);
         }

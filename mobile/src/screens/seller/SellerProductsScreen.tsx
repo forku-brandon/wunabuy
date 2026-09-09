@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { View, Image, FlatList, StyleSheet, TouchableOpacity, Switch, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ScreenContainer, Text, Card, Input, Button, Badge, Toast, EmptyState, QuantityInputModal } from '../../components/ui';
@@ -12,24 +12,33 @@ import { SellerService } from '../../services/api';
 
 export const SellerProductsScreen = ({ navigation }: any) => {
   const { theme, isDark } = useThemeStore();
-  const { products, toggleProductActive, updateStock, deleteProduct } = useSellerStore();
+  const { products, setProducts, toggleProductActive, updateStock, deleteProduct } = useSellerStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [galleryProduct, setGalleryProduct] = useState<Product | null>(null);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
+  const loadProducts = useCallback(async () => {
+    try {
+      const data = await SellerService.getStoreProducts();
+      if (Array.isArray(data)) {
+        setProducts(data);
+      }
+    } catch {
+      // Handled
+    }
+  }, [setProducts]);
+
+  useEffect(() => {
+    loadProducts();
+  }, [loadProducts]);
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
-    try {
-      await SellerService.getStoreProducts();
-    } catch {
-      // Handled
-    } finally {
-      setRefreshing(false);
-    }
-  }, []);
+    await loadProducts();
+    setRefreshing(false);
+  }, [loadProducts]);
 
   const filteredProducts = products.filter((p) => {
     if (searchQuery.trim()) {

@@ -29,8 +29,10 @@ class TransporterController extends Controller
      */
     public function getAvailableJobs(Request $request): JsonResponse
     {
-        $orders = Order::with(['store', 'customer'])
+        $orders = Order::with(['store', 'customer', 'items'])
             ->whereIn('status', ['ready_for_pickup', 'pending', 'preparing'])
+            ->whereNull('transporter_id')
+            ->latest()
             ->get();
 
         $jobs = [];
@@ -42,8 +44,16 @@ class TransporterController extends Controller
             $dAddress = $order->delivery_address ?? [];
             $dLat = (float) ($dAddress['latitude'] ?? 4.0611);
             $dLng = (float) ($dAddress['longitude'] ?? 9.7863);
+            $dText = is_array($dAddress) ? ($dAddress['address_text'] ?? ($dAddress['label'] ?? 'Douala')) : (string) $dAddress;
 
             $distance = $this->logisticsService->calculateHaversineDistance($sLat, $sLng, $dLat, $dLng);
+
+            $itemsSummary = $order->items->map(function ($it) {
+                return "{$it->quantity}x {$it->name}";
+            })->join(', ');
+            if (empty($itemsSummary)) {
+                $itemsSummary = '1x Wunabuy Verified Package';
+            }
 
             $jobs[] = [
                 'id' => 'job_' . substr($order->id, 0, 8),
@@ -60,7 +70,7 @@ class TransporterController extends Controller
                     'label' => 'Store Pickup',
                     'latitude' => $sLat,
                     'longitude' => $sLng,
-                    'address_text' => $store->address_text ?? 'Rue Joss, Akwa, Douala',
+                    'address_text' => $store->address_text ?? 'Akwa, Douala',
                     'city' => 'Douala',
                     'is_default' => false,
                 ],
@@ -69,11 +79,11 @@ class TransporterController extends Controller
                     'label' => 'Buyer Location',
                     'latitude' => $dLat,
                     'longitude' => $dLng,
-                    'address_text' => $dAddress['address_text'] ?? 'Boulevard de la LibertÃ©, Bonanjo, Douala',
+                    'address_text' => $dText,
                     'city' => 'Douala',
                     'is_default' => true,
                 ],
-                'items_summary' => '1x Wunabuy Verified Package',
+                'items_summary' => $itemsSummary,
                 'delivery_fee' => (float) ($order->delivery_fee > 0 ? $order->delivery_fee : 1500),
                 'currency' => 'XAF',
                 'distance_km' => $distance > 0 ? $distance : 2.4,
@@ -81,7 +91,6 @@ class TransporterController extends Controller
                 'created_at' => $order->created_at?->toIso8601String() ?? now()->toIso8601String(),
             ];
         }
-
 
         return $this->respondPaginated($jobs, false, null, count($jobs));
     }
@@ -94,8 +103,14 @@ class TransporterController extends Controller
         $user = $this->resolveUser(request());
         $transporter = $user?->transporter ?? Transporter::where('user_id', $user?->id)->first();
 
-        // Assign transporter to first eligible order
-        $order = Order::whereIn('status', ['ready_for_pickup', 'pending', 'preparing'])->first();
+        // Extract UUID or prefix from job_ prefix if present
+        $cleanId = str_starts_with($id, 'job_') ? substr($id, 4) : $id;
+
+        $order = (Str::isUuid($cleanId) ? Order::find($cleanId) : null)
+            ?? Order::where('id', 'like', "{$cleanId}%")->first()
+            ?? Order::where('order_code', $id)->first()
+            ?? Order::whereIn('status', ['ready_for_pickup', 'pending', 'preparing'])->whereNull('transporter_id')->first();
+
         if ($order && $transporter) {
             $order->transporter_id = $transporter->id;
             $order->status = 'in_transit';
@@ -105,6 +120,7 @@ class TransporterController extends Controller
         return $this->respondSuccess([
             'accepted' => true,
             'job_id' => $id,
+            'order_id' => $order?->id,
             'status' => 'accepted',
         ]);
     }

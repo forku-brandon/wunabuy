@@ -62,29 +62,29 @@ export const CheckoutPaymentScreen = ({ route, navigation }: any) => {
       let createdOrderId = 'wb_order_' + Date.now();
       let orderCode = `WB-2026-${Math.floor(1000 + Math.random() * 9000)}`;
 
-      try {
-        const orderRes = await OrdersService.createOrder({
-          store_id: cartStoreId || 'c6ed6a51-aa38-4d68-b27a-66331c85c858',
-          items: (cartItems && cartItems.length > 0)
-            ? cartItems.map((it) => ({
-                product_id: it.product_id,
-                quantity: it.quantity,
-              }))
-            : [{ product_id: '030d5e57-533a-421f-bdff-688e1eac866e', quantity: 1 }],
-          delivery_address: user?.default_address?.address_text || 'Bonanjo, Douala',
-          delivery_fee: deliveryFee,
-          payment_method: selectedMethod === PaymentMethod.MOMO ? PaymentMethod.MOMO : PaymentMethod.WALLET,
-          notes: `Delivery via ${deliveryMethod}`,
-        });
+      if (!cartItems || cartItems.length === 0) {
+        setError('Your cart is empty. Please add items before checkout.');
+        setIsProcessing(false);
+        return;
+      }
 
-        if (orderRes) {
-          createdOrderId = orderRes.id;
-          if (orderRes.order_code) {
-            orderCode = orderRes.order_code;
-          }
+      const orderRes = await OrdersService.createOrder({
+        store_id: cartStoreId || cartItems[0]?.store_id,
+        items: cartItems.map((it) => ({
+          product_id: it.product_id,
+          quantity: it.quantity,
+        })),
+        delivery_address: user?.default_address?.address_text || 'Bonanjo, Douala',
+        delivery_fee: deliveryFee,
+        payment_method: selectedMethod === PaymentMethod.MOMO ? PaymentMethod.MOMO : PaymentMethod.WALLET,
+        notes: `Delivery via ${deliveryMethod}`,
+      });
+
+      if (orderRes) {
+        createdOrderId = orderRes.id;
+        if (orderRes.order_code) {
+          orderCode = orderRes.order_code;
         }
-      } catch (orderApiErr: any) {
-        console.warn('[Wunabuy Checkout] createOrder fallback:', orderApiErr?.message);
       }
 
       if (selectedMethod === PaymentMethod.MOMO) {

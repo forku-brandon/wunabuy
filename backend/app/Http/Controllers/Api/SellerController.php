@@ -94,21 +94,74 @@ class SellerController extends Controller
     {
         $sellerUser = $this->resolveUser($request);
         $store = $sellerUser?->store;
-        
+
         $query = Order::with(['items', 'customer']);
         if ($store) {
             $query->where('store_id', $store->id);
-        } else if ($sellerUser && $sellerUser->role === 'seller') {
+        } elseif ($sellerUser && $sellerUser->role === 'seller') {
             return $this->respondSuccess([]);
         }
 
         if ($status = $request->query('status')) {
-            $query->where('status', $status);
+            if ($status === 'pending_acceptance') {
+                $query->whereIn('status', ['pending', 'paid_escrow']);
+            } elseif ($status === 'completed') {
+                $query->whereIn('status', ['completed', 'delivered']);
+            } else {
+                $query->where('status', $status);
+            }
         }
 
         $orders = $query->latest()->get();
 
-        return $this->respondSuccess($orders);
+        $formatted = $orders->map(function ($order) {
+            $delivAddr = $order->delivery_address;
+            $addressText = 'Douala';
+            if (is_array($delivAddr)) {
+                $addressText = $delivAddr['address_text'] ?? ($delivAddr['label'] ?? 'Douala');
+            } elseif (is_string($delivAddr)) {
+                $addressText = $delivAddr;
+            }
+
+            $mappedStatus = match ($order->status) {
+                'pending', 'paid_escrow' => 'pending_acceptance',
+                'preparing' => 'preparing',
+                'ready_for_pickup' => 'ready_for_pickup',
+                'in_transit' => 'in_transit',
+                'delivered', 'completed' => 'completed',
+                'cancelled' => 'cancelled',
+                'disputed' => 'disputed',
+                default => 'pending_acceptance',
+            };
+
+            return [
+                'id' => $order->id,
+                'order_code' => $order->order_code,
+                'customer_name' => $order->customer?->full_name ?? 'Verified Buyer',
+                'customer_phone' => $order->customer?->phone ?? '+237670000000',
+                'delivery_address' => $addressText,
+                'items' => $order->items->map(function ($item) {
+                    return [
+                        'product_id' => $item->product_id,
+                        'name' => $item->name,
+                        'price' => (float) $item->price,
+                        'quantity' => (int) $item->quantity,
+                        'image_url' => $item->image_url ?? 'https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?auto=format&fit=crop&w=800&q=80',
+                    ];
+                }),
+                'subtotal' => (float) $order->subtotal,
+                'delivery_fee' => (float) $order->delivery_fee,
+                'commission' => (float) round($order->subtotal * 0.035),
+                'total' => (float) $order->total,
+                'status' => $mappedStatus,
+                'created_at' => $order->created_at?->toIso8601String() ?? now()->toIso8601String(),
+                'acceptance_expires_at' => $order->created_at ? $order->created_at->addHours(2)->toIso8601String() : now()->addHours(2)->toIso8601String(),
+                'pickup_pin' => $order->pickup_pin ?? '84920',
+                'delivery_method' => 'wunabuy_transporter',
+            ];
+        });
+
+        return $this->respondSuccess($formatted);
     }
 
     /**
@@ -116,7 +169,8 @@ class SellerController extends Controller
      */
     public function acceptOrder(string $id): JsonResponse
     {
-        $order = Str::isUuid($id) ? Order::find($id) : Order::first();
+        $order = (Str::isUuid($id) ? Order::find($id) : null)
+            ?? Order::where('order_code', $id)->first();
         if ($order) {
             $order->status = 'preparing';
             $order->save();
@@ -130,7 +184,8 @@ class SellerController extends Controller
      */
     public function declineOrder(Request $request, string $id): JsonResponse
     {
-        $order = Str::isUuid($id) ? Order::find($id) : Order::first();
+        $order = (Str::isUuid($id) ? Order::find($id) : null)
+            ?? Order::where('order_code', $id)->first();
         if ($order) {
             $order->status = 'cancelled';
             $order->notes = ($order->notes ?? '') . ' [Seller Declined: ' . $request->input('reason', 'Out of stock') . ']';
@@ -145,7 +200,8 @@ class SellerController extends Controller
      */
     public function markReady(Request $request, string $id): JsonResponse
     {
-        $order = Str::isUuid($id) ? Order::find($id) : Order::first();
+        $order = (Str::isUuid($id) ? Order::find($id) : null)
+            ?? Order::where('order_code', $id)->first();
         if ($order) {
             $order->status = 'ready_for_pickup';
             $order->save();
@@ -165,10 +221,16 @@ class SellerController extends Controller
     /**
      * Store products list.
      */
-    public function products(): JsonResponse
+    public function products(Request $request): JsonResponse
     {
-        $store = Store::first();
-        $products = $store ? Product::where('store_id', $store->id)->get() : Product::all();
+        $sellerUser = $this->resolveUser($request);
+        $store = $sellerUser?->store;
+
+        if ($store) {
+            $products = Product::with('store')->where('store_id', $store->id)->latest()->get();
+        } else {
+            $products = Product::with('store')->latest()->get();
+        }
 
         return $this->respondSuccess($products);
     }

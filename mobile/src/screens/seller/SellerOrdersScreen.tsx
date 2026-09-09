@@ -25,7 +25,7 @@ type OrderTab = 'all' | 'pending_acceptance' | 'preparing' | 'ready_for_pickup' 
 
 export const SellerOrdersScreen = ({ navigation }: any) => {
   const { theme, isDark } = useThemeStore();
-  const { orders, acceptOrder, declineOrder, markOrderReady, markOrderInTransit, markOrderCompleted } = useSellerStore();
+  const { orders, setOrders, acceptOrder, declineOrder, markOrderReady, markOrderInTransit, markOrderCompleted } = useSellerStore();
   const [activeTab, setActiveTab] = useState<OrderTab>('pending_acceptance');
   const [refreshing, setRefreshing] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -85,13 +85,16 @@ export const SellerOrdersScreen = ({ navigation }: any) => {
 
   const loadOrders = useCallback(async () => {
     try {
-      await SellerService.getFulfillmentOrders();
+      const data = await SellerService.getFulfillmentOrders();
+      if (Array.isArray(data)) {
+        setOrders(data);
+      }
     } catch {
       // Fallback to store
     } finally {
       setRefreshing(false);
     }
-  }, []);
+  }, [setOrders]);
 
   useEffect(() => {
     loadOrders();

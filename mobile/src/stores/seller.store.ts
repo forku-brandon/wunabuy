@@ -1,4 +1,4 @@
-﻿import { create } from 'zustand';
+import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Product, ProductCategory, QualityTier } from '@wunabuy/types';
@@ -102,6 +102,7 @@ interface SellerState {
   }) => void;
   setTransactions: (transactions: SellerTransaction[]) => void;
   setOrders: (orders: SellerOrder[]) => void;
+  setProducts: (products: Product[]) => void;
 
   // Actions
   acceptOrder: (orderId: string) => void;
@@ -273,6 +274,10 @@ export const useSellerStore = create<SellerState>()(
 
       setOrders: (orders) => {
         set({ orders });
+      },
+
+      setProducts: (products) => {
+        set({ products });
       },
 
       acceptOrder: (orderId) => {

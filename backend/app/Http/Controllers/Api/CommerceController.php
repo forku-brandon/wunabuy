@@ -197,7 +197,7 @@ class CommerceController extends Controller
     {
         $product = Str::isUuid($id)
             ? Product::with('store')->find($id)
-            : Product::with('store')->first();
+            : Product::with('store')->where('name', 'ilike', "%{$id}%")->first();
 
         if (!$product) {
             return $this->respondError('NOT_FOUND', 'Product not found', null, 404);
@@ -219,7 +219,40 @@ class CommerceController extends Controller
      */
     public function createProduct(Request $request): JsonResponse
     {
-        $store = Store::first();
+        $sellerUser = $this->resolveUser($request);
+        $store = null;
+        if ($sellerUser) {
+            $store = $sellerUser->store;
+            if (!$store && in_array('seller', $sellerUser->available_roles ?? [])) {
+                $store = Store::create([
+                    'id' => (string) Str::uuid(),
+                    'owner_id' => $sellerUser->id,
+                    'store_name' => ($sellerUser->full_name ?: 'Merchant') . "'s Store",
+                    'description' => 'Verified merchant store on Wunabuy Marketplace.',
+                    'category' => 'Electronics',
+                    'address_text' => 'Douala, Cameroon',
+                    'rating_avg' => 5.0,
+                    'total_reviews' => 0,
+                    'is_verified' => true,
+                    'is_active' => true,
+                ]);
+            }
+        }
+
+        if (!$store) {
+            $storeId = $request->input('store_id');
+            $store = ($storeId && Str::isUuid($storeId)) ? Store::find($storeId) : Store::first();
+        }
+
+        $quantity = (int) ($request->input('quantity') ?? $request->input('stock_quantity', 10));
+        if ($quantity < 0) {
+            $quantity = 10;
+        }
+
+        $images = $request->input('images');
+        if (!is_array($images) || empty($images)) {
+            $images = ['https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=800&q=80'];
+        }
 
         $product = Product::create([
             'id' => (string) Str::uuid(),
@@ -228,16 +261,16 @@ class CommerceController extends Controller
             'description' => $request->input('description', ''),
             'price' => (float) $request->input('price', 10000),
             'currency' => 'XAF',
-            'stock_quantity' => (int) $request->input('stock_quantity', 10),
+            'quantity' => $quantity,
             'category' => $request->input('category', 'Electronics'),
             'quality_tier' => $request->input('quality_tier', 'new'),
-            'images' => $request->input('images', ['https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=800&q=80']),
+            'images' => $images,
             'is_active' => true,
             'rating_avg' => 5.0,
             'total_reviews' => 0,
         ]);
 
-        return $this->respondSuccess($product, [], 201);
+        return $this->respondSuccess($product->load('store'), [], 201);
     }
 
     /**
@@ -245,15 +278,20 @@ class CommerceController extends Controller
      */
     public function updateProduct(Request $request, string $id): JsonResponse
     {
-        $product = Str::isUuid($id) ? Product::find($id) : Product::first();
+        $product = Str::isUuid($id) ? Product::find($id) : null;
         if (!$product) {
             return $this->respondError('NOT_FOUND', 'Product not found', null, 404);
         }
 
-        $product->fill($request->all());
+        $data = $request->all();
+        if (isset($data['stock_quantity']) && !isset($data['quantity'])) {
+            $data['quantity'] = (int) $data['stock_quantity'];
+        }
+
+        $product->fill($data);
         $product->save();
 
-        return $this->respondSuccess($product);
+        return $this->respondSuccess($product->load('store'));
     }
 
     /**
