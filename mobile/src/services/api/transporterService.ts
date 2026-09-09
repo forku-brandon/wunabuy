@@ -229,30 +229,30 @@ export const TransporterService = {
           permit_status: 'Douala Council',
         },
         earnings: {
-          available_cashout: 48500,
-          pending_escrow: 12500,
-          total_lifetime_earned: 384500,
+          available_cashout: 0,
+          pending_escrow: 0,
+          total_lifetime_earned: 0,
         },
       };
     } catch {
       return {
         driver_id: 'DRV-2026-884',
-        full_name: 'Jean-Paul Kamga',
-        phone: '+237 670 123 456',
-        rating_avg: 4.95,
-        completed_deliveries: 248,
-        is_verified: true,
+        full_name: 'Driver Partner',
+        phone: '+237 670 000 000',
+        rating_avg: 5.0,
+        completed_deliveries: 0,
+        is_verified: false,
         vehicle: {
-          type: 'Yamaha YBR 125 🏍️',
-          plate_number: 'LT-214-AA',
-          operating_quarter: 'Akwa / Bonanjo',
-          insurance_status: 'Active (Dec 2026)',
-          permit_status: 'Douala Council',
+          type: 'Moto / Courier 🏍️',
+          plate_number: 'LT-000-XX',
+          operating_quarter: 'Douala',
+          insurance_status: 'Active',
+          permit_status: 'Pending',
         },
         earnings: {
-          available_cashout: 48500,
-          pending_escrow: 12500,
-          total_lifetime_earned: 384500,
+          available_cashout: 0,
+          pending_escrow: 0,
+          total_lifetime_earned: 0,
         },
       };
     }
@@ -270,7 +270,7 @@ export const TransporterService = {
         return response.data.data;
       }
       return {
-        available_payout: 100,
+        available_payout: 0,
         pending_escrow: 0,
         total_earned: 0,
         completed_trips_count: 0,
@@ -280,7 +280,7 @@ export const TransporterService = {
       };
     } catch {
       return {
-        available_payout: 100,
+        available_payout: 0,
         pending_escrow: 0,
         total_earned: 0,
         completed_trips_count: 0,

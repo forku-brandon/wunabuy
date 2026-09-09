@@ -71,13 +71,17 @@ class AuthController extends Controller
             'otp_expires_at' => now()->addMinutes(5),
         ]);
 
-        // Automatically initialize XAF wallet for user with 100 FCFA registration reward
+        // Only buyer accounts receive the 100 FCFA registration shopping reward.
+        // Transporter and seller accounts have 0 money in their account by default.
+        $initialBalance = ($role === 'buyer') ? 100.00 : 0.00;
+        $initialBonus = ($role === 'buyer') ? 100.00 : 0.00;
+
         Wallet::firstOrCreate(
             ['user_id' => $user->id],
             [
                 'currency' => 'XAF',
-                'balance_available' => 100.00,
-                'registration_bonus' => 100.00,
+                'balance_available' => $initialBalance,
+                'registration_bonus' => $initialBonus,
                 'balance_escrow_locked' => 0.00,
                 'is_active' => true,
             ]

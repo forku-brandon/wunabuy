@@ -14,6 +14,7 @@ import { RecentTransactionsWidget } from '../../components/wallet/RecentTransact
 
 import { ScreenContainer, Text, Card, Button, Badge, Toast } from '../../components/ui';
 import { useSellerStore, SellerTransaction } from '../../stores/seller.store';
+import { useAuthStore } from '../../stores/auth.store';
 import { useThemeStore } from '../../stores/theme.store';
 import { formatXAF, formatDate } from '@wunabuy/utils';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
@@ -23,6 +24,7 @@ type LedgerFilter = 'all' | 'payout' | 'escrow_release' | 'commission_deduction'
 
 export const SellerWalletScreen = ({ navigation }: any) => {
   const { theme, isDark } = useThemeStore();
+  const { user } = useAuthStore();
   const {
     availableBalance,
     escrowLockedBalance,
@@ -42,7 +44,7 @@ export const SellerWalletScreen = ({ navigation }: any) => {
   // Payout Modal State
   const [isPayoutModalVisible, setIsPayoutModalVisible] = useState(false);
   const [payoutProvider, setPayoutProvider] = useState<'mtn' | 'orange'>('mtn');
-  const [payoutPhone, setPayoutPhone] = useState('+237 670 123 456');
+  const [payoutPhone, setPayoutPhone] = useState(user?.phone || '');
   const [payoutAmount, setPayoutAmount] = useState('');
   const [isSubmittingPayout, setIsSubmittingPayout] = useState(false);
 
@@ -90,9 +92,11 @@ export const SellerWalletScreen = ({ navigation }: any) => {
   const telecomFee = Math.round(parsedAmount * 0.01);
   const netPayout = Math.max(0, parsedAmount - telecomFee);
 
+  const bonus = user?.wallet?.registration_bonus ?? 0;
+  const withdrawableBalance = Math.max(0, availableBalance - bonus);
+
   const handleSetAmountPreset = (fraction: number) => {
-    const withdrawable = Math.max(0, availableBalance - 100);
-    const amount = Math.floor(withdrawable * fraction);
+    const amount = Math.floor(withdrawableBalance * fraction);
     setPayoutAmount(String(amount));
   };
 
@@ -101,12 +105,11 @@ export const SellerWalletScreen = ({ navigation }: any) => {
       setToastMessage('Please enter a valid payout amount.');
       return;
     }
-    const withdrawable = Math.max(0, availableBalance - 100);
-    if (parsedAmount > withdrawable) {
-      if (withdrawable <= 0) {
-        setToastMessage('Your 100 FCFA registration reward cannot be withdrawn. You can spend it on Wunabuy or top up your wallet.');
+    if (parsedAmount > withdrawableBalance) {
+      if (bonus > 0 && availableBalance >= parsedAmount) {
+        setToastMessage('Your promotional registration reward cannot be withdrawn. You can spend it on Wunabuy or top up your wallet.');
       } else {
-        setToastMessage(`Only ${withdrawable.toLocaleString()} XAF is withdrawable. The 100 FCFA registration reward cannot be cashed out.`);
+        setToastMessage(`Insufficient withdrawable balance. You have ${formatXAF(withdrawableBalance)} available for payout.`);
       }
       return;
     }

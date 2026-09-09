@@ -6,26 +6,28 @@ import { ScreenContainer, Text, Card, Button, Badge, Input, BottomSheet, Toast }
 import { formatXAF, formatPhone } from '@wunabuy/utils';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
+import { useAuthStore } from '../../stores/auth.store';
 import { WalletService, TransporterService } from '../../services/api';
 import { RecentTransactionsWidget } from '../../components/wallet/RecentTransactionsWidget';
 
 export const TransporterEarningsScreen = ({ navigation }: any) => {
 
   const { theme, isDark } = useThemeStore();
+  const { user } = useAuthStore();
   const insets = useSafeAreaInsets();
 
   const [availablePayout, setAvailablePayout] = useState(0);
   const [pendingEscrow, setPendingEscrow] = useState(0);
   const [totalEarned, setTotalEarned] = useState(0);
-  const [completedTripsCount, setCompletedTripsCount] = useState(0);
-  const [ratingAvg, setRatingAvg] = useState(4.95);
+  const [completedTripsCount, setCompletedTripsCount] = useState((user as any)?.transporter?.completed_trips ?? 0);
+  const [ratingAvg, setRatingAvg] = useState((user as any)?.transporter?.rating_avg ?? 5.0);
   const [totalTips, setTotalTips] = useState(0);
   const [isBalanceVisible, setIsBalanceVisible] = useState(true);
   const [trips, setTrips] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [isWithdrawModalVisible, setIsWithdrawModalVisible] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState('');
-  const [withdrawPhone, setWithdrawPhone] = useState('+237 670 123 456');
+  const [withdrawPhone, setWithdrawPhone] = useState(user?.phone || '');
   const [momoProvider, setMomoProvider] = useState<'momo' | 'om'>('momo');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [error, setError] = useState('');
@@ -60,8 +62,10 @@ export const TransporterEarningsScreen = ({ navigation }: any) => {
     setRefreshing(false);
   }, [loadWalletData]);
 
+  const bonus = user?.wallet?.registration_bonus ?? 0;
+  const withdrawable = Math.max(0, availablePayout - bonus);
+
   const handlePresetPercentage = (percentage: number) => {
-    const withdrawable = Math.max(0, availablePayout - 100);
     const calc = Math.floor((withdrawable * percentage) / 100);
     setWithdrawAmount(calc.toString());
     setError('');
@@ -73,12 +77,11 @@ export const TransporterEarningsScreen = ({ navigation }: any) => {
       setError('Minimum payout amount is 100 FCFA.');
       return;
     }
-    const withdrawable = Math.max(0, availablePayout - 100);
     if (amount > withdrawable) {
-      if (withdrawable <= 0) {
-        setError('Your 100 FCFA registration reward cannot be withdrawn. You can spend it on Wunabuy or top up your wallet.');
+      if (bonus > 0 && availablePayout >= amount) {
+        setError('Your promotional registration reward cannot be withdrawn. You can spend it on Wunabuy or top up your wallet.');
       } else {
-        setError(`Only ${formatXAF(withdrawable)} is withdrawable. The 100 FCFA registration reward cannot be cashed out.`);
+        setError(`Insufficient balance. You have ${formatXAF(withdrawable)} available for cashout.`);
       }
       return;
     }

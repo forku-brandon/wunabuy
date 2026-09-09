@@ -384,13 +384,13 @@ export const useSellerStore = create<SellerState>()(
       totalReviews: 87,
       followersCount: 1420,
 
-      availableBalance: 100,
+      availableBalance: 0,
       escrowLockedBalance: 0,
       totalRevenue: 0,
       totalPaidOut: 0,
 
-      orders: INITIAL_SELLER_ORDERS,
-      products: INITIAL_SELLER_PRODUCTS,
+      orders: [],
+      products: [],
       transactions: [],
 
       updateStoreProfile: (partial) => {
@@ -405,13 +405,13 @@ export const useSellerStore = create<SellerState>()(
         set((state) => ({
           ...state,
           storeName: data.store_name ?? state.storeName,
-          isVerified: data.is_verified ?? state.isVerified,
-          ratingAvg: data.rating_avg ?? state.ratingAvg,
-          totalReviews: data.total_reviews ?? state.totalReviews,
-          availableBalance: data.available_balance ?? state.availableBalance,
-          escrowLockedBalance: data.escrow_locked_balance ?? state.escrowLockedBalance,
-          totalRevenue: data.total_revenue ?? state.totalRevenue,
-          totalPaidOut: data.total_paid_out ?? state.totalPaidOut,
+          isVerified: data.is_verified ?? false,
+          ratingAvg: data.rating_avg ?? 5.0,
+          totalReviews: data.total_reviews ?? 0,
+          availableBalance: data.available_balance ?? 0,
+          escrowLockedBalance: data.escrow_locked_balance ?? 0,
+          totalRevenue: data.total_revenue ?? 0,
+          totalPaidOut: data.total_paid_out ?? 0,
         }));
       },
 
@@ -565,7 +565,7 @@ export const useSellerStore = create<SellerState>()(
       },
     }),
     {
-      name: 'wunabuy-seller-storage',
+      name: 'wunabuy-seller-storage-v3',
       storage: createJSONStorage(() => AsyncStorage),
     }
   )

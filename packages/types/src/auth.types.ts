@@ -68,6 +68,8 @@ export interface User {
     id: string;
     balance_available: number;
     balance_escrow_locked: number;
+    registration_bonus?: number;
+    balance_withdrawable?: number;
     currency: string;
   } | null;
   /** Store details if seller */

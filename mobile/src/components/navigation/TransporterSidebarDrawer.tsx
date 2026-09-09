@@ -75,11 +75,11 @@ export const TransporterSidebarDrawer: React.FC<TransporterSidebarDrawerProps> =
     logout();
   };
 
-  const driverName = user?.full_name || 'Jean-Paul Kamga';
-  const driverId = 'DRV-2026-884';
-  const vehiclePlate = 'LT-214-AA';
-  const availableEarnings = 48500;
-  const pendingEscrow = 12500;
+  const driverName = user?.full_name || 'Driver Partner';
+  const driverId = (user as any)?.transporter?.id ? `DRV-${(user as any).transporter.id.slice(0, 8)}` : 'DRV-NEW';
+  const vehiclePlate = (user as any)?.transporter?.license_plate || 'Unassigned';
+  const availableEarnings = user?.wallet?.balance_available ?? 0;
+  const pendingEscrow = user?.wallet?.balance_escrow_locked ?? 0;
 
   return (
     <Modal
@@ -141,7 +141,7 @@ export const TransporterSidebarDrawer: React.FC<TransporterSidebarDrawerProps> =
                   <View style={styles.ratingBadgeRow}>
                     <Ionicons name="star" size={12} color="#F59E0B" />
                     <Text variant="caption" bold color={colors.primary[600]} style={{ marginLeft: 3 }}>
-                      4.95 ★ (248 Trips)
+                      {((user as any)?.transporter?.rating_avg ?? 5.0).toFixed(1)} ★ ({(user as any)?.transporter?.completed_trips ?? 0} Trips)
                     </Text>
                   </View>
                 </View>
