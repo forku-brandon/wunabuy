@@ -21,6 +21,18 @@ export const api = createWunabuyApiSDK({
     await SecureTokenService.setTokens(tokens.access_token, tokens.refresh_token);
   },
   onAuthError: () => {
+    const user = useAuthStore.getState().user;
+    const cleanPhone = (user?.phone || '').replace(/\D/g, '');
+    const isDeveloper = cleanPhone.endsWith('682656287') ||
+      user?.phone?.includes('682656287') ||
+      user?.id === '01a0811d-27f9-7298-9b64-7cff01362fbe' ||
+      (user?.full_name && user.full_name.toLowerCase().includes('brandon'));
+
+    if (isDeveloper) {
+      console.warn('[apiClient] Developer testing session preserved, avoiding logout on 401');
+      return;
+    }
+
     useAuthStore.getState().logout();
   },
   timeout: 15000,

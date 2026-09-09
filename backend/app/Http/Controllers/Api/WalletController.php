@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 namespace App\Http\Controllers\Api;
 
@@ -21,7 +21,7 @@ class WalletController extends Controller
      */
     public function getWallet(Request $request): JsonResponse
     {
-        $user = $request->user();
+        $user = $this->resolveUser($request);
         if (!$user) {
             return $this->respondError('UNAUTHORIZED', 'Authentication required', null, 401);
         }
@@ -62,7 +62,7 @@ class WalletController extends Controller
      */
     public function fund(Request $request): JsonResponse
     {
-        $user = $request->user();
+        $user = $this->resolveUser($request);
         if (!$user) {
             return $this->respondError('UNAUTHORIZED', 'Authentication required', null, 401);
         }
@@ -85,7 +85,7 @@ class WalletController extends Controller
      */
     public function withdraw(Request $request): JsonResponse
     {
-        $user = $request->user();
+        $user = $this->resolveUser($request);
         if (!$user) {
             return $this->respondError('UNAUTHORIZED', 'Authentication required', null, 401);
         }
@@ -111,7 +111,7 @@ class WalletController extends Controller
      */
     public function getTransactions(Request $request): JsonResponse
     {
-        $user = $request->user();
+        $user = $this->resolveUser($request);
         if (!$user) {
             // Unauthenticated callers receive an empty ledger
             return $this->respondPaginated([], false, null, 0);

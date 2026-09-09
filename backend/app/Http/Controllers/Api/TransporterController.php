@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 namespace App\Http\Controllers\Api;
 
@@ -230,9 +230,9 @@ class TransporterController extends Controller
      */
     public function getProfile(): JsonResponse
     {
-        $user = request()->user();
-        if (!) {
-            return ->respondError('UNAUTHORIZED', 'Authentication required', null, 401);
+        $user = $this->resolveUser(request());
+        if (!$user) {
+            return $this->respondError('UNAUTHORIZED', 'Authentication required', null, 401);
         }
         $transporter = ($user && $user->transporter) ? $user->transporter : Transporter::where('user_id', $user?->id)->first();
         $wallet = $user ? $user->wallet : null;
@@ -273,9 +273,9 @@ class TransporterController extends Controller
      */
     public function getEarnings(): JsonResponse
     {
-        $user = request()->user();
-        if (!) {
-            return ->respondError('UNAUTHORIZED', 'Authentication required', null, 401);
+        $user = $this->resolveUser(request());
+        if (!$user) {
+            return $this->respondError('UNAUTHORIZED', 'Authentication required', null, 401);
         }
         $transporter = ($user && $user->transporter) ? $user->transporter : Transporter::where('user_id', $user?->id)->first();
         $wallet = $user ? $user->wallet : null;
@@ -328,7 +328,7 @@ class TransporterController extends Controller
      */
     public function withdraw(Request $request): JsonResponse
     {
-        $user = $request->user();
+        $user = $this->resolveUser($request);
         if (!$user) {
             return $this->respondError('UNAUTHORIZED', 'Authentication required', null, 401);
         }

@@ -30,7 +30,7 @@ class SellerController extends Controller
      */
     public function dashboard(): JsonResponse
     {
-        $sellerUser = request()->user();
+        $sellerUser = $this->resolveUser(request());
         if (!$sellerUser) {
             return $this->respondError('UNAUTHORIZED', 'Authentication required', null, 401);
         }
@@ -92,7 +92,7 @@ class SellerController extends Controller
      */
     public function orders(Request $request): JsonResponse
     {
-        $sellerUser = $request->user();
+        $sellerUser = $this->resolveUser($request);
         $store = $sellerUser?->store;
         
         $query = Order::with(['items', 'customer']);
@@ -206,7 +206,7 @@ class SellerController extends Controller
      */
     public function requestPayout(Request $request): JsonResponse
     {
-        $sellerUser = $request->user();
+        $sellerUser = $this->resolveUser($request);
         if (!$sellerUser) {
             return $this->respondError('UNAUTHORIZED', 'Authentication required', null, 401);
         }
@@ -230,7 +230,7 @@ class SellerController extends Controller
      */
     public function analytics(Request $request): JsonResponse
     {
-        $sellerUser = $request->user();
+        $sellerUser = $this->resolveUser($request);
         if (!$sellerUser) {
             return $this->respondError('UNAUTHORIZED', 'Authentication required', null, 401);
         }

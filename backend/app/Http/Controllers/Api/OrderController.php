@@ -252,7 +252,7 @@ class OrderController extends Controller
      */
     public function getRefunds(Request $request): JsonResponse
     {
-        $user = $request->user();
+        $user = $this->resolveUser($request);
         if (!$user) {
             return $this->respondError('UNAUTHORIZED', 'Authentication required', null, 401);
         }
