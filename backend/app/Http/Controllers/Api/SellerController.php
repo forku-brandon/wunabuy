@@ -30,7 +30,10 @@ class SellerController extends Controller
      */
     public function dashboard(): JsonResponse
     {
-        $sellerUser = request()->user() ?? User::where('phone', '+237699112233')->first() ?? User::where('role', 'seller')->first() ?? User::first();
+        $sellerUser = request()->user();
+        if (!$sellerUser) {
+            return $this->respondError('UNAUTHORIZED', 'Authentication required', null, 401);
+        }
         $store = $sellerUser?->store;
         $wallet = $sellerUser ? $sellerUser->wallet : null;
 
@@ -203,7 +206,10 @@ class SellerController extends Controller
      */
     public function requestPayout(Request $request): JsonResponse
     {
-        $sellerUser = $request->user() ?? User::where('role', 'seller')->first() ?? User::first();
+        $sellerUser = $request->user();
+        if (!$sellerUser) {
+            return $this->respondError('UNAUTHORIZED', 'Authentication required', null, 401);
+        }
         $amount = (float) $request->input('amount', 0);
         if ($amount < 100) {
             return $this->respondError('VALIDATION_ERROR', 'Minimum payout request is 100 XAF.', ['amount' => ['Minimum is 100 XAF.']], 422);
@@ -224,15 +230,25 @@ class SellerController extends Controller
      */
     public function analytics(Request $request): JsonResponse
     {
-        $sellerUser = $request->user() ?? User::where('phone', '+237699112233')->first() ?? User::where('role', 'seller')->first() ?? User::first();
-        $store = ($sellerUser && $sellerUser->store) ? $sellerUser->store : Store::first();
-        $wallet = $sellerUser ? $sellerUser->wallet : null;
+        $sellerUser = $request->user();
+        if (!$sellerUser) {
+            return $this->respondError('UNAUTHORIZED', 'Authentication required', null, 401);
+        }
+        $store = ($sellerUser && $sellerUser->store) ? $sellerUser->store : null;
+        $wallet = $sellerUser->wallet ?? null;
         $timeRange = $request->query('time_range', '7d');
 
-        $orders = Order::all();
+        $ordersQuery = Order::query();
+        if ($store) {
+            $ordersQuery->where('store_id', $store->id);
+        } else {
+            $ordersQuery->whereRaw('1 = 0');
+        }
+        $orders = $ordersQuery->get();
         $completedOrdersCount = $orders->where('status', 'delivered')->count();
         $totalOrdersCount = $orders->count();
         $completionRate = $totalOrdersCount > 0 ? round(($completedOrdersCount / $totalOrdersCount) * 100, 1) : 100.0;
+
 
         $available = (float) ($wallet->balance_available ?? 0);
         $escrowLocked = (float) ($wallet->balance_escrow_locked ?? 0);

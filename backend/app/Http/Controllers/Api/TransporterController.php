@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace App\Http\Controllers\Api;
 
@@ -69,7 +69,7 @@ class TransporterController extends Controller
                     'label' => 'Buyer Location',
                     'latitude' => $dLat,
                     'longitude' => $dLng,
-                    'address_text' => $dAddress['address_text'] ?? 'Boulevard de la Liberté, Bonanjo, Douala',
+                    'address_text' => $dAddress['address_text'] ?? 'Boulevard de la LibertÃ©, Bonanjo, Douala',
                     'city' => 'Douala',
                     'is_default' => true,
                 ],
@@ -82,44 +82,6 @@ class TransporterController extends Controller
             ];
         }
 
-        if (empty($jobs)) {
-            // Provide default demo job
-            $jobs[] = [
-                'id' => 'job_1',
-                'order_id' => 'ord_101',
-                'order_code' => 'WB-2026-9842',
-                'store' => [
-                    'id' => 'store_101',
-                    'store_name' => 'Douala Tech Hub (Akwa)',
-                    'rating_avg' => 4.9,
-                    'is_verified' => true,
-                ],
-                'pickup_address' => [
-                    'id' => 'p_1',
-                    'label' => 'Store Pickup',
-                    'latitude' => 4.0510,
-                    'longitude' => 9.7678,
-                    'address_text' => 'Rue Joss, Akwa',
-                    'city' => 'Douala',
-                    'is_default' => false,
-                ],
-                'delivery_address' => [
-                    'id' => 'd_1',
-                    'label' => 'Buyer Home',
-                    'latitude' => 4.0611,
-                    'longitude' => 9.7863,
-                    'address_text' => 'Boulevard de la Liberté, Bonanjo',
-                    'city' => 'Douala',
-                    'is_default' => true,
-                ],
-                'items_summary' => '1x Samsung Galaxy A54 5G (Package size: Small)',
-                'delivery_fee' => 1500,
-                'currency' => 'XAF',
-                'distance_km' => 2.4,
-                'status' => 'pending',
-                'created_at' => now()->toIso8601String(),
-            ];
-        }
 
         return $this->respondPaginated($jobs, false, null, count($jobs));
     }
@@ -129,7 +91,8 @@ class TransporterController extends Controller
      */
     public function acceptJob(string $id): JsonResponse
     {
-        $transporter = Transporter::first();
+        $user = $this->resolveUser(request());
+        $transporter = $user?->transporter ?? Transporter::where('user_id', $user?->id)->first();
 
         // Assign transporter to first eligible order
         $order = Order::whereIn('status', ['ready_for_pickup', 'pending', 'preparing'])->first();
@@ -160,7 +123,8 @@ class TransporterController extends Controller
     public function updateDutyStatus(Request $request): JsonResponse
     {
         $isOnDuty = (bool) $request->input('is_on_duty', true);
-        $transporter = Transporter::first();
+        $user = $this->resolveUser($request);
+        $transporter = $user?->transporter ?? Transporter::where('user_id', $user?->id)->first();
         if ($transporter) {
             $transporter->is_online = $isOnDuty;
             $transporter->save();
@@ -188,15 +152,15 @@ class TransporterController extends Controller
             'verification_code' => $order->pickup_verification_pin ?? '7842',
             'delivery_fee' => (float) ($order->delivery_fee ?? 1500),
             'items_summary' => 'Samsung Galaxy A54 5G (128GB - Factory Sealed)',
-            'package_specs' => 'Fragile Electronics • Small Box (< 2 kg)',
+            'package_specs' => 'Fragile Electronics â€¢ Small Box (< 2 kg)',
             'store_name' => $store->store_name ?? 'Douala Tech Hub (Akwa Branch)',
             'store_address' => $store->address_text ?? 'Rue Joss, Quartier Akwa, Douala, Cameroon',
             'store_landmark_directions' => 'Opposite Place du Gouvernement, Next to Akwa Mall (Suite 104)',
             'store_phone' => $store->phone ?? '+237 670 123 456',
             'store_operating_hours' => $store->counter_hours ?? 'Mon - Sat: 8:00 AM - 6:30 PM',
-            'store_handover_instructions' => '🔑 Handover Code Verification: Present rider ID & ask merchant for the 4-digit pickup PIN upon parcel collection.',
+            'store_handover_instructions' => 'ðŸ”‘ Handover Code Verification: Present rider ID & ask merchant for the 4-digit pickup PIN upon parcel collection.',
             'buyer_name' => $customer->full_name ?? 'Marie Claire Ngono',
-            'buyer_address' => $dAddress['address_text'] ?? 'Boulevard de la Liberté, Quartier Akwa, Douala, Cameroon',
+            'buyer_address' => $dAddress['address_text'] ?? 'Boulevard de la LibertÃ©, Quartier Akwa, Douala, Cameroon',
             'buyer_landmark_directions' => 'Near BICEC Bank Main Gate, White 2-Story Building with Blue Gate',
             'buyer_phone' => $customer->phone ?? '+237 671 234 567',
             'buyer_delivery_instructions' => 'Call buyer on arrival. Buyer will inspect parcel & sign proof of delivery on phone.',
@@ -252,7 +216,8 @@ class TransporterController extends Controller
         $lat = (float) $request->input('latitude', 4.0510);
         $lng = (float) $request->input('longitude', 9.7678);
 
-        $transporter = Transporter::first();
+        $user = $this->resolveUser($request);
+        $transporter = $user?->transporter ?? Transporter::where('user_id', $user?->id)->first();
         if ($transporter) {
             $this->logisticsService->updateTransporterGPS($transporter->id, $lat, $lng);
         }
@@ -265,7 +230,10 @@ class TransporterController extends Controller
      */
     public function getProfile(): JsonResponse
     {
-        $user = request()->user() ?? User::where('role', 'transporter')->first() ?? User::first();
+        $user = request()->user();
+        if (!) {
+            return ->respondError('UNAUTHORIZED', 'Authentication required', null, 401);
+        }
         $transporter = ($user && $user->transporter) ? $user->transporter : Transporter::where('user_id', $user?->id)->first();
         $wallet = $user ? $user->wallet : null;
 
@@ -284,7 +252,7 @@ class TransporterController extends Controller
             'completed_deliveries' => (int) ($transporter->completed_trips ?? 0),
             'is_verified' => (bool) ($transporter->is_verified ?? false),
             'vehicle' => [
-                'type' => $transporter->vehicle_type ?? 'Yamaha YBR 125 🏍️',
+                'type' => $transporter->vehicle_type ?? 'Yamaha YBR 125 ðŸï¸',
                 'plate_number' => $transporter->license_plate ?? 'LT-8492-AB',
                 'operating_quarter' => 'Akwa / Bonanjo',
                 'insurance_status' => 'Active (Dec 2026)',
@@ -305,7 +273,10 @@ class TransporterController extends Controller
      */
     public function getEarnings(): JsonResponse
     {
-        $user = request()->user() ?? User::where('role', 'transporter')->first() ?? User::first();
+        $user = request()->user();
+        if (!) {
+            return ->respondError('UNAUTHORIZED', 'Authentication required', null, 401);
+        }
         $transporter = ($user && $user->transporter) ? $user->transporter : Transporter::where('user_id', $user?->id)->first();
         $wallet = $user ? $user->wallet : null;
 
@@ -357,7 +328,10 @@ class TransporterController extends Controller
      */
     public function withdraw(Request $request): JsonResponse
     {
-        $user = $request->user() ?? User::where('role', 'transporter')->first() ?? User::first();
+        $user = $request->user();
+        if (!$user) {
+            return $this->respondError('UNAUTHORIZED', 'Authentication required', null, 401);
+        }
         $amount = (float) $request->input('amount', 0);
         if ($amount < 100) {
             return $this->respondError('VALIDATION_ERROR', 'Minimum cashout amount is 100 XAF.', ['amount' => ['Minimum is 100 XAF.']], 422);

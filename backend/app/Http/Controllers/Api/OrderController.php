@@ -28,7 +28,13 @@ class OrderController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Order::with(['items', 'store', 'transporter']);
+        $user = $this->resolveUser($request);
+        if (!$user) {
+            return $this->respondError('UNAUTHORIZED', 'Authentication required', null, 401);
+        }
+
+        $query = Order::with(['items', 'store', 'transporter'])
+            ->where('customer_id', $user->id);
 
         if ($status = $request->query('status')) {
             $query->where('status', $status);
@@ -71,8 +77,29 @@ class OrderController extends Controller
         }
 
         return DB::transaction(function () use ($request, $idempotencyKey) {
-            $buyer = User::where('role', 'buyer')->first() ?? User::first();
-            $store = Store::first();
+            $buyer = $this->resolveUser($request);
+            if (!$buyer) {
+                return $this->respondError('UNAUTHORIZED', 'Authentication required', null, 401);
+            }
+
+            // Resolve store from items or request
+            $storeId = $request->input('store_id');
+            $store = $storeId ? Store::find($storeId) : null;
+
+            // Try to get the store from the first product in items
+            if (!$store) {
+                $firstItemProductId = $request->input('items.0.product_id');
+                if ($firstItemProductId && Str::isUuid($firstItemProductId)) {
+                    $firstProduct = Product::find($firstItemProductId);
+                    if ($firstProduct) {
+                        $store = Store::find($firstProduct->store_id);
+                    }
+                }
+            }
+
+            if (!$store) {
+                return $this->respondError('STORE_NOT_FOUND', 'Store not found — please provide a valid store_id', null, 422);
+            }
 
             $itemsData = $request->input('items', []);
             $subtotal = 0;
@@ -81,13 +108,12 @@ class OrderController extends Controller
             $orderCode = 'WB-' . date('Y') . '-' . rand(1000, 9999);
             $pickupPin = (string) rand(1000, 9999);
 
-            $firstProduct = Product::first();
 
             $order = Order::create([
                 'id' => $orderId,
                 'order_code' => $orderCode,
-                'customer_id' => $buyer ? $buyer->id : (string) Str::uuid(),
-                'store_id' => $store ? $store->id : (string) Str::uuid(),
+                'customer_id' => $buyer->id,
+                'store_id' => $store->id,
                 'status' => 'pending',
                 'subtotal' => 0,
                 'delivery_fee' => (float) $request->input('delivery_fee', 1500),
@@ -97,7 +123,7 @@ class OrderController extends Controller
                 'payment_status' => 'pending',
                 'delivery_address' => $request->input('delivery_address', [
                     'label' => 'Home',
-                    'address_text' => 'Boulevard de la Liberté, Bonanjo, Douala',
+                    'address_text' => 'Douala',
                     'city' => 'Douala',
                     'latitude' => 4.0611,
                     'longitude' => 9.7863,
@@ -110,10 +136,10 @@ class OrderController extends Controller
                 $productId = $item['product_id'] ?? null;
                 $product = Str::isUuid($productId) ? Product::find($productId) : null;
                 if (!$product) {
-                    $product = $firstProduct;
+                    continue; // skip invalid item — no fake product fallback
                 }
 
-                $price = $product ? (float) $product->price : (float) ($item['price'] ?? 10000);
+                $price = (float) $product->price;
                 $qty = (int) ($item['quantity'] ?? 1);
                 $lineTotal = $price * $qty;
                 $subtotal += $lineTotal;
@@ -122,7 +148,7 @@ class OrderController extends Controller
                     'id' => (string) Str::uuid(),
                     'order_id' => $order->id,
                     'product_id' => $product->id,
-                    'name' => $product ? $product->name : ($item['product_name'] ?? 'Product'),
+                    'name' => $product->name,
                     'price' => $price,
                     'quantity' => $qty,
                     'image_url' => is_array($product->images) ? ($product->images[0] ?? null) : null,
@@ -130,7 +156,9 @@ class OrderController extends Controller
             }
 
             if ($subtotal === 0) {
-                $subtotal = 25000;
+                // No valid items provided — rollback
+                $order->delete();
+                return $this->respondError('NO_ITEMS', 'No valid product items provided for this order', null, 422);
             }
 
             $deliveryFee = (float) $order->delivery_fee;
@@ -224,15 +252,16 @@ class OrderController extends Controller
      */
     public function getRefunds(Request $request): JsonResponse
     {
-        $user = $request->user() ?? User::where('role', 'buyer')->first() ?? User::first();
+        $user = $request->user();
+        if (!$user) {
+            return $this->respondError('UNAUTHORIZED', 'Authentication required', null, 401);
+        }
         $disputes = Dispute::with(['order.store', 'order.items'])
             ->where(function ($q) use ($user) {
-                if ($user) {
-                    $q->where('user_id', $user->id)
-                      ->orWhereHas('order', function ($oq) use ($user) {
-                          $oq->where('customer_id', $user->id);
-                      });
-                }
+                $q->where('user_id', $user->id)
+                  ->orWhereHas('order', function ($oq) use ($user) {
+                      $oq->where('customer_id', $user->id);
+                  });
             })
             ->latest()
             ->get();

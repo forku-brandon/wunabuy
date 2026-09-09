@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace App\Http\Controllers\Api;
 
@@ -21,8 +21,11 @@ class WalletController extends Controller
      */
     public function getWallet(Request $request): JsonResponse
     {
-        $user = $request->user() ?? User::where('role', 'buyer')->first() ?? User::first();
-        $wallet = $user ? $user->wallet : Wallet::first();
+        $user = $request->user();
+        if (!$user) {
+            return $this->respondError('UNAUTHORIZED', 'Authentication required', null, 401);
+        }
+        $wallet = $user->wallet ?? Wallet::where('user_id', $user->id)->first();
 
         if (!$wallet && $user) {
             $wallet = Wallet::create([
@@ -59,9 +62,9 @@ class WalletController extends Controller
      */
     public function fund(Request $request): JsonResponse
     {
-        $user = $request->user() ?? User::where('role', 'buyer')->first() ?? User::first();
+        $user = $request->user();
         if (!$user) {
-            return $this->respondError('UNAUTHENTICATED', 'Unauthenticated user.', null, 401);
+            return $this->respondError('UNAUTHORIZED', 'Authentication required', null, 401);
         }
 
         $amount = (float) $request->input('amount', 0);
@@ -82,9 +85,9 @@ class WalletController extends Controller
      */
     public function withdraw(Request $request): JsonResponse
     {
-        $user = $request->user() ?? User::where('role', 'buyer')->first() ?? User::first();
+        $user = $request->user();
         if (!$user) {
-            return $this->respondError('UNAUTHENTICATED', 'Unauthenticated user.', null, 401);
+            return $this->respondError('UNAUTHORIZED', 'Authentication required', null, 401);
         }
 
         $amount = (float) $request->input('amount', 0);
