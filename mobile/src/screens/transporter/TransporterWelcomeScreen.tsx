@@ -29,7 +29,7 @@ import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
 import { useAuthStore } from '../../stores/auth.store';
 import { UserRole } from '@wunabuy/types';
-import { AuthService } from '../../services/api';
+import { AuthService, KYCService } from '../../services/api';
 
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -136,9 +136,29 @@ const TRANSPORT_MODES: TransportMode[] = [
 export const TransporterWelcomeScreen = ({ navigation }: any) => {
   const insets = useSafeAreaInsets();
   const { theme, isDark } = useThemeStore();
-  const { setActiveRole } = useAuthStore();
+  const { user } = useAuthStore();
   const [activeIndex, setActiveIndex] = useState(0);
+  const [kycStatus, setKycStatus] = useState<string>('unsubmitted');
+  const [rejectionReason, setRejectionReason] = useState<string | null>(null);
   const flatListRef = useRef<FlatList>(null);
+
+  const isGranted = AuthService.canAccessRole(user, UserRole.TRANSPORTER);
+
+  const loadKYCStatus = async () => {
+    try {
+      const res = await KYCService.getTransporterKYCStatus();
+      if (res && res.status) {
+        setKycStatus(res.status);
+        setRejectionReason(res.reviewer_notes || (res as any).rejection_reason || null);
+      }
+    } catch {
+      // offline fallback
+    }
+  };
+
+  useEffect(() => {
+    loadKYCStatus();
+  }, []);
 
   // Safe Back Navigation Handler (prevents GO_BACK unhandled warnings)
   const handleBack = () => {
@@ -380,6 +400,35 @@ export const TransporterWelcomeScreen = ({ navigation }: any) => {
           </View>
         </View>
 
+        {/* Status Callout Banner if Pending or Rejected */}
+        {!isGranted && (kycStatus === 'pending' || kycStatus === 'under_review') && (
+          <View style={[styles.statusCalloutCard, { backgroundColor: '#FFFBEB', borderColor: '#FDE68A' }]}>
+            <Ionicons name="time" size={20} color="#D97706" style={{ marginRight: 8 }} />
+            <View style={{ flex: 1 }}>
+              <Text variant="caption" bold color="#92400E">
+                Driver Credentials Under Review
+              </Text>
+              <Text variant="caption" color="#B45309" style={{ marginTop: 2, fontSize: 11 }}>
+                Our logistics compliance staff will review your license & vehicle documents within 24 hours.
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {!isGranted && kycStatus === 'rejected' && (
+          <View style={[styles.statusCalloutCard, { backgroundColor: '#FEF2F2', borderColor: '#FECACA' }]}>
+            <Ionicons name="alert-circle" size={20} color="#DC2626" style={{ marginRight: 8 }} />
+            <View style={{ flex: 1 }}>
+              <Text variant="caption" bold color="#991B1B">
+                Verification Rejected
+              </Text>
+              <Text variant="caption" color="#B91C1C" style={{ marginTop: 2, fontSize: 11 }}>
+                Reason: {rejectionReason || 'Driver documents did not meet criteria. Please resubmit.'}
+              </Text>
+            </View>
+          </View>
+        )}
+
         {/* 20% Bottom Action Container (High-End Capsule Button) */}
         <View
           style={[
@@ -394,19 +443,62 @@ export const TransporterWelcomeScreen = ({ navigation }: any) => {
           <TouchableOpacity
             activeOpacity={0.88}
             onPress={() => {
-              useAuthStore.getState().setActiveRole(UserRole.TRANSPORTER);
-              AuthService.switchRole(UserRole.TRANSPORTER);
+              if (isGranted) {
+                useAuthStore.getState().setActiveRole(UserRole.TRANSPORTER);
+                AuthService.switchRole(UserRole.TRANSPORTER);
+              } else {
+                navigation.navigate('TransporterKYC');
+              }
             }}
-            style={[styles.capsuleBtn, { backgroundColor: colors.role.transporter }]}
+            style={[
+              styles.capsuleBtn,
+              {
+                backgroundColor: isGranted
+                  ? colors.role.transporter
+                  : kycStatus === 'rejected'
+                  ? '#DC2626'
+                  : kycStatus === 'pending' || kycStatus === 'under_review'
+                  ? '#D97706'
+                  : colors.role.transporter,
+              },
+            ]}
           >
-            <Text variant="bodyLarge" bold color={colors.neutral[0]} style={styles.capsuleBtnText}>
-              Open Transporter Dashboard ➔
-            </Text>
+            <View style={{ flex: 1 }}>
+              <Text variant="bodyLarge" bold color={colors.neutral[0]} style={styles.capsuleBtnText}>
+                {isGranted
+                  ? 'Open Transporter Dashboard ➔'
+                  : kycStatus === 'rejected'
+                  ? 'Update & Resubmit Documents ➔'
+                  : kycStatus === 'pending' || kycStatus === 'under_review'
+                  ? 'View Verification Status ➔'
+                  : 'Start Driver Verification ➔'}
+              </Text>
+              <Text variant="caption" color="rgba(255,255,255,0.85)" style={{ fontSize: 11, marginTop: 1 }}>
+                {isGranted
+                  ? 'Active Approved Fleet Account'
+                  : kycStatus === 'rejected'
+                  ? 'Fix rejected issues & re-apply'
+                  : kycStatus === 'pending' || kycStatus === 'under_review'
+                  ? 'Credentials pending compliance review'
+                  : 'Submit License & Vehicle Papers'}
+              </Text>
+            </View>
             <View style={styles.arrowCircle}>
-              <Ionicons name="arrow-forward" size={18} color={colors.role.transporter} />
+              <Ionicons
+                name={isGranted ? 'arrow-forward' : 'shield-checkmark'}
+                size={18}
+                color={
+                  isGranted
+                    ? colors.role.transporter
+                    : kycStatus === 'rejected'
+                    ? '#DC2626'
+                    : kycStatus === 'pending' || kycStatus === 'under_review'
+                    ? '#D97706'
+                    : colors.role.transporter
+                }
+              />
             </View>
           </TouchableOpacity>
-
         </View>
       </View>
     </ScreenContainer>
@@ -630,5 +722,14 @@ const styles = StyleSheet.create({
     backgroundColor: colors.neutral[0],
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  statusCalloutCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.sm,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    marginHorizontal: spacing.base,
+    marginBottom: spacing.xs,
   },
 });

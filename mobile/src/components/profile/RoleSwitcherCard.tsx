@@ -168,7 +168,7 @@ export const RoleSwitcherCard: React.FC<RoleSwitcherCardProps> = ({ navigation }
               <TouchableOpacity
                 activeOpacity={0.82}
                 onPress={() => {
-                  const isGranted = user?.role === UserRole.SELLER || user?.available_roles?.includes(UserRole.SELLER) || true;
+                  const isGranted = AuthService.canAccessRole(user, UserRole.SELLER);
                   if (isGranted) {
                     setActiveRole(UserRole.SELLER);
                     AuthService.switchRole(UserRole.SELLER);
@@ -196,7 +196,7 @@ export const RoleSwitcherCard: React.FC<RoleSwitcherCardProps> = ({ navigation }
               <TouchableOpacity
                 activeOpacity={0.82}
                 onPress={() => {
-                  const isGranted = user?.role === UserRole.TRANSPORTER || user?.available_roles?.includes(UserRole.TRANSPORTER) || true;
+                  const isGranted = AuthService.canAccessRole(user, UserRole.TRANSPORTER);
                   if (isGranted) {
                     setActiveRole(UserRole.TRANSPORTER);
                     AuthService.switchRole(UserRole.TRANSPORTER);

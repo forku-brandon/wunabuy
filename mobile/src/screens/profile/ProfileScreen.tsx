@@ -467,7 +467,7 @@ export const ProfileScreen = ({ navigation }: any) => {
 
           activeOpacity={0.88}
           onPress={() => {
-            const isGranted = user?.role === UserRole.SELLER || user?.available_roles?.includes(UserRole.SELLER) || true;
+            const isGranted = AuthService.canAccessRole(user, UserRole.SELLER);
             if (isGranted) {
               useAuthStore.getState().setActiveRole(UserRole.SELLER);
               AuthService.switchRole(UserRole.SELLER);
@@ -501,7 +501,7 @@ export const ProfileScreen = ({ navigation }: any) => {
         <TouchableOpacity
           activeOpacity={0.88}
           onPress={() => {
-            const isGranted = user?.role === UserRole.TRANSPORTER || user?.available_roles?.includes(UserRole.TRANSPORTER) || true;
+            const isGranted = AuthService.canAccessRole(user, UserRole.TRANSPORTER);
             if (isGranted) {
               useAuthStore.getState().setActiveRole(UserRole.TRANSPORTER);
               AuthService.switchRole(UserRole.TRANSPORTER);

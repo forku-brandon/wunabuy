@@ -335,7 +335,11 @@ class SellerController extends Controller
      */
     public function submitKYC(Request $request): JsonResponse
     {
-        $sellerUser = User::where('role', 'seller')->first() ?? User::first();
+        $sellerUser = $this->resolveUser($request);
+        if (!$sellerUser) {
+            return $this->respondError('UNAUTHENTICATED', 'User session expired or not found', null, 401);
+        }
+
         $res = $this->kycService->submitSellerKYC($sellerUser, $request->all());
 
         return $this->respondSuccess($res);
@@ -346,13 +350,39 @@ class SellerController extends Controller
      */
     public function getKYCStatus(Request $request): JsonResponse
     {
-        $store = Store::first();
+        $user = $this->resolveUser($request);
+        if (!$user) {
+            return $this->respondError('UNAUTHENTICATED', 'User session expired or not found', null, 401);
+        }
+
+        $store = $user->store;
+        $submission = DB::table('seller_kyc_submissions')
+            ->where('user_id', $user->id)
+            ->latest('created_at')
+            ->first();
+
+        $status = 'unsubmitted';
+        $reviewerNotes = null;
+        $reviewedAt = null;
+        $submittedAt = null;
+
+        if ($submission) {
+            $status = $submission->status;
+            $reviewerNotes = $submission->reviewer_notes;
+            $reviewedAt = $submission->reviewed_at;
+            $submittedAt = $submission->created_at;
+        } elseif ($store) {
+            $status = $store->kyc_status ?? 'pending';
+        }
 
         return $this->respondSuccess([
-            'store_id' => $store->id ?? 'store_1',
-            'status' => $store->kyc_status ?? 'pending',
+            'store_id' => $store->id ?? null,
+            'status' => $status,
             'is_verified' => (bool) ($store->is_verified ?? false),
-            'submitted_at' => now()->subDay()->toIso8601String(),
+            'reviewer_notes' => $reviewerNotes,
+            'rejection_reason' => $status === 'rejected' ? $reviewerNotes : null,
+            'submitted_at' => $submittedAt,
+            'reviewed_at' => $reviewedAt,
         ]);
     }
 }

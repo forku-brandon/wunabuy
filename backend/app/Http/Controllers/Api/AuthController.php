@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\Wallet;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
@@ -46,6 +47,7 @@ class AuthController extends Controller
         $role = $request->input('role', 'buyer');
         $email = $request->input('email');
         $addressText = $request->input('address_text');
+        $pin = $request->input('pin');
 
         // STRICT SECURITY CHECK: Prevent duplicate registration for the same phone number
         $existingUser = User::where('phone', $phone)->first();
@@ -58,30 +60,29 @@ class AuthController extends Controller
             );
         }
 
+        // Least access privilege: all new accounts start strictly with Buyer access.
+        // Access to Seller or Transporter workspaces requires document KYC verification.
         $user = User::create([
             'id' => (string) Str::uuid(),
             'phone' => $phone,
             'email' => $email,
             'full_name' => $fullName,
-            'role' => $role,
+            'role' => 'buyer',
             'status' => 'active',
             'is_phone_verified' => true,
-            'available_roles' => array_values(array_unique(['buyer', $role])),
+            'available_roles' => ['buyer'],
+            'pin' => $pin ? Hash::make($pin) : null,
             'otp' => '123456',
             'otp_expires_at' => now()->addMinutes(5),
         ]);
 
         // Only buyer accounts receive the 100 FCFA registration shopping reward.
-        // Transporter and seller accounts have 0 money in their account by default.
-        $initialBalance = ($role === 'buyer') ? 100.00 : 0.00;
-        $initialBonus = ($role === 'buyer') ? 100.00 : 0.00;
-
         Wallet::firstOrCreate(
             ['user_id' => $user->id],
             [
                 'currency' => 'XAF',
-                'balance_available' => $initialBalance,
-                'registration_bonus' => $initialBonus,
+                'balance_available' => 100.00,
+                'registration_bonus' => 100.00,
                 'balance_escrow_locked' => 0.00,
                 'is_active' => true,
             ]
@@ -421,11 +422,57 @@ class AuthController extends Controller
             return $this->respondError('UNAUTHENTICATED', 'User session expired or not found', null, 401);
         }
 
-        $available = $user->available_roles ?? ['buyer'];
-        if (!in_array($requestedRole, $available)) {
-            $available[] = $requestedRole;
-            $user->available_roles = $available;
+        // DEVELOPER TESTING BYPASS: Forku Brandon (phone ending in 682656287) has full testing permissions
+        $cleanPhone = preg_replace('/[^0-9]/', '', $user->phone ?? '');
+        $isDeveloper = str_ends_with($cleanPhone, '682656287');
+
+        if (!$isDeveloper && $requestedRole !== 'buyer') {
+            $available = $user->available_roles ?? ['buyer'];
+            $isGranted = false;
+            $kycStatus = 'unsubmitted';
+            $rejectionReason = null;
+
+            if ($requestedRole === 'seller') {
+                $sub = DB::table('seller_kyc_submissions')->where('user_id', $user->id)->latest('created_at')->first();
+                if ($sub) {
+                    $kycStatus = $sub->status;
+                    $rejectionReason = $sub->reviewer_notes;
+                }
+                $store = $user->store;
+                $isGranted = in_array('seller', $available) && ($kycStatus === 'approved' || ($store && (bool) $store->is_verified));
+            } elseif ($requestedRole === 'transporter') {
+                $sub = DB::table('transporter_kyc_submissions')->where('user_id', $user->id)->latest('created_at')->first();
+                if ($sub) {
+                    $kycStatus = $sub->status;
+                    $rejectionReason = $sub->reviewer_notes;
+                }
+                $transporter = $user->transporter;
+                $isGranted = in_array('transporter', $available) && ($kycStatus === 'approved' || ($transporter && in_array($transporter->status, ['active', 'online'])));
+            }
+
+            if (!$isGranted) {
+                return $this->respondError(
+                    'ROLE_ACCESS_DENIED',
+                    "You do not have verified access to the {$requestedRole} workspace. Please submit your verification documents for staff approval.",
+                    [
+                        'requested_role' => $requestedRole,
+                        'kyc_status' => $kycStatus,
+                        'rejection_reason' => $rejectionReason,
+                    ],
+                    403
+                );
+            }
         }
+
+        // Developer auto-assignment of available roles if missing
+        if ($isDeveloper) {
+            $available = $user->available_roles ?? ['buyer'];
+            if (!in_array($requestedRole, $available)) {
+                $available[] = $requestedRole;
+                $user->available_roles = array_values(array_unique($available));
+            }
+        }
+
         $user->role = $requestedRole;
         $user->save();
 

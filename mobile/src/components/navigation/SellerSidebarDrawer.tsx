@@ -55,7 +55,7 @@ export const SellerSidebarDrawer: React.FC<SellerSidebarDrawerProps> = ({
 
   const handleSwitchToTransporter = () => {
     onClose();
-    const isGranted = user?.role === UserRole.TRANSPORTER || user?.available_roles?.includes(UserRole.TRANSPORTER) || true;
+    const isGranted = AuthService.canAccessRole(user, UserRole.TRANSPORTER);
     if (isGranted) {
       useAuthStore.getState().setActiveRole(UserRole.TRANSPORTER);
       AuthService.switchRole(UserRole.TRANSPORTER);

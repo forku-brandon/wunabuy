@@ -12,6 +12,7 @@ use App\Services\LogisticsService;
 use App\Services\PaymentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class TransporterController extends Controller
@@ -390,7 +391,11 @@ class TransporterController extends Controller
      */
     public function submitKYC(Request $request): JsonResponse
     {
-        $user = User::where('role', 'transporter')->first() ?? User::first();
+        $user = $this->resolveUser($request);
+        if (!$user) {
+            return $this->respondError('UNAUTHENTICATED', 'User session expired or not found', null, 401);
+        }
+
         $result = $this->kycService->submitTransporterKYC($user, $request->all());
 
         return $this->respondSuccess($result);
@@ -399,16 +404,43 @@ class TransporterController extends Controller
     /**
      * Get Transporter KYC status.
      */
-    public function getKYCStatus(): JsonResponse
+    public function getKYCStatus(Request $request): JsonResponse
     {
-        $transporter = Transporter::first();
+        $user = $this->resolveUser($request);
+        if (!$user) {
+            return $this->respondError('UNAUTHENTICATED', 'User session expired or not found', null, 401);
+        }
+
+        $transporter = $user->transporter;
+        $submission = DB::table('transporter_kyc_submissions')
+            ->where('user_id', $user->id)
+            ->latest('created_at')
+            ->first();
+
+        $status = 'unsubmitted';
+        $reviewerNotes = null;
+        $reviewedAt = null;
+        $submittedAt = null;
+
+        if ($submission) {
+            $status = $submission->status;
+            $reviewerNotes = $submission->reviewer_notes;
+            $reviewedAt = $submission->reviewed_at;
+            $submittedAt = $submission->created_at;
+        } elseif ($transporter) {
+            $status = $transporter->kyc_status ?? 'pending';
+        }
 
         return $this->respondSuccess([
-            'submission_id' => 'sub_' . ($transporter->id ?? '1'),
-            'transporter_id' => $transporter->id ?? 'trn_1',
-            'vehicle_type' => $transporter->vehicle_type ?? 'bike',
-            'status' => $transporter->kyc_status ?? 'pending',
-            'submitted_at' => now()->subDays(2)->toIso8601String(),
+            'submission_id' => $submission->id ?? null,
+            'transporter_id' => $transporter->id ?? null,
+            'vehicle_type' => $submission->vehicle_type ?? ($transporter->vehicle_type ?? 'motorcycle'),
+            'status' => $status,
+            'is_verified' => (bool) ($transporter->is_verified ?? false),
+            'reviewer_notes' => $reviewerNotes,
+            'rejection_reason' => $status === 'rejected' ? $reviewerNotes : null,
+            'submitted_at' => $submittedAt,
+            'reviewed_at' => $reviewedAt,
         ]);
     }
 }

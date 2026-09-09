@@ -48,6 +48,51 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
+        // Developer Account: Forku Brandon (+237682656287 / 682656287) with full multi-role testing access
+        $existingDev = DB::table('users')->where('phone', '+237682656287')->first();
+        if ($existingDev) {
+            $devId = $existingDev->id;
+            DB::table('users')->where('id', $devId)->update([
+                'email' => 'forku.brandon@wunabuy.com',
+                'full_name' => 'Forku Brandon',
+                'role' => 'buyer',
+                'status' => 'active',
+                'pin' => Hash::make('123456'),
+                'is_phone_verified' => true,
+                'available_roles' => json_encode(['buyer', 'seller', 'transporter']),
+                'updated_at' => now(),
+            ]);
+        } else {
+            $devId = '01a0811d-27f9-7298-9b64-7cff01362fbe';
+            DB::table('users')->insert([
+                'id' => $devId,
+                'phone' => '+237682656287',
+                'email' => 'forku.brandon@wunabuy.com',
+                'full_name' => 'Forku Brandon',
+                'role' => 'buyer',
+                'status' => 'active',
+                'pin' => Hash::make('123456'),
+                'is_phone_verified' => true,
+                'available_roles' => json_encode(['buyer', 'seller', 'transporter']),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        // Developer Wallet
+        DB::table('wallets')->updateOrInsert(
+            ['user_id' => $devId],
+            [
+                'id' => (string) Str::uuid(),
+                'balance_available' => 100000.00,
+                'balance_escrow_locked' => 0.00,
+                'registration_bonus' => 0.00,
+                'currency' => 'XAF',
+                'is_active' => true,
+                'updated_at' => now(),
+            ]
+        );
+
         // Buyer Wallet
         $existingBuyerWallet = DB::table('wallets')->where('user_id', $buyerId)->first();
         if ($existingBuyerWallet) {

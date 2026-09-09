@@ -8,6 +8,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
+use Illuminate\Support\Facades\DB;
 
 class User extends Authenticatable
 {
@@ -178,24 +179,30 @@ class User extends Authenticatable
 
         $storeData = null;
         if ($this->store) {
+            $storeSub = DB::table('seller_kyc_submissions')->where('user_id', $this->id)->latest('created_at')->first();
             $storeData = [
                 'id' => $this->store->id,
                 'store_name' => $this->store->store_name,
                 'category' => $this->store->category,
                 'rating_avg' => (float) ($this->store->rating_avg ?? 5.0),
                 'is_verified' => (bool) $this->store->is_verified,
+                'kyc_status' => $storeSub->status ?? ($this->store->is_verified ? 'approved' : 'pending'),
                 'logo_url' => $this->store->logo_url,
             ];
         }
 
         $transporterData = null;
         if ($this->transporter) {
+            $transporterSub = DB::table('transporter_kyc_submissions')->where('user_id', $this->id)->latest('created_at')->first();
+            $isVerified = ($transporterSub->status ?? null) === 'approved' || in_array($this->transporter->status, ['active', 'online']);
             $transporterData = [
                 'id' => $this->transporter->id,
                 'vehicle_type' => $this->transporter->vehicle_type,
-                'kyc_status' => $this->transporter->kyc_status,
+                'status' => $this->transporter->status ?? 'pending',
+                'kyc_status' => $transporterSub->status ?? ($isVerified ? 'approved' : 'pending'),
+                'is_verified' => $isVerified,
                 'rating_avg' => (float) ($this->transporter->rating_avg ?? 5.0),
-                'completed_trips' => (int) ($this->transporter->completed_trips ?? 0),
+                'completed_trips' => (int) ($this->transporter->total_trips ?? 0),
             ];
         }
 

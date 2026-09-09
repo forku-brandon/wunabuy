@@ -20,33 +20,41 @@ class KYCService
             $store = $user->store ?? Store::firstOrCreate(
                 ['user_id' => $user->id],
                 [
-                    'store_name' => $data['business_name'] ?? ($user->full_name . ' Shop'),
-                    'slug' => Str::slug($data['business_name'] ?? ($user->full_name . ' Shop')) . '-' . Str::random(4),
+                    'store_name' => $data['store_name'] ?? ($data['business_name'] ?? ($user->full_name . ' Shop')),
+                    'slug' => Str::slug($data['store_name'] ?? ($data['business_name'] ?? ($user->full_name . ' Shop'))) . '-' . Str::random(4),
                     'category' => $data['category'] ?? 'General',
-                    'address_text' => $data['physical_address'] ?? 'Douala, Cameroon',
+                    'address_text' => $data['address_text'] ?? ($data['physical_address'] ?? 'Douala, Cameroon'),
                     'is_verified' => false,
-                    'kyc_status' => 'pending',
                 ]
             );
 
             $submissionId = (string) Str::uuid();
 
             DB::table('seller_kyc_submissions')->updateOrInsert(
-                ['store_id' => $store->id],
+                ['user_id' => $user->id],
                 [
                     'id' => $submissionId,
-                    'tax_number' => $data['tax_number'] ?? null,
-                    'id_card_url' => $data['id_card_front'] ?? 'https://images.unsplash.com/photo-cni-front',
-                    'business_permit_url' => $data['business_register_doc'] ?? null,
+                    'store_name' => $data['store_name'] ?? ($data['business_name'] ?? $store->store_name),
+                    'description' => $data['description'] ?? ($store->description ?? 'Store on Wunabuy'),
+                    'category' => $data['category'] ?? ($store->category ?? 'General'),
+                    'address_text' => $data['address_text'] ?? ($store->address_text ?? 'Douala, Cameroon'),
+                    'city' => $data['city'] ?? 'Douala',
+                    'latitude' => $data['latitude'] ?? null,
+                    'longitude' => $data['longitude'] ?? null,
+                    'cni_number' => $data['cni_number'] ?? 'CNI-PENDING',
+                    'id_card_front_url' => $data['id_card_front'] ?? 'https://images.unsplash.com/photo-cni-front',
+                    'id_card_back_url' => $data['id_card_back'] ?? 'https://images.unsplash.com/photo-cni-back',
+                    'storefront_photo_url' => $data['storefront_photo'] ?? 'https://images.unsplash.com/photo-storefront',
+                    'business_reg_url' => $data['business_reg_or_affidavit'] ?? ($data['business_register_doc'] ?? null),
                     'status' => 'pending',
                     'reviewer_notes' => null,
-                    'submitted_at' => now(),
+                    'reviewed_at' => null,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]
             );
 
-            $store->kyc_status = 'pending';
+            $store->is_verified = false;
             $store->save();
 
             return [
@@ -67,32 +75,32 @@ class KYCService
             $transporter = $user->transporter ?? Transporter::firstOrCreate(
                 ['user_id' => $user->id],
                 [
-                    'vehicle_type' => $data['vehicle_type'] ?? 'bike',
-                    'license_plate' => $data['license_plate'] ?? 'LT-123-AB',
-                    'is_verified' => false,
-                    'kyc_status' => 'pending',
+                    'vehicle_type' => $data['vehicle_type'] ?? 'motorcycle',
+                    'vehicle_plate' => $data['license_plate'] ?? ($data['vehicle_plate'] ?? 'LT-123-AB'),
+                    'status' => 'pending',
                 ]
             );
 
             $submissionId = (string) Str::uuid();
 
             DB::table('transporter_kyc_submissions')->updateOrInsert(
-                ['transporter_id' => $transporter->id],
+                ['user_id' => $user->id],
                 [
                     'id' => $submissionId,
-                    'id_card_url' => $data['id_card_front'] ?? 'https://images.unsplash.com/photo-cni-front',
-                    'license_url' => $data['drivers_license_photo'] ?? 'https://images.unsplash.com/photo-license',
-                    'vehicle_reg_url' => $data['carte_grise_photo'] ?? null,
-                    'insurance_url' => $data['vehicle_assurance_photo'] ?? null,
+                    'vehicle_type' => $data['vehicle_type'] ?? $transporter->vehicle_type,
+                    'vehicle_plate' => $data['license_plate'] ?? ($data['vehicle_plate'] ?? $transporter->license_plate),
+                    'driver_license_url' => $data['drivers_license_photo'] ?? ($data['driver_license_url'] ?? 'https://images.unsplash.com/photo-license'),
+                    'national_id_url' => $data['id_card_front'] ?? ($data['national_id_url'] ?? 'https://images.unsplash.com/photo-cni-front'),
+                    'vehicle_insurance_url' => $data['vehicle_insurance_doc'] ?? ($data['insurance_url'] ?? null),
                     'status' => 'pending',
                     'reviewer_notes' => null,
-                    'submitted_at' => now(),
+                    'reviewed_at' => null,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]
             );
 
-            $transporter->kyc_status = 'pending';
+            $transporter->status = 'pending';
             $transporter->save();
 
             return [
@@ -120,15 +128,37 @@ class KYCService
                 DB::table('seller_kyc_submissions')->where('id', $sellerSub->id)->update([
                     'status' => $status,
                     'reviewer_notes' => $notes,
-                    'verified_at' => $isApproved ? now() : null,
+                    'reviewed_at' => now(),
                     'updated_at' => now(),
                 ]);
 
-                $store = Store::find($sellerSub->store_id);
-                if ($store) {
+                $user = User::find($sellerSub->user_id);
+                if ($user) {
+                    $store = $user->store ?? Store::firstOrCreate(
+                        ['user_id' => $user->id],
+                        [
+                            'store_name' => $sellerSub->store_name,
+                            'slug' => Str::slug($sellerSub->store_name) . '-' . Str::random(4),
+                            'category' => $sellerSub->category,
+                            'address_text' => $sellerSub->address_text,
+                        ]
+                    );
                     $store->is_verified = $isApproved;
-                    $store->kyc_status = $status;
                     $store->save();
+
+                    $roles = $user->available_roles ?? ['buyer'];
+                    if ($isApproved) {
+                        if (!in_array('seller', $roles)) {
+                            $roles[] = 'seller';
+                        }
+                    } else {
+                        $roles = array_values(array_filter($roles, fn($r) => $r !== 'seller'));
+                        if ($user->role === 'seller') {
+                            $user->role = 'buyer';
+                        }
+                    }
+                    $user->available_roles = array_values(array_unique($roles));
+                    $user->save();
                 }
 
                 AuditLog::create([
@@ -151,15 +181,36 @@ class KYCService
                 DB::table('transporter_kyc_submissions')->where('id', $transporterSub->id)->update([
                     'status' => $status,
                     'reviewer_notes' => $notes,
-                    'verified_at' => $isApproved ? now() : null,
+                    'reviewed_at' => now(),
                     'updated_at' => now(),
                 ]);
 
-                $transporter = Transporter::find($transporterSub->transporter_id);
-                if ($transporter) {
-                    $transporter->is_verified = $isApproved;
-                    $transporter->kyc_status = $status;
+                $user = User::find($transporterSub->user_id);
+                if ($user) {
+                    $transporter = $user->transporter ?? Transporter::firstOrCreate(
+                        ['user_id' => $user->id],
+                        [
+                            'vehicle_type' => $transporterSub->vehicle_type,
+                            'vehicle_plate' => $transporterSub->vehicle_plate,
+                            'status' => 'online',
+                        ]
+                    );
+                    $transporter->status = $isApproved ? 'active' : 'pending';
                     $transporter->save();
+
+                    $roles = $user->available_roles ?? ['buyer'];
+                    if ($isApproved) {
+                        if (!in_array('transporter', $roles)) {
+                            $roles[] = 'transporter';
+                        }
+                    } else {
+                        $roles = array_values(array_filter($roles, fn($r) => $r !== 'transporter'));
+                        if ($user->role === 'transporter') {
+                            $user->role = 'buyer';
+                        }
+                    }
+                    $user->available_roles = array_values(array_unique($roles));
+                    $user->save();
                 }
 
                 AuditLog::create([

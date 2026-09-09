@@ -16,11 +16,11 @@ import { useThemeStore } from '../../stores/theme.store';
 
 import { useAuthStore } from '../../stores/auth.store';
 import { UserRole } from '@wunabuy/types';
-import { AuthService } from '../../services/api';
+import { AuthService, KYCService } from '../../services/api';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const BANNER_WIDTH = SCREEN_WIDTH - spacing.base * 2;
-const SLIDESHOW_HEIGHT = Math.max(SCREEN_HEIGHT * 0.62, 420); // Takes 70% of main screen body
+const SLIDESHOW_HEIGHT = Math.max(SCREEN_HEIGHT * 0.58, 390);
 const WUNABUY_LOGO = require('../../../assets/icon.png');
 
 
@@ -71,8 +71,33 @@ const SELLER_SLIDES: SellerSlide[] = [
 export const SellerWelcomeScreen = ({ navigation }: any) => {
   const insets = useSafeAreaInsets();
   const { theme, isDark } = useThemeStore();
+  const { user } = useAuthStore();
   const [activeIndex, setActiveIndex] = useState(0);
+  const [kycStatus, setKycStatus] = useState<string>('unsubmitted');
+  const [rejectionReason, setRejectionReason] = useState<string | null>(null);
+  const [isLoadingStatus, setIsLoadingStatus] = useState(false);
   const flatListRef = useRef<FlatList>(null);
+
+  const isGranted = AuthService.canAccessRole(user, UserRole.SELLER);
+
+  const loadKYCStatus = async () => {
+    try {
+      setIsLoadingStatus(true);
+      const res = await KYCService.getStoreKYCStatus();
+      if (res && res.status) {
+        setKycStatus(res.status);
+        setRejectionReason(res.reviewer_notes || res.rejection_reason || null);
+      }
+    } catch {
+      // offline fallback
+    } finally {
+      setIsLoadingStatus(false);
+    }
+  };
+
+  useEffect(() => {
+    loadKYCStatus();
+  }, []);
 
   // Automated Slideshow Motion Effect (Rotates every 3.5 seconds)
   useEffect(() => {
@@ -191,27 +216,86 @@ export const SellerWelcomeScreen = ({ navigation }: any) => {
           </View>
         </View>
 
+        {/* Status Callout Banner if Pending or Rejected */}
+        {!isGranted && (kycStatus === 'pending' || kycStatus === 'under_review') && (
+          <View style={[styles.statusCalloutCard, { backgroundColor: '#FFFBEB', borderColor: '#FDE68A' }]}>
+            <Ionicons name="time" size={20} color="#D97706" style={{ marginRight: 8 }} />
+            <View style={{ flex: 1 }}>
+              <Text variant="caption" bold color="#92400E">
+                KYC Verification Under Review
+              </Text>
+              <Text variant="caption" color="#B45309" style={{ marginTop: 2, fontSize: 11 }}>
+                Our compliance staff will review your submitted documents within 24 hours.
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {!isGranted && kycStatus === 'rejected' && (
+          <View style={[styles.statusCalloutCard, { backgroundColor: '#FEF2F2', borderColor: '#FECACA' }]}>
+            <Ionicons name="alert-circle" size={20} color="#DC2626" style={{ marginRight: 8 }} />
+            <View style={{ flex: 1 }}>
+              <Text variant="caption" bold color="#991B1B">
+                Verification Rejected
+              </Text>
+              <Text variant="caption" color="#B91C1C" style={{ marginTop: 2, fontSize: 11 }}>
+                Reason: {rejectionReason || 'Documents did not meet criteria. Please resubmit.'}
+              </Text>
+            </View>
+          </View>
+        )}
+
         {/* Advanced Capsule Action Button (20% Height Section) */}
         <View style={styles.actionSection20}>
           <TouchableOpacity
             activeOpacity={0.88}
             onPress={() => {
-              useAuthStore.getState().setActiveRole(UserRole.SELLER);
-              AuthService.switchRole(UserRole.SELLER);
+              if (isGranted) {
+                useAuthStore.getState().setActiveRole(UserRole.SELLER);
+                AuthService.switchRole(UserRole.SELLER);
+              } else {
+                navigation.navigate('StoreKYC');
+              }
             }}
-            style={styles.advancedGetStartedCapsule}
+            style={[
+              styles.advancedGetStartedCapsule,
+              !isGranted && kycStatus === 'rejected' ? { backgroundColor: '#DC2626' } : {},
+              !isGranted && (kycStatus === 'pending' || kycStatus === 'under_review') ? { backgroundColor: '#D97706' } : {},
+            ]}
           >
             <View style={styles.capsuleLeftGroup}>
               <Text variant="bodyLarge" bold color={colors.neutral[0]} style={styles.capsuleBtnText}>
-                Open Seller Dashboard ➔
+                {isGranted
+                  ? 'Open Seller Dashboard ➔'
+                  : kycStatus === 'rejected'
+                  ? 'Update & Resubmit Documents ➔'
+                  : kycStatus === 'pending' || kycStatus === 'under_review'
+                  ? 'View Application Status ➔'
+                  : 'Start Store Verification ➔'}
               </Text>
               <Text variant="caption" color="rgba(255,255,255,0.85)" style={styles.capsuleSubText}>
-                Active Approved Store Account
+                {isGranted
+                  ? 'Active Approved Store Account'
+                  : kycStatus === 'rejected'
+                  ? 'Fix rejected issues & re-apply'
+                  : kycStatus === 'pending' || kycStatus === 'under_review'
+                  ? 'Verification pending staff review'
+                  : 'Enter CNI & Storefront Documents'}
               </Text>
             </View>
 
             <View style={styles.arrowIconCircle}>
-              <Ionicons name="arrow-forward" size={22} color={colors.primary[600]} />
+              <Ionicons
+                name={isGranted ? 'arrow-forward' : 'shield-checkmark'}
+                size={20}
+                color={
+                  !isGranted && kycStatus === 'rejected'
+                    ? '#DC2626'
+                    : !isGranted && (kycStatus === 'pending' || kycStatus === 'under_review')
+                    ? '#D97706'
+                    : colors.primary[600]
+                }
+              />
             </View>
           </TouchableOpacity>
         </View>
@@ -354,5 +438,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     ...shadows.sm,
+  },
+  statusCalloutCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.sm,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    marginTop: spacing.sm,
   },
 });

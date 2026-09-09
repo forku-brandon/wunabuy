@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { RootStackParamList } from './types';
@@ -10,6 +10,7 @@ import { TransporterTabNavigator } from './TransporterTabNavigator';
 import { useAuthStore } from '../stores/auth.store';
 import { useThemeStore } from '../stores/theme.store';
 import { UserRole } from '@wunabuy/types';
+import { AuthService } from '../services/api';
 import { ScreenContainer, Text } from '../components/ui';
 
 // Screen Imports
@@ -47,8 +48,17 @@ const ChatConversationScreen = ({ route }: any) => (
 );
 
 export const RootNavigator = () => {
-  const { isAuthenticated, activeRole } = useAuthStore();
+  const { isAuthenticated, activeRole, user, setActiveRole } = useAuthStore();
   const { theme } = useThemeStore();
+
+  // Strict Workspace Access Guard: If active workspace is restricted and user lacks verified permission, fallback to Buyer
+  useEffect(() => {
+    if (isAuthenticated && activeRole !== UserRole.BUYER) {
+      if (!AuthService.canAccessRole(user, activeRole)) {
+        setActiveRole(UserRole.BUYER);
+      }
+    }
+  }, [isAuthenticated, activeRole, user, setActiveRole]);
 
   return (
     <NavigationContainer

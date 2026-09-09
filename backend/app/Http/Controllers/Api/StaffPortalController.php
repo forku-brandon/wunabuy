@@ -176,38 +176,43 @@ class StaffPortalController extends Controller
      */
     public function getKYCQueue(): JsonResponse
     {
-        $queue = [
-            [
-                'id' => 'kyc_sel_001',
-                'applicant_name' => 'Amadou Bello',
-                'applicant_type' => 'STORE_SELLER',
-                'entity_title' => 'Akwa Super Store',
-                'phone' => '+237 671 223 344',
-                'city_quarter' => 'Douala / Akwa',
-                'cni_number' => '1198234882',
-                'submitted_at' => now()->subDays(1)->toIso8601String(),
-                'status' => 'PENDING_REVIEW',
-                'cni_front_url' => 'https://images.unsplash.com/photo-cni-front',
-                'cni_back_url' => 'https://images.unsplash.com/photo-cni-back',
-                'storefront_or_vehicle_photo' => 'https://images.unsplash.com/photo-storefront',
-            ],
-            [
-                'id' => 'kyc_trn_001',
-                'applicant_name' => 'Paul Eto\'o',
-                'applicant_type' => 'DRIVER_TRANSPORTER',
-                'entity_title' => 'Express Moto Delivery (LT-8492-AB)',
-                'phone' => '+237 699 445 566',
-                'city_quarter' => 'Douala / Deido',
-                'cni_number' => '1199348851',
-                'submitted_at' => now()->subDays(2)->toIso8601String(),
-                'status' => 'PENDING_REVIEW',
-                'cni_front_url' => 'https://images.unsplash.com/photo-cni-front',
-                'cni_back_url' => 'https://images.unsplash.com/photo-cni-back',
-                'storefront_or_vehicle_photo' => 'https://images.unsplash.com/photo-vehicle',
-            ],
-        ];
+        $sellerSubs = DB::table('seller_kyc_submissions')
+            ->join('users', 'seller_kyc_submissions.user_id', '=', 'users.id')
+            ->select(
+                'seller_kyc_submissions.id',
+                'users.full_name as applicant_name',
+                DB::raw("'STORE_SELLER' as applicant_type"),
+                'seller_kyc_submissions.store_name as entity_title',
+                'users.phone',
+                DB::raw("CONCAT(seller_kyc_submissions.city, ' / ', seller_kyc_submissions.address_text) as city_quarter"),
+                'seller_kyc_submissions.cni_number',
+                'seller_kyc_submissions.created_at as submitted_at',
+                DB::raw("CASE WHEN seller_kyc_submissions.status = 'approved' THEN 'APPROVED' WHEN seller_kyc_submissions.status = 'rejected' THEN 'REJECTED' ELSE 'PENDING_REVIEW' END as status"),
+                'seller_kyc_submissions.id_card_front_url as cni_front_url',
+                'seller_kyc_submissions.id_card_back_url as cni_back_url',
+                'seller_kyc_submissions.storefront_photo_url as storefront_or_vehicle_photo'
+            )->get();
 
-        return $this->respondSuccess($queue);
+        $transporterSubs = DB::table('transporter_kyc_submissions')
+            ->join('users', 'transporter_kyc_submissions.user_id', '=', 'users.id')
+            ->select(
+                'transporter_kyc_submissions.id',
+                'users.full_name as applicant_name',
+                DB::raw("'DRIVER_TRANSPORTER' as applicant_type"),
+                DB::raw("CONCAT(transporter_kyc_submissions.vehicle_type, ' (', transporter_kyc_submissions.vehicle_plate, ')') as entity_title"),
+                'users.phone',
+                DB::raw("'Douala / Logistics Hub' as city_quarter"),
+                DB::raw("COALESCE(transporter_kyc_submissions.vehicle_plate, 'N/A') as cni_number"),
+                'transporter_kyc_submissions.created_at as submitted_at',
+                DB::raw("CASE WHEN transporter_kyc_submissions.status = 'approved' THEN 'APPROVED' WHEN transporter_kyc_submissions.status = 'rejected' THEN 'REJECTED' ELSE 'PENDING_REVIEW' END as status"),
+                'transporter_kyc_submissions.national_id_url as cni_front_url',
+                'transporter_kyc_submissions.national_id_url as cni_back_url',
+                'transporter_kyc_submissions.driver_license_url as storefront_or_vehicle_photo'
+            )->get();
+
+        $merged = $sellerSubs->concat($transporterSubs)->sortByDesc('submitted_at')->values();
+
+        return $this->respondSuccess($merged);
     }
 
     /**

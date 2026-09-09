@@ -99,9 +99,32 @@ export const AuthService = {
   },
 
   /**
-   * Switch active workspace role (strictly checked against user.available_roles)
+   * Helper to verify if user has permission to access a specific role.
+   * Developer bypass: Forku Brandon (phone ending in 682656287) has full testing permissions.
    */
-  async switchRole(requestedRole: UserRole): Promise<{ success: boolean; active_role: UserRole }> {
+  canAccessRole(user: User | null, role: UserRole): boolean {
+    if (!user) return false;
+    const cleanPhone = (user.phone || '').replace(/\D/g, '');
+    if (cleanPhone.endsWith('682656287')) return true;
+    if (role === UserRole.BUYER) return true;
+    return user.available_roles?.includes(role) ?? false;
+  },
+
+  /**
+   * Switch active workspace role (strictly checked against user.available_roles and backend permissions)
+   */
+  async switchRole(requestedRole: UserRole): Promise<{ success: boolean; active_role: UserRole; error?: string }> {
+    const currentUser = useAuthStore.getState().user;
+
+    // Check local permissions first (unless developer)
+    if (!AuthService.canAccessRole(currentUser, requestedRole)) {
+      return {
+        success: false,
+        active_role: useAuthStore.getState().activeRole,
+        error: `Permission required for ${requestedRole} workspace.`,
+      };
+    }
+
     try {
       const response = await api.client.post<{ success: boolean; data: { active_role: UserRole; user?: User } }>('/user/switch-role', {
         requested_role: requestedRole,
@@ -116,9 +139,13 @@ export const AuthService = {
       }
       useAuthStore.getState().setActiveRole(requestedRole);
       return { success: true, active_role: requestedRole };
-    } catch {
-      useAuthStore.getState().setActiveRole(requestedRole);
-      return { success: true, active_role: requestedRole };
+    } catch (err: any) {
+      const errorMsg = err?.response?.data?.error?.message || err?.message || 'Access denied.';
+      return {
+        success: false,
+        active_role: useAuthStore.getState().activeRole,
+        error: errorMsg,
+      };
     }
   },
 };
