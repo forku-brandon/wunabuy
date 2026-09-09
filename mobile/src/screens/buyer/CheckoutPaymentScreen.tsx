@@ -10,6 +10,7 @@ import { useAuthStore } from '../../stores/auth.store';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
 import { OrdersService } from '../../services/api';
+import { WalletService } from '../../services/api/walletService';
 
 export const CheckoutPaymentScreen = ({ route, navigation }: any) => {
   const {
@@ -28,9 +29,23 @@ export const CheckoutPaymentScreen = ({ route, navigation }: any) => {
   const commission = Math.round(subtotal * 0.035);
   const totalAmount = subtotal + commission + deliveryFee;
 
-  // Mock available wallet balance
-  const walletBalance = 47500;
+  // Live dynamic available wallet balance
+  const [walletBalance, setWalletBalance] = useState(0);
   const isWalletSufficient = walletBalance >= totalAmount;
+
+  React.useEffect(() => {
+    let isMounted = true;
+    WalletService.getWallet()
+      .then((w) => {
+        if (isMounted && w && typeof w.balance_available === 'number') {
+          setWalletBalance(w.balance_available);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>(PaymentMethod.MOMO);
   const [provider, setProvider] = useState<'MTN' | 'ORANGE'>('MTN');

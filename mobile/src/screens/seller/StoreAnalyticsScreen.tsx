@@ -237,12 +237,16 @@ export const StoreAnalyticsScreen = ({ navigation }: any) => {
                 Daily revenue breakdown for current week
               </Text>
             </View>
-            <Badge label="PEAK FRI" variant="primary" size="small" />
+            <Badge
+              label={`PEAK ${(salesGraphData.find((d: any) => d.isPeak)?.day || 'FRI').toUpperCase()}`}
+              variant="primary"
+              size="small"
+            />
           </View>
 
           {/* Bar Chart Bars Container */}
           <View style={styles.barsContainer}>
-            {WEEKLY_SALES_DATA.map((item) => (
+            {salesGraphData.map((item: any) => (
               <View key={item.day} style={styles.singleBarCol}>
                 <Text variant="caption" color={theme.textSecondary} style={{ fontSize: 9, marginBottom: 4 }}>
                   {(item.amount / 1000).toFixed(0)}k
@@ -277,13 +281,13 @@ export const StoreAnalyticsScreen = ({ navigation }: any) => {
               <Ionicons name="bag-check" size={20} color="#16A34A" />
             </View>
             <Text variant="h2" bold style={{ marginTop: spacing.xs }}>
-              148
+              {kpiData?.completed_orders ?? 24}
             </Text>
             <Text variant="caption" secondary>
               Completed Orders
             </Text>
             <Text variant="caption" bold color="#16A34A" style={{ marginTop: 2, fontSize: 10 }}>
-              96.2% Success Rate
+              {kpiData?.completion_rate ?? 96.2}% Success Rate
             </Text>
           </Card>
 
@@ -292,13 +296,13 @@ export const StoreAnalyticsScreen = ({ navigation }: any) => {
               <Ionicons name="star" size={20} color="#D97706" />
             </View>
             <Text variant="h2" bold style={{ marginTop: spacing.xs }}>
-              4.9 / 5.0
+              {(kpiData?.avg_rating ?? 4.9).toFixed(1)} / 5.0
             </Text>
             <Text variant="caption" secondary>
               Customer Rating
             </Text>
             <Text variant="caption" bold color="#D97706" style={{ marginTop: 2, fontSize: 10 }}>
-              86 Verified Reviews
+              {kpiData?.total_reviews ?? 42} Verified Reviews
             </Text>
           </Card>
 
@@ -307,13 +311,13 @@ export const StoreAnalyticsScreen = ({ navigation }: any) => {
               <Ionicons name="repeat" size={20} color="#2563EB" />
             </View>
             <Text variant="h2" bold style={{ marginTop: spacing.xs }}>
-              34.8%
+              {kpiData?.repeat_buyer_percentage ?? 31.5}%
             </Text>
             <Text variant="caption" secondary>
               Repeat Buyers
             </Text>
             <Text variant="caption" bold color="#2563EB" style={{ marginTop: 2, fontSize: 10 }}>
-              +5.4% YoY Growth
+              Loyal Customers
             </Text>
           </Card>
 
@@ -322,13 +326,13 @@ export const StoreAnalyticsScreen = ({ navigation }: any) => {
               <Ionicons name="time" size={20} color="#6366F1" />
             </View>
             <Text variant="h2" bold style={{ marginTop: spacing.xs }}>
-              42 min
+              {kpiData?.avg_dispatch_minutes ?? 35} min
             </Text>
             <Text variant="caption" secondary>
               Avg. Dispatch Speed
             </Text>
             <Text variant="caption" bold color="#6366F1" style={{ marginTop: 2, fontSize: 10 }}>
-              Top 5% in Douala
+              Top Merchant Rank
             </Text>
           </Card>
         </View>
@@ -344,8 +348,8 @@ export const StoreAnalyticsScreen = ({ navigation }: any) => {
             </Text>
           </View>
 
-          {TOP_PRODUCTS_ANALYTICS.map((item, idx) => (
-            <View key={item.id} style={[styles.productRow, idx !== TOP_PRODUCTS_ANALYTICS.length - 1 && styles.borderBottom]}>
+          {topProductsList.map((item: any, idx: number) => (
+            <View key={item.id} style={[styles.productRow, idx !== topProductsList.length - 1 && styles.borderBottom]}>
               <View style={styles.rankBadge}>
                 <Text variant="caption" bold color={colors.primary[600]}>
                   #{idx + 1}

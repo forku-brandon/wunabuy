@@ -15,7 +15,7 @@ export const TransactionHistoryScreen = ({ navigation }: any) => {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<'7d' | '15d' | '1m' | 'custom'>('1m');
-  const [transactions, setTransactions] = useState<TransactionItem[]>(MOCK_APP_TRANSACTIONS);
+  const [transactions, setTransactions] = useState<TransactionItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -23,23 +23,30 @@ export const TransactionHistoryScreen = ({ navigation }: any) => {
     let isMounted = true;
     const fetchTransactions = async () => {
       setIsLoading(true);
-      const apiTxs = await WalletService.getTransactions();
-      if (isMounted && apiTxs && apiTxs.length > 0) {
-        // Map API format to TransactionItem format
-        const mapped: TransactionItem[] = apiTxs.map((t, idx) => ({
-          id: t.id || `tx_${idx}`,
-          title: t.description || 'Wallet Transaction',
-          date: t.created_at ? new Date(t.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '12:00 PM',
-          fullDateGroup: t.created_at ? new Date(t.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Today, 02 Sep 2026',
-          amount: t.type === 'debit' ? -Math.abs(t.amount) : Math.abs(t.amount),
-          type: t.type === 'debit' ? 'debit' : 'credit',
-          status: t.status === 'completed' ? 'completed' : t.status === 'failed' ? 'failed' : 'pending',
-
-          statusText: t.status === 'completed' ? 'Successful' : t.status === 'failed' ? 'Cancelled' : 'Processing',
-        }));
-        setTransactions(mapped);
+      try {
+        const apiTxs = await WalletService.getTransactions();
+        if (isMounted) {
+          const mapped: TransactionItem[] = (apiTxs || []).map((t, idx) => ({
+            id: t.id || `tx_${idx}`,
+            title: t.description || 'Wallet Transaction',
+            date: t.created_at ? new Date(t.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recently',
+            fullDateGroup: t.created_at ? new Date(t.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Recent',
+            amount: t.type === 'debit' ? -Math.abs(t.amount) : Math.abs(t.amount),
+            type: t.type === 'debit' ? 'debit' : 'credit',
+            status: t.status === 'completed' ? 'completed' : t.status === 'failed' ? 'failed' : 'pending',
+            reference: t.reference,
+          }));
+          setTransactions(mapped);
+        }
+      } catch {
+        if (isMounted) {
+          setTransactions([]);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
-      setIsLoading(false);
     };
     fetchTransactions();
     return () => {
@@ -198,11 +205,22 @@ export const TransactionHistoryScreen = ({ navigation }: any) => {
         </ScrollView>
 
         {/* Grouped Date List Items matching Image 1 */}
-        {Object.entries(groupedTransactions).map(([dateGroup, items]) => (
-          <View key={dateGroup} style={styles.dateGroupSection}>
-            <Text variant="caption" bold color={theme.text} style={styles.dateGroupHeader}>
-              {dateGroup}
+        {filteredTransactions.length === 0 && !isLoading ? (
+          <View style={{ paddingVertical: spacing['2xl'], alignItems: 'center' }}>
+            <Ionicons name="receipt-outline" size={48} color={theme.textSecondary} style={{ marginBottom: spacing.sm }} />
+            <Text variant="bodyLarge" bold color={theme.text}>
+              No transactions found
             </Text>
+            <Text variant="caption" color={theme.textSecondary} style={{ marginTop: 4 }}>
+              Transactions will appear here as soon as you fund, withdraw, or make purchases.
+            </Text>
+          </View>
+        ) : (
+          Object.entries(groupedTransactions).map(([dateGroup, items]) => (
+            <View key={dateGroup} style={styles.dateGroupSection}>
+              <Text variant="caption" bold color={theme.text} style={styles.dateGroupHeader}>
+                {dateGroup}
+              </Text>
 
             {items.map((item) => {
               const isCancelled = item.status === 'cancelled';
@@ -247,7 +265,7 @@ export const TransactionHistoryScreen = ({ navigation }: any) => {
               );
             })}
           </View>
-        ))}
+        )))}
       </ScrollView>
 
       {toastMessage && <Toast message={toastMessage} type="success" onDismiss={() => setToastMessage(null)} />}

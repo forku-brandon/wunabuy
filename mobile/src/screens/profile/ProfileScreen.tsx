@@ -29,7 +29,7 @@ export const ProfileScreen = ({ navigation }: any) => {
   const insets = useSafeAreaInsets();
   const { user, activeRole } = useAuthStore();
   const { theme, isDark } = useThemeStore();
-  const [walletBalance, setWalletBalance] = useState<number>(47500);
+  const [walletBalance, setWalletBalance] = useState<number>(0);
   const [isBalanceVisible, setIsBalanceVisible] = useState<boolean>(true);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);

@@ -254,7 +254,8 @@ export const WalletScreen = ({ navigation }: any) => {
 
   // ── State ──────────────────────────────────────────────────────────────────
 
-  const [balance, setBalance] = useState(MOCK_BALANCE);
+  const [balance, setBalance] = useState(0);
+  const [transactions, setTransactions] = useState<any[]>([]);
   const [balanceVisible, setBalanceVisible] = useState(true);
 
   const [sheetMode, setSheetMode] = useState<SheetMode>(null);
@@ -270,9 +271,23 @@ export const WalletScreen = ({ navigation }: any) => {
 
   const loadWalletData = useCallback(async () => {
     try {
-      const wallet = await WalletService.getWallet();
+      const [wallet, txList] = await Promise.all([
+        WalletService.getWallet(),
+        WalletService.getTransactions(),
+      ]);
       if (wallet && typeof wallet.balance_available === 'number') {
         setBalance(wallet.balance_available);
+      }
+      if (Array.isArray(txList)) {
+        setTransactions(txList.map((tx) => ({
+          id: tx.id,
+          title: tx.description,
+          date: new Date(tx.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+          amount: tx.amount,
+          type: tx.type,
+          status: tx.status,
+          reference: tx.reference,
+        })));
       }
     } catch {
       // Safe fallback
@@ -574,6 +589,7 @@ export const WalletScreen = ({ navigation }: any) => {
 
         {/* ── Recent Transactions Section (Image 2 style) ────────────────── */}
         <RecentTransactionsWidget
+          transactions={transactions}
           onViewAll={() => navigation.navigate('TransactionHistory')}
         />
 

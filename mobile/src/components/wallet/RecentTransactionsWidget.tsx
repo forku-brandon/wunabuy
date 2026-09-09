@@ -108,7 +108,7 @@ interface RecentTransactionsWidgetProps {
 }
 
 export const RecentTransactionsWidget: React.FC<RecentTransactionsWidgetProps> = ({
-  transactions = MOCK_APP_TRANSACTIONS,
+  transactions = [],
   onViewAll,
   limit = 5,
 }) => {
@@ -117,7 +117,7 @@ export const RecentTransactionsWidget: React.FC<RecentTransactionsWidgetProps> =
 
   const formatAmountText = (item: TransactionItem) => {
     const absVal = Math.abs(item.amount);
-    const formattedNum = absVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const formattedNum = absVal.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 
     if (item.amount < 0 || item.type === 'debit') {
       return `-${formattedNum} XAF`;
@@ -134,16 +134,25 @@ export const RecentTransactionsWidget: React.FC<RecentTransactionsWidgetProps> =
         <Text variant="h2" bold color={theme.text}>
           Recent transactions
         </Text>
-        <TouchableOpacity activeOpacity={0.7} onPress={onViewAll}>
-          <Text variant="bodyMedium" bold color={colors.primary[500]}>
-            View all
-          </Text>
-        </TouchableOpacity>
+        {transactions.length > 0 && onViewAll && (
+          <TouchableOpacity activeOpacity={0.7} onPress={onViewAll}>
+            <Text variant="bodyMedium" bold color={colors.primary[500]}>
+              View all
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Clean White/Dark Single Card Container */}
       <View style={[styles.cardContainer, { backgroundColor: theme.card, borderColor: theme.border }]}>
-        {displayItems.map((item, index) => {
+        {displayItems.length === 0 ? (
+          <View style={{ paddingVertical: spacing.xl, alignItems: 'center' }}>
+            <Text variant="bodyMedium" color={theme.textSecondary}>
+              No recent transactions recorded
+            </Text>
+          </View>
+        ) : (
+          displayItems.map((item, index) => {
           const isLast = index === displayItems.length - 1;
           const isCancelled = item.status === 'cancelled';
           const isNegative = item.amount < 0 || (item.type === 'debit' && !isCancelled);
@@ -191,7 +200,8 @@ export const RecentTransactionsWidget: React.FC<RecentTransactionsWidgetProps> =
               </Text>
             </View>
           );
-        })}
+        })
+        )}
       </View>
     </View>
   );

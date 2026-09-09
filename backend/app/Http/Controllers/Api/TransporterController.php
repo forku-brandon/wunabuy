@@ -6,6 +6,7 @@ use App\Models\Order;
 use App\Models\Transporter;
 use App\Models\User;
 use App\Models\Wallet;
+use App\Models\WalletTransaction;
 use App\Services\KYCService;
 use App\Services\LogisticsService;
 use App\Services\PaymentService;
@@ -265,6 +266,14 @@ class TransporterController extends Controller
     {
         $transporter = Transporter::with('user')->first();
         $user = $transporter?->user ?? User::where('role', 'transporter')->first();
+        $wallet = $user ? $user->wallet : null;
+
+        $available = (float) ($wallet->balance_available ?? 0);
+        $pending = (float) ($wallet->balance_escrow_locked ?? 0);
+        $totalEarned = $wallet ? (float) WalletTransaction::where('wallet_id', $wallet->id)->where('type', 'credit')->sum('amount') : 0;
+        if ($totalEarned === 0) {
+            $totalEarned = $available + $pending;
+        }
 
         return $this->respondSuccess([
             'driver_id' => $transporter->id ?? 'DRV-2026-884',
@@ -282,9 +291,9 @@ class TransporterController extends Controller
                 'permit_status' => 'Douala Council',
             ],
             'earnings' => [
-                'available_cashout' => 48500,
-                'pending_escrow' => 12500,
-                'total_lifetime_earned' => 384500,
+                'available_cashout' => $available,
+                'pending_escrow' => $pending,
+                'total_lifetime_earned' => $totalEarned,
             ],
         ]);
     }
@@ -294,18 +303,53 @@ class TransporterController extends Controller
      */
     public function getEarnings(): JsonResponse
     {
+        $transporter = Transporter::with('user')->first();
+        $user = $transporter?->user ?? User::where('role', 'transporter')->first();
+        $wallet = $user ? $user->wallet : null;
+
+        $available = (float) ($wallet->balance_available ?? 0);
+        $pending = (float) ($wallet->balance_escrow_locked ?? 0);
+
+        $txQuery = WalletTransaction::query();
+        if ($wallet) {
+            $txQuery->where('wallet_id', $wallet->id);
+        }
+        $dbTxs = $txQuery->latest('created_at')->take(20)->get();
+
+        $txList = [];
+        $totalEarned = 0;
+        $totalTips = 0;
+
+        foreach ($dbTxs as $tx) {
+            if ($tx->type === 'credit') {
+                $totalEarned += (float) $tx->amount;
+                if (str_contains(strtolower($tx->description ?? ''), 'tip') || str_contains($tx->reference ?? '', 'TIP')) {
+                    $totalTips += (float) $tx->amount;
+                }
+            }
+
+            $txList[] = [
+                'id' => $tx->id,
+                'code' => $tx->description ?? ($tx->reference ?? 'Trip Payout'),
+                'fee' => (float) $tx->amount,
+                'distance' => str_contains($tx->type, 'payout') || $tx->amount < 0 ? 'Withdrawal' : 'Completed Trip',
+                'date' => $tx->created_at?->format('M d, H:i') ?? 'Recently',
+                'status' => $tx->amount > 0 ? 'credited' : 'cashout',
+            ];
+        }
+
+        if ($totalEarned === 0) {
+            $totalEarned = $available + $pending;
+        }
+
         return $this->respondSuccess([
-            'available_payout' => 48500,
-            'pending_escrow' => 12500,
-            'total_earned' => 384500,
-            'completed_trips_count' => 248,
-            'rating_avg' => 4.95,
-            'total_tips_xaf' => 3500,
-            'transactions' => [
-                ['id' => '1', 'code' => 'Trip #WB-2026-9840', 'fee' => 1500, 'distance' => '2.4 km', 'date' => 'Today, 10:30 AM', 'status' => 'credited'],
-                ['id' => '2', 'code' => 'Trip #WB-2026-9835', 'fee' => 2500, 'distance' => '4.1 km', 'date' => 'Today, 08:15 AM', 'status' => 'credited'],
-                ['id' => '3', 'code' => 'MTN MoMo Cashout (*126#)', 'fee' => -20000, 'distance' => 'Withdrawal', 'date' => 'Yesterday, 06:45 PM', 'status' => 'cashout'],
-            ],
+            'available_payout' => $available,
+            'pending_escrow' => $pending,
+            'total_earned' => $totalEarned,
+            'completed_trips_count' => (int) ($transporter->completed_trips ?? count($txList)),
+            'rating_avg' => (float) ($transporter->rating_avg ?? 4.95),
+            'total_tips_xaf' => $totalTips,
+            'transactions' => $txList,
         ]);
     }
 

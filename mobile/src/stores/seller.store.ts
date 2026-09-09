@@ -87,6 +87,21 @@ interface SellerState {
 
   // Profile Action
   updateStoreProfile: (profile: Partial<SellerState>) => void;
+  setDashboardMetrics: (data: {
+    store_name?: string;
+    is_verified?: boolean;
+    rating_avg?: number;
+    total_reviews?: number;
+    available_balance?: number;
+    escrow_locked_balance?: number;
+    total_revenue?: number;
+    total_paid_out?: number;
+    pending_orders_count?: number;
+    preparing_orders_count?: number;
+    ready_orders_count?: number;
+  }) => void;
+  setTransactions: (transactions: SellerTransaction[]) => void;
+  setOrders: (orders: SellerOrder[]) => void;
 
   // Actions
   acceptOrder: (orderId: string) => void;
@@ -421,6 +436,28 @@ export const useSellerStore = create<SellerState>()(
           ...partial,
           storePhone: partial.primaryPhone || partial.storePhone || state.storePhone,
         }));
+      },
+
+      setDashboardMetrics: (data) => {
+        set((state) => ({
+          ...state,
+          storeName: data.store_name ?? state.storeName,
+          isVerified: data.is_verified ?? state.isVerified,
+          ratingAvg: data.rating_avg ?? state.ratingAvg,
+          totalReviews: data.total_reviews ?? state.totalReviews,
+          availableBalance: data.available_balance ?? state.availableBalance,
+          escrowLockedBalance: data.escrow_locked_balance ?? state.escrowLockedBalance,
+          totalRevenue: data.total_revenue ?? state.totalRevenue,
+          totalPaidOut: data.total_paid_out ?? state.totalPaidOut,
+        }));
+      },
+
+      setTransactions: (transactions) => {
+        set({ transactions });
+      },
+
+      setOrders: (orders) => {
+        set({ orders });
       },
 
       acceptOrder: (orderId) => {

@@ -59,8 +59,8 @@ export const TransporterProfileScreen = ({ navigation }: any) => {
   const vehiclePlate = profileData?.vehicle?.plate_number || 'LT-214-AA';
   const vehicleType = profileData?.vehicle?.type || 'Yamaha YBR 125 🏍️';
   const baseQuarter = profileData?.vehicle?.operating_quarter || 'Akwa / Bonanjo';
-  const availableEarnings = profileData?.earnings?.available_cashout ?? 48500;
-  const pendingEscrow = profileData?.earnings?.pending_escrow ?? 12500;
+  const availableEarnings = profileData?.earnings?.available_cashout ?? 0;
+  const pendingEscrow = profileData?.earnings?.pending_escrow ?? 0;
 
 
   const handleCopyDriverId = () => {
@@ -226,10 +226,10 @@ export const TransporterProfileScreen = ({ navigation }: any) => {
               <View style={styles.ratingRow}>
                 <Ionicons name="star" size={14} color="#F59E0B" />
                 <Text variant="bodyMedium" bold color={colors.primary[600]} style={{ marginLeft: 4 }}>
-                  4.95 ★
+                  {(profileData?.rating_avg ?? 4.95).toFixed(2)} ★
                 </Text>
                 <Text variant="caption" secondary style={{ marginLeft: 6 }}>
-                  (248 Completed Deliveries)
+                  ({profileData?.completed_deliveries ?? 0} Completed Deliveries)
                 </Text>
               </View>
             </View>

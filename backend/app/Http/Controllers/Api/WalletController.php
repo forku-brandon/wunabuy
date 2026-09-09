@@ -29,21 +29,22 @@ class WalletController extends Controller
                 'id' => (string) Str::uuid(),
                 'user_id' => $user->id,
                 'currency' => 'XAF',
-                'balance_available' => 47500,
-                'balance_escrow_locked' => 236000,
+                'balance_available' => 0,
+                'balance_escrow_locked' => 0,
+                'is_active' => true,
             ]);
         }
 
-        $avail = (float) ($wallet->balance_available ?? 47500);
-        $locked = (float) ($wallet->balance_escrow_locked ?? 236000);
+        $avail = (float) ($wallet->balance_available ?? 0);
+        $locked = (float) ($wallet->balance_escrow_locked ?? 0);
 
         return $this->respondSuccess([
             'wallet_id' => $wallet->id ?? 'wal_demo',
-            'currency' => 'XAF',
+            'currency' => $wallet->currency ?? 'XAF',
             'balance_available' => $avail,
             'balance_escrow_locked' => $locked,
             'balance_total' => $avail + $locked,
-            'is_active' => true,
+            'is_active' => (bool) ($wallet->is_active ?? true),
             'last_updated_at' => $wallet->updated_at?->toIso8601String() ?? now()->toIso8601String(),
         ]);
     }
@@ -83,34 +84,30 @@ class WalletController extends Controller
      */
     public function getTransactions(Request $request): JsonResponse
     {
-        $transactions = WalletTransaction::latest()->take(20)->get();
+        $user = $request->user() ?? User::where('role', 'buyer')->first() ?? User::first();
+        $wallet = $user ? $user->wallet : null;
 
-        if ($transactions->isEmpty()) {
-            $transactions = collect([
-                [
-                    'id' => 'tx_001',
-                    'type' => 'credit',
-                    'amount' => 20000,
-                    'currency' => 'XAF',
-                    'description' => 'Wallet Top-Up via MTN MoMo',
-                    'provider' => 'mtn',
-                    'status' => 'completed',
-                    'reference' => 'WNB-MOMO-99120',
-                    'created_at' => now()->subDay()->toIso8601String(),
-                ],
-                [
-                    'id' => 'tx_002',
-                    'type' => 'debit',
-                    'amount' => -8500,
-                    'currency' => 'XAF',
-                    'description' => 'Escrow Payment — Order #WNB-00412',
-                    'provider' => 'mtn',
-                    'status' => 'completed',
-                    'reference' => 'WNB-ESC-00412',
-                    'created_at' => now()->subDays(2)->toIso8601String(),
-                ],
-            ]);
+        $walletId = $request->query('wallet_id', $wallet?->id);
+
+        $query = WalletTransaction::query();
+        if ($walletId) {
+            $query->where('wallet_id', $walletId);
         }
+
+        $transactions = $query->latest('created_at')->take(50)->get()->map(function ($tx) {
+            return [
+                'id' => $tx->id,
+                'wallet_id' => $tx->wallet_id,
+                'type' => $tx->type,
+                'amount' => (float) $tx->amount,
+                'currency' => $tx->currency ?? 'XAF',
+                'description' => $tx->description ?? 'Wallet Transaction',
+                'provider' => $tx->provider ?? 'wallet_escrow',
+                'status' => $tx->status ?? 'completed',
+                'reference' => $tx->reference ?? ('TX-' . substr($tx->id, 0, 8)),
+                'created_at' => $tx->created_at?->toIso8601String() ?? now()->toIso8601String(),
+            ];
+        });
 
         return $this->respondPaginated($transactions, false, null, count($transactions));
     }
@@ -120,13 +117,14 @@ class WalletController extends Controller
      */
     public function checkTransactionStatus(string $id): JsonResponse
     {
-        $tx = WalletTransaction::find($id);
+        $tx = WalletTransaction::where('id', $id)->orWhere('reference', $id)->first();
+        $wallet = $tx ? $tx->wallet : null;
 
         return $this->respondSuccess([
             'transaction_id' => $id,
             'status' => $tx ? $tx->status : 'completed',
-            'amount' => $tx ? abs((float) $tx->amount) : 20000,
-            'new_balance' => 67500,
+            'amount' => $tx ? abs((float) $tx->amount) : 0,
+            'new_balance' => (float) ($wallet?->balance_available ?? 0),
         ]);
     }
 

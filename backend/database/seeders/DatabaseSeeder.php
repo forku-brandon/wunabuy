@@ -131,6 +131,29 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
+        // Transporter Wallet
+        $existingTransporterWallet = DB::table('wallets')->where('user_id', $transporterUserId)->first();
+        if ($existingTransporterWallet) {
+            DB::table('wallets')->where('user_id', $transporterUserId)->update([
+                'balance_available' => 48500.00,
+                'balance_escrow_locked' => 12500.00,
+                'currency' => 'XAF',
+                'is_active' => true,
+                'updated_at' => now(),
+            ]);
+        } else {
+            DB::table('wallets')->insert([
+                'id' => (string) Str::uuid(),
+                'user_id' => $transporterUserId,
+                'balance_available' => 48500.00,
+                'balance_escrow_locked' => 12500.00,
+                'currency' => 'XAF',
+                'is_active' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
         // Staff SuperAdmin
         $existingAdmin = DB::table('users')->where('phone', '+237699000001')->first();
         if ($existingAdmin) {
@@ -872,5 +895,218 @@ class DatabaseSeeder extends Seeder
                 'updated_at' => now(),
             ]
         );
+
+        // ─────────────────────────────────────────────────────────────────────
+        // 5. SEED WALLET TRANSACTIONS
+        // ─────────────────────────────────────────────────────────────────────
+        $sellerUser = DB::table('users')->where('phone', '+237699112233')->first();
+        $sellerWallet = $sellerUser ? DB::table('wallets')->where('user_id', $sellerUser->id)->first() : null;
+        $transporterWallet = DB::table('wallets')->where('user_id', $transporterUserId)->first();
+
+        // Seed transactions for all buyer wallets (e.g. Jean Dupont phone +237670123456 and mobile test user)
+        $buyerWallets = DB::table('wallets')
+            ->join('users', 'wallets.user_id', '=', 'users.id')
+            ->where('users.role', 'buyer')
+            ->select('wallets.*')
+            ->get();
+
+        foreach ($buyerWallets as $index => $bWallet) {
+            DB::table('wallets')->where('id', $bWallet->id)->update([
+                'balance_available' => 47500.00,
+                'balance_escrow_locked' => 236000.00,
+            ]);
+
+            $prefix = sprintf('ba%06x', $index + 1);
+            $refSuffix = strtoupper(substr($bWallet->id, 0, 4));
+            $buyerTxs = [
+                [
+                    'id' => "{$prefix}-0001-4000-8000-000000000001",
+                    'wallet_id' => $bWallet->id,
+                    'type' => 'credit',
+                    'amount' => 100000.00,
+                    'currency' => 'XAF',
+                    'provider' => 'mtn',
+                    'status' => 'completed',
+                    'reference' => "WNB-MOMO-88129-{$refSuffix}",
+                    'description' => 'Wallet Top-Up via MTN Mobile Money',
+                    'created_at' => now()->subDays(3),
+                ],
+                [
+                    'id' => "{$prefix}-0002-4000-8000-000000000002",
+                    'wallet_id' => $bWallet->id,
+                    'type' => 'credit',
+                    'amount' => 50000.00,
+                    'currency' => 'XAF',
+                    'provider' => 'orange',
+                    'status' => 'completed',
+                    'reference' => "WNB-OM-99214-{$refSuffix}",
+                    'description' => 'Top-Up via Orange Money Deposit',
+                    'created_at' => now()->subDays(2),
+                ],
+                [
+                    'id' => "{$prefix}-0003-4000-8000-000000000003",
+                    'wallet_id' => $bWallet->id,
+                    'type' => 'debit',
+                    'amount' => -188000.00,
+                    'currency' => 'XAF',
+                    'provider' => 'wallet_escrow',
+                    'status' => 'completed',
+                    'reference' => "WNB-ESC-8812-{$refSuffix}",
+                    'description' => 'Escrow Payment — Order #WNB-2026-8812',
+                    'created_at' => now()->subHours(2),
+                ],
+                [
+                    'id' => "{$prefix}-0004-4000-8000-000000000004",
+                    'wallet_id' => $bWallet->id,
+                    'type' => 'debit',
+                    'amount' => -34200.00,
+                    'currency' => 'XAF',
+                    'provider' => 'orange',
+                    'status' => 'completed',
+                    'reference' => "WNB-ESC-6420-{$refSuffix}",
+                    'description' => 'Escrow Payment — Order #WNB-2026-6420',
+                    'created_at' => now()->subHours(5),
+                ],
+                [
+                    'id' => "{$prefix}-0005-4000-8000-000000000005",
+                    'wallet_id' => $bWallet->id,
+                    'type' => 'debit',
+                    'amount' => -16500.00,
+                    'currency' => 'XAF',
+                    'provider' => 'wallet_escrow',
+                    'status' => 'completed',
+                    'reference' => "WNB-ESC-3199-{$refSuffix}",
+                    'description' => 'Delivered Order #WNB-2026-3199',
+                    'created_at' => now()->subDays(2),
+                ],
+            ];
+
+            foreach ($buyerTxs as $tx) {
+                DB::table('wallet_transactions')->updateOrInsert(
+                    ['reference' => $tx['reference']],
+                    array_merge($tx, ['updated_at' => now()])
+                );
+            }
+        }
+
+        if ($sellerWallet) {
+            $sellerTxs = [
+                [
+                    'id' => 'c1a2c3d4-0001-4000-8000-000000000001',
+                    'wallet_id' => $sellerWallet->id,
+                    'type' => 'escrow_release',
+                    'amount' => 188000.00,
+                    'currency' => 'XAF',
+                    'provider' => 'wallet_escrow',
+                    'status' => 'completed',
+                    'reference' => 'WNB-REL-8812',
+                    'description' => 'Escrow released for Order #WNB-2026-8812',
+                    'created_at' => now()->subDays(1),
+                ],
+                [
+                    'id' => 'c1a2c3d4-0002-4000-8000-000000000002',
+                    'wallet_id' => $sellerWallet->id,
+                    'type' => 'commission_deduction',
+                    'amount' => -9400.00,
+                    'currency' => 'XAF',
+                    'provider' => 'wallet_escrow',
+                    'status' => 'completed',
+                    'reference' => 'WNB-COM-8812',
+                    'description' => 'Platform 5% fulfillment fee for Order #WNB-2026-8812',
+                    'created_at' => now()->subDays(1),
+                ],
+                [
+                    'id' => 'c1a2c3d4-0003-4000-8000-000000000003',
+                    'wallet_id' => $sellerWallet->id,
+                    'type' => 'payout',
+                    'amount' => -50000.00,
+                    'currency' => 'XAF',
+                    'provider' => 'mtn',
+                    'status' => 'completed',
+                    'reference' => 'WNB-PO-55120',
+                    'description' => 'Payout to MTN MoMo (+237 699 112 233)',
+                    'created_at' => now()->subHours(6),
+                ],
+            ];
+
+            foreach ($sellerTxs as $tx) {
+                DB::table('wallet_transactions')->updateOrInsert(
+                    ['id' => $tx['id']],
+                    array_merge($tx, ['updated_at' => now()])
+                );
+            }
+        }
+
+        if ($transporterWallet) {
+            $transporterTxs = [
+                [
+                    'id' => 'd1a2c3d4-0001-4000-8000-000000000001',
+                    'wallet_id' => $transporterWallet->id,
+                    'type' => 'credit',
+                    'amount' => 1500.00,
+                    'currency' => 'XAF',
+                    'provider' => 'wallet_escrow',
+                    'status' => 'completed',
+                    'reference' => 'TRIP-2026-9842',
+                    'description' => 'Delivery Fee — Order #WNB-2026-9842',
+                    'created_at' => now()->subHours(2),
+                ],
+                [
+                    'id' => 'd1a2c3d4-0002-4000-8000-000000000002',
+                    'wallet_id' => $transporterWallet->id,
+                    'type' => 'credit',
+                    'amount' => 2000.00,
+                    'currency' => 'XAF',
+                    'provider' => 'wallet_escrow',
+                    'status' => 'completed',
+                    'reference' => 'TRIP-2026-7731',
+                    'description' => 'Delivery Fee — Order #WNB-2026-7731',
+                    'created_at' => now()->subHours(4),
+                ],
+                [
+                    'id' => 'd1a2c3d4-0003-4000-8000-000000000003',
+                    'wallet_id' => $transporterWallet->id,
+                    'type' => 'credit',
+                    'amount' => 1500.00,
+                    'currency' => 'XAF',
+                    'provider' => 'wallet_escrow',
+                    'status' => 'completed',
+                    'reference' => 'TRIP-2026-3390',
+                    'description' => 'Delivery Fee — Order #WNB-2026-3390',
+                    'created_at' => now()->subDay(),
+                ],
+                [
+                    'id' => 'd1a2c3d4-0004-4000-8000-000000000004',
+                    'wallet_id' => $transporterWallet->id,
+                    'type' => 'credit',
+                    'amount' => 500.00,
+                    'currency' => 'XAF',
+                    'provider' => 'wallet_escrow',
+                    'status' => 'completed',
+                    'reference' => 'TIP-2026-004',
+                    'description' => 'Customer Tip for Express Service',
+                    'created_at' => now()->subDay(),
+                ],
+                [
+                    'id' => 'd1a2c3d4-0005-4000-8000-000000000005',
+                    'wallet_id' => $transporterWallet->id,
+                    'type' => 'debit',
+                    'amount' => -10000.00,
+                    'currency' => 'XAF',
+                    'provider' => 'mtn',
+                    'status' => 'completed',
+                    'reference' => 'CASHOUT-881',
+                    'description' => 'Instant Cashout to MTN MoMo (*126#)',
+                    'created_at' => now()->subDays(2),
+                ],
+            ];
+
+            foreach ($transporterTxs as $tx) {
+                DB::table('wallet_transactions')->updateOrInsert(
+                    ['id' => $tx['id']],
+                    array_merge($tx, ['updated_at' => now()])
+                );
+            }
+        }
     }
 }

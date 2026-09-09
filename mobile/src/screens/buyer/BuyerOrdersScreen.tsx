@@ -10,6 +10,7 @@ import { formatXAF, getStatusLabel } from '@wunabuy/utils';
 import { spacing, borderRadius, colors, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
 import { OrdersService } from '../../services/api';
+import { WalletService } from '../../services/api/walletService';
 
 export interface OrderItemData {
   id: string;
@@ -26,6 +27,7 @@ export const BuyerOrdersScreen = ({ navigation }: any) => {
   const insets = useSafeAreaInsets();
   const { theme, isDark } = useThemeStore();
   const [orders, setOrders] = useState<OrderItemData[]>([]);
+  const [escrowLockedTotal, setEscrowLockedTotal] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [selectedFilter, setSelectedFilter] = useState<string>('All');
   const [activeOrderForModal, setActiveOrderForModal] = useState<OrderItemData | null>(null);
@@ -36,7 +38,13 @@ export const BuyerOrdersScreen = ({ navigation }: any) => {
 
   const loadOrders = useCallback(async () => {
     try {
-      const data = await OrdersService.getOrders();
+      const [data, wallet] = await Promise.all([
+        OrdersService.getOrders(),
+        WalletService.getWallet().catch(() => null),
+      ]);
+      if (wallet && typeof wallet.balance_escrow_locked === 'number') {
+        setEscrowLockedTotal(wallet.balance_escrow_locked);
+      }
       const mapped: OrderItemData[] = (data || []).map((o) => ({
         id: o.id,
         order_code: o.order_code,
@@ -126,7 +134,7 @@ export const BuyerOrdersScreen = ({ navigation }: any) => {
           </View>
           <View style={styles.escrowTextCol}>
             <Text variant="bodyLarge" bold color={colors.primary[600]}>
-              236,000 FCFA Locked in Escrow
+              {formatXAF(escrowLockedTotal)} Locked in Escrow
             </Text>
             <Text variant="caption" secondary style={{ marginTop: 2 }}>
               Your money stays 100% safe in buyer protection until delivery is inspected &amp; signed.

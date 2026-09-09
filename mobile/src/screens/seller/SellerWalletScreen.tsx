@@ -17,7 +17,7 @@ import { useSellerStore, SellerTransaction } from '../../stores/seller.store';
 import { useThemeStore } from '../../stores/theme.store';
 import { formatXAF, formatDate } from '@wunabuy/utils';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
-import { SellerService } from '../../services/api';
+import { SellerService, WalletService } from '../../services/api';
 
 type LedgerFilter = 'all' | 'payout' | 'escrow_release' | 'commission_deduction';
 
@@ -30,6 +30,8 @@ export const SellerWalletScreen = ({ navigation }: any) => {
     totalPaidOut,
     transactions,
     requestPayout,
+    setDashboardMetrics,
+    setTransactions,
   } = useSellerStore();
 
   const [isBalanceVisible, setIsBalanceVisible] = useState(true);
@@ -46,11 +48,28 @@ export const SellerWalletScreen = ({ navigation }: any) => {
 
   const loadDashboardData = useCallback(async () => {
     try {
-      await SellerService.getStoreDashboard();
+      const [data, txList] = await Promise.all([
+        SellerService.getStoreDashboard(),
+        WalletService.getTransactions(),
+      ]);
+      if (data) {
+        setDashboardMetrics(data);
+      }
+      if (Array.isArray(txList) && txList.length > 0) {
+        setTransactions(txList.map((tx) => ({
+          id: tx.id,
+          type: tx.type === 'credit' ? 'escrow_release' : tx.amount < -10000 ? 'payout' : 'commission_deduction',
+          amount: Math.abs(tx.amount),
+          status: tx.status,
+          reference: tx.reference,
+          description: tx.description,
+          created_at: tx.created_at,
+        })));
+      }
     } catch {
       // Offline fallback
     }
-  }, []);
+  }, [setDashboardMetrics, setTransactions]);
 
   useEffect(() => {
     loadDashboardData();
@@ -259,6 +278,15 @@ export const SellerWalletScreen = ({ navigation }: any) => {
       >
         {ListHeader}
         <RecentTransactionsWidget
+          transactions={filteredTransactions.map((t) => ({
+            id: t.id,
+            title: t.description,
+            date: formatDate(t.created_at),
+            amount: t.type === 'payout' || t.type === 'commission_deduction' ? -t.amount : t.amount,
+            type: t.type === 'escrow_release' ? 'credit' : 'debit',
+            status: t.status,
+            reference: t.reference,
+          }))}
           onViewAll={() => navigation.navigate('TransactionHistory')}
         />
       </ScrollView>

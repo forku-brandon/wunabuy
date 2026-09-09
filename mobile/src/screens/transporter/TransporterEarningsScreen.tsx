@@ -22,11 +22,14 @@ export const TransporterEarningsScreen = ({ navigation }: any) => {
   const { theme, isDark } = useThemeStore();
   const insets = useSafeAreaInsets();
 
-  const [availablePayout, setAvailablePayout] = useState(48500);
-  const [pendingEscrow, setPendingEscrow] = useState(12500);
-  const [totalEarned, setTotalEarned] = useState(384500);
+  const [availablePayout, setAvailablePayout] = useState(0);
+  const [pendingEscrow, setPendingEscrow] = useState(0);
+  const [totalEarned, setTotalEarned] = useState(0);
+  const [completedTripsCount, setCompletedTripsCount] = useState(0);
+  const [ratingAvg, setRatingAvg] = useState(4.95);
+  const [totalTips, setTotalTips] = useState(0);
   const [isBalanceVisible, setIsBalanceVisible] = useState(true);
-  const [trips, setTrips] = useState(MOCK_TRIP_HISTORY);
+  const [trips, setTrips] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [isWithdrawModalVisible, setIsWithdrawModalVisible] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState('');
@@ -40,10 +43,13 @@ export const TransporterEarningsScreen = ({ navigation }: any) => {
     try {
       const data = await TransporterService.getDriverEarnings();
       if (data) {
-        setAvailablePayout(data.available_payout);
-        setPendingEscrow(data.pending_escrow);
-        setTotalEarned(data.total_earned);
-        if (data.transactions && data.transactions.length > 0) {
+        setAvailablePayout(data.available_payout ?? 0);
+        setPendingEscrow(data.pending_escrow ?? 0);
+        setTotalEarned(data.total_earned ?? 0);
+        setCompletedTripsCount(data.completed_trips_count ?? 0);
+        setRatingAvg(data.rating_avg ?? 4.95);
+        setTotalTips(data.total_tips_xaf ?? 0);
+        if (data.transactions) {
           setTrips(data.transactions as any);
         }
       }
@@ -177,7 +183,7 @@ export const TransporterEarningsScreen = ({ navigation }: any) => {
           <View style={[styles.telemetryCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
             <Ionicons name="checkmark-circle-outline" size={20} color={colors.primary[500]} />
             <Text variant="h2" bold style={{ marginTop: 2 }}>
-              248
+              {completedTripsCount}
             </Text>
             <Text variant="caption" secondary>
               Trips Delivered
@@ -187,7 +193,7 @@ export const TransporterEarningsScreen = ({ navigation }: any) => {
           <View style={[styles.telemetryCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
             <Ionicons name="star-outline" size={20} color="#F59E0B" />
             <Text variant="h2" bold style={{ marginTop: 2 }}>
-              4.95 ★
+              {ratingAvg.toFixed(2)} ★
             </Text>
             <Text variant="caption" secondary>
               Fleet Rating
@@ -197,7 +203,7 @@ export const TransporterEarningsScreen = ({ navigation }: any) => {
           <View style={[styles.telemetryCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
             <Ionicons name="gift-outline" size={20} color={colors.primary[500]} />
             <Text variant="h2" bold style={{ marginTop: 2 }}>
-              3,500
+              {totalTips.toLocaleString('en-US')}
             </Text>
             <Text variant="caption" secondary>
               Tips (FCFA)
@@ -207,6 +213,14 @@ export const TransporterEarningsScreen = ({ navigation }: any) => {
 
         {/* Recent Transactions Section (Image 2 style) */}
         <RecentTransactionsWidget
+          transactions={trips.map((t: any) => ({
+            id: t.id,
+            title: t.code,
+            date: t.date,
+            amount: t.fee,
+            type: t.fee >= 0 ? 'credit' : 'debit',
+            status: t.status === 'cashout' ? 'completed' : 'completed',
+          }))}
           onViewAll={() => navigation?.navigate('TransactionHistory')}
         />
 
