@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { ScreenContainer, Text, Input, Button } from '../../components/ui';
 import { SecureTokenService } from '../../services/SecureTokenService';
 import { useAuthStore } from '../../stores/auth.store';
@@ -9,7 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { api } from '../../services/api';
 
-export const RegisterScreen = ({ route }: any) => {
+export const RegisterScreen = ({ navigation, route }: any) => {
   const phone = route.params?.phone ?? '+237670000000';
   const { setAuth } = useAuthStore();
   const insets = useSafeAreaInsets();
@@ -126,6 +126,12 @@ export const RegisterScreen = ({ route }: any) => {
           containerStyle={styles.inputContainer}
         />
 
+        {error ? (
+          <Text variant="caption" color={colors.semantic.error[500]} align="center" style={styles.errorText}>
+            {error}
+          </Text>
+        ) : null}
+
         <Button
           title="Create Account & Log In →"
           variant="primary"
@@ -133,6 +139,16 @@ export const RegisterScreen = ({ route }: any) => {
           onPress={handleSubmit}
           style={styles.button}
         />
+
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={() => navigation.navigate('Login', { mode: 'login' })}
+          style={styles.signInLink}
+        >
+          <Text variant="bodyMedium" bold align="center" color={colors.primary[500]}>
+            Already have an account? Sign In
+          </Text>
+        </TouchableOpacity>
       </View>
     </ScreenContainer>
   );
@@ -162,8 +178,16 @@ const styles = StyleSheet.create({
   inputContainer: {
     marginBottom: spacing.lg,
   },
+  errorText: {
+    marginBottom: spacing.md,
+  },
   button: {
-    marginTop: spacing.md,
+    marginTop: spacing.xs,
     height: 52,
+  },
+  signInLink: {
+    marginTop: spacing.xl,
+    paddingVertical: spacing.sm,
+    alignItems: 'center',
   },
 });

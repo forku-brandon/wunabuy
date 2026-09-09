@@ -33,6 +33,15 @@ export function createAuthApi(client: AxiosInstance) {
     },
 
     /**
+     * Check if a phone number is already registered in the system.
+     */
+    checkPhone: async (payload: { phone: string } | string): Promise<ApiResponse<{ phone: string; is_registered: boolean }>> => {
+      const data = typeof payload === 'string' ? { phone: payload } : payload;
+      const res = await client.post<ApiResponse<{ phone: string; is_registered: boolean }>>('/auth/check-phone', data);
+      return res.data;
+    },
+
+    /**
      * Send OTP to phone number.
      */
     sendOtp: async (payload: { phone: string } | string): Promise<ApiResponse<OTPResponse>> => {

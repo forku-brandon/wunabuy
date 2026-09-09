@@ -47,35 +47,29 @@ class AuthController extends Controller
         $email = $request->input('email');
         $addressText = $request->input('address_text');
 
-        $user = User::where('phone', $phone)->first();
-        if ($user) {
-            $user->full_name = $fullName;
-            if ($email) {
-                $user->email = $email;
-            }
-            $user->role = $role;
-            $user->status = 'active';
-            $user->is_phone_verified = true;
-            $available = $user->available_roles ?? ['buyer'];
-            if (!in_array($role, $available)) {
-                $available[] = $role;
-            }
-            $user->available_roles = array_values(array_unique($available));
-            $user->save();
-        } else {
-            $user = User::create([
-                'id' => (string) Str::uuid(),
-                'phone' => $phone,
-                'email' => $email,
-                'full_name' => $fullName,
-                'role' => $role,
-                'status' => 'active',
-                'is_phone_verified' => true,
-                'available_roles' => array_values(array_unique(['buyer', $role])),
-                'otp' => '123456',
-                'otp_expires_at' => now()->addMinutes(5),
-            ]);
+        // STRICT SECURITY CHECK: Prevent duplicate registration for the same phone number
+        $existingUser = User::where('phone', $phone)->first();
+        if ($existingUser) {
+            return $this->respondError(
+                'PHONE_ALREADY_EXISTS',
+                'An account with this phone number already exists. Please sign in instead.',
+                ['phone' => ['This phone number is already registered.']],
+                409
+            );
         }
+
+        $user = User::create([
+            'id' => (string) Str::uuid(),
+            'phone' => $phone,
+            'email' => $email,
+            'full_name' => $fullName,
+            'role' => $role,
+            'status' => 'active',
+            'is_phone_verified' => true,
+            'available_roles' => array_values(array_unique(['buyer', $role])),
+            'otp' => '123456',
+            'otp_expires_at' => now()->addMinutes(5),
+        ]);
 
         // Automatically initialize XAF wallet for user if missing
         Wallet::firstOrCreate(
@@ -198,6 +192,24 @@ class AuthController extends Controller
             'access_token' => $token,
             'token_type' => 'Bearer',
             'user' => $user->toAuthProfileArray(),
+        ]);
+    }
+
+    /**
+     * Check if a phone number is already registered in the system.
+     */
+    public function checkPhone(Request $request): JsonResponse
+    {
+        $phone = $request->input('phone');
+        if (!$phone) {
+            return $this->respondError('VALIDATION_ERROR', 'Phone number is required.', ['phone' => ['Please enter your phone number.']], 422);
+        }
+
+        $exists = User::where('phone', $phone)->exists();
+
+        return $this->respondSuccess([
+            'phone' => $phone,
+            'is_registered' => $exists,
         ]);
     }
 

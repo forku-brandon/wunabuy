@@ -8,7 +8,8 @@ import { api } from '../../services/api';
 
 export const LoginScreen = ({ navigation, route }: any) => {
   const insets = useSafeAreaInsets();
-  const mode: 'register' | 'login' = route.params?.mode ?? 'login';
+  const initialMode: 'register' | 'login' = route.params?.mode ?? 'login';
+  const [authMode, setAuthMode] = useState<'register' | 'login'>(initialMode);
   const [phone, setPhone] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -17,11 +18,6 @@ export const LoginScreen = ({ navigation, route }: any) => {
   const handlePhoneChange = (text: string) => {
     setError('');
     setPhone(text);
-  };
-
-  const handleQuickDemo = () => {
-    setError('');
-    setPhone('670123456');
   };
 
   const handleSubmit = async () => {
@@ -40,20 +36,38 @@ export const LoginScreen = ({ navigation, route }: any) => {
     setLoading(true);
     setError('');
 
-    // Seamless bypass of OTP:
-    // If login mode -> directly to PinLogin screen to enter 6-digit PIN
-    // If register mode -> directly to Register screen to setup profile & set 6-digit PIN
-    setTimeout(() => {
+    try {
+      const checkRes = await api.auth.checkPhone(normalized);
+      const isRegistered = checkRes?.data?.is_registered ?? false;
+
+      if (authMode === 'register') {
+        if (isRegistered) {
+          setLoading(false);
+          setError('An account with this phone number already exists. Please sign in instead.');
+          return;
+        }
+        setLoading(false);
+        navigation.navigate('Register', { phone: normalized });
+      } else {
+        if (!isRegistered) {
+          setLoading(false);
+          setError('No account found for this phone number. Please create an account first.');
+          return;
+        }
+        setLoading(false);
+        navigation.navigate('PinLogin', { phone: normalized });
+      }
+    } catch {
       setLoading(false);
-      if (mode === 'register') {
+      if (authMode === 'register') {
         navigation.navigate('Register', { phone: normalized });
       } else {
         navigation.navigate('PinLogin', { phone: normalized });
       }
-    }, 250);
+    }
   };
 
-  const isRegister = mode === 'register';
+  const isRegister = authMode === 'register';
 
   return (
     <ScreenContainer contentContainerStyle={{ ...styles.container, paddingBottom: Math.max(insets.bottom + spacing.xl, spacing['3xl']) }}>
@@ -80,13 +94,6 @@ export const LoginScreen = ({ navigation, route }: any) => {
           containerStyle={styles.inputContainer}
         />
 
-        {/* Quick Demo Fill Button */}
-        <TouchableOpacity activeOpacity={0.8} onPress={handleQuickDemo} style={styles.demoFillBtn}>
-          <Text variant="caption" bold color={colors.primary[500]}>
-            💡 Auto-fill Demo Number (+237 670 123 456)
-          </Text>
-        </TouchableOpacity>
-
         <Button
           title={isRegister ? 'Continue to Registration →' : 'Continue to PIN →'}
           variant="primary"
@@ -94,6 +101,21 @@ export const LoginScreen = ({ navigation, route }: any) => {
           onPress={handleSubmit}
           style={styles.button}
         />
+
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={() => {
+            setError('');
+            setAuthMode(isRegister ? 'login' : 'register');
+          }}
+          style={styles.switchModeBtn}
+        >
+          <Text variant="bodyMedium" bold align="center" color={colors.primary[500]}>
+            {isRegister
+              ? 'Already have an account? Sign In'
+              : "Don't have an account? Create an Account"}
+          </Text>
+        </TouchableOpacity>
       </View>
 
       {toastMessage && <Toast message={toastMessage} type="success" />}
@@ -123,15 +145,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
   },
   inputContainer: {
-    marginBottom: spacing.sm,
-  },
-  demoFillBtn: {
-    alignSelf: 'flex-end',
     marginBottom: spacing.lg,
-    paddingVertical: spacing.xs,
   },
   button: {
     marginTop: spacing.xs,
     height: 52,
+  },
+  switchModeBtn: {
+    marginTop: spacing.xl,
+    paddingVertical: spacing.sm,
+    alignItems: 'center',
   },
 });

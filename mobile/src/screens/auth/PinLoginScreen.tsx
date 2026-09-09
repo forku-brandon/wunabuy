@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { ScreenContainer, Text, Button, Toast } from '../../components/ui';
 import { OTPInput } from '../../components/auth/OTPInput';
@@ -63,12 +63,6 @@ export const PinLoginScreen = ({ navigation, route }: any) => {
     }
   };
 
-  const handleQuickDemo = () => {
-    setError('');
-    setPin('123456');
-    handlePinSubmit('123456');
-  };
-
   return (
     <ScreenContainer contentContainerStyle={{ ...styles.container, paddingBottom: Math.max(insets.bottom + spacing.xl, spacing['3xl']) }}>
       <View style={styles.contentBox}>
@@ -99,13 +93,6 @@ export const PinLoginScreen = ({ navigation, route }: any) => {
             {error}
           </Text>
         ) : null}
-
-        {/* Quick Demo Fill Button */}
-        <TouchableOpacity activeOpacity={0.8} onPress={handleQuickDemo} style={styles.demoFillBtn}>
-          <Text variant="caption" bold color={colors.primary[500]} align="center">
-            💡 Auto-fill Demo PIN (123456)
-          </Text>
-        </TouchableOpacity>
 
         <Button
           title="Sign In →"
@@ -150,13 +137,8 @@ const styles = StyleSheet.create({
   error: {
     marginVertical: spacing.sm,
   },
-  demoFillBtn: {
-    alignSelf: 'center',
-    marginVertical: spacing.md,
-    paddingVertical: spacing.xs,
-  },
   button: {
-    marginTop: spacing.sm,
+    marginTop: spacing.md,
     height: 52,
   },
 });
