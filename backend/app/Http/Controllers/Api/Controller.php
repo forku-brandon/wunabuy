@@ -60,4 +60,24 @@ abstract class Controller extends BaseController
             ],
         ], $status);
     }
+
+    /**
+     * Resolve authenticated user from Sanctum Bearer token or request user.
+     */
+    protected function resolveUser(\Illuminate\Http\Request $request): ?\App\Models\User
+    {
+        if ($user = $request->user()) {
+            return $user;
+        }
+
+        $bearer = $request->bearerToken();
+        if ($bearer) {
+            $tokenModel = \Laravel\Sanctum\PersonalAccessToken::findToken($bearer);
+            if ($tokenModel && $tokenModel->tokenable instanceof \App\Models\User) {
+                return $tokenModel->tokenable;
+            }
+        }
+
+        return null;
+    }
 }

@@ -8,11 +8,13 @@ interface AuthState {
   accessToken: string | null;
   refreshToken: string | null;
   activeRole: UserRole;
+  permissions: string[];
   isAuthenticated: boolean;
 
   // Actions
   setAuth: (user: User, accessToken: string, refreshToken: string) => void;
   setActiveRole: (role: UserRole) => void;
+  hasPermission: (permission: string) => boolean;
   updateUser: (userPartial: Partial<User>) => void;
   logout: () => void;
 }
@@ -24,19 +26,22 @@ export const useAuthStore = create<AuthState>()(
       accessToken: null,
       refreshToken: null,
       activeRole: UserRole.BUYER,
+      permissions: [],
       isAuthenticated: false,
 
       setAuth: (user, accessToken, refreshToken) => {
         const approvedRoles = user.available_roles && user.available_roles.length > 0
           ? user.available_roles
-          : [UserRole.BUYER, UserRole.SELLER, UserRole.TRANSPORTER];
+          : [UserRole.BUYER];
 
+        const permissions = user.permissions || [];
 
         set({
-          user: { ...user, available_roles: approvedRoles },
+          user: { ...user, available_roles: approvedRoles, permissions },
           accessToken,
           refreshToken,
           activeRole: user.role || UserRole.BUYER,
+          permissions,
           isAuthenticated: true,
         });
       },
@@ -45,10 +50,21 @@ export const useAuthStore = create<AuthState>()(
         set({ activeRole: role });
       },
 
+      hasPermission: (permission: string) => {
+        const { permissions, user } = get();
+        const activePerms = user?.permissions || permissions || [];
+        return activePerms.includes('*') || activePerms.includes(permission);
+      },
+
       updateUser: (userPartial) => {
         const { user } = get();
         if (user) {
-          set({ user: { ...user, ...userPartial } });
+          const updatedUser = { ...user, ...userPartial };
+          set({
+            user: updatedUser,
+            permissions: updatedUser.permissions || get().permissions,
+            activeRole: updatedUser.role || get().activeRole,
+          });
         }
       },
 
@@ -58,6 +74,7 @@ export const useAuthStore = create<AuthState>()(
           accessToken: null,
           refreshToken: null,
           activeRole: UserRole.BUYER,
+          permissions: [],
           isAuthenticated: false,
         });
       },

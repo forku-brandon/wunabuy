@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\Address;
+use App\Models\Store;
+use App\Models\Transporter;
 use App\Models\User;
 use App\Models\Wallet;
 use Illuminate\Http\JsonResponse;
@@ -35,41 +37,108 @@ class AuthController extends Controller
     }
 
     /**
-     * Register new buyer or seller account.
+     * Register new buyer or seller account and return full user profile & permissions.
      */
     public function register(Request $request): JsonResponse
     {
         $phone = $request->input('phone', '+237670123456');
         $fullName = $request->input('full_name', 'Wunabuy Member');
         $role = $request->input('role', 'buyer');
+        $email = $request->input('email');
+        $addressText = $request->input('address_text');
 
         $user = User::where('phone', $phone)->first();
-        if (!$user) {
+        if ($user) {
+            $user->full_name = $fullName;
+            if ($email) {
+                $user->email = $email;
+            }
+            $user->role = $role;
+            $user->status = 'active';
+            $user->is_phone_verified = true;
+            $available = $user->available_roles ?? ['buyer'];
+            if (!in_array($role, $available)) {
+                $available[] = $role;
+            }
+            $user->available_roles = array_values(array_unique($available));
+            $user->save();
+        } else {
             $user = User::create([
                 'id' => (string) Str::uuid(),
                 'phone' => $phone,
-                'email' => $request->input('email'),
+                'email' => $email,
                 'full_name' => $fullName,
                 'role' => $role,
                 'status' => 'active',
                 'is_phone_verified' => true,
-                'available_roles' => array_unique(['buyer', $role]),
+                'available_roles' => array_values(array_unique(['buyer', $role])),
                 'otp' => '123456',
                 'otp_expires_at' => now()->addMinutes(5),
             ]);
+        }
 
-            // Automatically initialize XAF wallet for user
-            Wallet::firstOrCreate(
-                ['user_id' => $user->id],
-                ['currency' => 'XAF', 'balance_available' => 50000, 'balance_escrow_locked' => 0]
+        // Automatically initialize XAF wallet for user if missing
+        Wallet::firstOrCreate(
+            ['user_id' => $user->id],
+            ['currency' => 'XAF', 'balance_available' => 50000, 'balance_escrow_locked' => 0]
+        );
+
+        // If delivery address provided, save as default address
+        if ($addressText && !empty(trim($addressText))) {
+            Address::firstOrCreate(
+                ['user_id' => $user->id, 'address_text' => trim($addressText)],
+                [
+                    'id' => (string) Str::uuid(),
+                    'label' => 'Home',
+                    'city' => 'Douala',
+                    'latitude' => 4.0510564,
+                    'longitude' => 9.7678687,
+                    'is_default' => true,
+                ]
             );
         }
 
+        // If seller, initialize store shell if missing
+        if ($role === 'seller' && !$user->store) {
+            Store::firstOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'id' => (string) Str::uuid(),
+                    'store_name' => $fullName . "'s Store",
+                    'tagline' => 'Verified Merchant on Wunabuy',
+                    'description' => 'Quality verified goods and escrow protection.',
+                    'category' => 'General',
+                    'address_text' => $addressText ?? 'Douala, Cameroon',
+                    'city' => 'Douala',
+                    'phone' => $phone,
+                    'email' => $email ?? ($phone . '@wunabuy.com'),
+                    'is_verified' => false,
+                    'is_active' => true,
+                ]
+            );
+        }
+
+        // If transporter, initialize transporter profile if missing
+        if ($role === 'transporter' && !$user->transporter) {
+            Transporter::firstOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'id' => (string) Str::uuid(),
+                    'vehicle_type' => 'moto',
+                    'status' => 'offline',
+                    'is_verified' => false,
+                    'rating_avg' => 5.0,
+                    'completed_trips' => 0,
+                ]
+            );
+        }
+
+        $token = $user->createToken('auth-token')->plainTextToken;
+
         return $this->respondSuccess([
-            'phone' => $phone,
-            'otp_sent' => true,
-            'expires_in_seconds' => 300,
-            'demo_code' => '123456',
+            'access_token' => $token,
+            'token_type' => 'Bearer',
+            'user' => $user->toAuthProfileArray(),
         ]);
     }
 
@@ -87,11 +156,11 @@ class AuthController extends Controller
             $user = User::create([
                 'id' => (string) Str::uuid(),
                 'phone' => $phone,
-                'full_name' => 'Jean Dupont',
+                'full_name' => 'Wunabuy Member',
                 'role' => 'buyer',
                 'status' => 'active',
                 'is_phone_verified' => true,
-                'available_roles' => ['buyer', 'seller', 'transporter'],
+                'available_roles' => ['buyer'],
             ]);
 
             Wallet::firstOrCreate(
@@ -105,27 +174,12 @@ class AuthController extends Controller
             return $this->respondError('VALIDATION_ERROR', 'Invalid or expired OTP code', ['otp' => ['The provided OTP code is incorrect.']]);
         }
 
-        $token = 'wnb_' . Str::random(40);
-        try {
-            $token = $user->createToken('auth-token')->plainTextToken;
-        } catch (\Throwable) {
-            // Keep fallback string token
-        }
+        $token = $user->createToken('auth-token')->plainTextToken;
 
         return $this->respondSuccess([
             'access_token' => $token,
             'token_type' => 'Bearer',
-            'user' => [
-                'id' => $user->id,
-                'phone' => $user->phone,
-                'email' => $user->email,
-                'full_name' => $user->full_name,
-                'role' => $user->role,
-                'status' => $user->status,
-                'avatar_url' => $user->avatar_url,
-                'is_phone_verified' => (bool) $user->is_phone_verified,
-                'available_roles' => $user->available_roles ?? ['buyer'],
-            ],
+            'user' => $user->toAuthProfileArray(),
         ]);
     }
 
@@ -153,23 +207,13 @@ class AuthController extends Controller
      */
     public function getMe(Request $request): JsonResponse
     {
-        $user = $request->user() ?? User::where('role', 'buyer')->first() ?? User::first();
+        $user = $this->resolveUser($request);
 
         if (!$user) {
             return $this->respondError('UNAUTHENTICATED', 'User session expired or not found', null, 401);
         }
 
-        return $this->respondSuccess([
-            'id' => $user->id,
-            'phone' => $user->phone,
-            'email' => $user->email,
-            'full_name' => $user->full_name,
-            'role' => $user->role,
-            'status' => $user->status,
-            'avatar_url' => $user->avatar_url,
-            'is_phone_verified' => (bool) $user->is_phone_verified,
-            'available_roles' => $user->available_roles ?? ['buyer', 'seller', 'transporter'],
-        ]);
+        return $this->respondSuccess($user->toAuthProfileArray());
     }
 
     /**
@@ -177,9 +221,9 @@ class AuthController extends Controller
      */
     public function updateMe(Request $request): JsonResponse
     {
-        $user = $request->user() ?? User::first();
+        $user = $this->resolveUser($request);
         if (!$user) {
-            return $this->respondError('UNAUTHENTICATED', 'User not found', null, 401);
+            return $this->respondError('UNAUTHENTICATED', 'User session expired or not found', null, 401);
         }
 
         if ($request->has('full_name')) {
@@ -193,17 +237,7 @@ class AuthController extends Controller
         }
         $user->save();
 
-        return $this->respondSuccess([
-            'id' => $user->id,
-            'phone' => $user->phone,
-            'email' => $user->email,
-            'full_name' => $user->full_name,
-            'role' => $user->role,
-            'status' => $user->status,
-            'avatar_url' => $user->avatar_url,
-            'is_phone_verified' => (bool) $user->is_phone_verified,
-            'available_roles' => $user->available_roles ?? ['buyer'],
-        ]);
+        return $this->respondSuccess($user->fresh()->toAuthProfileArray());
     }
 
     /**
@@ -211,25 +245,12 @@ class AuthController extends Controller
      */
     public function getAddresses(Request $request): JsonResponse
     {
-        $user = $request->user() ?? User::first();
-        $addresses = $user ? Address::where('user_id', $user->id)->get() : [];
-
-        if (count($addresses) === 0) {
-            // Seed a default address for demo
-            $addresses = [
-                [
-                    'id' => 'addr_1',
-                    'label' => 'Home',
-                    'address_text' => 'Boulevard de la Liberté, Bonanjo',
-                    'city' => 'Douala',
-                    'quarter' => 'Bonanjo',
-                    'latitude' => 4.0611,
-                    'longitude' => 9.7863,
-                    'is_default' => true,
-                ]
-            ];
+        $user = $this->resolveUser($request);
+        if (!$user) {
+            return $this->respondError('UNAUTHENTICATED', 'User session expired or not found', null, 401);
         }
 
+        $addresses = Address::where('user_id', $user->id)->orderBy('is_default', 'desc')->get();
         return $this->respondSuccess($addresses);
     }
 
@@ -238,19 +259,26 @@ class AuthController extends Controller
      */
     public function addAddress(Request $request): JsonResponse
     {
-        $user = $request->user() ?? User::first();
-        $userId = $user ? $user->id : (string) Str::uuid();
+        $user = $this->resolveUser($request);
+        if (!$user) {
+            return $this->respondError('UNAUTHENTICATED', 'User session expired or not found', null, 401);
+        }
+
+        $isDefault = (bool) $request->input('is_default', false);
+        if ($isDefault) {
+            Address::where('user_id', $user->id)->update(['is_default' => false]);
+        }
 
         $address = Address::create([
             'id' => (string) Str::uuid(),
-            'user_id' => $userId,
+            'user_id' => $user->id,
             'label' => $request->input('label', 'Home'),
             'address_text' => $request->input('address_text', 'Douala, Cameroon'),
             'city' => $request->input('city', 'Douala'),
             'quarter' => $request->input('quarter', 'Akwa'),
             'latitude' => $request->input('latitude', 4.0510),
             'longitude' => $request->input('longitude', 9.7678),
-            'is_default' => (bool) $request->input('is_default', false),
+            'is_default' => $isDefault,
         ]);
 
         return $this->respondSuccess($address);
@@ -273,14 +301,19 @@ class AuthController extends Controller
      */
     public function uploadAvatar(Request $request): JsonResponse
     {
-        $url = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80';
-        $user = $request->user() ?? User::first();
-        if ($user) {
-            $user->avatar_url = $url;
-            $user->save();
+        $user = $this->resolveUser($request);
+        if (!$user) {
+            return $this->respondError('UNAUTHENTICATED', 'User session expired or not found', null, 401);
         }
 
-        return $this->respondSuccess(['avatar_url' => $url]);
+        $url = $request->input('avatar_url', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80');
+        $user->avatar_url = $url;
+        $user->save();
+
+        return $this->respondSuccess([
+            'avatar_url' => $url,
+            'user' => $user->fresh()->toAuthProfileArray(),
+        ]);
     }
 
     /**
@@ -289,18 +322,23 @@ class AuthController extends Controller
     public function switchRole(Request $request): JsonResponse
     {
         $requestedRole = $request->input('requested_role', 'buyer');
-        $user = $request->user() ?? User::first();
+        $user = $this->resolveUser($request);
 
-        if ($user) {
-            $available = $user->available_roles ?? ['buyer'];
-            if (!in_array($requestedRole, $available)) {
-                $available[] = $requestedRole;
-                $user->available_roles = $available;
-            }
-            $user->role = $requestedRole;
-            $user->save();
+        if (!$user) {
+            return $this->respondError('UNAUTHENTICATED', 'User session expired or not found', null, 401);
         }
 
-        return $this->respondSuccess(['active_role' => $requestedRole]);
+        $available = $user->available_roles ?? ['buyer'];
+        if (!in_array($requestedRole, $available)) {
+            $available[] = $requestedRole;
+            $user->available_roles = $available;
+        }
+        $user->role = $requestedRole;
+        $user->save();
+
+        return $this->respondSuccess([
+            'active_role' => $requestedRole,
+            'user' => $user->fresh()->toAuthProfileArray(),
+        ]);
     }
 }

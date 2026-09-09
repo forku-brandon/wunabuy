@@ -16,10 +16,10 @@ import type {
 export function createAuthApi(client: AxiosInstance) {
   return {
     /**
-     * Register a new Buyer or Seller. Triggers SMS OTP.
+     * Register a new Buyer or Seller. Triggers account creation and returns auth tokens & profile.
      */
-    register: async (payload: RegisterPayload): Promise<ApiResponse<OTPResponse>> => {
-      const res = await client.post<ApiResponse<OTPResponse>>('/auth/register', payload);
+    register: async (payload: RegisterPayload): Promise<ApiResponse<AuthResponse>> => {
+      const res = await client.post<ApiResponse<AuthResponse>>('/auth/register', payload);
       return res.data;
     },
 

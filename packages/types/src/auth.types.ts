@@ -58,13 +58,38 @@ export interface User {
   /** Whether the user has verified their phone number */
   is_phone_verified: boolean;
   /** User's default address for deliveries */
-  default_address: Address | null;
+  default_address?: Address | null;
   /** List of roles the user can switch between */
   available_roles: UserRole[];
+  /** Fine-grained permissions assigned to user */
+  permissions?: string[];
+  /** User's wallet details */
+  wallet?: {
+    id: string;
+    balance_available: number;
+    balance_escrow_locked: number;
+    currency: string;
+  } | null;
+  /** Store details if seller */
+  store?: {
+    id: string;
+    store_name: string;
+    is_verified: boolean;
+    logo_url?: string | null;
+  } | null;
+  /** Transporter details if courier */
+  transporter?: {
+    id: string;
+    vehicle_type: string;
+    status?: string;
+    is_verified: boolean;
+    rating_avg?: number;
+    completed_trips?: number;
+  } | null;
   /** ISO 8601 date string representing creation time */
-  created_at: string;
+  created_at?: string;
   /** ISO 8601 date string representing the last update time */
-  updated_at: string;
+  updated_at?: string;
 }
 
 /**
@@ -83,6 +108,8 @@ export interface AuthState {
   isAuthenticated: boolean;
   /** Indicates if authentication is currently processing */
   isLoading: boolean;
+  /** Active user permissions list */
+  permissions?: string[];
 }
 
 /**
@@ -106,7 +133,13 @@ export interface RegisterPayload {
   /** User's full name */
   full_name: string;
   /** Desired role upon registration */
-  role: 'buyer' | 'seller';
+  role: 'buyer' | 'seller' | 'transporter' | string;
+  /** Optional delivery address */
+  address_text?: string;
+  /** Optional city */
+  city?: string;
+  /** Optional password */
+  password?: string;
 }
 
 /**

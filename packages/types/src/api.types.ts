@@ -8,7 +8,14 @@ export interface ApiResponse<T> {
   /** Core response payload data */
   data: T;
   /** Additional metadata, if any */
-  meta: Record<string, unknown> | undefined;
+  meta?: Record<string, unknown>;
+  /** Error details if request failed */
+  error?: {
+    code: string;
+    message: string;
+    details?: any;
+    request_id?: string;
+  };
 }
 
 /**

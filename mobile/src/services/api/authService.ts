@@ -103,10 +103,13 @@ export const AuthService = {
    */
   async switchRole(requestedRole: UserRole): Promise<{ success: boolean; active_role: UserRole }> {
     try {
-      const response = await api.client.post<{ success: boolean; data: { active_role: UserRole } }>('/user/switch-role', {
+      const response = await api.client.post<{ success: boolean; data: { active_role: UserRole; user?: User } }>('/user/switch-role', {
         requested_role: requestedRole,
       });
 
+      if (response.data?.data?.user) {
+        useAuthStore.getState().updateUser(response.data.data.user);
+      }
       if (response.data?.data?.active_role) {
         useAuthStore.getState().setActiveRole(response.data.data.active_role);
         return { success: true, active_role: response.data.data.active_role };

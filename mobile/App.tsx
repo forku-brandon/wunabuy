@@ -6,6 +6,8 @@ import { View, ActivityIndicator, StyleSheet, Platform } from 'react-native';
 import * as NavigationBar from 'expo-navigation-bar';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { useThemeStore } from './src/stores/theme.store';
+import { useAuthStore } from './src/stores/auth.store';
+import { AuthService } from './src/services/api/authService';
 import './src/i18n'; // Initialize i18next
 
 const queryClient = new QueryClient({
@@ -24,6 +26,13 @@ const queryClient = new QueryClient({
  */
 const AppContent: React.FC = () => {
   const { isDark } = useThemeStore();
+  const { isAuthenticated } = useAuthStore();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      AuthService.getCurrentUser().catch(() => {});
+    }
+  }, [isAuthenticated]);
 
   useEffect(() => {
     if (Platform.OS === 'android') {

@@ -7,6 +7,8 @@ import { UserRole, UserStatus, Address } from '@wunabuy/types';
 import { spacing, colors } from '@wunabuy/design-tokens';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { api } from '../../services/api';
+
 export const RegisterScreen = ({ route }: any) => {
   const phone = route.params?.phone ?? '+237670000000';
   const { setAuth } = useAuthStore();
@@ -27,43 +29,26 @@ export const RegisterScreen = ({ route }: any) => {
     setError('');
 
     try {
-      let defaultAddress: Address | null = null;
-      if (addressText.trim()) {
-        defaultAddress = {
-          id: 'addr_' + Date.now(),
-          label: 'Home',
-          latitude: 4.0510564,
-          longitude: 9.7678687,
-          address_text: addressText.trim(),
-          city: 'Douala',
-          is_default: true,
-        };
+      const res = await api.auth.register({
+        phone,
+        full_name: fullName.trim(),
+        role: 'buyer',
+        address_text: addressText.trim() || undefined,
+      });
+
+      if (!res?.success || !res?.data) {
+        throw new Error(res?.error?.message || 'Failed to complete registration.');
       }
 
-      const newUser = {
-        id: 'user_uuid_' + Date.now(),
-        phone,
-        email: null,
-        full_name: fullName.trim(),
-        role: UserRole.BUYER,
-        status: UserStatus.ACTIVE,
-        avatar_url: null,
-        is_phone_verified: true,
-        default_address: defaultAddress,
-        available_roles: [UserRole.BUYER],
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
+      const { user, access_token } = res.data;
+      const refreshToken = 'sanctum_refresh_' + Date.now();
 
-      const accessToken = '1|sanctum_token_access_mock_' + Date.now();
-      const refreshToken = 'sanctum_token_refresh_mock_' + Date.now();
-
-      await SecureTokenService.setTokens(accessToken, refreshToken);
-      setAuth(newUser, accessToken, refreshToken);
+      await SecureTokenService.setTokens(access_token, refreshToken);
+      setAuth(user, access_token, refreshToken);
       setLoading(false);
     } catch (err: any) {
       setLoading(false);
-      setError(err?.message || 'Failed to complete registration.');
+      setError(err?.response?.data?.error?.message || err?.message || 'Failed to complete registration.');
     }
   };
 

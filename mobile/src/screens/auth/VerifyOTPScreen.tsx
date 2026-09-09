@@ -42,54 +42,21 @@ export const VerifyOTPScreen = ({ navigation, route }: any) => {
     setError('');
 
     try {
-      let authenticatedUser: any = null;
-      let accessToken = '';
-      let refreshToken = '';
+      const res = await api.auth.verifyOTP({
+        phone,
+        otp,
+        code: otp,
+        role: UserRole.BUYER,
+      });
 
-      try {
-        const res = await api.auth.verifyOTP({
-          phone,
-          code: otp,
-          role: UserRole.BUYER,
-        });
-
-        if (res) {
-          const authData: any = res.data || res;
-          authenticatedUser = authData.user || authData;
-          accessToken = authData.access_token || authData.tokens?.access_token || '1|sanctum_token_verified_' + Date.now();
-          refreshToken = authData.refresh_token || authData.tokens?.refresh_token || 'sanctum_refresh_' + Date.now();
-        }
-      } catch (apiErr: any) {
-        console.warn('[Wunabuy Auth] verifyOTP API call fallback:', apiErr?.message);
+      if (!res?.success || !res?.data) {
+        throw new Error(res?.error?.message || 'Invalid verification code. Please check and try again.');
       }
 
-      if (!authenticatedUser) {
-        authenticatedUser = {
-          id: 'user_' + phone.replace(/[^0-9]/g, ''),
-          phone: phone,
-          email: 'user@wunabuy.com',
-          full_name: 'Jean Dupont',
-          role: UserRole.BUYER,
-          status: UserStatus.ACTIVE,
-          avatar_url: null,
-          is_phone_verified: true,
-          default_address: {
-            id: 'addr_default',
-            label: 'Home',
-            latitude: 4.0510564,
-            longitude: 9.7678687,
-            address_text: 'Rue Joss, Akwa',
-            city: 'Douala',
-            is_default: true,
-          },
-          available_roles: [UserRole.BUYER, UserRole.SELLER, UserRole.TRANSPORTER],
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-
-        accessToken = '1|sanctum_token_access_mock_' + Date.now();
-        refreshToken = 'sanctum_token_refresh_mock_' + Date.now();
-      }
+      const authData = res.data;
+      const authenticatedUser = authData.user;
+      const accessToken = authData.access_token;
+      const refreshToken = 'sanctum_refresh_' + Date.now();
 
       if (mode === 'register') {
         // Phone number verified -> Move to user profile setup (name & address)
@@ -106,7 +73,7 @@ export const VerifyOTPScreen = ({ navigation, route }: any) => {
       }
     } catch (err: any) {
       setLoading(false);
-      setError(err?.message || 'Invalid verification code. Please check and try again.');
+      setError(err?.response?.data?.error?.message || err?.message || 'Invalid verification code. Please check and try again.');
     }
   };
 
