@@ -174,7 +174,7 @@ export const ProfileScreen = ({ navigation }: any) => {
           >
             <Avatar
               url={user?.avatar_url}
-              name={user?.full_name ?? 'Jean Dupont'}
+              name={user?.full_name ?? 'Member'}
               size={52}
               showBorder
             />
@@ -194,7 +194,7 @@ export const ProfileScreen = ({ navigation }: any) => {
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
               <Text variant="h2" bold numberOfLines={1}>
-                {activeRole === UserRole.SELLER ? 'Douala Tech Hub' : (user?.full_name ?? 'Jean Dupont')}
+                {activeRole === UserRole.SELLER ? ((user as any)?.store?.store_name || user?.full_name || 'Seller Store') : (user?.full_name ?? 'Member')}
               </Text>
               <Badge
                 label={activeRole === UserRole.SELLER ? 'SELLER' : activeRole === UserRole.TRANSPORTER ? 'TRANSPORTER' : 'BUYER'}
@@ -205,7 +205,7 @@ export const ProfileScreen = ({ navigation }: any) => {
             <TouchableOpacity
               activeOpacity={0.7}
               onPress={() => {
-                const p = user?.phone || '+237670123456';
+                const p = user?.phone || '';
                 const cleaned = p.replace(/[^+\d]/g, '');
                 if (cleaned) Linking.openURL(`tel:${cleaned}`).catch(() => {});
               }}
@@ -213,7 +213,7 @@ export const ProfileScreen = ({ navigation }: any) => {
             >
               <Ionicons name="call-outline" size={12} color={colors.primary[500]} style={{ marginRight: 4 }} />
               <Text variant="caption" color={colors.primary[600]} numberOfLines={1}>
-                {formatPhone(user?.phone ?? '+237670123456')} 📞
+                {user?.phone ? `${formatPhone(user.phone)} 📞` : ''}
               </Text>
             </TouchableOpacity>
           </TouchableOpacity>
@@ -598,16 +598,16 @@ export const ProfileScreen = ({ navigation }: any) => {
               <View style={styles.largeAvatarRing}>
                 <Avatar
                   url={selectedAvatarUri}
-                  name={user?.full_name ?? 'Jean Dupont'}
+                  name={user?.full_name ?? 'Member'}
                   size={104}
                   showBorder
                 />
               </View>
               <Text variant="bodyLarge" bold style={{ marginTop: spacing.sm }}>
-                {user?.full_name ?? 'Jean Dupont'}
+                {user?.full_name ?? 'Member'}
               </Text>
               <Text variant="caption" secondary>
-                {formatPhone(user?.phone ?? '+237670123456')}
+                {user?.phone ? formatPhone(user.phone) : ''}
               </Text>
             </View>
 

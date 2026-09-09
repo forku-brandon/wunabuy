@@ -16,17 +16,26 @@ export const RoleSwitcherCard: React.FC<RoleSwitcherCardProps> = ({ navigation }
   const { user, activeRole, setActiveRole } = useAuthStore();
   const { theme, isDark } = useThemeStore();
 
+  React.useEffect(() => {
+    AuthService.getCurrentUser().catch(() => {});
+  }, []);
+
   const handleRoleSelect = (role: UserRole) => {
     setActiveRole(role);
     AuthService.switchRole(role);
   };
 
-  // Provide Buyer, Seller, and Transporter workspaces for direct switching
-  const availableRoles: UserRole[] = [UserRole.BUYER, UserRole.SELLER, UserRole.TRANSPORTER];
+  const isSellerApproved = AuthService.canAccessRole(user, UserRole.SELLER);
+  const isTransporterApproved = AuthService.canAccessRole(user, UserRole.TRANSPORTER);
 
-
-  const isSellerApproved = true;
-  const isTransporterApproved = availableRoles.includes(UserRole.TRANSPORTER);
+  // Strictly only show roles granted to this account (unverified roles remain hidden)
+  const availableRoles: UserRole[] = [UserRole.BUYER];
+  if (isSellerApproved) {
+    availableRoles.push(UserRole.SELLER);
+  }
+  if (isTransporterApproved) {
+    availableRoles.push(UserRole.TRANSPORTER);
+  }
 
   const getRoleConfig = (role: UserRole) => {
     switch (role) {
@@ -164,62 +173,49 @@ export const RoleSwitcherCard: React.FC<RoleSwitcherCardProps> = ({ navigation }
 
           {navigation && (
             <View style={styles.actionButtonsCol}>
-              {/* Become a Seller Button */}
-              <TouchableOpacity
-                activeOpacity={0.82}
-                onPress={() => {
-                  const isGranted = AuthService.canAccessRole(user, UserRole.SELLER);
-                  if (isGranted) {
-                    setActiveRole(UserRole.SELLER);
-                    AuthService.switchRole(UserRole.SELLER);
-                  } else {
-                    navigation.navigate('SellerWelcome');
-                  }
-                }}
-                style={[styles.applyCardBtn, { borderColor: colors.role.seller }]}
-              >
-                <View style={[styles.applyIconCircle, { backgroundColor: '#EFF6FF' }]}>
-                  <Ionicons name="storefront" size={18} color={colors.role.seller} />
-                </View>
-                <View style={styles.applyTextCol}>
-                  <Text variant="bodyMedium" bold color={colors.role.seller}>
-                    Become a Seller
-                  </Text>
-                  <Text variant="caption" secondary>
-                    Sell products &amp; manage store online
-                  </Text>
-                </View>
-                <Ionicons name="chevron-forward" size={16} color={colors.role.seller} />
-              </TouchableOpacity>
+              {/* Become a Seller Button (hidden once role is granted) */}
+              {!isSellerApproved && (
+                <TouchableOpacity
+                  activeOpacity={0.82}
+                  onPress={() => navigation.navigate('SellerWelcome')}
+                  style={[styles.applyCardBtn, { borderColor: colors.role.seller }]}
+                >
+                  <View style={[styles.applyIconCircle, { backgroundColor: '#EFF6FF' }]}>
+                    <Ionicons name="storefront" size={18} color={colors.role.seller} />
+                  </View>
+                  <View style={styles.applyTextCol}>
+                    <Text variant="bodyMedium" bold color={colors.role.seller}>
+                      Become a Seller
+                    </Text>
+                    <Text variant="caption" secondary>
+                      Sell products &amp; manage store online
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={16} color={colors.role.seller} />
+                </TouchableOpacity>
+              )}
 
-              {/* Become a Transporter Button */}
-              <TouchableOpacity
-                activeOpacity={0.82}
-                onPress={() => {
-                  const isGranted = AuthService.canAccessRole(user, UserRole.TRANSPORTER);
-                  if (isGranted) {
-                    setActiveRole(UserRole.TRANSPORTER);
-                    AuthService.switchRole(UserRole.TRANSPORTER);
-                  } else {
-                    navigation.navigate('TransporterWelcome');
-                  }
-                }}
-                style={[styles.applyCardBtn, { borderColor: colors.role.transporter, marginTop: spacing.xs }]}
-              >
-                <View style={[styles.applyIconCircle, { backgroundColor: '#FFFBEB' }]}>
-                  <Ionicons name="car-sport" size={18} color={colors.role.transporter} />
-                </View>
-                <View style={styles.applyTextCol}>
-                  <Text variant="bodyMedium" bold color={colors.role.transporter}>
-                    Become a Transporter
-                  </Text>
-                  <Text variant="caption" secondary>
-                    Deliver packages &amp; earn daily income
-                  </Text>
-                </View>
-                <Ionicons name="chevron-forward" size={16} color={colors.role.transporter} />
-              </TouchableOpacity>
-
+              {/* Become a Transporter Button (hidden once role is granted) */}
+              {!isTransporterApproved && (
+                <TouchableOpacity
+                  activeOpacity={0.82}
+                  onPress={() => navigation.navigate('TransporterWelcome')}
+                  style={[styles.applyCardBtn, { borderColor: colors.role.transporter, marginTop: !isSellerApproved ? spacing.xs : 0 }]}
+                >
+                  <View style={[styles.applyIconCircle, { backgroundColor: '#FFFBEB' }]}>
+                    <Ionicons name="car-sport" size={18} color={colors.role.transporter} />
+                  </View>
+                  <View style={styles.applyTextCol}>
+                    <Text variant="bodyMedium" bold color={colors.role.transporter}>
+                      Become a Transporter
+                    </Text>
+                    <Text variant="caption" secondary>
+                      Deliver packages &amp; earn daily income
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={16} color={colors.role.transporter} />
+                </TouchableOpacity>
+              )}
             </View>
           )}
         </View>

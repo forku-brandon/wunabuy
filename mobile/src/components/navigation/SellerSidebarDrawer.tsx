@@ -64,6 +64,8 @@ export const SellerSidebarDrawer: React.FC<SellerSidebarDrawerProps> = ({
     }
   };
 
+  const isTransporterApproved = AuthService.canAccessRole(user, UserRole.TRANSPORTER);
+
 
   const handleLogout = () => {
 
@@ -225,11 +227,20 @@ export const SellerSidebarDrawer: React.FC<SellerSidebarDrawerProps> = ({
                 <Ionicons name="bicycle" size={20} color={colors.neutral[0]} />
               </View>
               <View style={styles.menuTextCol}>
-                <Text variant="bodyLarge" bold>
-                  Become a Transporter
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Text variant="bodyLarge" bold>
+                    {isTransporterApproved ? 'Transporter Fleet' : 'Become a Transporter'}
+                  </Text>
+                  {isTransporterApproved && (
+                    <View style={[styles.activePillTag, { backgroundColor: 'rgba(245,158,11,0.15)' }]}>
+                      <Text variant="caption" bold color={colors.role.transporter} style={{ fontSize: 9 }}>
+                        1-TAP SWITCH
+                      </Text>
+                    </View>
+                  )}
+                </View>
                 <Text variant="caption" secondary numberOfLines={1}>
-                  Deliver packages &amp; earn daily income
+                  {isTransporterApproved ? 'Accept dispatch deliveries & routes' : 'Deliver packages & earn daily income'}
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color={theme.placeholder} />

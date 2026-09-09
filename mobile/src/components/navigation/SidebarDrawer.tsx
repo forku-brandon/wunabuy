@@ -16,6 +16,8 @@ import { useAuthStore } from '../../stores/auth.store';
 import { useThemeStore } from '../../stores/theme.store';
 import { UserRole } from '@wunabuy/types';
 import { AuthService } from '../../services/api';
+import { WalletService } from '../../services/api/walletService';
+import { formatXAF } from '@wunabuy/utils';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 
 
@@ -36,6 +38,28 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({
   const { user, logout } = useAuthStore();
   const { theme, isDark, toggleTheme } = useThemeStore();
   const [isBalanceVisible, setIsBalanceVisible] = useState(true);
+
+  // Sync wallet balance dynamically when sidebar opens
+  React.useEffect(() => {
+    if (isOpen) {
+      WalletService.getWallet()
+        .then((wallet) => {
+          if (wallet && typeof wallet.balance_available === 'number') {
+            useAuthStore.getState().updateUser({
+              wallet: {
+                id: wallet.wallet_id,
+                balance_available: wallet.balance_available,
+                balance_escrow_locked: wallet.balance_escrow_locked ?? 0,
+                registration_bonus: wallet.registration_bonus ?? 0,
+                balance_withdrawable: wallet.balance_withdrawable ?? 0,
+                currency: wallet.currency ?? 'XAF',
+              },
+            });
+          }
+        })
+        .catch(() => {});
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -114,23 +138,23 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({
               ]}
             >
               <View style={styles.avatarWrapper}>
-                <Avatar url={user?.avatar_url} name={user?.full_name || 'Jean Dupont'} size={48} />
+                <Avatar url={user?.avatar_url} name={user?.full_name || 'Member'} size={48} />
                 <View style={styles.onlinePulseDot} />
               </View>
 
               <View style={styles.userInfo}>
                 <Text variant="bodyLarge" bold numberOfLines={1}>
-                  {user?.full_name || 'Jean Dupont'}
+                  {user?.full_name || 'Member'}
                 </Text>
                 <Text variant="caption" secondary numberOfLines={1} style={{ marginTop: 1 }}>
-                  {user?.phone || '+237 670 123 456'}
+                  {user?.phone || ''}
                 </Text>
 
                 {/* Wallet Balance Display with Eye Privacy Toggle */}
                 <View style={[styles.walletBalanceBadge, { backgroundColor: isDark ? 'rgba(13,148,136,0.25)' : '#CCFBF1' }]}>
                   <Ionicons name="wallet-outline" size={13} color={colors.primary[600]} style={{ marginRight: 4 }} />
                   <Text variant="caption" bold color={colors.primary[600]} style={styles.walletBalanceText}>
-                    {isBalanceVisible ? '47,500 XAF' : '••••••• XAF'}
+                    {isBalanceVisible ? formatXAF(user?.wallet?.balance_available ?? 0) : '••••••• FCFA'}
                   </Text>
                   <TouchableOpacity
                     activeOpacity={0.7}
@@ -180,11 +204,20 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({
                 <Ionicons name="storefront" size={20} color={colors.neutral[0]} />
               </View>
               <View style={styles.menuTextCol}>
-                <Text variant="bodyLarge" bold>
-                  Become a Seller
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Text variant="bodyLarge" bold>
+                    {AuthService.canAccessRole(user, UserRole.SELLER) ? 'Seller Store' : 'Become a Seller'}
+                  </Text>
+                  {AuthService.canAccessRole(user, UserRole.SELLER) && (
+                    <View style={[styles.activePillTag, { backgroundColor: 'rgba(13,148,136,0.15)' }]}>
+                      <Text variant="caption" bold color={colors.primary[600]} style={{ fontSize: 9 }}>
+                        1-TAP SWITCH
+                      </Text>
+                    </View>
+                  )}
+                </View>
                 <Text variant="caption" secondary numberOfLines={1}>
-                  Sell products &amp; manage store online
+                  {AuthService.canAccessRole(user, UserRole.SELLER) ? 'Manage products, orders & inventory' : 'Sell products & manage store online'}
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color={theme.placeholder} />
@@ -212,11 +245,20 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({
                 <Ionicons name="bicycle" size={20} color={colors.neutral[0]} />
               </View>
               <View style={styles.menuTextCol}>
-                <Text variant="bodyLarge" bold>
-                  Become a Transporter
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Text variant="bodyLarge" bold>
+                    {AuthService.canAccessRole(user, UserRole.TRANSPORTER) ? 'Transporter Fleet' : 'Become a Transporter'}
+                  </Text>
+                  {AuthService.canAccessRole(user, UserRole.TRANSPORTER) && (
+                    <View style={[styles.activePillTag, { backgroundColor: 'rgba(245,158,11,0.15)' }]}>
+                      <Text variant="caption" bold color={colors.role.transporter} style={{ fontSize: 9 }}>
+                        1-TAP SWITCH
+                      </Text>
+                    </View>
+                  )}
+                </View>
                 <Text variant="caption" secondary numberOfLines={1}>
-                  Deliver packages &amp; earn daily income
+                  {AuthService.canAccessRole(user, UserRole.TRANSPORTER) ? 'Accept dispatch deliveries & routes' : 'Deliver packages & earn daily income'}
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color={theme.placeholder} />
@@ -498,6 +540,11 @@ const styles = StyleSheet.create({
   },
   menuTextCol: {
     flex: 1,
+  },
+  activePillTag: {
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    borderRadius: borderRadius.xs,
   },
   simpleMenuItem: {
     flexDirection: 'row',

@@ -69,6 +69,8 @@ export const TransporterSidebarDrawer: React.FC<TransporterSidebarDrawerProps> =
     }
   };
 
+  const isSellerApproved = AuthService.canAccessRole(user, UserRole.SELLER);
+
 
   const handleLogout = () => {
     onClose();
@@ -238,11 +240,20 @@ export const TransporterSidebarDrawer: React.FC<TransporterSidebarDrawerProps> =
                 <Ionicons name="storefront" size={18} color="#FFFFFF" />
               </View>
               <View style={{ flex: 1 }}>
-                <Text variant="bodyMedium" bold color="#1E40AF">
-                  Become a Seller
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Text variant="bodyMedium" bold color="#1E40AF">
+                    {isSellerApproved ? 'Seller Store' : 'Become a Seller'}
+                  </Text>
+                  {isSellerApproved && (
+                    <View style={[styles.activePillTag, { backgroundColor: 'rgba(13,148,136,0.15)' }]}>
+                      <Text variant="caption" bold color={colors.primary[600]} style={{ fontSize: 9 }}>
+                        1-TAP SWITCH
+                      </Text>
+                    </View>
+                  )}
+                </View>
                 <Text variant="caption" secondary numberOfLines={1}>
-                  Sell products &amp; manage store online
+                  {isSellerApproved ? 'Manage products, orders & inventory' : 'Sell products & manage store online'}
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={16} color="#2563EB" />
@@ -527,6 +538,11 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  activePillTag: {
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    borderRadius: borderRadius.xs,
   },
   linksContainer: {
     marginBottom: spacing.lg,
