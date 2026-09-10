@@ -27,20 +27,31 @@ export const OrderStatusStepper: React.FC<OrderStatusStepperProps> = ({
   const { theme } = useThemeStore();
 
   const getStepIndex = (currentStatus: OrderStatus): number => {
-    switch (currentStatus) {
+    switch (currentStatus as string) {
       case OrderStatus.PAID_ESCROW:
+      case 'paid_escrow':
+      case 'pending':
+      case 'pending_payment':
+      case 'pending_acceptance':
         return 0;
       case OrderStatus.PREPARING:
+      case 'preparing':
         return 1;
       case OrderStatus.READY_FOR_PICKUP:
+      case 'ready_for_pickup':
         return 2;
       case OrderStatus.EN_ROUTE:
       case OrderStatus.IN_TRANSIT:
+      case 'en_route':
+      case 'in_transit':
         return 3;
       case OrderStatus.DELIVERED:
       case OrderStatus.RECEIVED:
+      case 'delivered':
+      case 'received':
         return 4;
       case OrderStatus.COMPLETED:
+      case 'completed':
         return 5;
       default:
         return 0;

@@ -104,11 +104,11 @@ export const OrderTrackingScreen = ({ route, navigation }: any) => {
         </View>
 
         <Badge
-          label={getStatusLabel(status)}
+          label={getStatusLabel(status as any)}
           variant={
-            status === OrderStatus.COMPLETED
+            status === OrderStatus.COMPLETED || (status as string) === 'completed' || (status as string) === 'delivered'
               ? 'success'
-              : status === OrderStatus.DISPUTED
+              : status === OrderStatus.DISPUTED || (status as string) === 'disputed'
               ? 'error'
               : 'primary'
           }
@@ -189,7 +189,7 @@ export const OrderTrackingScreen = ({ route, navigation }: any) => {
         </Card>
 
         {/* Primary Action Buttons */}
-        {status !== OrderStatus.COMPLETED && status !== OrderStatus.DISPUTED && (
+        {status !== OrderStatus.COMPLETED && (status as string) !== 'completed' && status !== OrderStatus.DISPUTED && (status as string) !== 'disputed' && (
           <View style={styles.actionsContainer}>
             <Button
               title="Confirm Receipt & Release Escrow ➔"
@@ -205,6 +205,22 @@ export const OrderTrackingScreen = ({ route, navigation }: any) => {
               style={styles.disputeBtn}
             />
           </View>
+        )}
+
+        {(status === OrderStatus.COMPLETED || (status as string) === 'completed') && (
+          <Card style={{ backgroundColor: isDark ? 'rgba(34, 197, 94, 0.15)' : '#DCFCE7', borderColor: '#22C55E', marginTop: spacing.md, padding: spacing.md }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Ionicons name="checkmark-done-circle" size={24} color="#16A34A" style={{ marginRight: 8 }} />
+              <View style={{ flex: 1 }}>
+                <Text variant="bodyMedium" bold color="#16A34A">
+                  Order Completed
+                </Text>
+                <Text variant="caption" color="#16A34A">
+                  Escrow funds have been successfully released to the seller.
+                </Text>
+              </View>
+            </View>
+          </Card>
         )}
       </ScrollView>
 

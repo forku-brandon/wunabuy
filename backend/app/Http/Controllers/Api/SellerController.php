@@ -8,6 +8,7 @@ use App\Models\Store;
 use App\Models\User;
 use App\Models\Wallet;
 use App\Models\WalletTransaction;
+use App\Services\EscrowService;
 use App\Services\KYCService;
 use App\Services\LogisticsService;
 use App\Services\PaymentService;
@@ -21,7 +22,8 @@ class SellerController extends Controller
     public function __construct(
         protected KYCService $kycService,
         protected LogisticsService $logisticsService,
-        protected PaymentService $paymentService
+        protected PaymentService $paymentService,
+        protected EscrowService $escrowService
     ) {
     }
 
@@ -45,10 +47,10 @@ class SellerController extends Controller
         }
 
         $orders = $query->get();
-        $pendingCount = $orders->where('status', 'pending')->count();
+        $pendingCount = $orders->whereIn('status', ['pending', 'paid_escrow', 'pending_acceptance', 'pending_payment'])->count();
         $preparingCount = $orders->where('status', 'preparing')->count();
         $readyCount = $orders->where('status', 'ready_for_pickup')->count();
-        $deliveredOrders = $orders->where('status', 'delivered');
+        $deliveredOrders = $orders->whereIn('status', ['delivered', 'completed', 'received']);
 
         // Dynamic revenue from delivered orders or wallet credits
         $totalRevenue = (float) $deliveredOrders->sum('total');
@@ -104,9 +106,11 @@ class SellerController extends Controller
 
         if ($status = $request->query('status')) {
             if ($status === 'pending_acceptance') {
-                $query->whereIn('status', ['pending', 'paid_escrow']);
+                $query->whereIn('status', ['pending', 'paid_escrow', 'pending_acceptance', 'pending_payment']);
+            } elseif ($status === 'in_transit') {
+                $query->whereIn('status', ['in_transit', 'en_route']);
             } elseif ($status === 'completed') {
-                $query->whereIn('status', ['completed', 'delivered']);
+                $query->whereIn('status', ['completed', 'delivered', 'received']);
             } else {
                 $query->where('status', $status);
             }
@@ -124,13 +128,13 @@ class SellerController extends Controller
             }
 
             $mappedStatus = match ($order->status) {
-                'pending', 'paid_escrow' => 'pending_acceptance',
+                'pending', 'paid_escrow', 'pending_acceptance', 'pending_payment' => 'pending_acceptance',
                 'preparing' => 'preparing',
                 'ready_for_pickup' => 'ready_for_pickup',
-                'in_transit' => 'in_transit',
-                'delivered', 'completed' => 'completed',
+                'in_transit', 'en_route' => 'in_transit',
+                'delivered', 'completed', 'received' => 'completed',
                 'cancelled' => 'cancelled',
-                'disputed' => 'disputed',
+                'disputed', 'resolved' => 'disputed',
                 default => 'pending_acceptance',
             };
 
@@ -216,6 +220,37 @@ class SellerController extends Controller
         }
 
         return $this->respondSuccess(['ready' => true, 'order_id' => $id]);
+    }
+
+    /**
+     * Handover parcel to rider after PIN verification.
+     */
+    public function handoverOrder(Request $request, string $id): JsonResponse
+    {
+        $order = (Str::isUuid($id) ? Order::find($id) : null)
+            ?? Order::where('order_code', $id)->first();
+        if ($order) {
+            $order->status = 'in_transit';
+            $order->save();
+        }
+
+        return $this->respondSuccess(['handed_over' => true, 'order_id' => $id]);
+    }
+
+    /**
+     * Mark order completed (releases escrow to seller wallet).
+     */
+    public function completeOrder(string $id): JsonResponse
+    {
+        $order = (Str::isUuid($id) ? Order::find($id) : null)
+            ?? Order::where('order_code', $id)->first();
+        if (!$order) {
+            return $this->respondError('NOT_FOUND', 'Order not found', null, 404);
+        }
+
+        $this->escrowService->releaseEscrow($order, 'Seller Delivery Confirmation');
+
+        return $this->respondSuccess(['completed' => true, 'order' => $order->fresh()]);
     }
 
     /**
@@ -307,7 +342,7 @@ class SellerController extends Controller
             $ordersQuery->whereRaw('1 = 0');
         }
         $orders = $ordersQuery->get();
-        $completedOrdersCount = $orders->where('status', 'delivered')->count();
+        $completedOrdersCount = $orders->whereIn('status', ['delivered', 'completed', 'received'])->count();
         $totalOrdersCount = $orders->count();
         $completionRate = $totalOrdersCount > 0 ? round(($completedOrdersCount / $totalOrdersCount) * 100, 1) : 100.0;
 
@@ -315,7 +350,7 @@ class SellerController extends Controller
         $available = (float) ($wallet->balance_available ?? 0);
         $escrowLocked = (float) ($wallet->balance_escrow_locked ?? 0);
 
-        $totalRevenue = (float) $orders->where('status', 'delivered')->sum('total');
+        $totalRevenue = (float) $orders->whereIn('status', ['delivered', 'completed', 'received'])->sum('total');
         if ($totalRevenue <= 0 && $wallet) {
             $totalRevenue = (float) WalletTransaction::where('wallet_id', $wallet->id)
                 ->where('type', 'escrow_release')

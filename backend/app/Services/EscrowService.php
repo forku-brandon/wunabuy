@@ -157,7 +157,8 @@ class EscrowService
                 }
             }
 
-            $order->status = 'delivered';
+            $order->status = 'completed';
+            $order->delivered_at = $order->delivered_at ?? now();
             $order->payment_status = 'released';
             $order->save();
 

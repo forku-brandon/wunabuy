@@ -86,6 +86,8 @@ Route::prefix('v1')->group(function () {
     Route::post('/seller/orders/{id}/accept', [SellerController::class, 'acceptOrder']);
     Route::post('/seller/orders/{id}/decline', [SellerController::class, 'declineOrder']);
     Route::post('/seller/orders/{id}/ready', [SellerController::class, 'markReady']);
+    Route::post('/seller/orders/{id}/handover', [SellerController::class, 'handoverOrder']);
+    Route::post('/seller/orders/{id}/complete', [SellerController::class, 'completeOrder']);
     Route::get('/seller/products', [SellerController::class, 'products']);
     Route::patch('/seller/products/{id}/status', [SellerController::class, 'toggleProductStatus']);
     Route::patch('/seller/products/{id}/stock', [SellerController::class, 'updateStock']);

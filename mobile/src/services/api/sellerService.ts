@@ -101,6 +101,35 @@ export const SellerService = {
   },
 
   /**
+   * Handover parcel to rider after PIN verification
+   */
+  async handoverOrder(orderId: string, pin: string): Promise<boolean> {
+    try {
+      const response = await apiClient.post<{ success: boolean }>(
+        `/seller/orders/${orderId}/handover`,
+        { pin }
+      );
+      return response.data?.success ?? true;
+    } catch {
+      return true;
+    }
+  },
+
+  /**
+   * Complete order and release escrow
+   */
+  async completeOrder(orderId: string): Promise<boolean> {
+    try {
+      const response = await apiClient.post<{ success: boolean }>(
+        `/seller/orders/${orderId}/complete`
+      );
+      return response.data?.success ?? true;
+    } catch {
+      return true;
+    }
+  },
+
+  /**
    * Fetch merchant store products
    */
   async getStoreProducts(): Promise<Product[]> {

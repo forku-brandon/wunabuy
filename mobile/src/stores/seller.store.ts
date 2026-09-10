@@ -5,12 +5,19 @@ import { Product, ProductCategory, QualityTier } from '@wunabuy/types';
 
 export type SellerOrderStatus =
   | 'pending_acceptance' // New incoming order (2-hour acceptance timer)
+  | 'pending'
+  | 'pending_payment'
+  | 'paid_escrow'
   | 'preparing'          // Accepted, merchant packing
   | 'ready_for_pickup'   // Packaged, ready for driver handover
   | 'in_transit'         // Picked up by transporter / in-house rider
+  | 'en_route'
+  | 'delivered'
+  | 'received'
   | 'completed'          // Delivered & escrow released
   | 'cancelled'          // Declined or timed out
-  | 'disputed';          // Buyer raised issue
+  | 'disputed'           // Buyer raised issue
+  | 'resolved';
 
 export interface SellerOrderItem {
   product_id: string;

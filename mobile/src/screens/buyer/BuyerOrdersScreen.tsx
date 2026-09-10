@@ -79,10 +79,19 @@ export const BuyerOrdersScreen = ({ navigation }: any) => {
     selectedFilter === 'All'
       ? orders
       : orders.filter((o) => {
-          if (selectedFilter === 'Paid Escrow') return o.status === OrderStatus.PAID_ESCROW;
-          if (selectedFilter === 'En Route') return o.status === OrderStatus.EN_ROUTE || o.status === OrderStatus.IN_TRANSIT;
-          if (selectedFilter === 'Completed') return o.status === OrderStatus.COMPLETED;
-          if (selectedFilter === 'Disputed') return o.status === OrderStatus.DISPUTED;
+          const s = (o.status || '').toLowerCase();
+          if (selectedFilter === 'Paid Escrow') {
+            return s === 'paid_escrow' || s === 'pending' || s === 'pending_payment' || s === 'pending_acceptance' || s === 'preparing';
+          }
+          if (selectedFilter === 'En Route') {
+            return s === 'en_route' || s === 'in_transit' || s === 'ready_for_pickup';
+          }
+          if (selectedFilter === 'Completed') {
+            return s === 'completed' || s === 'delivered' || s === 'received';
+          }
+          if (selectedFilter === 'Disputed') {
+            return s === 'disputed' || s === 'resolved' || s === 'cancelled' || s === 'refunded';
+          }
           return true;
         });
 
@@ -98,6 +107,7 @@ export const BuyerOrdersScreen = ({ navigation }: any) => {
     );
     setToastMessage('Receipt confirmed! 100% Escrow funds released to merchant.');
     setIsSignModalOpen(false);
+    loadOrders();
   };
 
   const handleSubmitDispute = async (reason: DisputeReason, description: string) => {
@@ -227,11 +237,11 @@ export const BuyerOrdersScreen = ({ navigation }: any) => {
               </View>
 
               <Badge
-                label={getStatusLabel(item.status)}
+                label={getStatusLabel(item.status as any)}
                 variant={
-                  item.status === OrderStatus.COMPLETED
+                  (item.status as string) === 'completed' || (item.status as string) === 'delivered' || (item.status as string) === 'received'
                     ? 'success'
-                    : item.status === OrderStatus.DISPUTED
+                    : (item.status as string) === 'disputed' || (item.status as string) === 'cancelled'
                     ? 'error'
                     : 'primary'
                 }
@@ -270,7 +280,7 @@ export const BuyerOrdersScreen = ({ navigation }: any) => {
               </TouchableOpacity>
 
               {/* Row 2: Equal 2-Column Split for Confirm Receipt & Dispute */}
-              {item.status !== OrderStatus.COMPLETED && item.status !== OrderStatus.DISPUTED && (
+              {(item.status as string) !== 'completed' && (item.status as string) !== 'cancelled' && (item.status as string) !== 'refunded' && (item.status as string) !== 'disputed' && (
                 <View style={styles.secondaryActionsRow}>
                   <TouchableOpacity
                     activeOpacity={0.85}
@@ -299,6 +309,15 @@ export const BuyerOrdersScreen = ({ navigation }: any) => {
                       Open Dispute
                     </Text>
                   </TouchableOpacity>
+                </View>
+              )}
+
+              {(item.status as string) === 'completed' && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing.xs, paddingVertical: 6, paddingHorizontal: 10, backgroundColor: isDark ? 'rgba(34, 197, 94, 0.15)' : '#DCFCE7', borderRadius: borderRadius.sm }}>
+                  <Ionicons name="checkmark-done-circle" size={16} color="#16A34A" style={{ marginRight: 6 }} />
+                  <Text variant="caption" bold color="#16A34A">
+                    Order Completed • Escrow Released to Seller
+                  </Text>
                 </View>
               )}
             </View>

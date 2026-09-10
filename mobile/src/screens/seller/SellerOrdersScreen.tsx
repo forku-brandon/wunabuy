@@ -106,14 +106,21 @@ export const SellerOrdersScreen = ({ navigation }: any) => {
   }, [loadOrders]);
 
   // Tab counts
-  const pendingCount = orders.filter((o) => o.status === 'pending_acceptance').length;
+  const pendingCount = orders.filter((o) => o.status === 'pending_acceptance' || o.status === 'pending' || o.status === 'paid_escrow' || o.status === 'pending_payment').length;
   const preparingCount = orders.filter((o) => o.status === 'preparing').length;
   const readyCount = orders.filter((o) => o.status === 'ready_for_pickup').length;
-  const inTransitCount = orders.filter((o) => o.status === 'in_transit').length;
-  const completedCount = orders.filter((o) => o.status === 'completed').length;
+  const inTransitCount = orders.filter((o) => o.status === 'in_transit' || o.status === 'en_route').length;
+  const completedCount = orders.filter((o) => o.status === 'completed' || o.status === 'delivered' || o.status === 'received').length;
 
   const filteredOrders = orders.filter((o) => {
     if (activeTab === 'all') return true;
+    if (activeTab === 'pending_acceptance') {
+      return o.status === 'pending_acceptance' || o.status === 'pending' || o.status === 'paid_escrow' || o.status === 'pending_payment';
+    }
+    if (activeTab === 'preparing') return o.status === 'preparing';
+    if (activeTab === 'ready_for_pickup') return o.status === 'ready_for_pickup';
+    if (activeTab === 'in_transit') return o.status === 'in_transit' || o.status === 'en_route';
+    if (activeTab === 'completed') return o.status === 'completed' || o.status === 'delivered' || o.status === 'received';
     return o.status === activeTab;
   });
 
@@ -181,13 +188,17 @@ export const SellerOrdersScreen = ({ navigation }: any) => {
     }
 
     markOrderInTransit(selectedOrderForHandover.id);
+    SellerService.handoverOrder(selectedOrderForHandover.id, enteredPin);
     setIsHandoverModalVisible(false);
     setToastMessage(`✅ Rider verified! Order #${selectedOrderForHandover.order_code} handed over successfully.`);
+    loadOrders();
   };
 
-  const handleCompleteOrder = (order: SellerOrder) => {
+  const handleCompleteOrder = async (order: SellerOrder) => {
     markOrderCompleted(order.id);
+    await SellerService.completeOrder(order.id);
     setToastMessage(`Order #${order.order_code} marked completed! Funds released to wallet.`);
+    loadOrders();
   };
 
   return (
@@ -300,11 +311,11 @@ export const SellerOrdersScreen = ({ navigation }: any) => {
             />
           }
           renderItem={({ item }) => {
-            const isPending = item.status === 'pending_acceptance';
+            const isPending = item.status === 'pending_acceptance' || item.status === 'pending' || item.status === 'paid_escrow' || item.status === 'pending_payment';
             const isPreparing = item.status === 'preparing';
             const isReady = item.status === 'ready_for_pickup';
-            const isInTransit = item.status === 'in_transit';
-            const isCompleted = item.status === 'completed';
+            const isInTransit = item.status === 'in_transit' || item.status === 'en_route';
+            const isCompleted = item.status === 'completed' || item.status === 'delivered' || item.status === 'received';
 
             return (
               <Card style={styles.orderCard}>

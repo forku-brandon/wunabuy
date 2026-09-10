@@ -1,8 +1,25 @@
-export type OrderStatusValue = 'pending_payment' | 'paid_escrow' | 'preparing' | 'ready_for_pickup' | 'en_route' | 'in_transit' | 'delivered' | 'received' | 'completed' | 'cancelled' | 'refunded' | 'disputed' | 'resolved';
+export type OrderStatusValue =
+  | 'pending'
+  | 'pending_payment'
+  | 'paid_escrow'
+  | 'pending_acceptance'
+  | 'preparing'
+  | 'ready_for_pickup'
+  | 'en_route'
+  | 'in_transit'
+  | 'delivered'
+  | 'received'
+  | 'completed'
+  | 'cancelled'
+  | 'refunded'
+  | 'disputed'
+  | 'resolved';
 
 const STATUS_COLORS: Record<OrderStatusValue, string> = {
+  pending: '#F59E0B',
   pending_payment: '#F59E0B',
   paid_escrow: '#3B82F6',
+  pending_acceptance: '#F59E0B',
   preparing: '#8B5CF6',
   ready_for_pickup: '#10B981',
   en_route: '#06B6D4',
@@ -17,8 +34,10 @@ const STATUS_COLORS: Record<OrderStatusValue, string> = {
 } as const;
 
 const STATUS_LABELS: Record<OrderStatusValue, string> = {
+  pending: 'Pending',
   pending_payment: 'Pending Payment',
   paid_escrow: 'Paid (Escrow)',
+  pending_acceptance: 'Pending Acceptance',
   preparing: 'Preparing',
   ready_for_pickup: 'Ready for Pickup',
   en_route: 'En Route',
