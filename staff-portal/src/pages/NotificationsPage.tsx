@@ -32,7 +32,7 @@ export const NotificationsPage: React.FC = () => {
   const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification, clearRead } = useNotifications();
   const navigate = useNavigate();
 
-  const [activeTab, setActiveTab] = useState<'all' | 'unread' | 'CRITICAL' | 'PAYOUT' | 'KYC_DISPUTE' | 'LOGISTICS' | 'HR'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'unread' | 'CRITICAL' | 'PAYOUT' | 'KYC_DISPUTE'>('all');
   const [selectedPriority, setSelectedPriority] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -44,8 +44,6 @@ export const NotificationsPage: React.FC = () => {
       if (activeTab === 'CRITICAL' && notif.priority !== 'CRITICAL') return false;
       if (activeTab === 'PAYOUT' && notif.category !== 'PAYOUT') return false;
       if (activeTab === 'KYC_DISPUTE' && notif.category !== 'KYC' && notif.category !== 'DISPUTE') return false;
-      if (activeTab === 'LOGISTICS' && notif.category !== 'LOGISTICS') return false;
-      if (activeTab === 'HR' && notif.category !== 'HR') return false;
 
       // Priority dropdown filter
       if (selectedPriority !== 'ALL' && notif.priority !== selectedPriority) return false;
@@ -112,100 +110,100 @@ export const NotificationsPage: React.FC = () => {
     const diffDays = Math.floor(diffHours / 24);
 
     if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins} mins ago`;
-    if (diffHours < 24) return `${diffHours} hours ago`;
-    return `${diffDays} days ago`;
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    return `${diffDays}d ago`;
   };
 
   return (
     <PageContainer
-      title="System Notifications & Operational Alerts Center"
-      subtitle="Real-time centralized ledger of system alerts, escrow payout authorizations, KYC submissions, and dispute escalations."
+      title="System Notifications & Operational Alerts"
+      subtitle="Centralized operational stream of security alerts, escrow payout authorizations, and compliance verifications"
       action={
         <div className="flex items-center space-x-2">
           {unreadCount > 0 && (
             <Button variant="primary" size="sm" onClick={markAllAsRead}>
-              <CheckCheck className="w-3.5 h-3.5 mr-1.5" />
+              <CheckCheck className="w-3.5 h-3.5 mr-1" />
               <span>Mark All Read</span>
             </Button>
           )}
           <Button variant="outline" size="sm" onClick={clearRead}>
-            <Trash2 className="w-3.5 h-3.5 mr-1.5 text-slate-400" />
+            <Trash2 className="w-3.5 h-3.5 mr-1 text-slate-400" />
             <span>Clear Read</span>
           </Button>
         </div>
       }
     >
       {/* 1. TOP TELEMETRY KPI METRICS GRID */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <Card className="p-4 flex items-center space-x-4 border-l-4 border-l-teal-500">
-          <div className="w-12 h-12 rounded-2xl bg-teal-50 dark:bg-teal-950/60 flex items-center justify-center text-teal-600 dark:text-teal-400">
-            <Bell className="w-6 h-6" />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 mb-5">
+        <Card className="p-3.5 flex items-center space-x-3">
+          <div className="w-9 h-9 rounded-lg bg-teal-50 dark:bg-teal-950/60 flex items-center justify-center text-teal-600 dark:text-teal-400 shrink-0">
+            <Bell className="w-4 h-4" />
           </div>
-          <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Total System Notifications</p>
-            <h3 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 font-mono mt-0.5">{notifications.length}</h3>
-          </div>
-        </Card>
-
-        <Card className="p-4 flex items-center space-x-4 border-l-4 border-l-amber-500">
-          <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/60 flex items-center justify-center text-amber-600 dark:text-amber-400">
-            <BellRing className="w-6 h-6" />
-          </div>
-          <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Unread Operational Alerts</p>
-            <h3 className="text-2xl font-extrabold text-amber-600 dark:text-amber-400 font-mono mt-0.5">{unreadCount}</h3>
+          <div className="min-w-0">
+            <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate">Total Alerts</p>
+            <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">{notifications.length}</h3>
           </div>
         </Card>
 
-        <Card className="p-4 flex items-center space-x-4 border-l-4 border-l-red-500">
-          <div className="w-12 h-12 rounded-2xl bg-red-50 dark:bg-red-950/60 flex items-center justify-center text-red-600 dark:text-red-400">
-            <ShieldAlert className="w-6 h-6" />
+        <Card className="p-3.5 flex items-center space-x-3">
+          <div className="w-9 h-9 rounded-lg bg-amber-50 dark:bg-amber-950/60 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
+            <BellRing className="w-4 h-4" />
           </div>
-          <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Critical Priority Alerts</p>
-            <h3 className="text-2xl font-extrabold text-red-600 dark:text-red-400 font-mono mt-0.5">{criticalCount}</h3>
+          <div className="min-w-0">
+            <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate">Unread Alerts</p>
+            <h3 className="text-xl font-bold text-amber-600 dark:text-amber-400 tracking-tight">{unreadCount}</h3>
           </div>
         </Card>
 
-        <Card className="p-4 flex items-center space-x-4 border-l-4 border-l-teal-500">
-          <div className="w-12 h-12 rounded-2xl bg-teal-50 dark:bg-teal-950/60 flex items-center justify-center text-teal-600 dark:text-teal-400">
-            <Wallet className="w-6 h-6" />
+        <Card className="p-3.5 flex items-center space-x-3">
+          <div className="w-9 h-9 rounded-lg bg-rose-50 dark:bg-rose-950/60 flex items-center justify-center text-rose-600 dark:text-rose-400 shrink-0">
+            <ShieldAlert className="w-4 h-4" />
           </div>
-          <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Payout &amp; Escrow Requests</p>
-            <h3 className="text-2xl font-extrabold text-teal-600 dark:text-teal-400 font-mono mt-0.5">{payoutCount + kycDisputeCount}</h3>
+          <div className="min-w-0">
+            <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate">Critical Priority</p>
+            <h3 className="text-xl font-bold text-rose-600 dark:text-rose-400 tracking-tight">{criticalCount}</h3>
+          </div>
+        </Card>
+
+        <Card className="p-3.5 flex items-center space-x-3">
+          <div className="w-9 h-9 rounded-lg bg-teal-50 dark:bg-teal-950/60 flex items-center justify-center text-teal-600 dark:text-teal-400 shrink-0">
+            <Wallet className="w-4 h-4" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate">Payouts & KYC</p>
+            <h3 className="text-xl font-bold text-teal-600 dark:text-teal-400 tracking-tight">{payoutCount + kycDisputeCount}</h3>
           </div>
         </Card>
       </div>
 
       {/* 2. TAB NAVIGATION & FILTERS BAR */}
-      <Card className="p-4 mb-6">
-        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
+      <Card className="p-3 mb-5">
+        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
           {/* Category Tabs */}
-          <div className="flex items-center space-x-1.5 overflow-x-auto pb-2 lg:pb-0 scrollbar-none text-xs font-bold">
+          <div className="inline-flex p-1 bg-slate-100 dark:bg-slate-800/80 rounded-lg overflow-x-auto text-xs font-medium">
             <button
               onClick={() => setActiveTab('all')}
-              className={`px-3.5 py-2 rounded-xl transition-all whitespace-nowrap ${
+              className={`px-3 py-1.5 rounded-md transition-all whitespace-nowrap ${
                 activeTab === 'all'
-                  ? 'bg-teal-600 text-white shadow-2xs'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                  ? 'bg-white dark:bg-slate-900 text-teal-700 dark:text-teal-400 shadow-xs font-semibold'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
               }`}
             >
-              All Notifications ({notifications.length})
+              All ({notifications.length})
             </button>
 
             <button
               onClick={() => setActiveTab('unread')}
-              className={`px-3.5 py-2 rounded-xl transition-all whitespace-nowrap flex items-center space-x-1.5 ${
+              className={`px-3 py-1.5 rounded-md transition-all whitespace-nowrap flex items-center space-x-1.5 ${
                 activeTab === 'unread'
-                  ? 'bg-teal-600 text-white shadow-2xs'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                  ? 'bg-white dark:bg-slate-900 text-teal-700 dark:text-teal-400 shadow-xs font-semibold'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
               }`}
             >
               <span>Unread</span>
               {unreadCount > 0 && (
-                <span className="px-1.5 py-0.2 rounded-full bg-amber-500 text-slate-950 text-[10px] font-black">
+                <span className="px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-400 text-[10px] font-bold">
                   {unreadCount}
                 </span>
               )}
@@ -213,21 +211,21 @@ export const NotificationsPage: React.FC = () => {
 
             <button
               onClick={() => setActiveTab('CRITICAL')}
-              className={`px-3.5 py-2 rounded-xl transition-all whitespace-nowrap ${
+              className={`px-3 py-1.5 rounded-md transition-all whitespace-nowrap ${
                 activeTab === 'CRITICAL'
-                  ? 'bg-red-600 text-white shadow-2xs'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                  ? 'bg-white dark:bg-slate-900 text-rose-600 dark:text-rose-400 shadow-xs font-semibold'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
               }`}
             >
-              Critical Alerts ({criticalCount})
+              Critical ({criticalCount})
             </button>
 
             <button
               onClick={() => setActiveTab('PAYOUT')}
-              className={`px-3.5 py-2 rounded-xl transition-all whitespace-nowrap ${
+              className={`px-3 py-1.5 rounded-md transition-all whitespace-nowrap ${
                 activeTab === 'PAYOUT'
-                  ? 'bg-teal-600 text-white shadow-2xs'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                  ? 'bg-white dark:bg-slate-900 text-teal-700 dark:text-teal-400 shadow-xs font-semibold'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
               }`}
             >
               Payouts ({payoutCount})
@@ -235,56 +233,34 @@ export const NotificationsPage: React.FC = () => {
 
             <button
               onClick={() => setActiveTab('KYC_DISPUTE')}
-              className={`px-3.5 py-2 rounded-xl transition-all whitespace-nowrap ${
+              className={`px-3 py-1.5 rounded-md transition-all whitespace-nowrap ${
                 activeTab === 'KYC_DISPUTE'
-                  ? 'bg-teal-600 text-white shadow-2xs'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                  ? 'bg-white dark:bg-slate-900 text-teal-700 dark:text-teal-400 shadow-xs font-semibold'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
               }`}
             >
               KYC &amp; Disputes ({kycDisputeCount})
-            </button>
-
-            <button
-              onClick={() => setActiveTab('LOGISTICS')}
-              className={`px-3.5 py-2 rounded-xl transition-all whitespace-nowrap ${
-                activeTab === 'LOGISTICS'
-                  ? 'bg-teal-600 text-white shadow-2xs'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
-              }`}
-            >
-              Logistics
-            </button>
-
-            <button
-              onClick={() => setActiveTab('HR')}
-              className={`px-3.5 py-2 rounded-xl transition-all whitespace-nowrap ${
-                activeTab === 'HR'
-                  ? 'bg-teal-600 text-white shadow-2xs'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
-              }`}
-            >
-              HR Ops
             </button>
           </div>
 
           {/* Controls: Search Input & Priority Filter */}
           <div className="flex items-center space-x-2">
-            <div className="relative flex-1 sm:w-64">
+            <div className="relative flex-1 sm:w-60">
               <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search alerts, references..."
-                className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 font-medium"
+                placeholder="Search alerts..."
+                className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500 text-slate-900 dark:text-slate-100 placeholder-slate-400"
               />
             </div>
 
-            <div className="relative flex-shrink-0">
+            <div className="relative shrink-0">
               <select
                 value={selectedPriority}
                 onChange={(e) => setSelectedPriority(e.target.value)}
-                className="pl-8 pr-3 py-1.5 text-xs bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 font-bold text-slate-700 dark:text-slate-200 appearance-none cursor-pointer"
+                className="pl-7 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500 font-medium text-slate-700 dark:text-slate-200 appearance-none cursor-pointer"
               >
                 <option value="ALL">All Priorities</option>
                 <option value="CRITICAL">Critical</option>
@@ -293,19 +269,19 @@ export const NotificationsPage: React.FC = () => {
                 <option value="INFO">Info</option>
                 <option value="SUCCESS">Success</option>
               </select>
-              <SlidersHorizontal className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              <SlidersHorizontal className="w-3 h-3 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             </div>
           </div>
         </div>
       </Card>
 
       {/* 3. NOTIFICATIONS LIST CONTAINER */}
-      <div className="space-y-3">
+      <div className="space-y-2.5">
         {filteredNotifications.length === 0 ? (
-          <Card className="p-12 text-center">
-            <Bell className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
-            <h3 className="text-base font-bold text-slate-800 dark:text-slate-200 font-heading">No Notifications Found</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto font-medium">
+          <Card className="p-10 text-center">
+            <Bell className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">No Notifications Found</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
               There are no system notifications matching your selected tab, priority filter, or search query.
             </p>
           </Card>
@@ -315,24 +291,24 @@ export const NotificationsPage: React.FC = () => {
             return (
               <Card
                 key={notif.id}
-                className={`p-4 transition-all hover:border-slate-300 dark:hover:border-slate-700 ${
+                className={`p-3.5 transition-all hover:border-slate-300 dark:hover:border-slate-700 ${
                   !notif.is_read
-                    ? 'bg-white dark:bg-[#121824] border-l-4 border-l-teal-500 shadow-xs'
-                    : 'bg-slate-50/60 dark:bg-[#0d121c]/60 opacity-85'
+                    ? 'bg-white dark:bg-slate-900 border-l-2 border-l-teal-500 shadow-xs'
+                    : 'bg-slate-50/50 dark:bg-slate-900/40 opacity-80'
                 }`}
               >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start space-x-3.5 min-w-0">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start space-x-3 min-w-0">
                     <div
-                      className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                      className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
                         notif.priority === 'CRITICAL'
-                          ? 'bg-red-50 dark:bg-red-950/60 text-red-600'
+                          ? 'bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400'
                           : notif.priority === 'HIGH'
-                          ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-600'
-                          : 'bg-teal-50 dark:bg-teal-950/60 text-teal-600'
+                          ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400'
+                          : 'bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400'
                       }`}
                     >
-                      <IconComp className="w-5 h-5" />
+                      <IconComp className="w-4 h-4" />
                     </div>
 
                     <div className="min-w-0 space-y-1">
@@ -341,38 +317,38 @@ export const NotificationsPage: React.FC = () => {
                           {notif.priority}
                         </Badge>
 
-                        <span className="text-[10px] font-bold font-mono px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 uppercase">
+                        <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 uppercase">
                           {notif.category}
                         </span>
 
                         {!notif.is_read && (
-                          <span className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" title="Unread Alert" />
+                          <span className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" title="Unread Alert" />
                         )}
 
-                        <span className="text-[11px] text-slate-400 font-mono flex items-center">
-                          <Clock className="w-3 h-3 mr-1" />
+                        <span className="text-[10px] text-slate-400 font-mono flex items-center">
+                          <Clock className="w-2.5 h-2.5 mr-1" />
                           {formatRelativeTime(notif.timestamp)}
                         </span>
                       </div>
 
-                      <h4 className="text-sm font-extrabold text-slate-900 dark:text-slate-100 font-heading tracking-tight">
+                      <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100 tracking-tight">
                         {notif.title}
                       </h4>
 
-                      <p className="text-xs text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
+                      <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
                         {notif.body}
                       </p>
 
                       {notif.source_node && (
                         <span className="text-[10px] text-slate-400 font-mono block">
-                          Node: <strong className="text-slate-600 dark:text-slate-300">{notif.source_node}</strong>
+                          Node: <span className="text-slate-600 dark:text-slate-300">{notif.source_node}</span>
                         </span>
                       )}
                     </div>
                   </div>
 
                   {/* Right Actions */}
-                  <div className="flex items-center space-x-2 flex-shrink-0">
+                  <div className="flex items-center space-x-1.5 shrink-0">
                     <Button
                       variant="outline"
                       size="sm"
@@ -380,18 +356,18 @@ export const NotificationsPage: React.FC = () => {
                         markAsRead(notif.id);
                         navigate(notif.target_url);
                       }}
-                      className="text-xs font-bold"
+                      className="text-xs"
                     >
-                      <span>{notif.action_label || 'View Details'}</span>
-                      <ExternalLink className="w-3.5 h-3.5 ml-1.5" />
+                      <span>{notif.action_label || 'View'}</span>
+                      <ExternalLink className="w-3 h-3 ml-1" />
                     </Button>
 
                     <button
                       onClick={() => deleteNotification(notif.id)}
-                      className="p-1.5 text-slate-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                      className="p-1 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                       title="Delete Notification"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>

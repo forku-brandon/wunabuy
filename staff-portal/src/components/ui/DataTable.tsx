@@ -68,38 +68,38 @@ export function DataTable<T extends Record<string, any>>({
   const currentSlice = filteredData.slice(startIndex, endIndex);
 
   return (
-    <div className="w-full bg-white dark:bg-[#151C28] rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs p-6 transition-colors">
+    <div className="w-full bg-white dark:bg-[#111827] rounded-xl border border-slate-200/70 dark:border-slate-800/80 shadow-xs overflow-hidden transition-colors">
       {/* Header Bar: Search Input & Actions */}
       {(searchable || actions) && (
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 mb-6">
+        <div className="p-4 sm:p-4.5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800/60">
           {searchable ? (
             <div className="relative flex-1 max-w-sm">
-              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={handleSearchChange}
                 placeholder={searchPlaceholder}
-                className="w-full pl-10 pr-4 py-2 text-xs bg-slate-100/80 dark:bg-slate-800/80 border-none rounded-full focus:outline-none focus:ring-2 focus:ring-teal-500 font-medium text-slate-900 dark:text-slate-100"
+                className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-800 rounded-lg focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500 font-normal text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
               />
             </div>
           ) : (
             <div />
           )}
 
-          {actions && <div className="flex items-center space-x-3">{actions}</div>}
+          {actions && <div className="flex items-center space-x-2.5">{actions}</div>}
         </div>
       )}
 
-      {/* Touch-Friendly Table Container */}
-      <div className="overflow-x-auto rounded-2xl border border-slate-100 dark:border-slate-800">
+      {/* Clean Table Container */}
+      <div className="overflow-x-auto">
         <table className="w-full text-left text-xs">
-          <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 uppercase tracking-wider font-extrabold border-b border-slate-200/80 dark:border-slate-800">
+          <thead className="bg-slate-50/70 dark:bg-slate-800/40 text-slate-500 dark:text-slate-400 uppercase tracking-wider text-[11px] font-semibold border-b border-slate-200/70 dark:border-slate-800/80">
             <tr>
               {columns.map((col) => (
                 <th
                   key={col.key}
-                  className={`py-3.5 px-4 ${
+                  className={`py-3 px-4 ${
                     col.align === 'right'
                       ? 'text-right'
                       : col.align === 'center'
@@ -112,17 +112,17 @@ export function DataTable<T extends Record<string, any>>({
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium text-slate-700 dark:text-slate-300">
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-800/70 font-normal text-slate-700 dark:text-slate-300">
             {currentSlice.length > 0 ? (
               currentSlice.map((item, rowIdx) => (
                 <tr
                   key={item.id || rowIdx}
-                  className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors"
+                  className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors"
                 >
                   {columns.map((col, cIdx) => (
                     <td
                       key={col.key || `col_${cIdx}`}
-                      className={`py-4 px-4 ${
+                      className={`py-3.5 px-4 ${
                         col.align === 'right'
                           ? 'text-right'
                           : col.align === 'center'
@@ -140,8 +140,8 @@ export function DataTable<T extends Record<string, any>>({
             ) : (
               <tr>
                 <td colSpan={columns.length} className="py-12 text-center text-slate-400 dark:text-slate-500">
-                  <Inbox className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                  <p className="font-semibold text-xs">{emptyMessage}</p>
+                  <Inbox className="w-7 h-7 mx-auto mb-2 opacity-40" />
+                  <p className="font-medium text-xs">{emptyMessage}</p>
                 </td>
               </tr>
             )}
@@ -150,15 +150,15 @@ export function DataTable<T extends Record<string, any>>({
       </div>
 
       {/* Pagination Footer Controls */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 font-semibold">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-slate-100 dark:border-slate-800/70 text-xs text-slate-500 dark:text-slate-400 font-medium">
         <div>
-          Showing <strong className="text-slate-900 dark:text-slate-100">{totalEntries > 0 ? startIndex + 1 : 0}</strong> to{' '}
-          <strong className="text-slate-900 dark:text-slate-100">{endIndex}</strong> of{' '}
-          <strong className="text-slate-900 dark:text-slate-100">{totalEntries}</strong> entries
+          Showing <span className="font-semibold text-slate-900 dark:text-slate-100">{totalEntries > 0 ? startIndex + 1 : 0}</span> to{' '}
+          <span className="font-semibold text-slate-900 dark:text-slate-100">{endIndex}</span> of{' '}
+          <span className="font-semibold text-slate-900 dark:text-slate-100">{totalEntries}</span> entries
         </div>
 
         <div className="flex items-center space-x-3">
-          <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500">
+          <span className="text-[11px] text-slate-400 dark:text-slate-500">
             Page {validCurrentPage} of {totalPages}
           </span>
           <div className="flex items-center space-x-1.5">

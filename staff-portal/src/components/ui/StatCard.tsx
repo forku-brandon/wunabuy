@@ -18,25 +18,25 @@ export const StatCard: React.FC<StatCardProps> = ({
   change,
   changeType = 'positive',
   icon,
-  iconBg = 'bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300',
+  iconBg = 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300',
   description,
 }) => {
   return (
     <Card className="flex flex-col justify-between">
       <div>
-        {/* Top Row: Micro-eyebrow + Icon Badge */}
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-[10px] font-mono font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest block">
+        {/* Top Row: Title + Icon Badge */}
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block">
             {title}
           </span>
-          <div className={`w-9 h-9 rounded-lg flex items-center justify-center shadow-2xs ${iconBg}`}>
+          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${iconBg}`}>
             {icon}
           </div>
         </div>
 
         {/* Middle Row: Crisp Metric Value */}
-        <div className="my-1">
-          <span className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 font-mono tracking-tight block">
+        <div className="my-0.5">
+          <span className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight block">
             {value}
           </span>
         </div>
@@ -44,7 +44,7 @@ export const StatCard: React.FC<StatCardProps> = ({
 
       {/* Bottom Row: Trend Pill & Description */}
       {(change || description) && (
-        <div className="pt-3 mt-3 flex items-center justify-between text-xs">
+        <div className="pt-3 mt-3 border-t border-slate-100 dark:border-slate-800/60 flex items-center justify-between text-xs">
           {change && (
             <Badge
               variant={
@@ -63,7 +63,7 @@ export const StatCard: React.FC<StatCardProps> = ({
           )}
 
           {description && (
-            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 truncate">
+            <span className="text-[11px] font-normal text-slate-500 dark:text-slate-400 truncate ml-2">
               {description}
             </span>
           )}

@@ -6,13 +6,11 @@ import {
   LogOut,
   UserCheck,
   ChevronDown,
-  Calendar,
   MessageSquare,
   Menu,
   Send,
   Sun,
   Moon,
-  CalendarDays,
   ShieldCheck,
   Settings,
   User,
@@ -43,9 +41,6 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileSidebar }) => {
   // Header Interactive Modals & Drawers State
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
-  const [filterPeriodOpen, setFilterPeriodOpen] = useState(false);
-
-  const [selectedPeriod, setSelectedPeriod] = useState('This Week (2026)');
   const [notificationsCount, setNotificationsCount] = useState(12);
   const [chatMessageInput, setChatMessageInput] = useState('');
   const [chatMessages, setChatMessages] = useState([
@@ -73,57 +68,60 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileSidebar }) => {
   };
 
   return (
-    <header className="h-16 bg-white dark:bg-[#121824] px-4 sm:px-6 flex items-center justify-between flex-shrink-0 relative z-30 shadow-2xs transition-colors">
-      {/* Left: Mobile Menu Toggle + Clean Compact Search Bar */}
+    <header className="h-16 bg-white dark:bg-[#111827] px-4 sm:px-6 flex items-center justify-between flex-shrink-0 relative z-30 border-b border-slate-200/70 dark:border-slate-800/80 transition-colors">
+      {/* Left: Mobile Menu Toggle + Enterprise Search Bar */}
       <div className="flex items-center space-x-3">
         {/* Mobile Hamburger Toggle Button */}
         {onToggleMobileSidebar && (
           <button
             onClick={onToggleMobileSidebar}
-            className="lg:hidden p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+            className="lg:hidden p-1.5 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
             title="Open Mobile Navigation Menu"
           >
             <Menu className="w-5 h-5" />
           </button>
         )}
 
-        {/* Clean Compact Search Bar */}
-        <div className="w-44 sm:w-64 lg:w-80 relative">
+        {/* Enterprise Search Bar with Keyboard Shortcut */}
+        <div className="w-48 sm:w-64 lg:w-72 relative">
           <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
           <input
             type="text"
-            placeholder="Search orders, KYC..."
-            className="w-full pl-8 pr-3 py-1.5 sm:py-2 text-xs bg-slate-100/80 dark:bg-slate-800/80 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white dark:focus:bg-slate-800 text-slate-900 dark:text-slate-100 font-medium transition-all"
+            placeholder="Search orders, KYC, claims..."
+            className="w-full pl-8 pr-12 py-1.5 text-xs bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-800 rounded-lg focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500 text-slate-900 dark:text-slate-100 font-normal transition-all placeholder:text-slate-400"
           />
+          <kbd className="hidden sm:inline-block absolute right-2.5 top-1/2 -translate-y-1/2 px-1.5 py-0.5 text-[9px] font-mono font-medium text-slate-400 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded">
+            ⌘K
+          </kbd>
         </div>
       </div>
 
       {/* Right: Streamlined Action Buttons */}
-      <div className="flex items-center space-x-2.5">
+      <div className="flex items-center space-x-2 sm:space-x-2.5">
         {/* Language Switcher Pill Dropdown */}
         <div className="relative">
           <button
             onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
-            className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg bg-slate-100/80 dark:bg-slate-800/80 hover:bg-slate-200/80 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 text-xs font-extrabold transition-colors"
-            title="Switch Platform System Language (English / Français)"
+            className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200/70 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold transition-colors"
+            title="Switch Platform System Language"
           >
             <Globe className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
-            <span className="uppercase tracking-wider">{language === 'en' ? 'EN 🇬🇧' : 'FR 🇫🇷'}</span>
+            <span className="uppercase text-[11px] font-mono">{language === 'en' ? 'EN' : 'FR'}</span>
             <ChevronDown className="w-3 h-3 text-slate-400" />
           </button>
 
           {isLangMenuOpen && (
-            <div className="absolute right-0 mt-2 w-44 bg-white dark:bg-[#121824] rounded-xl shadow-xl py-2 z-50 animate-fade-in border border-slate-100 dark:border-slate-800">
-              <div className="px-3 py-1 text-[10px] font-mono font-extrabold uppercase text-slate-400 tracking-wider">
-                SELECT LANGUAGE / LANGUE
+            <div className="absolute right-0 mt-2 w-44 bg-white dark:bg-[#121824] rounded-xl shadow-xl py-1.5 z-50 animate-fade-in border border-slate-200/80 dark:border-slate-800">
+              <div className="px-3 py-1 text-[9px] font-semibold uppercase tracking-wider text-slate-400">
+                Language / Langue
               </div>
               <button
                 onClick={() => {
                   setLanguage('en');
                   setIsLangMenuOpen(false);
                 }}
-                className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800 font-bold ${
-                  language === 'en' ? 'text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/40 font-extrabold' : 'text-slate-700 dark:text-slate-300'
+                className={`w-full text-left px-3 py-1.5 text-xs flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800 font-medium ${
+                  language === 'en' ? 'text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/40 font-semibold' : 'text-slate-700 dark:text-slate-300'
                 }`}
               >
                 <span>🇬🇧 English (EN)</span>
@@ -134,8 +132,8 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileSidebar }) => {
                   setLanguage('fr');
                   setIsLangMenuOpen(false);
                 }}
-                className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800 font-bold ${
-                  language === 'fr' ? 'text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/40 font-extrabold' : 'text-slate-700 dark:text-slate-300'
+                className={`w-full text-left px-3 py-1.5 text-xs flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800 font-medium ${
+                  language === 'fr' ? 'text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/40 font-semibold' : 'text-slate-700 dark:text-slate-300'
                 }`}
               >
                 <span>🇫🇷 Français (FR)</span>
@@ -148,43 +146,24 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileSidebar }) => {
         {/* Theme Switcher Toggle Button (Sun / Moon) */}
         <button
           onClick={toggleTheme}
-          className="w-8 h-8 rounded-lg bg-slate-100/80 dark:bg-slate-800/80 hover:bg-slate-200/80 dark:hover:bg-slate-700/80 flex items-center justify-center text-slate-700 dark:text-slate-200 transition-colors"
+          className="w-8 h-8 rounded-lg border border-slate-200/70 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 transition-colors"
           title={`Switch to ${theme === 'light' ? 'Dark' : 'Light'} Mode`}
         >
           {theme === 'light' ? (
-            <Moon className="w-4 h-4 text-slate-700" />
+            <Moon className="w-3.5 h-3.5 text-slate-600" />
           ) : (
-            <Sun className="w-4 h-4 text-amber-400" />
+            <Sun className="w-3.5 h-3.5 text-amber-400" />
           )}
-        </button>
-
-        {/* Calendar & Operational Tasks Header Button */}
-        <button
-          onClick={() => navigate('/calendar')}
-          className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold transition-all shadow-2xs"
-          title="Open Operational Calendar & Task Manager"
-        >
-          <CalendarDays className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">Calendar &amp; Tasks</span>
-        </button>
-
-        {/* Date Filter Pill Button */}
-        <button
-          onClick={() => setFilterPeriodOpen(true)}
-          className="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-teal-50 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300 text-xs font-bold hover:bg-teal-100 dark:hover:bg-teal-900/60 transition-colors shadow-2xs"
-        >
-          <Calendar className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
-          <span>{selectedPeriod}</span>
         </button>
 
         {/* Action Icon 1: Support Chat & Internal Communications */}
         <button
           onClick={() => navigate('/communications')}
-          className="w-8 h-8 rounded-lg bg-slate-100/80 dark:bg-slate-800/80 hover:bg-slate-200/80 dark:hover:bg-slate-700/80 flex items-center justify-center text-slate-600 dark:text-slate-300 relative transition-colors"
-          title="Open Internal Staff Chat & Broadcast Center"
+          className="w-8 h-8 rounded-lg border border-slate-200/70 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 relative transition-colors"
+          title="Open Internal Staff Chat & Broadcasts"
         >
-          <MessageSquare className="w-4 h-4" />
-          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-teal-600 text-white font-extrabold text-[9px] rounded-full flex items-center justify-center shadow-2xs">
+          <MessageSquare className="w-3.5 h-3.5" />
+          <span className="absolute -top-1 -right-1 w-4 h-4 bg-teal-600 text-white font-bold text-[9px] rounded-full flex items-center justify-center shadow-xs">
             3
           </span>
         </button>
@@ -193,12 +172,12 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileSidebar }) => {
         <div className="relative">
           <button
             onClick={() => setNotificationsOpen(!notificationsOpen)}
-            className="w-8 h-8 rounded-lg bg-slate-100/80 dark:bg-slate-800/80 hover:bg-slate-200/80 dark:hover:bg-slate-700/80 flex items-center justify-center text-slate-600 dark:text-slate-300 relative transition-colors"
+            className="w-8 h-8 rounded-lg border border-slate-200/70 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 relative transition-colors"
             title="System Operational Notifications"
           >
-            <Bell className="w-4 h-4" />
+            <Bell className="w-3.5 h-3.5" />
             {unreadCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-amber-500 text-slate-950 font-extrabold text-[9px] rounded-full flex items-center justify-center shadow-2xs">
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-amber-500 text-slate-950 font-bold text-[9px] rounded-full flex items-center justify-center shadow-xs">
                 {unreadCount}
               </span>
             )}
@@ -380,32 +359,7 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileSidebar }) => {
         </div>
       </div>
 
-      {/* FILTER PERIOD MODAL */}
-      <Modal
-        isOpen={filterPeriodOpen}
-        onClose={() => setFilterPeriodOpen(false)}
-        title="Filter Dashboard Time Range"
-      >
-        <div className="space-y-3 text-xs">
-          {['Today (Live)', 'This Week (2026)', 'This Month (August 2026)', 'Quarter 3 (2026)', 'All Time'].map((period) => (
-            <button
-              key={period}
-              onClick={() => {
-                setSelectedPeriod(period);
-                setFilterPeriodOpen(false);
-              }}
-              className={`w-full text-left p-3 rounded-lg font-bold flex items-center justify-between ${
-                selectedPeriod === period
-                  ? 'bg-teal-50 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300'
-                  : 'bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300'
-              }`}
-            >
-              <span>{period}</span>
-              {selectedPeriod === period && <UserCheck className="w-4 h-4 text-teal-600 dark:text-teal-400" />}
-            </button>
-          ))}
-        </div>
-      </Modal>
+
 
       {/* SUPPORT CHAT MODAL */}
       <Modal

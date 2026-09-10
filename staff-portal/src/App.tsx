@@ -14,15 +14,12 @@ import { AuthPage } from './pages/AuthPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { KYCPage } from './pages/KYCPage';
 import { DisputesPage } from './pages/DisputesPage';
-import { LogisticsOpsPage } from './pages/LogisticsOpsPage';
 import { UsersPage } from './pages/UsersPage';
 import { FinancialsPage } from './pages/FinancialsPage';
 import { MarketingPage } from './pages/MarketingPage';
 import { CommunicationsPage } from './pages/CommunicationsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { StaffProfilePage } from './pages/StaffProfilePage';
-import { HROpsPage } from './pages/HROpsPage';
-import { CalendarPage } from './pages/CalendarPage';
 import { NotificationsPage } from './pages/NotificationsPage';
 
 const queryClient = new QueryClient({
@@ -64,16 +61,7 @@ const ProtectedLayout: React.FC = () => {
           />
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/profile" element={<StaffProfilePage />} />
-          <Route path="/calendar" element={<CalendarPage />} />
           <Route path="/communications" element={<CommunicationsPage />} />
-          <Route
-            path="/hr"
-            element={
-              <PermissionGuard permission="view_hr_ops">
-                <HROpsPage />
-              </PermissionGuard>
-            }
-          />
           <Route
             path="/kyc"
             element={
@@ -87,14 +75,6 @@ const ProtectedLayout: React.FC = () => {
             element={
               <PermissionGuard permission="view_disputes">
                 <DisputesPage />
-              </PermissionGuard>
-            }
-          />
-          <Route
-            path="/logistics"
-            element={
-              <PermissionGuard permission="view_logistics">
-                <LogisticsOpsPage />
               </PermissionGuard>
             }
           />
