@@ -46,7 +46,11 @@ export const SellerProfileScreen = ({ navigation }: any) => {
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [copiedNotification, setCopiedNotification] = useState(false);
 
-  const storeAccountNumber = '2 1 4 5 4 5 5 3 6';
+  const storeIdentifier = useSellerStore.getState().storeId
+    ? `STORE #${useSellerStore.getState().storeId!.slice(0, 8).toUpperCase()}`
+    : user?.phone
+    ? formatPhone(user.phone)
+    : '';
 
   const pendingAcceptanceCount = orders.filter((o) => o.status === 'pending_acceptance').length;
   const preparingCount = orders.filter((o) => o.status === 'preparing').length;
@@ -55,10 +59,21 @@ export const SellerProfileScreen = ({ navigation }: any) => {
 
   const loadProfileData = useCallback(async () => {
     try {
-      await Promise.all([
+      const [dash, kyc, prods, ordersList] = await Promise.all([
         SellerService.getStoreDashboard(),
         KYCService.getStoreKYCStatus(),
+        SellerService.getStoreProducts(),
+        SellerService.getFulfillmentOrders(),
       ]);
+      if (dash) {
+        useSellerStore.getState().setDashboardMetrics(dash);
+      }
+      if (prods && Array.isArray(prods)) {
+        useSellerStore.getState().setProducts(prods);
+      }
+      if (ordersList && Array.isArray(ordersList)) {
+        useSellerStore.getState().setOrders(ordersList);
+      }
     } catch {
       // Offline fallback
     }
@@ -207,10 +222,10 @@ export const SellerProfileScreen = ({ navigation }: any) => {
               </TouchableOpacity>
             </TouchableOpacity>
 
-            <TouchableOpacity activeOpacity={0.85} onPress={handleOpenAvatarModal} style={styles.userNameCol}>
+            <TouchableOpacity activeOpacity={0.85} onPress={() => navigation.navigate('EditStoreProfile')} style={styles.userNameCol}>
               <View style={styles.userNameRow}>
                 <Text variant="h2" bold numberOfLines={1} style={styles.userNameText}>
-                  {storeName || user?.full_name || 'Douala Tech Hub'}
+                  {storeName || user?.full_name || 'Set Up Store Profile'}
                 </Text>
                 <View style={[styles.kycVerifiedBadge, { backgroundColor: '#CCFBF1' }]}>
                   <Ionicons name="shield-checkmark" size={11} color={colors.primary[600]} style={{ marginRight: 2 }} />
@@ -220,7 +235,7 @@ export const SellerProfileScreen = ({ navigation }: any) => {
                 </View>
               </View>
               <Text variant="caption" secondary style={styles.userPhoneText}>
-                {formatPhone(user?.phone ?? '+237670123456')}
+                {user?.phone ? formatPhone(user.phone) : 'No Phone Added'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -249,19 +264,21 @@ export const SellerProfileScreen = ({ navigation }: any) => {
               <Text variant="caption" color="rgba(255,255,255,0.85)" bold>
                 Store Available Balance
               </Text>
-              <TouchableOpacity
-                activeOpacity={0.7}
-                onPress={(e) => {
-                  e.stopPropagation();
-                  handleCopyAccount();
-                }}
-                style={styles.copyIdPill}
-              >
-                <Text variant="caption" color="#FFFFFF" bold style={{ fontSize: 10 }}>
-                  {storeAccountNumber}
-                </Text>
-                <Ionicons name="copy-outline" size={10} color="#FFFFFF" style={{ marginLeft: 3 }} />
-              </TouchableOpacity>
+              {storeIdentifier ? (
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    handleCopyAccount();
+                  }}
+                  style={styles.copyIdPill}
+                >
+                  <Text variant="caption" color="#FFFFFF" bold style={{ fontSize: 10 }}>
+                    {storeIdentifier}
+                  </Text>
+                  <Ionicons name="copy-outline" size={10} color="#FFFFFF" style={{ marginLeft: 3 }} />
+                </TouchableOpacity>
+              ) : null}
             </View>
 
             <View style={styles.walletBalanceRow}>
@@ -324,7 +341,7 @@ export const SellerProfileScreen = ({ navigation }: any) => {
               </Text>
             </View>
             <Text variant="caption" secondary numberOfLines={1} style={{ marginTop: 2 }}>
-              📍 {address || 'Quartier Akwa, Douala'} • {category || 'Electronics'}
+              {address ? `📍 ${address}` : '📍 Physical address not set'} • {category || 'Uncategorized'}
             </Text>
           </View>
           <Ionicons name="chevron-forward" size={18} color={colors.primary[500]} />

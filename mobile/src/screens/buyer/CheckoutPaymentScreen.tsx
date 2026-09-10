@@ -118,6 +118,7 @@ export const CheckoutPaymentScreen = ({ route, navigation }: any) => {
             paymentMethod: 'Mobile Money',
             deliveryMethod,
             pickupPin,
+            storeName: cartItems[0]?.store_name,
           });
         }, 3000);
       } else if (selectedMethod === PaymentMethod.WALLET) {
@@ -144,6 +145,7 @@ export const CheckoutPaymentScreen = ({ route, navigation }: any) => {
             paymentMethod: 'Wallet Balance',
             deliveryMethod,
             pickupPin,
+            storeName: cartItems[0]?.store_name,
           });
         }, 1200);
       }

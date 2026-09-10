@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\Store;
 use App\Models\User;
@@ -36,7 +37,7 @@ class SellerController extends Controller
         if (!$sellerUser) {
             return $this->respondError('UNAUTHORIZED', 'Authentication required', null, 401);
         }
-        $store = $sellerUser?->store;
+        $store = $sellerUser->store ?? Store::where('user_id', $sellerUser->id)->first();
         $wallet = $sellerUser ? $sellerUser->wallet : null;
 
         $query = Order::query();
@@ -73,7 +74,20 @@ class SellerController extends Controller
         $withdrawable = max(0, $avail - $bonus);
 
         return $this->respondSuccess([
-            'store_name' => $store->store_name ?? ($sellerUser->full_name . "'s Store"),
+            'store_id' => $store?->id,
+            'store_name' => $store?->store_name ?? ($sellerUser->full_name . "'s Store"),
+            'category' => $store?->category ?? '',
+            'address' => $store?->address_text ?? '',
+            'landmark' => $store?->landmark ?? '',
+            'tagline' => $store?->tagline ?? '',
+            'description' => $store?->description ?? '',
+            'primary_phone' => $store?->phone ?? $sellerUser->phone ?? '',
+            'secondary_phone' => $store?->phone ?? '',
+            'email' => $store?->email ?? $sellerUser->email ?? '',
+            'operating_hours' => $store?->counter_hours ?? '',
+            'rider_pickup_instructions' => $store?->rider_instructions ?? '',
+            'logo_url' => $store?->logo_url ?? '',
+            'cover_photo_url' => $store?->banner_url ?? '',
             'is_verified' => (bool) ($store->is_verified ?? false),
             'rating_avg' => (float) ($store->rating_avg ?? 5.0),
             'total_reviews' => (int) ($store->total_reviews ?? 0),
@@ -171,14 +185,26 @@ class SellerController extends Controller
     /**
      * Accept order within the 2-hour timeout window.
      */
-    public function acceptOrder(string $id): JsonResponse
+    public function acceptOrder(Request $request, string $id): JsonResponse
     {
+        $sellerUser = $this->resolveUser($request);
+        if (!$sellerUser) {
+            return $this->respondError('UNAUTHORIZED', 'Authentication required', null, 401);
+        }
+
         $order = (Str::isUuid($id) ? Order::find($id) : null)
             ?? Order::where('order_code', $id)->first();
-        if ($order) {
-            $order->status = 'preparing';
-            $order->save();
+        if (!$order) {
+            return $this->respondError('NOT_FOUND', 'Order not found', null, 404);
         }
+
+        $store = $sellerUser->store;
+        if (!$store || $order->store_id !== $store->id) {
+            return $this->respondError('FORBIDDEN', 'Unauthorized: Order belongs to another store', null, 403);
+        }
+
+        $order->status = 'preparing';
+        $order->save();
 
         return $this->respondSuccess(['accepted' => true, 'order_id' => $id]);
     }
@@ -188,13 +214,25 @@ class SellerController extends Controller
      */
     public function declineOrder(Request $request, string $id): JsonResponse
     {
+        $sellerUser = $this->resolveUser($request);
+        if (!$sellerUser) {
+            return $this->respondError('UNAUTHORIZED', 'Authentication required', null, 401);
+        }
+
         $order = (Str::isUuid($id) ? Order::find($id) : null)
             ?? Order::where('order_code', $id)->first();
-        if ($order) {
-            $order->status = 'cancelled';
-            $order->notes = ($order->notes ?? '') . ' [Seller Declined: ' . $request->input('reason', 'Out of stock') . ']';
-            $order->save();
+        if (!$order) {
+            return $this->respondError('NOT_FOUND', 'Order not found', null, 404);
         }
+
+        $store = $sellerUser->store;
+        if (!$store || $order->store_id !== $store->id) {
+            return $this->respondError('FORBIDDEN', 'Unauthorized: Order belongs to another store', null, 403);
+        }
+
+        $order->status = 'cancelled';
+        $order->notes = ($order->notes ?? '') . ' [Seller Declined: ' . $request->input('reason', 'Out of stock') . ']';
+        $order->save();
 
         return $this->respondSuccess(['declined' => true, 'order_id' => $id]);
     }
@@ -204,22 +242,32 @@ class SellerController extends Controller
      */
     public function markReady(Request $request, string $id): JsonResponse
     {
-        $order = (Str::isUuid($id) ? Order::find($id) : null)
-            ?? Order::where('order_code', $id)->first();
-        if ($order) {
-            $order->status = 'ready_for_pickup';
-            $order->save();
-
-            $qrData = $this->logisticsService->generateParcelQR($order);
-
-            return $this->respondSuccess([
-                'ready' => true,
-                'order_id' => $order->id,
-                'parcel_qr' => $qrData,
-            ]);
+        $sellerUser = $this->resolveUser($request);
+        if (!$sellerUser) {
+            return $this->respondError('UNAUTHORIZED', 'Authentication required', null, 401);
         }
 
-        return $this->respondSuccess(['ready' => true, 'order_id' => $id]);
+        $order = (Str::isUuid($id) ? Order::find($id) : null)
+            ?? Order::where('order_code', $id)->first();
+        if (!$order) {
+            return $this->respondError('NOT_FOUND', 'Order not found', null, 404);
+        }
+
+        $store = $sellerUser->store;
+        if (!$store || $order->store_id !== $store->id) {
+            return $this->respondError('FORBIDDEN', 'Unauthorized: Order belongs to another store', null, 403);
+        }
+
+        $order->status = 'ready_for_pickup';
+        $order->save();
+
+        $qrData = $this->logisticsService->generateParcelQR($order);
+
+        return $this->respondSuccess([
+            'ready' => true,
+            'order_id' => $order->id,
+            'parcel_qr' => $qrData,
+        ]);
     }
 
     /**
@@ -227,12 +275,24 @@ class SellerController extends Controller
      */
     public function handoverOrder(Request $request, string $id): JsonResponse
     {
+        $sellerUser = $this->resolveUser($request);
+        if (!$sellerUser) {
+            return $this->respondError('UNAUTHORIZED', 'Authentication required', null, 401);
+        }
+
         $order = (Str::isUuid($id) ? Order::find($id) : null)
             ?? Order::where('order_code', $id)->first();
-        if ($order) {
-            $order->status = 'in_transit';
-            $order->save();
+        if (!$order) {
+            return $this->respondError('NOT_FOUND', 'Order not found', null, 404);
         }
+
+        $store = $sellerUser->store;
+        if (!$store || $order->store_id !== $store->id) {
+            return $this->respondError('FORBIDDEN', 'Unauthorized: Order belongs to another store', null, 403);
+        }
+
+        $order->status = 'in_transit';
+        $order->save();
 
         return $this->respondSuccess(['handed_over' => true, 'order_id' => $id]);
     }
@@ -240,12 +300,22 @@ class SellerController extends Controller
     /**
      * Mark order completed (releases escrow to seller wallet).
      */
-    public function completeOrder(string $id): JsonResponse
+    public function completeOrder(Request $request, string $id): JsonResponse
     {
+        $sellerUser = $this->resolveUser($request);
+        if (!$sellerUser) {
+            return $this->respondError('UNAUTHORIZED', 'Authentication required', null, 401);
+        }
+
         $order = (Str::isUuid($id) ? Order::find($id) : null)
             ?? Order::where('order_code', $id)->first();
         if (!$order) {
             return $this->respondError('NOT_FOUND', 'Order not found', null, 404);
+        }
+
+        $store = $sellerUser->store;
+        if (!$store || $order->store_id !== $store->id) {
+            return $this->respondError('FORBIDDEN', 'Unauthorized: Order belongs to another store', null, 403);
         }
 
         $this->escrowService->releaseEscrow($order, 'Seller Delivery Confirmation');
@@ -275,13 +345,25 @@ class SellerController extends Controller
      */
     public function toggleProductStatus(Request $request, string $id): JsonResponse
     {
-        $product = Str::isUuid($id) ? Product::find($id) : Product::first();
-        if ($product) {
-            $product->is_active = (bool) $request->input('is_active', true);
-            $product->save();
+        $sellerUser = $this->resolveUser($request);
+        if (!$sellerUser) {
+            return $this->respondError('UNAUTHORIZED', 'Authentication required', null, 401);
         }
 
-        return $this->respondSuccess(['success' => true, 'is_active' => $product?->is_active]);
+        $product = Str::isUuid($id) ? Product::find($id) : null;
+        if (!$product) {
+            return $this->respondError('NOT_FOUND', 'Product not found', null, 404);
+        }
+
+        $store = $sellerUser->store;
+        if (!$store || $product->store_id !== $store->id) {
+            return $this->respondError('FORBIDDEN', 'Unauthorized: Product belongs to another store', null, 403);
+        }
+
+        $product->is_active = (bool) $request->input('is_active', true);
+        $product->save();
+
+        return $this->respondSuccess(['success' => true, 'is_active' => $product->is_active]);
     }
 
     /**
@@ -289,13 +371,26 @@ class SellerController extends Controller
      */
     public function updateStock(Request $request, string $id): JsonResponse
     {
-        $product = Str::isUuid($id) ? Product::find($id) : Product::first();
-        if ($product) {
-            $product->stock_quantity = (int) $request->input('quantity', 10);
-            $product->save();
+        $sellerUser = $this->resolveUser($request);
+        if (!$sellerUser) {
+            return $this->respondError('UNAUTHORIZED', 'Authentication required', null, 401);
         }
 
-        return $this->respondSuccess(['success' => true, 'stock_quantity' => $product?->stock_quantity]);
+        $product = Str::isUuid($id) ? Product::find($id) : null;
+        if (!$product) {
+            return $this->respondError('NOT_FOUND', 'Product not found', null, 404);
+        }
+
+        $store = $sellerUser->store;
+        if (!$store || $product->store_id !== $store->id) {
+            return $this->respondError('FORBIDDEN', 'Unauthorized: Product belongs to another store', null, 403);
+        }
+
+        $newQuantity = max(0, (int) $request->input('quantity', 10));
+        $product->quantity = $newQuantity;
+        $product->save();
+
+        return $this->respondSuccess(['success' => true, 'stock_quantity' => $product->quantity]);
     }
 
     /**
@@ -335,72 +430,209 @@ class SellerController extends Controller
         $wallet = $sellerUser->wallet ?? null;
         $timeRange = $request->query('time_range', '7d');
 
-        $ordersQuery = Order::query();
-        if ($store) {
-            $ordersQuery->where('store_id', $store->id);
-        } else {
-            $ordersQuery->whereRaw('1 = 0');
-        }
-        $orders = $ordersQuery->get();
-        $completedOrdersCount = $orders->whereIn('status', ['delivered', 'completed', 'received'])->count();
-        $totalOrdersCount = $orders->count();
-        $completionRate = $totalOrdersCount > 0 ? round(($completedOrdersCount / $totalOrdersCount) * 100, 1) : 100.0;
-
-
         $available = (float) ($wallet->balance_available ?? 0);
         $escrowLocked = (float) ($wallet->balance_escrow_locked ?? 0);
 
-        $totalRevenue = (float) $orders->whereIn('status', ['delivered', 'completed', 'received'])->sum('total');
-        if ($totalRevenue <= 0 && $wallet) {
-            $totalRevenue = (float) WalletTransaction::where('wallet_id', $wallet->id)
-                ->where('type', 'escrow_release')
-                ->sum('amount');
+        if (!$store) {
+            return $this->respondSuccess([
+                'time_range' => $timeRange,
+                'total_revenue' => 0.0,
+                'revenue_growth_percentage' => 0.0,
+                'available_balance' => $available,
+                'escrow_locked_balance' => $escrowLocked,
+                'weekly_sales' => [],
+                'kpis' => [
+                    'completed_orders' => 0,
+                    'completion_rate' => 100.0,
+                    'avg_rating' => 0.0,
+                    'total_reviews' => 0,
+                    'repeat_buyer_percentage' => 0.0,
+                    'avg_dispatch_minutes' => 0,
+                ],
+                'top_products' => [],
+            ]);
         }
 
-        // Aggregate top products from store
-        $storeProducts = $store ? Product::where('store_id', $store->id)->take(3)->get() : Product::take(3)->get();
-        $topProducts = [];
-        $dummyCounts = [42, 28, 19];
-        foreach ($storeProducts as $idx => $prod) {
-            $count = $dummyCounts[$idx] ?? 10;
-            $topProducts[] = [
-                'id' => $prod->id,
-                'name' => $prod->name,
-                'salesCount' => $count,
-                'revenue' => (float) ($prod->price * $count),
-            ];
+        // Time window definition
+        $now = now();
+        if ($timeRange === '30d') {
+            $startDate = $now->copy()->subDays(29)->startOfDay();
+            $prevStartDate = $startDate->copy()->subDays(30);
+            $prevEndDate = $startDate->copy()->subSecond();
+        } elseif ($timeRange === '1y' || $timeRange === 'this_year') {
+            $startDate = $now->copy()->startOfYear();
+            $prevStartDate = $startDate->copy()->subYear();
+            $prevEndDate = $startDate->copy()->subSecond();
+        } else { // '7d' default
+            $startDate = $now->copy()->subDays(6)->startOfDay();
+            $prevStartDate = $startDate->copy()->subDays(7);
+            $prevEndDate = $startDate->copy()->subSecond();
         }
 
-        // Dynamic weekly sales breakdown
-        $baseDayAmount = $totalRevenue > 0 ? round($totalRevenue / 7) : 25000;
-        $dayMultipliers = ['Mon' => 0.6, 'Tue' => 0.8, 'Wed' => 0.7, 'Thu' => 1.1, 'Fri' => 1.4, 'Sat' => 1.0, 'Sun' => 0.8];
+        // Fetch actual store orders in window
+        $ordersInPeriod = Order::where('store_id', $store->id)
+            ->where('created_at', '>=', $startDate)
+            ->where('created_at', '<=', $now)
+            ->get();
+
+        $completedStatuses = ['delivered', 'completed', 'received'];
+        $completedOrdersCount = $ordersInPeriod->whereIn('status', $completedStatuses)->count();
+        $totalOrdersInPeriod = $ordersInPeriod->count();
+        $completionRate = $totalOrdersInPeriod > 0
+            ? round(($completedOrdersCount / $totalOrdersInPeriod) * 100, 1)
+            : 100.0;
+
+        $totalRevenue = (float) $ordersInPeriod->whereIn('status', $completedStatuses)->sum('total');
+
+        // Growth rate compared to previous period of same duration
+        $prevRevenue = (float) Order::where('store_id', $store->id)
+            ->where('created_at', '>=', $prevStartDate)
+            ->where('created_at', '<=', $prevEndDate)
+            ->whereIn('status', $completedStatuses)
+            ->sum('total');
+
+        $revenueGrowthPercentage = 0.0;
+        if ($prevRevenue > 0) {
+            $revenueGrowthPercentage = round((($totalRevenue - $prevRevenue) / $prevRevenue) * 100, 1);
+        } elseif ($totalRevenue > 0) {
+            $revenueGrowthPercentage = 100.0;
+        }
+
+        // Daily/Periodic sales breakdown for charts
+        $salesBreakdown = [];
+        $maxDailyAmt = 0;
+
+        if ($timeRange === '30d') {
+            for ($i = 0; $i < 4; $i++) {
+                $wStart = $startDate->copy()->addDays($i * 7);
+                $wEnd = $i === 3 ? $now : $wStart->copy()->addDays(6)->endOfDay();
+                $label = 'W' . ($i + 1);
+                $amt = (float) $ordersInPeriod->whereBetween('created_at', [$wStart, $wEnd])
+                    ->whereIn('status', $completedStatuses)
+                    ->sum('total');
+                if ($amt > $maxDailyAmt) {
+                    $maxDailyAmt = $amt;
+                }
+                $salesBreakdown[] = [
+                    'day' => $label,
+                    'amount' => $amt,
+                ];
+            }
+        } elseif ($timeRange === '1y' || $timeRange === 'this_year') {
+            $monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            for ($m = 1; $m <= 12; $m++) {
+                $mStart = $now->copy()->setMonth($m)->startOfMonth();
+                $mEnd = $mStart->copy()->endOfMonth();
+                $label = $monthNames[$m - 1];
+                $amt = (float) Order::where('store_id', $store->id)
+                    ->whereBetween('created_at', [$mStart, $mEnd])
+                    ->whereIn('status', $completedStatuses)
+                    ->sum('total');
+                if ($amt > $maxDailyAmt) {
+                    $maxDailyAmt = $amt;
+                }
+                $salesBreakdown[] = [
+                    'day' => $label,
+                    'amount' => $amt,
+                ];
+            }
+        } else { // 7d
+            for ($i = 0; $i < 7; $i++) {
+                $dayDate = $startDate->copy()->addDays($i);
+                $dStart = $dayDate->copy()->startOfDay();
+                $dEnd = $dayDate->copy()->endOfDay();
+                $label = $dayDate->format('D');
+                $amt = (float) $ordersInPeriod->whereBetween('created_at', [$dStart, $dEnd])
+                    ->whereIn('status', $completedStatuses)
+                    ->sum('total');
+                if ($amt > $maxDailyAmt) {
+                    $maxDailyAmt = $amt;
+                }
+                $salesBreakdown[] = [
+                    'day' => $label,
+                    'amount' => $amt,
+                ];
+            }
+        }
+
         $weeklySales = [];
-        $maxAmt = max(array_map(fn($m) => $baseDayAmount * $m, $dayMultipliers));
-        foreach ($dayMultipliers as $day => $mult) {
-            $amt = round($baseDayAmount * $mult);
-            $hPercent = $maxAmt > 0 ? round(($amt / $maxAmt) * 100) : 50;
+        foreach ($salesBreakdown as $entry) {
+            $hPercent = $maxDailyAmt > 0 ? (int) round(($entry['amount'] / $maxDailyAmt) * 100) : 0;
             $weeklySales[] = [
-                'day' => $day,
-                'amount' => $amt,
-                'heightPercent' => (int) $hPercent,
-                'isPeak' => $hPercent >= 95,
+                'day' => $entry['day'],
+                'amount' => (int) round($entry['amount']),
+                'heightPercent' => $hPercent,
+                'isPeak' => ($maxDailyAmt > 0 && $entry['amount'] >= $maxDailyAmt),
             ];
         }
+
+        // Aggregate real Top Products from OrderItems
+        $topItems = OrderItem::whereHas('order', function ($q) use ($store, $startDate, $now) {
+                $q->where('store_id', $store->id)
+                  ->where('created_at', '>=', $startDate)
+                  ->where('created_at', '<=', $now)
+                  ->whereIn('status', ['delivered', 'completed', 'received', 'confirmed', 'processing', 'ready_for_pickup']);
+            })
+            ->select('product_id', DB::raw('SUM(quantity) as total_qty'), DB::raw('SUM(quantity * price) as total_revenue'))
+            ->groupBy('product_id')
+            ->orderByDesc('total_revenue')
+            ->take(5)
+            ->get();
+
+        $topProducts = [];
+        foreach ($topItems as $item) {
+            $p = Product::find($item->product_id);
+            if ($p) {
+                $topProducts[] = [
+                    'id' => $p->id,
+                    'name' => $p->name,
+                    'salesCount' => (int) $item->total_qty,
+                    'revenue' => (float) $item->total_revenue,
+                ];
+            }
+        }
+
+        // Calculate repeat buyer percentage
+        $customerOrderCounts = Order::where('store_id', $store->id)
+            ->select('customer_id', DB::raw('count(*) as count'))
+            ->groupBy('customer_id')
+            ->get();
+
+        $totalCustomers = $customerOrderCounts->count();
+        $repeatCustomers = $customerOrderCounts->where('count', '>', 1)->count();
+        $repeatBuyerPercentage = $totalCustomers > 0
+            ? round(($repeatCustomers / $totalCustomers) * 100, 1)
+            : 0.0;
+
+        // Calculate average fulfillment minutes from delivered_at
+        $deliveredOrders = Order::where('store_id', $store->id)
+            ->whereNotNull('delivered_at')
+            ->get();
+
+        $totalMinutes = 0;
+        $fulfilledCount = 0;
+        foreach ($deliveredOrders as $do) {
+            if ($do->delivered_at && $do->created_at) {
+                $totalMinutes += $do->created_at->diffInMinutes($do->delivered_at);
+                $fulfilledCount++;
+            }
+        }
+        $avgDispatchMinutes = $fulfilledCount > 0 ? (int) round($totalMinutes / $fulfilledCount) : 0;
 
         return $this->respondSuccess([
             'time_range' => $timeRange,
             'total_revenue' => $totalRevenue,
-            'revenue_growth_percentage' => 14.8,
+            'revenue_growth_percentage' => $revenueGrowthPercentage,
             'available_balance' => $available,
             'escrow_locked_balance' => $escrowLocked,
             'weekly_sales' => $weeklySales,
             'kpis' => [
-                'completed_orders' => $completedOrdersCount > 0 ? $completedOrdersCount : 24,
+                'completed_orders' => $completedOrdersCount,
                 'completion_rate' => $completionRate,
-                'avg_rating' => (float) ($store->rating_avg ?? 4.9),
-                'total_reviews' => (int) ($store->total_reviews ?? 42),
-                'repeat_buyer_percentage' => 31.5,
-                'avg_dispatch_minutes' => 35,
+                'avg_rating' => (float) ($store->rating_avg ?? 0.0),
+                'total_reviews' => (int) ($store->total_reviews ?? 0),
+                'repeat_buyer_percentage' => $repeatBuyerPercentage,
+                'avg_dispatch_minutes' => $avgDispatchMinutes,
             ],
             'top_products' => $topProducts,
         ]);
@@ -411,19 +643,46 @@ class SellerController extends Controller
      */
     public function updateProfile(Request $request): JsonResponse
     {
-        $store = Store::first();
-        if ($store) {
-            $store->store_name = $request->input('store_name', $store->store_name);
-            $store->category = $request->input('category', $store->category);
-            $store->address_text = $request->input('address_text', $store->address_text);
-            $store->phone = $request->input('primary_phone', $store->phone);
-            $store->counter_hours = $request->input('operating_hours', $store->counter_hours);
-            $store->rider_instructions = $request->input('rider_pickup_instructions', $store->rider_instructions);
-            $store->logo_url = $request->input('logo_url', $store->logo_url);
-            $store->save();
+        $user = $this->resolveUser($request);
+        if (!$user) {
+            return $this->respondError('UNAUTHENTICATED', 'User session expired or not found', null, 401);
         }
 
-        return $this->respondSuccess(['success' => true, 'store' => $store]);
+        $store = $user->store ?? Store::where('user_id', $user->id)->first();
+        if (!$store) {
+            $store = Store::create([
+                'id' => (string) Str::uuid(),
+                'user_id' => $user->id,
+                'store_name' => $request->input('store_name', ($user->full_name ?: 'Merchant') . "'s Store"),
+                'category' => $request->input('category', 'General Merchandise'),
+                'address_text' => $request->input('address_text', 'Douala, Cameroon'),
+                'city' => $request->input('city', 'Douala'),
+                'is_verified' => false,
+                'is_active' => true,
+            ]);
+        }
+
+        if ($request->has('store_name')) $store->store_name = $request->input('store_name');
+        if ($request->has('category')) $store->category = $request->input('category');
+        if ($request->has('tagline')) $store->tagline = $request->input('tagline');
+        if ($request->has('description')) $store->description = $request->input('description');
+        if ($request->has('address_text')) $store->address_text = $request->input('address_text');
+        if ($request->has('landmark_directions')) $store->landmark = $request->input('landmark_directions');
+        if ($request->has('landmark')) $store->landmark = $request->input('landmark');
+        if ($request->has('primary_phone')) $store->phone = $request->input('primary_phone');
+        if ($request->has('phone')) $store->phone = $request->input('phone');
+        if ($request->has('email')) $store->email = $request->input('email');
+        if ($request->has('operating_hours')) $store->counter_hours = $request->input('operating_hours');
+        if ($request->has('rider_pickup_instructions')) $store->rider_instructions = $request->input('rider_pickup_instructions');
+        if ($request->has('logo_url')) $store->logo_url = $request->input('logo_url');
+        if ($request->has('cover_photo_url')) $store->banner_url = $request->input('cover_photo_url');
+        if ($request->has('banner_url')) $store->banner_url = $request->input('banner_url');
+        if ($request->has('latitude')) $store->latitude = $request->input('latitude');
+        if ($request->has('longitude')) $store->longitude = $request->input('longitude');
+
+        $store->save();
+
+        return $this->respondSuccess($store);
     }
 
     /**

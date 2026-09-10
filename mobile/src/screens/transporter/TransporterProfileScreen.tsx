@@ -9,6 +9,9 @@ import {
   Alert,
   Modal,
   TouchableWithoutFeedback,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -35,6 +38,14 @@ export const TransporterProfileScreen = ({ navigation }: any) => {
   const [copiedNotification, setCopiedNotification] = useState(false);
   const [profileData, setProfileData] = useState<DriverProfileData | null>(null);
 
+  // Vehicle update modal states
+  const [isVehicleModalVisible, setIsVehicleModalVisible] = useState(false);
+  const [editFullName, setEditFullName] = useState('');
+  const [editVehicleType, setEditVehicleType] = useState('Motorcycle');
+  const [editPlateNumber, setEditPlateNumber] = useState('');
+  const [editLicenseNumber, setEditLicenseNumber] = useState('');
+  const [isSavingVehicle, setIsSavingVehicle] = useState(false);
+
   const loadProfile = useCallback(async () => {
     try {
       const data = await TransporterService.getDriverProfile();
@@ -54,14 +65,55 @@ export const TransporterProfileScreen = ({ navigation }: any) => {
     setRefreshing(false);
   }, [loadProfile]);
 
-  const driverName = profileData?.full_name || user?.full_name || 'Jean-Paul Kamga';
-  const driverId = profileData?.driver_id || 'DRV-2026-884';
-  const vehiclePlate = profileData?.vehicle?.plate_number || 'LT-214-AA';
-  const vehicleType = profileData?.vehicle?.type || 'Yamaha YBR 125 🏍️';
-  const baseQuarter = profileData?.vehicle?.operating_quarter || 'Akwa / Bonanjo';
+  const driverName = profileData?.full_name || user?.full_name || 'Fleet Driver';
+  const driverId = profileData?.driver_id || (user?.id ? `DRV-${user.id.substring(0, 8).toUpperCase()}` : '');
+  const vehiclePlate = profileData?.vehicle?.plate_number || '';
+  const vehicleType = profileData?.vehicle?.type || '';
+  const driverLicense = profileData?.vehicle?.license_number || '';
+  const isVehicleRegistered = !!(vehiclePlate || vehicleType);
+  const baseQuarter = profileData?.vehicle?.operating_quarter || '';
   const availableEarnings = profileData?.earnings?.available_cashout ?? 0;
   const pendingEscrow = profileData?.earnings?.pending_escrow ?? 0;
 
+
+  const handleOpenVehicleModal = () => {
+    setEditFullName(profileData?.full_name || user?.full_name || '');
+    setEditVehicleType(profileData?.vehicle?.type || 'Motorcycle');
+    setEditPlateNumber(profileData?.vehicle?.plate_number || '');
+    setEditLicenseNumber(profileData?.vehicle?.license_number || '');
+    setIsVehicleModalVisible(true);
+  };
+
+  const handleCloseVehicleModal = () => {
+    setIsVehicleModalVisible(false);
+  };
+
+  const handleSaveVehicle = async () => {
+    setIsSavingVehicle(true);
+    try {
+      const updated = await TransporterService.updateDriverProfile({
+        full_name: editFullName.trim(),
+        vehicle_type: editVehicleType.trim(),
+        vehicle_plate: editPlateNumber.trim(),
+        plate_number: editPlateNumber.trim(),
+        license_number: editLicenseNumber.trim(),
+      });
+      if (editFullName.trim()) {
+        useAuthStore.getState().updateUser({ full_name: editFullName.trim() });
+      }
+      if (updated) {
+        setProfileData(updated);
+      } else {
+        await loadProfile();
+      }
+      setIsVehicleModalVisible(false);
+      setToastMessage('Vehicle information saved! 🛵');
+    } catch {
+      Alert.alert('Save Failed', 'Could not save vehicle information. Please try again.');
+    } finally {
+      setIsSavingVehicle(false);
+    }
+  };
 
   const handleCopyDriverId = () => {
     setCopiedNotification(true);
@@ -213,12 +265,12 @@ export const TransporterProfileScreen = ({ navigation }: any) => {
                 <Text variant="h2" bold numberOfLines={1} style={{ flex: 1 }}>
                   {driverName}
                 </Text>
-                <Badge label="VERIFIED RIDER" variant="primary" size="small" />
+                <Badge label={profileData?.is_verified ? 'VERIFIED RIDER' : 'FLEET DRIVER'} variant={profileData?.is_verified ? 'success' : 'primary'} size="small" />
               </View>
 
               <TouchableOpacity activeOpacity={0.7} onPress={handleCopyDriverId} style={styles.driverIdRow}>
                 <Text variant="caption" secondary bold>
-                  ID: {driverId} • {vehiclePlate}
+                  ID: {driverId}{vehiclePlate ? ` • ${vehiclePlate}` : ''}
                 </Text>
                 <Ionicons name="copy-outline" size={12} color={theme.textSecondary} style={{ marginLeft: 4 }} />
               </TouchableOpacity>
@@ -226,7 +278,7 @@ export const TransporterProfileScreen = ({ navigation }: any) => {
               <View style={styles.ratingRow}>
                 <Ionicons name="star" size={14} color="#F59E0B" />
                 <Text variant="bodyMedium" bold color={colors.primary[600]} style={{ marginLeft: 4 }}>
-                  {(profileData?.rating_avg ?? 4.95).toFixed(2)} ★
+                  {(profileData?.rating_avg ?? 5.0).toFixed(1)} ★
                 </Text>
                 <Text variant="caption" secondary style={{ marginLeft: 6 }}>
                   ({profileData?.completed_deliveries ?? 0} Completed Deliveries)
@@ -415,71 +467,119 @@ export const TransporterProfileScreen = ({ navigation }: any) => {
           <Text variant="h2" bold style={styles.sectionTitleText}>
             Active Registered Vehicle
           </Text>
+          {isVehicleRegistered && (
+            <TouchableOpacity onPress={handleOpenVehicleModal}>
+              <Text variant="caption" bold color={colors.primary[600]}>
+                Edit Details ›
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
 
-        <Card style={styles.vehicleCard}>
-          <View style={styles.vehicleRow}>
-            <View style={[styles.vehicleIconCircle, { backgroundColor: isDark ? 'rgba(13,148,136,0.2)' : colors.primary[50] }]}>
-              <Ionicons name="bicycle" size={26} color={colors.primary[500]} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Text variant="bodyLarge" bold numberOfLines={1} style={{ flex: 1, marginRight: 6 }}>
-                  {vehicleType}
-                </Text>
-                <Badge label="INSPECTED" variant="primary" size="small" />
+        {isVehicleRegistered ? (
+          <Card style={styles.vehicleCard}>
+            <View style={styles.vehicleRow}>
+              <View style={[styles.vehicleIconCircle, { backgroundColor: isDark ? 'rgba(13,148,136,0.2)' : colors.primary[50] }]}>
+                <Ionicons
+                  name={
+                    vehicleType.toLowerCase().includes('car') ||
+                    vehicleType.toLowerCase().includes('van') ||
+                    vehicleType.toLowerCase().includes('truck')
+                      ? 'car'
+                      : 'bicycle'
+                  }
+                  size={26}
+                  color={colors.primary[500]}
+                />
               </View>
-              <Text variant="caption" secondary style={{ marginTop: 2 }}>
-                Commercial Delivery Motorcycle • 125cc
-              </Text>
-            </View>
-          </View>
-
-          {/* 2-Column Specs Grid */}
-          <View style={[styles.vehicleSpecsGrid, { borderTopColor: theme.border }]}>
-            <View style={styles.specGridItem}>
-              <Text variant="caption" secondary bold style={{ fontSize: 10 }}>
-                LICENSE PLATE
-              </Text>
-              <Text variant="bodyMedium" bold color={colors.primary[600]}>
-                {vehiclePlate}
-              </Text>
-            </View>
-
-            <View style={styles.specGridItem}>
-              <Text variant="caption" secondary bold style={{ fontSize: 10 }}>
-                DISPATCH SECTOR
-              </Text>
-              <Text variant="bodyMedium" bold style={{ marginTop: 1 }}>
-                {baseQuarter}
-              </Text>
-            </View>
-
-            <View style={styles.specGridItem}>
-              <Text variant="caption" secondary bold style={{ fontSize: 10 }}>
-                INSURANCE STATUS
-              </Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 1 }}>
-                <Ionicons name="checkmark-circle" size={14} color="#10B981" />
-                <Text variant="caption" bold color="#10B981">
-                  Active (Dec 2026)
+              <View style={{ flex: 1 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Text variant="bodyLarge" bold numberOfLines={1} style={{ flex: 1, marginRight: 6 }}>
+                    {vehicleType || 'Registered Vehicle'}
+                  </Text>
+                  <Badge label="ACTIVE FLEET" variant="primary" size="small" />
+                </View>
+                <Text variant="caption" secondary style={{ marginTop: 2 }}>
+                  {vehiclePlate ? `Plate: ${vehiclePlate}` : 'Commercial Delivery Transport'}
                 </Text>
               </View>
             </View>
 
-            <View style={styles.specGridItem}>
-              <Text variant="caption" secondary bold style={{ fontSize: 10 }}>
-                FLEET PERMIT
-              </Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 1 }}>
-                <Ionicons name="shield-checkmark" size={14} color={colors.primary[500]} />
-                <Text variant="caption" bold color={colors.primary[600]}>
-                  Douala Council
+            {/* 2-Column Specs Grid */}
+            <View style={[styles.vehicleSpecsGrid, { borderTopColor: theme.border }]}>
+              <View style={styles.specGridItem}>
+                <Text variant="caption" secondary bold style={{ fontSize: 10 }}>
+                  LICENSE PLATE
+                </Text>
+                <Text variant="bodyMedium" bold color={colors.primary[600]}>
+                  {vehiclePlate || 'Not registered'}
                 </Text>
               </View>
+
+              <View style={styles.specGridItem}>
+                <Text variant="caption" secondary bold style={{ fontSize: 10 }}>
+                  DRIVER LICENSE
+                </Text>
+                <Text variant="bodyMedium" bold style={{ marginTop: 1 }}>
+                  {driverLicense || 'Verified on file'}
+                </Text>
+              </View>
+
+              <View style={styles.specGridItem}>
+                <Text variant="caption" secondary bold style={{ fontSize: 10 }}>
+                  VEHICLE TYPE
+                </Text>
+                <Text variant="bodyMedium" bold style={{ marginTop: 1 }}>
+                  {vehicleType || 'Motorcycle'}
+                </Text>
+              </View>
+
+              <View style={styles.specGridItem}>
+                <Text variant="caption" secondary bold style={{ fontSize: 10 }}>
+                  DISPATCH STATUS
+                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 1 }}>
+                  <Ionicons name="checkmark-circle" size={14} color="#10B981" />
+                  <Text variant="caption" bold color="#10B981">
+                    Ready for Delivery
+                  </Text>
+                </View>
+              </View>
             </View>
-          </View>
-        </Card>
+          </Card>
+        ) : (
+          <Card style={[styles.emptyVehicleCard, { borderColor: theme.border }]}>
+            <View style={{ alignItems: 'center', paddingVertical: spacing.md }}>
+              <View
+                style={[
+                  styles.vehicleIconCircle,
+                  {
+                    width: 56,
+                    height: 56,
+                    borderRadius: 28,
+                    backgroundColor: isDark ? 'rgba(13,148,136,0.2)' : colors.primary[50],
+                    marginBottom: spacing.sm,
+                  },
+                ]}
+              >
+                <Ionicons name="bicycle-outline" size={28} color={colors.primary[500]} />
+              </View>
+              <Text variant="bodyLarge" bold>
+                No Vehicle Registered Yet
+              </Text>
+              <Text variant="caption" secondary align="center" style={{ marginTop: 4, maxWidth: 280 }}>
+                Register your delivery motorcycle, tricycle, or car to accept package delivery requests and start earning.
+              </Text>
+              <Button
+                title="+ Register Vehicle"
+                variant="primary"
+                size="small"
+                onPress={handleOpenVehicleModal}
+                style={{ marginTop: spacing.md, backgroundColor: colors.primary[500] }}
+              />
+            </View>
+          </Card>
+        )}
 
 
 
@@ -590,6 +690,139 @@ export const TransporterProfileScreen = ({ navigation }: any) => {
             </View>
           </View>
         </View>
+      </Modal>
+
+      {/* Vehicle Info & Registration Modal */}
+      <Modal
+        visible={isVehicleModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={handleCloseVehicleModal}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={styles.modalOverlay}
+        >
+          <TouchableWithoutFeedback onPress={handleCloseVehicleModal}>
+            <View style={styles.modalBackdrop} />
+          </TouchableWithoutFeedback>
+
+          <View style={[styles.vehicleModalCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
+            <View style={styles.modalHeaderRow}>
+              <View>
+                <Text variant="h2" bold>
+                  {isVehicleRegistered ? 'Update Vehicle Details' : 'Register Vehicle'}
+                </Text>
+                <Text variant="caption" secondary style={{ marginTop: 2 }}>
+                  Used for dispatch order assignment &amp; compliance
+                </Text>
+              </View>
+              <TouchableOpacity activeOpacity={0.7} onPress={handleCloseVehicleModal} style={styles.modalCloseBtn}>
+                <Ionicons name="close" size={22} color={theme.text} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: spacing.md, paddingBottom: spacing.sm }}>
+              {/* Driver Full Name */}
+              <View>
+                <Text variant="caption" secondary bold style={{ marginBottom: 4 }}>
+                  DRIVER FULL NAME
+                </Text>
+                <View style={[styles.inputWrapper, { backgroundColor: isDark ? colors.neutral[800] : colors.neutral[100], borderColor: theme.border }]}>
+                  <Ionicons name="person-outline" size={18} color={colors.primary[500]} style={{ marginRight: 8 }} />
+                  <TextInput
+                    value={editFullName}
+                    onChangeText={setEditFullName}
+                    placeholder="Enter your legal full name"
+                    placeholderTextColor={theme.textTertiary}
+                    style={[styles.modalTextInput, { color: theme.text }]}
+                  />
+                </View>
+              </View>
+
+              {/* Vehicle Type selector chips */}
+              <View>
+                <Text variant="caption" secondary bold style={{ marginBottom: 6 }}>
+                  VEHICLE TYPE
+                </Text>
+                <View style={styles.vehicleTypeChips}>
+                  {['Motorcycle', 'Tricycle / Keke', 'Car / Sedan', 'Van / Pickup'].map((type) => {
+                    const isSelected = editVehicleType.toLowerCase().includes(type.split(' ')[0].toLowerCase());
+                    return (
+                      <TouchableOpacity
+                        key={type}
+                        onPress={() => setEditVehicleType(type)}
+                        style={[
+                          styles.typeChip,
+                          {
+                            backgroundColor: isSelected ? colors.primary[500] : (isDark ? colors.neutral[800] : colors.neutral[100]),
+                            borderColor: isSelected ? colors.primary[500] : theme.border,
+                          },
+                        ]}
+                      >
+                        <Text variant="caption" bold color={isSelected ? '#FFFFFF' : theme.text}>
+                          {type}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+
+              {/* License Plate Number */}
+              <View>
+                <Text variant="caption" secondary bold style={{ marginBottom: 4 }}>
+                  LICENSE PLATE NUMBER
+                </Text>
+                <View style={[styles.inputWrapper, { backgroundColor: isDark ? colors.neutral[800] : colors.neutral[100], borderColor: theme.border }]}>
+                  <Ionicons name="card-outline" size={18} color={colors.primary[500]} style={{ marginRight: 8 }} />
+                  <TextInput
+                    value={editPlateNumber}
+                    onChangeText={setEditPlateNumber}
+                    placeholder="e.g. LT-8492-AB"
+                    placeholderTextColor={theme.textTertiary}
+                    autoCapitalize="characters"
+                    style={[styles.modalTextInput, { color: theme.text }]}
+                  />
+                </View>
+              </View>
+
+              {/* Driver License Number */}
+              <View>
+                <Text variant="caption" secondary bold style={{ marginBottom: 4 }}>
+                  DRIVER LICENSE NUMBER (CNI / PERMIS)
+                </Text>
+                <View style={[styles.inputWrapper, { backgroundColor: isDark ? colors.neutral[800] : colors.neutral[100], borderColor: theme.border }]}>
+                  <Ionicons name="document-text-outline" size={18} color={colors.primary[500]} style={{ marginRight: 8 }} />
+                  <TextInput
+                    value={editLicenseNumber}
+                    onChangeText={setEditLicenseNumber}
+                    placeholder="e.g. DL-2024-551"
+                    placeholderTextColor={theme.textTertiary}
+                    autoCapitalize="characters"
+                    style={[styles.modalTextInput, { color: theme.text }]}
+                  />
+                </View>
+              </View>
+            </ScrollView>
+
+            <View style={[styles.modalActionButtonsRow, { marginTop: spacing.md }]}>
+              <Button
+                title="Cancel"
+                variant="outline"
+                onPress={handleCloseVehicleModal}
+                style={styles.modalBtnFlex}
+              />
+              <Button
+                title="Save Vehicle"
+                variant="primary"
+                loading={isSavingVehicle}
+                onPress={handleSaveVehicle}
+                style={[styles.modalBtnFlex, { backgroundColor: colors.primary[500] }]}
+              />
+            </View>
+          </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {toastMessage && (
@@ -861,6 +1094,43 @@ const styles = StyleSheet.create({
   },
   modalBtnFlex: {
     flex: 1,
+  },
+  emptyVehicleCard: {
+    padding: spacing.lg,
+    borderRadius: borderRadius.xl,
+    borderWidth: 1,
+    ...shadows.sm,
+  },
+  vehicleModalCard: {
+    borderTopLeftRadius: borderRadius['2xl'],
+    borderTopRightRadius: borderRadius['2xl'],
+    borderTopWidth: 1,
+    padding: spacing.lg,
+    maxHeight: '85%',
+    ...shadows.xl,
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.md,
+    height: 46,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+  },
+  modalTextInput: {
+    flex: 1,
+    fontSize: 14,
+  },
+  vehicleTypeChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+  },
+  typeChip: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
   },
 });
 

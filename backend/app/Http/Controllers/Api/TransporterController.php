@@ -98,29 +98,40 @@ class TransporterController extends Controller
     /**
      * Accept delivery job.
      */
-    public function acceptJob(string $id): JsonResponse
+    public function acceptJob(Request $request, string $id): JsonResponse
     {
-        $user = $this->resolveUser(request());
-        $transporter = $user?->transporter ?? Transporter::where('user_id', $user?->id)->first();
+        $user = $this->resolveUser($request);
+        if (!$user) {
+            return $this->respondError('UNAUTHORIZED', 'Authentication required', null, 401);
+        }
+        $transporter = $user->transporter ?? Transporter::where('user_id', $user->id)->first();
+        if (!$transporter) {
+            return $this->respondError('FORBIDDEN', 'Transporter profile required to accept delivery jobs', null, 403);
+        }
 
         // Extract UUID or prefix from job_ prefix if present
         $cleanId = str_starts_with($id, 'job_') ? substr($id, 4) : $id;
 
         $order = (Str::isUuid($cleanId) ? Order::find($cleanId) : null)
-            ?? Order::where('id', 'like', "{$cleanId}%")->first()
-            ?? Order::where('order_code', $id)->first()
-            ?? Order::whereIn('status', ['ready_for_pickup', 'pending', 'preparing'])->whereNull('transporter_id')->first();
+            ?? Order::where('order_code', $cleanId)->first()
+            ?? Order::where('order_code', $id)->first();
 
-        if ($order && $transporter) {
-            $order->transporter_id = $transporter->id;
-            $order->status = 'in_transit';
-            $order->save();
+        if (!$order) {
+            return $this->respondError('NOT_FOUND', 'Delivery job not found', null, 404);
         }
+
+        if ($order->transporter_id && $order->transporter_id !== $transporter->id) {
+            return $this->respondError('JOB_ALREADY_ASSIGNED', 'This delivery job has already been claimed by another rider', null, 409);
+        }
+
+        $order->transporter_id = $transporter->id;
+        $order->status = 'in_transit';
+        $order->save();
 
         return $this->respondSuccess([
             'accepted' => true,
             'job_id' => $id,
-            'order_id' => $order?->id,
+            'order_id' => $order->id,
             'status' => 'accepted',
         ]);
     }
@@ -158,29 +169,30 @@ class TransporterController extends Controller
         $cleanId = $jobId ? (str_starts_with($jobId, 'job_') ? substr($jobId, 4) : $jobId) : null;
 
         $user = $this->resolveUser($request);
-        $transporter = $user?->transporter ?? Transporter::where('user_id', $user?->id)->first();
-
-        $query = Order::with(['store', 'customer', 'items']);
-        if ($transporter) {
-            $query->where('transporter_id', $transporter->id);
+        if (!$user) {
+            return $this->respondError('UNAUTHORIZED', 'Authentication required', null, 401);
         }
+
+        $transporter = $user->transporter ?? Transporter::where('user_id', $user->id)->first();
+        if (!$transporter) {
+            return $this->respondError('FORBIDDEN', 'Transporter profile required', null, 403);
+        }
+
+        $query = Order::with(['store', 'customer', 'items'])
+            ->where('transporter_id', $transporter->id);
 
         $order = null;
         if ($cleanId) {
             $order = (Str::isUuid($cleanId) ? (clone $query)->find($cleanId) : null)
-                ?? (clone $query)->where('id', 'like', "{$cleanId}%")->first()
-                ?? (clone $query)->where('order_code', $cleanId)->first()
-                ?? (Str::isUuid($cleanId) ? Order::with(['store', 'customer', 'items'])->find($cleanId) : null);
+                ?? (clone $query)->where('order_code', $cleanId)->first();
         }
 
         if (!$order) {
-            $order = (clone $query)->where('status', 'in_transit')->latest()->first()
-                ?? Order::with(['store', 'customer', 'items'])->where('status', 'in_transit')->latest()->first()
-                ?? Order::with(['store', 'customer', 'items'])->latest()->first();
+            $order = (clone $query)->whereIn('status', ['in_transit', 'ready_for_pickup'])->latest()->first();
         }
 
         if (!$order) {
-            return $this->respondError('NOT_FOUND', 'No active delivery trip found.', null, 404);
+            return $this->respondError('NOT_FOUND', 'No active delivery trip found for this transporter.', null, 404);
         }
 
         $store = $order->store;
@@ -231,23 +243,36 @@ class TransporterController extends Controller
      */
     public function updateTripStage(Request $request, string $id): JsonResponse
     {
+        $user = $this->resolveUser($request);
+        if (!$user) {
+            return $this->respondError('UNAUTHORIZED', 'Authentication required', null, 401);
+        }
+
+        $transporter = $user->transporter ?? Transporter::where('user_id', $user->id)->first();
+        if (!$transporter && !in_array($user->role, ['admin', 'superadmin'])) {
+            return $this->respondError('FORBIDDEN', 'Transporter profile required', null, 403);
+        }
+
         $stage = (int) $request->input('stage', 1);
         $cleanId = str_starts_with($id, 'job_') ? substr($id, 4) : $id;
 
         $order = (Str::isUuid($cleanId) ? Order::find($cleanId) : null)
-            ?? Order::where('id', 'like', "{$cleanId}%")->first()
-            ?? Order::where('order_code', $cleanId)->first()
-            ?? Order::where('status', 'in_transit')->first()
-            ?? Order::first();
+            ?? Order::where('order_code', $cleanId)->first();
 
-        if ($order) {
-            if ($stage === 4) {
-                $order->status = 'delivered';
-            } elseif ($stage === 3) {
-                $order->status = 'in_transit';
-            }
-            $order->save();
+        if (!$order) {
+            return $this->respondError('NOT_FOUND', 'Delivery order not found', null, 404);
         }
+
+        if ($transporter && $order->transporter_id !== $transporter->id && !in_array($user->role, ['admin', 'superadmin'])) {
+            return $this->respondError('FORBIDDEN', 'Unauthorized: you are not the assigned transporter for this order', null, 403);
+        }
+
+        if ($stage === 4) {
+            $order->status = 'delivered';
+        } elseif ($stage === 3) {
+            $order->status = 'in_transit';
+        }
+        $order->save();
 
         return $this->respondSuccess([
             'trip_id' => $id,
@@ -261,18 +286,31 @@ class TransporterController extends Controller
      */
     public function submitProofOfDelivery(Request $request, string $id): JsonResponse
     {
+        $user = $this->resolveUser($request);
+        if (!$user) {
+            return $this->respondError('UNAUTHORIZED', 'Authentication required', null, 401);
+        }
+
+        $transporter = $user->transporter ?? Transporter::where('user_id', $user->id)->first();
+        if (!$transporter && !in_array($user->role, ['admin', 'superadmin'])) {
+            return $this->respondError('FORBIDDEN', 'Transporter profile required', null, 403);
+        }
+
         $cleanId = str_starts_with($id, 'job_') ? substr($id, 4) : $id;
 
         $order = (Str::isUuid($cleanId) ? Order::find($cleanId) : null)
-            ?? Order::where('id', 'like', "{$cleanId}%")->first()
-            ?? Order::where('order_code', $cleanId)->first()
-            ?? Order::where('status', 'in_transit')->first()
-            ?? Order::first();
+            ?? Order::where('order_code', $cleanId)->first();
 
-        if ($order) {
-            $order->status = 'delivered';
-            $order->save();
+        if (!$order) {
+            return $this->respondError('NOT_FOUND', 'Delivery order not found', null, 404);
         }
+
+        if ($transporter && $order->transporter_id !== $transporter->id && !in_array($user->role, ['admin', 'superadmin'])) {
+            return $this->respondError('FORBIDDEN', 'Unauthorized: you are not the assigned transporter for this order', null, 403);
+        }
+
+        $order->status = 'delivered';
+        $order->save();
 
         return $this->respondSuccess([
             'delivery_id' => $id,
@@ -318,19 +356,20 @@ class TransporterController extends Controller
         $totalEarned = $wallet ? (float) WalletTransaction::where('wallet_id', $wallet->id)->where('type', 'credit')->sum('amount') : 0;
 
         return $this->respondSuccess([
-            'driver_id' => $transporter->id ?? 'DRV-2026-884',
-            'full_name' => $user->full_name ?? 'Paul Eto\'o',
-            'phone' => $user->phone ?? '+237 670 123 456',
+            'driver_id' => $transporter?->id ?? ('DRV-' . strtoupper(substr($user->id, 0, 8))),
+            'full_name' => $user->full_name ?? '',
+            'phone' => $user->phone ?? '',
             'avatar_url' => $user->avatar_url ?? null,
             'rating_avg' => (float) ($transporter->rating_avg ?? 5.0),
-            'completed_deliveries' => (int) ($transporter->completed_trips ?? 0),
-            'is_verified' => (bool) ($transporter->is_verified ?? false),
+            'completed_deliveries' => (int) ($transporter->total_trips ?? 0),
+            'is_verified' => (bool) ($transporter && ($transporter->status === 'approved' || $transporter->status === 'active')),
             'vehicle' => [
-                'type' => $transporter->vehicle_type ?? 'Yamaha YBR 125',
-                'plate_number' => $transporter->license_plate ?? 'LT-8492-AB',
-                'operating_quarter' => 'Akwa / Bonanjo',
-                'insurance_status' => 'Active (Dec 2026)',
-                'permit_status' => 'Douala Council',
+                'type' => $transporter?->vehicle_type ?? '',
+                'plate_number' => $transporter?->vehicle_plate ?? '',
+                'license_number' => $transporter?->license_number ?? '',
+                'operating_quarter' => '',
+                'insurance_status' => '',
+                'permit_status' => '',
             ],
             'earnings' => [
                 'available_cashout' => $available,
@@ -340,6 +379,46 @@ class TransporterController extends Controller
                 'total_lifetime_earned' => $totalEarned,
             ],
         ]);
+    }
+
+    /**
+     * Update Driver Profile & Vehicle Specs.
+     */
+    public function updateProfile(Request $request): JsonResponse
+    {
+        $user = $this->resolveUser($request);
+        if (!$user) {
+            return $this->respondError('UNAUTHORIZED', 'Authentication required', null, 401);
+        }
+
+        $transporter = ($user && $user->transporter) ? $user->transporter : Transporter::where('user_id', $user->id)->first();
+        if (!$transporter) {
+            $transporter = Transporter::create([
+                'id' => (string) Str::uuid(),
+                'user_id' => $user->id,
+                'vehicle_type' => $request->input('vehicle_type', 'motorcycle'),
+                'vehicle_plate' => $request->input('vehicle_plate', $request->input('plate_number', '')),
+                'license_number' => $request->input('license_number', ''),
+                'status' => 'active',
+                'is_online' => true,
+                'rating_avg' => 5.0,
+                'total_trips' => 0,
+                'total_earnings' => 0,
+            ]);
+        }
+
+        if ($request->has('vehicle_type')) $transporter->vehicle_type = $request->input('vehicle_type');
+        if ($request->has('vehicle_plate')) $transporter->vehicle_plate = $request->input('vehicle_plate');
+        if ($request->has('plate_number')) $transporter->vehicle_plate = $request->input('plate_number');
+        if ($request->has('license_number')) $transporter->license_number = $request->input('license_number');
+        $transporter->save();
+
+        if ($request->has('full_name')) {
+            $user->full_name = $request->input('full_name');
+            $user->save();
+        }
+
+        return $this->getProfile();
     }
 
     /**

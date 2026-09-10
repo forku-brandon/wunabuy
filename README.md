@@ -31,15 +31,19 @@ It connects three user groups through a single escrow-protected ecosystem:
 | 🏪 **Sellers (Store Owners)** | Digitize storefronts, manage inventory, receive guaranteed payouts after verified delivery |
 | 🚚 **Transport Providers** | Accept delivery jobs, navigate with GPS, earn transparent mileage-based fees |
 
-The **Full-Stack Platform (v3.3)** integrates a **100% dynamic, live database architecture backed by PostgreSQL 18** and **Laravel 13**, completely purging all mock financial data, fake addresses, and dummy driver jobs. It features dual-entry escrow settlement (`EscrowService.php`), dynamic logistics with HMAC-SHA256 parcel custody QR tags (`LogisticsService.php`), real Cameroon Mobile Money ledger simulations (`PaymentService.php`), and a **Zero-SMS 6-Digit PIN Security Architecture** (`/auth/login-pin`, `/auth/register`) with modular OTP support for future SMS gateways. Engineered with **zero-code environment switching** (`mobile/src/config/env.ts` with Android emulator `10.0.2.2`, iOS/Web `localhost`, LAN Wi-Fi, and cloud production `https://api.wunabuy.com/api/v1`) and dynamic CORS origin governance.
+The **Full-Stack Platform (v3.5)** integrates a **100% dynamic, live database architecture backed by PostgreSQL 18** and **Laravel 13**, completely purging all fake stores, mock sellers, and static mock financial data. It features strict **Anti-IDOR Authorization Hardening** and **Elimination of all `::first()` Database Fallbacks**, dual-entry escrow settlement (`EscrowService.php`), dynamic logistics with HMAC-SHA256 parcel custody QR tags (`LogisticsService.php`), real Cameroon Mobile Money ledger simulations (`PaymentService.php`), a **Zero-Demo Profile & Catalog Architecture** (with all 25 catalog products affiliated to verified seller *Brandon Official Tech Store*), **Sanctum Token Auto-Recovery** (`/auth/refresh`, `/auth/dev-session`), and modern **Android Edge-to-Edge System Navigation** compliance. Engineered with **zero-code environment switching** (`mobile/src/config/env.ts` with Android emulator `10.0.2.2`, iOS/Web `localhost`, LAN Wi-Fi, and cloud production `https://api.wunabuy.com/api/v1`) and dynamic CORS origin governance.
 
 An internal **Staff Portal (v3.1)** provides operational dashboards across 7 departments with **OWASP Top 10:2025 Enterprise Security Hardening** (Permission Guards `PermissionGuard.tsx`, Strict CSP Headers `index.html`, Asset Origin Whitelisting `securitySupplyChain.ts`, Encrypted Storage & 15-Min Session Idle Auto-Logout `securityCrypto.ts` & `useSessionTimeout.ts`, Input Sanitization & XSS Stripping `securitySanitizer.ts`, Dual-Control Confirmations `DualControlConfirmModal.tsx`, Action Throttling `rateLimiter.ts`, Brute-Force Lockout, HMAC State Integrity Checksums, Security Audit Logger `securityLogger.ts`, and React Error Boundary `ErrorBoundary.tsx`).
 
-The **Mobile App (v3.3)** features a dedicated **6-Digit PIN Login & Setup Screen** (`PinLoginScreen.tsx` & `RegisterScreen.tsx`), an interactive quantity input modal (`QuantityInputModal.tsx`), a 2D tabular store pickup & location component with bidirectional scrolling (`StorePickupTable.tsx`), live camera seller store QR & PIN scanner modal (`SellerQRScannerModal.tsx`), printable encrypted parcel QR shipping tags with central logo emblem (`PrintableParcelQRModal.tsx`), real-time transporter parcel code match verification (`TransporterActiveTripScreen.tsx`), and direct phone dialer integration (`Linking.openURL('tel:...')`).
+The **Mobile App (v3.5)** features instant Seller Dashboard catalog hydration (live products and active orders loaded on startup), a dedicated **6-Digit PIN Login & Setup Screen** (`PinLoginScreen.tsx` & `RegisterScreen.tsx`), an interactive quantity input modal (`QuantityInputModal.tsx`), a 2D tabular store pickup & location component with bidirectional scrolling (`StorePickupTable.tsx`), live camera seller store QR & PIN scanner modal (`SellerQRScannerModal.tsx`), printable encrypted parcel QR shipping tags with central logo emblem (`PrintableParcelQRModal.tsx`), real-time transporter parcel code match verification (`TransporterActiveTripScreen.tsx`), direct phone dialer integration (`Linking.openURL('tel:...')`), and zero-demo profile customization (`ProfileScreen.tsx`, `EditStoreProfileScreen.tsx`, `TransporterProfileScreen.tsx`).
 
 ### Core Value Propositions
 
+- **Anti-IDOR Security & Zero Database Fallbacks** — Complete elimination of dangerous `::first()` fallbacks across all controllers. Order fulfillment, escrow release, order cancellation, and catalog modifications enforce strict ownership checks.
 - **100% Dynamic PostgreSQL Database Engine** — Live financial ledger, buyer disputes, wallet balances, store analytics, and transporter dispatch jobs query real PostgreSQL tables with zero static mock constants.
+- **Zero-Demo Profile & Catalog Architecture** — Buyer profiles, Seller store profiles, and Transporter profiles start completely free of fake mock data. Real merchant catalog with 25 authentic products assigned exclusively to verified seller Forku Brandon.
+- **Self-Healing Token Recovery & Developer Session Minting** — Client-side Axios interceptors auto-refresh Sanctum access tokens on 401 and auto-recover developer testing sessions in local mode, preventing session drops and console warning loops.
+- **Modern Edge-to-Edge Android Compliance** — Full compatibility with Android 15 edge-to-edge transparent navigation system UI.
 - **6-Digit PIN Authentication & Dynamic Permissions** — Instant, zero-cost, reliable login via 6-digit security PIN and phone number with fine-grained role permissions, eager-loaded wallets, and forward-compatible SMS OTP 2FA architecture.
 - **OWASP Top 10:2025 Enterprise Security Hardening** — Web Staff Operations Portal hardened against all 10 critical security risk categories with route access guards, CSP, encrypted storage, 15-minute idle session auto-logout, input sanitization, dual-control action authorization, and security audit telemetry.
 - **Escrow-Protected Payments** — Buyer funds are locked until delivery is confirmed via photo proof + buyer digital signature. 48-hour auto-release with dispute protection.
@@ -241,6 +245,19 @@ pnpm test
 # Run all linters
 pnpm lint
 ```
+
+### 📱 Testing the Mobile App on Android
+
+1. **Physical Android Device (Recommended via Expo Go)**:
+   - Install **Expo Go** from the Google Play Store on your Android phone.
+   - Connect your phone to the same Wi-Fi network as your development machine.
+   - Run `pnpm dev:mobile` (or `npx expo start` in `mobile/`).
+   - Open Expo Go on your phone and scan the QR code displayed in the terminal, or tap "Enter URL manually" and enter `exp://<YOUR_LAN_IP>:8081`.
+   - *Note*: Pressing `a` in the terminal invokes `adb` to connect to an Android emulator or USB device. If you do not have Android Studio / Android SDK installed locally, `adb` will not be found; simply scan the QR code or open the Expo URL directly in Expo Go.
+
+2. **Android Emulator / USB ADB**:
+   - If using an Android emulator or USB debugging via terminal (`a`), ensure Android Studio is installed and Android SDK Platform-Tools are added to your Windows PATH:
+     `C:\Users\<Username>\AppData\Local\Android\Sdk\platform-tools`
 
 ---
 

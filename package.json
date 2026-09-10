@@ -5,7 +5,7 @@
   "scripts": {
     "dev:mobile": "pnpm --filter wunabuy-mobile dev",
     "dev:staff": "pnpm --filter wunabuy-staff-portal dev",
-    "dev:backend": "cd backend && php artisan serve",
+    "dev:backend": "cd backend && C:/smartstocks/php83/php.exe artisan serve --host=0.0.0.0 --port=8000",
     "build": "turbo run build",
     "test": "turbo run test",
     "lint": "turbo run lint",

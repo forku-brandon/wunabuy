@@ -35,6 +35,8 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
     products,
     updateStock,
     setDashboardMetrics,
+    setProducts,
+    setOrders,
   } = useSellerStore();
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -70,9 +72,11 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
 
   const loadDashboardData = useCallback(async () => {
     try {
-      const [kycData, dashboardData] = await Promise.all([
+      const [kycData, dashboardData, storeProducts, fulfillmentOrders] = await Promise.all([
         KYCService.getStoreKYCStatus(),
         SellerService.getStoreDashboard(),
+        SellerService.getStoreProducts(),
+        SellerService.getFulfillmentOrders(),
       ]);
 
       if (kycData?.status) {
@@ -81,12 +85,18 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
       if (dashboardData) {
         setDashboardMetrics(dashboardData);
       }
+      if (storeProducts && Array.isArray(storeProducts)) {
+        setProducts(storeProducts);
+      }
+      if (fulfillmentOrders && Array.isArray(fulfillmentOrders)) {
+        setOrders(fulfillmentOrders);
+      }
     } catch {
       // Handled gracefully with offline fallback - keeps hidden
     } finally {
       setRefreshing(false);
     }
-  }, [setDashboardMetrics]);
+  }, [setDashboardMetrics, setProducts, setOrders]);
 
   useEffect(() => {
     loadDashboardData();

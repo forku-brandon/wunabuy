@@ -9,7 +9,14 @@ export interface EscrowDisputeItem {
   dispute_reason: string;
   dispute_description: string;
   escrow_amount: number;
-  status: 'OPEN' | 'UNDER_REVIEW' | 'RESOLVED_REFUND' | 'RESOLVED_RELEASE';
+  status:
+    | 'OPEN'
+    | 'UNDER_REVIEW'
+    | 'PENDING_REVIEW'
+    | 'RESOLVED_REFUND'
+    | 'RESOLVED_RELEASE'
+    | 'RESOLVED'
+    | 'REFUNDED';
   filed_at: string;
   evidence_photos: string[];
 }

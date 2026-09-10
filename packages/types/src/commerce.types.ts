@@ -34,6 +34,12 @@ export interface StoreSummary {
   store_name: string;
   /** Average rating out of 5 */
   rating_avg: number;
+  /** Total number of verified reviews */
+  total_reviews?: number;
+  /** Address location text */
+  address_text?: string;
+  /** Store city */
+  city?: string;
   /** Indicates if the store is verified */
   is_verified: boolean;
 }
@@ -123,6 +129,8 @@ export interface CartItem {
   image_url: string;
   /** Maximum allowable quantity based on stock */
   max_quantity: number;
+  /** Name of the merchant store selling the product */
+  store_name?: string;
 }
 
 export interface HomeFeedBanner {

@@ -60,6 +60,7 @@ export interface SellerTransaction {
 }
 
 interface SellerState {
+  storeId?: string;
   storeName: string;
   storePhone: string;
   category: string;
@@ -95,7 +96,20 @@ interface SellerState {
   // Profile Action
   updateStoreProfile: (profile: Partial<SellerState>) => void;
   setDashboardMetrics: (data: {
+    store_id?: string;
     store_name?: string;
+    category?: string;
+    address?: string;
+    landmark?: string;
+    tagline?: string;
+    description?: string;
+    primary_phone?: string;
+    secondary_phone?: string;
+    email?: string;
+    operating_hours?: string;
+    rider_pickup_instructions?: string;
+    logo_url?: string;
+    cover_photo_url?: string;
     is_verified?: boolean;
     rating_avg?: number;
     total_reviews?: number;
@@ -130,119 +144,30 @@ interface SellerState {
 }
 
 
-const INITIAL_SELLER_PRODUCTS: Product[] = [
-  {
-    id: 'sp_1',
-    store_id: 'store_1',
-    name: 'Samsung Galaxy A54 5G (128GB)',
-    description: 'Crisp Super AMOLED 120Hz display, 50MP OIS camera, 5000mAh battery with fast charging.',
-    category: ProductCategory.ELECTRONICS,
-    price: 185000,
-    currency: 'XAF',
-    quantity: 14,
-    quality_tier: QualityTier.NEW,
-    images: [
-      'https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=800',
-      'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800',
-    ],
-    is_active: true,
-    rating_avg: 4.8,
-    total_reviews: 32,
-    distance_km: 1.2,
-    store: { id: 'store_1', store_name: 'Douala Tech Hub', rating_avg: 4.9, is_verified: true },
-    created_at: '2026-08-20T10:00:00Z',
-    updated_at: '2026-08-28T12:00:00Z',
-  },
-  {
-    id: 'sp_2',
-    store_id: 'store_1',
-    name: 'Wireless Bluetooth Earbuds Pro ANC',
-    description: 'Active noise cancellation, deep bass, 30h battery life with wireless charging case.',
-    category: ProductCategory.ELECTRONICS,
-    price: 25000,
-    currency: 'XAF',
-    quantity: 4, // Low stock indicator test
-    quality_tier: QualityTier.NEW,
-    images: [
-      'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=800',
-    ],
-    is_active: true,
-    rating_avg: 4.6,
-    total_reviews: 19,
-    distance_km: 1.2,
-    store: { id: 'store_1', store_name: 'Douala Tech Hub', rating_avg: 4.9, is_verified: true },
-    created_at: '2026-08-21T11:00:00Z',
-    updated_at: '2026-08-28T12:00:00Z',
-  },
-  {
-    id: 'sp_3',
-    store_id: 'store_1',
-    name: '4K Ultra HD Action Camera + Accessories',
-    description: 'Waterproof up to 30m, dual screens, image stabilization, WiFi app control.',
-    category: ProductCategory.ELECTRONICS,
-    price: 45000,
-    currency: 'XAF',
-    quantity: 8,
-    quality_tier: QualityTier.LIKE_NEW,
-    images: [
-      'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=800',
-    ],
-    is_active: true,
-    rating_avg: 4.7,
-    total_reviews: 14,
-    distance_km: 1.2,
-    store: { id: 'store_1', store_name: 'Douala Tech Hub', rating_avg: 4.9, is_verified: true },
-    created_at: '2026-08-22T09:00:00Z',
-    updated_at: '2026-08-28T12:00:00Z',
-  },
-  {
-    id: 'sp_4',
-    store_id: 'store_1',
-    name: 'Fast Charging Power Bank 20000mAh',
-    description: '22.5W Super Charge, dual USB + Type-C ports, LED digital display.',
-    category: ProductCategory.ELECTRONICS,
-    price: 18000,
-    currency: 'XAF',
-    quantity: 0, // Out of stock test
-    quality_tier: QualityTier.NEW,
-    images: [
-      'https://images.unsplash.com/photo-1609592424368-e4b2d18cbfe1?w=800',
-    ],
-    is_active: false,
-    rating_avg: 4.9,
-    total_reviews: 41,
-    distance_km: 1.2,
-    store: { id: 'store_1', store_name: 'Douala Tech Hub', rating_avg: 4.9, is_verified: true },
-    created_at: '2026-08-23T14:00:00Z',
-    updated_at: '2026-08-28T12:00:00Z',
-  },
-];
-
-const INITIAL_SELLER_TRANSACTIONS: SellerTransaction[] = [];
-
 export const useSellerStore = create<SellerState>()(
   persist(
     (set, get) => ({
-      storeName: 'Douala Tech Hub',
-      storePhone: '+237 670 123 456',
-      category: 'Electronics & Smart Devices',
-      tagline: 'Premier Electronics Importer & Original Smartphone Hub in Douala',
-      description: 'Douala Tech Hub is a certified merchant specializing in authentic smartphones, laptops, wireless audio, and consumer electronics with 100% Escrow Warranty.',
-      address: 'Rue Joss, Quartier Akwa, Douala, Cameroon',
-      landmarkDirections: 'Opposite Place du Gouvernement, Next to Akwa Mall (1st Floor, Suite 104)',
-      primaryPhone: '+237 670 123 456',
-      secondaryPhone: '+237 699 876 543',
-      email: 'contact@doualatechhub.cm',
-      operatingHours: 'Mon - Sat: 8:00 AM - 6:30 PM (Closed Sundays)',
-      riderPickupInstructions: 'Present 5-digit PIN at counter #2. Dedicated motorcycle parking available in rear alley.',
+      storeId: '',
+      storeName: '',
+      storePhone: '',
+      category: '',
+      tagline: '',
+      description: '',
+      address: '',
+      landmarkDirections: '',
+      primaryPhone: '',
+      secondaryPhone: '',
+      email: '',
+      operatingHours: '',
+      riderPickupInstructions: '',
       latitude: 4.0510,
       longitude: 9.7679,
-      logoUrl: 'https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=400',
-      coverPhotoUrl: 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=800',
-      isVerified: true,
-      ratingAvg: 4.9,
-      totalReviews: 87,
-      followersCount: 1420,
+      logoUrl: '',
+      coverPhotoUrl: '',
+      isVerified: false,
+      ratingAvg: 0,
+      totalReviews: 0,
+      followersCount: 0,
 
       availableBalance: 0,
       escrowLockedBalance: 0,
@@ -264,14 +189,27 @@ export const useSellerStore = create<SellerState>()(
       setDashboardMetrics: (data) => {
         set((state) => ({
           ...state,
+          storeId: data.store_id ?? state.storeId,
           storeName: data.store_name ?? state.storeName,
-          isVerified: data.is_verified ?? false,
-          ratingAvg: data.rating_avg ?? 5.0,
-          totalReviews: data.total_reviews ?? 0,
-          availableBalance: data.available_balance ?? 0,
-          escrowLockedBalance: data.escrow_locked_balance ?? 0,
-          totalRevenue: data.total_revenue ?? 0,
-          totalPaidOut: data.total_paid_out ?? 0,
+          category: data.category ?? state.category,
+          address: data.address ?? state.address,
+          landmarkDirections: data.landmark ?? state.landmarkDirections,
+          tagline: data.tagline ?? state.tagline,
+          description: data.description ?? state.description,
+          primaryPhone: data.primary_phone ?? state.primaryPhone,
+          secondaryPhone: data.secondary_phone ?? state.secondaryPhone,
+          email: data.email ?? state.email,
+          operatingHours: data.operating_hours ?? state.operatingHours,
+          riderPickupInstructions: data.rider_pickup_instructions ?? state.riderPickupInstructions,
+          logoUrl: data.logo_url ?? state.logoUrl,
+          coverPhotoUrl: data.cover_photo_url ?? state.coverPhotoUrl,
+          isVerified: data.is_verified ?? state.isVerified,
+          ratingAvg: data.rating_avg ?? state.ratingAvg,
+          totalReviews: data.total_reviews ?? state.totalReviews,
+          availableBalance: data.available_balance ?? state.availableBalance,
+          escrowLockedBalance: data.escrow_locked_balance ?? state.escrowLockedBalance,
+          totalRevenue: data.total_revenue ?? state.totalRevenue,
+          totalPaidOut: data.total_paid_out ?? state.totalPaidOut,
         }));
       },
 

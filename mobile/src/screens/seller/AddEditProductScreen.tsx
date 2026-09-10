@@ -201,7 +201,7 @@ export const AddEditProductScreen = ({ navigation, route }: any) => {
         } catch {
           const newProduct: Product = {
             id: `sp_${Date.now()}`,
-            store_id: userStore?.id || 'store_1',
+            store_id: userStore?.id || useSellerStore.getState().storeId || '',
             name: name.trim(),
             description: description.trim(),
             category,

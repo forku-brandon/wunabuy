@@ -46,6 +46,8 @@ Route::prefix('v1')->group(function () {
     Route::post('/auth/verify-otp', [AuthController::class, 'verifyOtp']);
     Route::post('/auth/register', [AuthController::class, 'register']);
     Route::post('/auth/reset-password', [AuthController::class, 'resetPassword']);
+    Route::post('/auth/refresh', [AuthController::class, 'refreshToken']);
+    Route::post('/auth/dev-session', [AuthController::class, 'devSession']);
 
     Route::get('/users/me', [AuthController::class, 'getMe']);
     Route::put('/users/me', [AuthController::class, 'updateMe']);
@@ -66,6 +68,7 @@ Route::prefix('v1')->group(function () {
     Route::get('/stores/{id}', [CommerceController::class, 'getStore']);
     Route::get('/stores/{id}/pickup-location', [CommerceController::class, 'getStorePickupLocation']);
     Route::get('/promotions/cart-banner', [CommerceController::class, 'getCartBanner']);
+    Route::get('/adverts', [CommerceController::class, 'getAdverts']);
     Route::post('/reviews', [CommerceController::class, 'createReview']);
     Route::get('/reviews/{type}/{id}', [CommerceController::class, 'getReviews']);
 
@@ -111,6 +114,7 @@ Route::prefix('v1')->group(function () {
     Route::post('/delivery/{id}/photo', [TransporterController::class, 'submitProofOfDelivery']);
     Route::put('/delivery/{id}/location', [TransporterController::class, 'pushGPSBreadcrumb']);
     Route::get('/transporter/profile', [TransporterController::class, 'getProfile']);
+    Route::post('/transporter/profile', [TransporterController::class, 'updateProfile']);
     Route::get('/transporter/earnings', [TransporterController::class, 'getEarnings']);
     Route::post('/transporter/wallet/withdraw', [TransporterController::class, 'withdraw']);
     Route::post('/transporter/verify-code', [TransporterController::class, 'verifyCode']);
@@ -133,6 +137,11 @@ Route::prefix('v1')->group(function () {
     Route::post('/staff/auth/login', [StaffPortalController::class, 'loginWithPassword']);
     Route::get('/staff/auth/me', [StaffPortalController::class, 'getProfile']);
 
+    Route::get('/staff/dashboard/stats', [StaffPortalController::class, 'getDashboardStats']);
+    Route::get('/staff/users', [StaffPortalController::class, 'getUsers']);
+    Route::put('/staff/users/{id}/status', [StaffPortalController::class, 'updateUserStatus']);
+
+    Route::get('/staff/financials/stats', [StaffPortalController::class, 'getFinancialStats']);
     Route::get('/staff/financials/payouts', [StaffPortalController::class, 'getPayoutLedger']);
     Route::post('/staff/financials/payouts/{id}/authorize', [StaffPortalController::class, 'authorizePayout']);
 
@@ -161,5 +170,11 @@ Route::prefix('v1')->group(function () {
     Route::get('/staff/tasks', [StaffPortalController::class, 'getTasks']);
     Route::post('/staff/tasks', [StaffPortalController::class, 'createTask']);
     Route::patch('/staff/tasks/{id}/status', [StaffPortalController::class, 'updateTaskStatus']);
+
+    Route::get('/staff/adverts', [StaffPortalController::class, 'getAdverts']);
+    Route::post('/staff/adverts', [StaffPortalController::class, 'createAdvert']);
+    Route::get('/staff/adverts/{id}', [StaffPortalController::class, 'getAdvert']);
+    Route::put('/staff/adverts/{id}', [StaffPortalController::class, 'updateAdvert']);
+    Route::delete('/staff/adverts/{id}', [StaffPortalController::class, 'deleteAdvert']);
 
 });

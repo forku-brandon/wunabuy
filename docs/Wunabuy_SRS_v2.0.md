@@ -1,10 +1,49 @@
 # Software Requirements Specification (SRS)
 # Wunabuy — Multi-Sided E-Commerce & Web Staff Operations Platform
 
-**Document Version:** 3.2 (Enterprise Backend Architecture & Live Full-Stack Wiring Baseline)  
-**Date:** September 8, 2026  
+**Document Version:** 3.5 (Zero-Demo RBAC, Strict IDOR Protections & Real Store Catalog Architecture)  
+**Date:** September 10, 2026  
 **Status:** Approved / In Production Use  
-**Companion Documents:** Wunabuy PRD v3.2, Wunabuy Frontend Tech Spec v3.2, Wunabuy Backend Tech Spec v3.2  
+**Companion Documents:** Wunabuy PRD v3.5, Wunabuy Frontend Tech Spec v3.5, Wunabuy Backend Tech Spec v3.5, Wunabuy Backend API Contract v3.5  
+
+---
+
+## 🛡️ Zero-Demo RBAC, Strict IDOR Protections & Store Catalog Architecture (September 10, 2026 - v3.5)
+
+- **Strict Role-Based Access Control (RBAC) & Anti-IDOR Enforcement**:
+  - **Financial Escrow Protection**: Order completion (`POST /api/v1/seller/orders/:id/complete`) strictly validates that the caller owns the fulfilling store (`$order->store_id === $sellerUser->store->id`). Receipt confirmation (`POST /api/v1/orders/:id/confirm`) strictly verifies caller is the purchasing buyer (`$order->customer_id === $user->id`).
+  - **Zero Database Fallbacks (`::first()`)**: Completely eliminated all unsafe `Model::first()` fallbacks across `CommerceController`, `OrderController`, `SellerController`, `TransporterController`, `AuthController`, and `StaffPortalController`. Non-existent records or unauthenticated inputs strictly return HTTP 404 NOT_FOUND or HTTP 401/403.
+  - **Order Mutation Ownership**: Order cancellation and disputes strictly verify caller authorization (customer or store owner). Unauthorized callers receive HTTP 403 FORBIDDEN.
+  - **Catalog Listing Ownership**: Product creation, updates, status toggles, stock adjustments, and deletion strictly require authenticated seller store ownership.
+  - **Transporter Job Integrity**: Transporters can only accept unassigned jobs matching exact IDs. Active trip queries return only trips assigned to the requesting transporter, eliminating cross-user data leakage.
+  - **Header Spoofing Prevention**: Dev headers (`X-User-Id`, `X-Dev-User`) are strictly ignored outside `local` and `testing` environments.
+
+- **Legitimate Seller Catalog Affiliation & Zero Fake Stores**:
+  - All fake stores (*Marché Central Fresh & Organics*, *Akwa Super Store*, *Douala Glam*, *K-Town Fashion*) and fake users (*Mama Helene*, *Amadou Bello*, *Fatima Njoya*, *Cedric Tagne*) permanently purged from PostgreSQL.
+  - All catalog products (25 items) affiliated to **Brandon Official Tech Store** (`01a0872b-a556-7183-b186-9bcec9d61ca4`, user: **Forku Brandon** `+237682656287`).
+  - Mobile Seller Dashboard hydrates products and active orders on startup via `Promise.all([SellerService.getStoreProducts(), SellerService.getFulfillmentOrders(), ...])`, immediately displaying the merchant's 25 products and live stock counters.
+
+---
+
+## 🚀 Zero-Demo Profile Architecture, Token Auto-Recovery & Edge-to-Edge System Specifications (September 10, 2026 - v3.4)
+
+- **Zero-Demo Profile Architecture Across All 3 Workspaces**:
+  - **Buyer Profile (`ProfileScreen.tsx`)**: User identity (phone number, full name, avatar) loads dynamically from live authenticated user session. All order badges (`Pending`, `Processing`, `Delivered`, `Completed`) query real-time order counts from PostgreSQL. Unconfigured default addresses or empty transaction histories display clean, user-friendly empty states without static mock constants.
+  - **Seller Store Profile (`SellerProfileScreen.tsx` & `EditStoreProfileScreen.tsx`)**: Real-time store branding, physical address, landmark directions, GPS coordinates, operating hours, and rider pickup instructions. If store is newly created or unconfigured, fields remain blank to prompt legitimate merchant onboarding, completely eliminating hardcoded demo store names or fake revenue metrics (`500,000 FCFA`).
+  - **Transporter Driver Profile (`TransporterProfileScreen.tsx`)**: Driver vehicle information (vehicle type, license plate, driver license number, carte grise, and insurance) is managed via `GET /api/v1/transporter/profile` and `POST /api/v1/transporter/profile`. Default unconfigured states present clean placeholder prompts. Completed delivery counts and earnings strictly reflect verified jobs.
+
+- **Sanctum Token Auto-Recovery & Developer Session Self-Healing**:
+  - **Auto-Refresh Route (`POST /api/v1/auth/refresh`)**: Revokes existing access tokens and mints a fresh Sanctum Bearer token along with eager-loaded user permissions and wallet balances.
+  - **Developer Session Auto-Minting (`POST /api/v1/auth/dev-session`)**: In local development (`APP_ENV=local`), the mobile client automatically recovers developer testing sessions for authorized accounts without prompting manual re-login on token expiry.
+  - **Client Interceptor Self-Healing (`apiClient.ts`)**: Synchronizes tokens between `SecureTokenService` and `useAuthStore`, passes developer tracking headers (`X-User-Id`), and on HTTP 401 executes an instant in-flight recovery, eliminating console warning loops.
+
+- **Android 15 Edge-to-Edge Navigation Compliance (`App.tsx`)**:
+  - Removed deprecated `NavigationBar.setBackgroundColorAsync` invocation, fully conforming to modern Android edge-to-edge transparent navigation bar requirements.
+  - Retained dynamic button contrast adaptation via `NavigationBar.setButtonStyleAsync(isDark ? 'light' : 'dark')`.
+
+- **Completed Order Lifecycle & Tab Synchronization**:
+  - Synchronized order lifecycle state transitions across all 3 roles: Buyer receipt confirmation (`POST /api/v1/orders/:id/confirm`) automatically marks order `status: 'completed'`, releases escrow balances, credits seller and transporter wallets, and updates `completed_at` timestamps.
+  - Buyer and Seller `Completed` order tabs filter strictly by `status === 'completed'`, ensuring all completed transactions appear immediately in their respective tabs.
 
 ---
 

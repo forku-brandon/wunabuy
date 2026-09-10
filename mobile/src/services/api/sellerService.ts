@@ -3,7 +3,20 @@ import { Product } from '@wunabuy/types';
 import { SellerOrder, SellerTransaction } from '../../stores/seller.store';
 
 export interface SellerDashboardData {
+  store_id?: string;
   store_name: string;
+  category?: string;
+  address?: string;
+  landmark?: string;
+  tagline?: string;
+  description?: string;
+  primary_phone?: string;
+  secondary_phone?: string;
+  email?: string;
+  operating_hours?: string;
+  rider_pickup_instructions?: string;
+  logo_url?: string;
+  cover_photo_url?: string;
   is_verified: boolean;
   rating_avg: number;
   total_reviews: number;
@@ -208,6 +221,33 @@ export const SellerService = {
       return null;
     } catch {
       return null;
+    }
+  },
+
+  /**
+   * Fetch Seller Sales Tips & Growth Adverts dynamically
+   */
+  async getSalesTips(): Promise<any[]> {
+    try {
+      const response = await apiClient.get<{ success: boolean; data: any[] }>('/adverts', {
+        params: { audience: 'seller', type: 'tip' },
+      });
+      if (response.data?.success && Array.isArray(response.data.data)) {
+        return response.data.data.map((item) => ({
+          id: item.id,
+          badge: item.badge || 'PRO TIP',
+          badgeColor: item.badge_color,
+          title: item.title,
+          subtitle: item.subtitle || '',
+          ctaText: item.cta_text || 'Learn More',
+          iconName: item.icon_name || 'bulb-outline',
+          imageUrl: item.image_url || '',
+          actionScreen: item.action_screen,
+        }));
+      }
+      return [];
+    } catch {
+      return [];
     }
   },
 

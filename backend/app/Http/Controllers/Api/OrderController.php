@@ -98,11 +98,7 @@ class OrderController extends Controller
             }
 
             if (!$store) {
-                $store = Store::first();
-            }
-
-            if (!$store) {
-                return $this->respondError('STORE_NOT_FOUND', 'Store not found — please provide a valid store_id', null, 422);
+                return $this->respondError('STORE_NOT_FOUND', 'Store not found — please provide a valid store_id or valid product items', null, 422);
             }
 
             $itemsData = $request->input('items', []);
@@ -197,13 +193,24 @@ class OrderController extends Controller
     /**
      * Show single order with tracking timeline.
      */
-    public function show(string $id): JsonResponse
+    public function show(Request $request, string $id): JsonResponse
     {
         $order = (Str::isUuid($id) ? Order::with(['items', 'store', 'transporter'])->find($id) : null)
             ?? Order::where('order_code', $id)->first();
 
         if (!$order) {
             return $this->respondError('NOT_FOUND', 'Order not found', null, 404);
+        }
+
+        $user = $this->resolveUser($request);
+        if ($user) {
+            $isAuthorized = ($user->id === $order->customer_id)
+                || ($user->store && $user->store->id === $order->store_id)
+                || ($user->transporter && $user->transporter->id === $order->transporter_id)
+                || in_array($user->role, ['admin', 'superadmin']);
+            if (!$isAuthorized) {
+                return $this->respondError('FORBIDDEN', 'Access denied to this order', null, 403);
+            }
         }
 
         return $this->respondSuccess($order);
@@ -230,12 +237,21 @@ class OrderController extends Controller
     /**
      * Confirm delivery receipt by Buyer -> Releases Escrow.
      */
-    public function confirmReceipt(string $id): JsonResponse
+    public function confirmReceipt(Request $request, string $id): JsonResponse
     {
+        $user = $this->resolveUser($request);
+        if (!$user) {
+            return $this->respondError('UNAUTHORIZED', 'Authentication required', null, 401);
+        }
+
         $order = (Str::isUuid($id) ? Order::find($id) : null)
             ?? Order::where('order_code', $id)->first();
         if (!$order) {
             return $this->respondError('NOT_FOUND', 'Order not found', null, 404);
+        }
+
+        if ($order->customer_id !== $user->id && !in_array($user->role, ['admin', 'superadmin'])) {
+            return $this->respondError('FORBIDDEN', 'Only the buyer who placed the order can confirm receipt and release escrow', null, 403);
         }
 
         $result = $this->escrowService->releaseEscrow($order, 'Buyer Confirmation');
@@ -308,11 +324,11 @@ class OrderController extends Controller
 
             $refunds[] = [
                 'id' => $d->id,
-                'order_code' => $order?->order_code ?? 'WB-2026-8812',
-                'store_name' => $order?->store?->store_name ?? 'Akwa Super Store',
-                'product_name' => $firstItem?->name ?? 'Samsung Galaxy A54 5G',
-                'product_image' => $firstItem?->image_url ?? 'https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=800',
-                'amount' => (float) ($d->refund_amount > 0 ? $d->refund_amount : ($order?->total ?? 188000)),
+                'order_code' => $order?->order_code ?? ('WB-' . strtoupper(substr(str_replace('-', '', $d->id), 0, 8))),
+                'store_name' => $order?->store?->store_name ?? 'Store',
+                'product_name' => $firstItem?->name ?? 'Order Item',
+                'product_image' => $firstItem?->image_url ?? '',
+                'amount' => (float) ($d->refund_amount > 0 ? $d->refund_amount : ($order?->total ?? 0)),
                 'reason' => $d->reason,
                 'status' => $mobileStatus,
                 'requested_at' => $d->created_at?->toIso8601String() ?? now()->toIso8601String(),
@@ -330,9 +346,21 @@ class OrderController extends Controller
      */
     public function cancel(Request $request, string $id): JsonResponse
     {
-        $order = Str::isUuid($id) ? Order::find($id) : Order::first();
+        $user = $this->resolveUser($request);
+        if (!$user) {
+            return $this->respondError('UNAUTHORIZED', 'Authentication required', null, 401);
+        }
+
+        $order = (Str::isUuid($id) ? Order::find($id) : null)
+            ?? Order::where('order_code', $id)->first();
         if (!$order) {
             return $this->respondError('NOT_FOUND', 'Order not found', null, 404);
+        }
+
+        $isCustomer = $order->customer_id === $user->id;
+        $isStoreOwner = $user->store && $order->store_id === $user->store->id;
+        if (!$isCustomer && !$isStoreOwner && !in_array($user->role, ['admin', 'superadmin'])) {
+            return $this->respondError('FORBIDDEN', 'Unauthorized: you are not authorized to cancel this order', null, 403);
         }
 
         if (in_array($order->status, ['in_transit', 'delivered', 'completed'])) {
@@ -351,13 +379,23 @@ class OrderController extends Controller
      */
     public function dispute(Request $request, string $id): JsonResponse
     {
-        $order = Str::isUuid($id) ? Order::find($id) : Order::first();
+        $user = $this->resolveUser($request);
+        if (!$user) {
+            return $this->respondError('UNAUTHORIZED', 'Authentication required', null, 401);
+        }
+
+        $order = (Str::isUuid($id) ? Order::find($id) : null)
+            ?? Order::where('order_code', $id)->first();
         if (!$order) {
             return $this->respondError('NOT_FOUND', 'Order not found', null, 404);
         }
 
+        if ($order->customer_id !== $user->id && !in_array($user->role, ['admin', 'superadmin'])) {
+            return $this->respondError('FORBIDDEN', 'Unauthorized: only the buyer can dispute this order', null, 403);
+        }
+
         $reason = $request->input('reason', 'Goods damaged or not received');
-        $userId = $order->customer_id;
+        $userId = $user->id;
         $evidence = $request->input('evidence_photos', []);
 
         $this->escrowService->freezeEscrow($order, $reason, $userId, $evidence);

@@ -54,7 +54,7 @@ export const CartItemCard: React.FC<CartItemCardProps> = ({
             </View>
 
             <Text variant="caption" secondary style={styles.storeName}>
-              Douala Tech Hub (Akwa)
+              {item.store_name || 'Verified Merchant Store'}
             </Text>
 
             <View style={styles.footerRow}>

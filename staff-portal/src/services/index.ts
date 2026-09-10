@@ -8,4 +8,7 @@ export * from './logisticsApi';
 export * from './tasksApi';
 export * from './rbacApi';
 export * from './auditLogsApi';
+export * from './advertsApi';
+export * from './dashboardApi';
+export * from './usersApi';
 

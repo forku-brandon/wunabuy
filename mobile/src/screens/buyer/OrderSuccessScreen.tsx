@@ -15,6 +15,9 @@ export const OrderSuccessScreen = ({ route, navigation }: any) => {
     phone = '+237670000000',
     deliveryMethod = 'wunabuy_transporter',
     pickupPin = '84920',
+    storeName = 'Official Verified Store',
+    storeAddress = 'Merchant Counter Hub',
+    storePhone = '+237682656287',
   } = route.params || {};
 
   const isSelfPickup = deliveryMethod === 'self_pickup';
@@ -78,7 +81,7 @@ export const OrderSuccessScreen = ({ route, navigation }: any) => {
             MERCHANT STORE
           </Text>
           <Text variant="bodyMedium" bold>
-            Douala Tech Hub (Akwa)
+            {storeName}
           </Text>
         </View>
 
@@ -86,7 +89,7 @@ export const OrderSuccessScreen = ({ route, navigation }: any) => {
           <View style={[styles.storeAddressBox, { backgroundColor: isDark ? colors.neutral[900] : '#F0FDFA' }]}>
             <Ionicons name="location" size={14} color={colors.primary[600]} style={{ marginRight: 4 }} />
             <Text variant="caption" secondary style={{ flex: 1 }}>
-              Pickup at <Text bold color={theme.text}>Douala Tech Hub — Rue Joss, Akwa</Text> (Phone: +237 670 123 456)
+              Pickup at <Text bold color={theme.text}>{storeName} — {storeAddress}</Text> (Phone: {storePhone})
             </Text>
           </View>
         )}

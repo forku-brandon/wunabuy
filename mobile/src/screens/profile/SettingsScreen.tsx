@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScreenContainer, Text, Card, Button, Toast } from '../../components/ui';
 import { RoleSwitcherCard } from '../../components/profile/RoleSwitcherCard';
 import { LanguageSelectorModal } from './LanguageSelectorModal';
+import { EditProfileModal } from './EditProfileModal';
 import { useAuthStore } from '../../stores/auth.store';
 import { useThemeStore } from '../../stores/theme.store';
 import { UserRole } from '@wunabuy/types';
@@ -18,6 +19,7 @@ export const SettingsScreen = ({ navigation }: any) => {
   const { isDark, toggleTheme, theme } = useThemeStore();
 
   const [isLangModalOpen, setIsLangModalOpen] = useState(false);
+  const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -80,6 +82,21 @@ export const SettingsScreen = ({ navigation }: any) => {
           ACCOUNT &amp; DELIVERY
         </Text>
         <Card style={styles.groupedCard}>
+          {/* Edit Profile Details */}
+          <TouchableOpacity
+            activeOpacity={0.8}
+            style={styles.menuRow}
+            onPress={() => setIsEditProfileModalOpen(true)}
+          >
+            <View style={styles.menuLeft}>
+              <Ionicons name="person-circle-outline" size={20} color={colors.primary[500]} style={styles.menuIcon} />
+              <Text variant="bodyLarge">Edit Profile Details</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={theme.placeholder} />
+          </TouchableOpacity>
+
+          <View style={[styles.divider, { backgroundColor: theme.border }]} />
+
           {/* Saved Delivery Addresses */}
           <TouchableOpacity
             activeOpacity={0.8}
@@ -235,6 +252,12 @@ export const SettingsScreen = ({ navigation }: any) => {
       <LanguageSelectorModal
         visible={isLangModalOpen}
         onClose={() => setIsLangModalOpen(false)}
+      />
+
+      <EditProfileModal
+        visible={isEditProfileModalOpen}
+        onClose={() => setIsEditProfileModalOpen(false)}
+        onSuccess={(msg) => setToastMessage(msg)}
       />
 
       {toastMessage && <Toast message={toastMessage} type="info" />}

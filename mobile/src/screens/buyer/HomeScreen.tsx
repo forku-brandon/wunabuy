@@ -230,52 +230,60 @@ export const HomeScreen = ({ navigation }: any) => {
         )}
       />
 
-      {/* "Special Offer" Promo Card */}
-      <View style={styles.specialOfferSection}>
-        <View style={[styles.offerCard, { backgroundColor: isDark ? '#1E293B' : colors.primary[50] }]}>
-          <View style={styles.offerTextCol}>
-            <Text variant="caption" bold color={colors.primary[500]} style={styles.offerEyebrow}>
-              Special Offer
-            </Text>
-            <Text variant="h1" bold style={styles.offerTitle}>
-              Up to 30% Off
-            </Text>
-            <Text variant="caption" secondary style={styles.offerSub}>
-              On selected beauty &amp; verified essentials
-            </Text>
+      {/* "Special Offer" Promo Card (100% Dynamic from PostgreSQL DB Adverts) */}
+      {feedData?.special_offer ? (
+        <View style={styles.specialOfferSection}>
+          <View style={[styles.offerCard, { backgroundColor: isDark ? '#1E293B' : colors.primary[50] }]}>
+            <View style={styles.offerTextCol}>
+              <Text variant="caption" bold color={colors.primary[500]} style={styles.offerEyebrow}>
+                {feedData.special_offer.eyebrow || 'Special Offer'}
+              </Text>
+              <Text variant="h1" bold style={styles.offerTitle}>
+                {feedData.special_offer.title}
+              </Text>
+              <Text variant="caption" secondary style={styles.offerSub}>
+                {feedData.special_offer.subtitle || 'On selected verified essentials'}
+              </Text>
 
-            <TouchableOpacity
-              activeOpacity={0.85}
-              onPress={() => navigation.navigate('BuyerSearch')}
-              style={styles.grabNowBtn}
-            >
-              <Text variant="caption" bold color={colors.neutral[900]} style={styles.grabNowText}>
-                Grab Now
-              </Text>
-              <View style={styles.grabArrowCircle}>
-                <Ionicons name="arrow-forward" size={12} color={colors.neutral[0]} />
-              </View>
-            </TouchableOpacity>
-          </View>
+              <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={() => navigation.navigate('BuyerSearch')}
+                style={styles.grabNowBtn}
+              >
+                <Text variant="caption" bold color={colors.neutral[900]} style={styles.grabNowText}>
+                  Grab Now
+                </Text>
+                <View style={styles.grabArrowCircle}>
+                  <Ionicons name="arrow-forward" size={12} color={colors.neutral[0]} />
+                </View>
+              </TouchableOpacity>
+            </View>
 
-          {/* Right Product Graphic Composition with Circular 30% Off Badge */}
-          <View style={styles.offerGraphicCol}>
-            <Image
-              source={{ uri: 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=800&q=80' }}
-              style={styles.offerImage}
-              resizeMode="cover"
-            />
-            <View style={styles.discountBadgeCircle}>
-              <Text variant="caption" bold color={colors.primary[500]} style={styles.discountPercentText}>
-                30%
-              </Text>
-              <Text variant="caption" bold color={colors.primary[500]} style={styles.discountOffText}>
-                OFF
-              </Text>
+            {/* Right Product Graphic Composition with Circular Discount Badge */}
+            <View style={styles.offerGraphicCol}>
+              <Image
+                source={{
+                  uri:
+                    feedData.special_offer.image_url ||
+                    'https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=800&q=80',
+                }}
+                style={styles.offerImage}
+                resizeMode="cover"
+              />
+              {!!feedData.special_offer.discount_percent && (
+                <View style={styles.discountBadgeCircle}>
+                  <Text variant="caption" bold color={colors.primary[500]} style={styles.discountPercentText}>
+                    {feedData.special_offer.discount_percent}%
+                  </Text>
+                  <Text variant="caption" bold color={colors.primary[500]} style={styles.discountOffText}>
+                    OFF
+                  </Text>
+                </View>
+              )}
             </View>
           </View>
         </View>
-      </View>
+      ) : null}
 
       {/* Explore All Products Catalog Grid Header */}
       <View style={styles.gridSectionHeader}>

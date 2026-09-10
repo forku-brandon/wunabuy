@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Models\Advert;
 use App\Models\Product;
 use App\Models\Review;
 use App\Models\Store;
@@ -27,87 +28,64 @@ class CommerceController extends Controller
             ->limit(10)
             ->get();
 
+        // Dynamic Hero Banners from DB
+        $dbBanners = Advert::where('type', 'banner')
+            ->where('is_active', true)
+            ->whereIn('target_audience', ['buyer', 'all'])
+            ->orderBy('sort_order')
+            ->get();
+
+        $heroBanners = $dbBanners->map(function ($b) {
+            return [
+                'id' => $b->id,
+                'badge' => $b->badge ?? 'WUNABUY MARKETPLACE',
+                'badgeColor' => $b->badge_color ?? '#0D9488',
+                'title' => $b->title,
+                'subtitle' => $b->subtitle ?? '',
+                'ctaText' => $b->cta_text ?? 'Shop Now',
+                'imageUrl' => $b->image_url ?? '',
+                'actionScreen' => $b->action_screen,
+                'actionUrl' => $b->action_url,
+            ];
+        });
+
+        // Dynamic Partners from DB
+        $dbPartners = Advert::where('type', 'partner')
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->get();
+
+        $partners = $dbPartners->map(function ($p) {
+            return [
+                'id' => $p->id,
+                'name' => $p->title,
+                'category' => $p->category ?? $p->subtitle ?? 'Official Partner',
+                'iconName' => $p->icon_name ?? 'shield-checkmark-outline',
+                'iconColor' => $p->icon_color ?? '#0D9488',
+                'badge' => $p->badge ?? 'Verified Partner',
+            ];
+        });
+
+        // Dynamic Special Offer from DB
+        $dbSpecialOffer = Advert::where('type', 'special_offer')
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->first();
+
+        $specialOffer = $dbSpecialOffer ? [
+            'eyebrow' => $dbSpecialOffer->badge ?? 'Special Offer',
+            'title' => $dbSpecialOffer->title,
+            'subtitle' => $dbSpecialOffer->subtitle ?? '',
+            'discount_percent' => $dbSpecialOffer->discount_percent ?? 30,
+            'image_url' => $dbSpecialOffer->image_url ?? '',
+        ] : null;
+
         return $this->respondSuccess([
-            'hero_banners' => [
-                [
-                    'id' => 'slide_1',
-                    'badge' => '100% ESCROW GUARANTEE',
-                    'badgeColor' => '#0D9488',
-                    'title' => "Shop Safely, ✨\nBuy Confidently",
-                    'subtitle' => 'Your money stays 100% safe in 48-hour escrow protection until delivery is signed.',
-                    'ctaText' => 'Explore Escrow',
-                    'imageUrl' => 'https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?auto=format&fit=crop&w=800&q=80',
-                ],
-                [
-                    'id' => 'slide_2',
-                    'badge' => 'VERIFIED LOCAL STORES',
-                    'badgeColor' => '#0F766E',
-                    'title' => "Glow Naturally, ✨\nShine Beautifully",
-                    'subtitle' => 'Explore our premium beauty, electronics & verified collection from Douala store owners.',
-                    'ctaText' => 'Shop Now',
-                    'imageUrl' => 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=800&q=80',
-                ],
-                [
-                    'id' => 'slide_3',
-                    'badge' => 'EXPRESS GPS DELIVERY',
-                    'badgeColor' => '#F59E0B',
-                    'title' => "Fast Doorstep ✨\nGPS Delivery",
-                    'subtitle' => 'Track your transport provider live with 10-second GPS breadcrumb updates.',
-                    'ctaText' => 'Track Live',
-                    'imageUrl' => 'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=800&q=80',
-                ],
-            ],
-            'partners' => [
-                [
-                    'id' => 'partner_1',
-                    'name' => 'MTN MoMo',
-                    'category' => 'Mobile Money Escrow',
-                    'iconName' => 'phone-portrait-outline',
-                    'iconColor' => '#F59E0B',
-                    'badge' => '1-Tap Cashout',
-                ],
-                [
-                    'id' => 'partner_2',
-                    'name' => 'Orange Money',
-                    'category' => 'Mobile Wallet Partner',
-                    'iconName' => 'wallet-outline',
-                    'iconColor' => '#F97316',
-                    'badge' => 'Instant Transfer',
-                ],
-                [
-                    'id' => 'partner_3',
-                    'name' => 'Flutterwave',
-                    'category' => 'PCI-DSS Escrow Gateway',
-                    'iconName' => 'card-outline',
-                    'iconColor' => '#0D9488',
-                    'badge' => 'Verified Gateway',
-                ],
-                [
-                    'id' => 'partner_4',
-                    'name' => 'DHL Logistics',
-                    'category' => 'Regional Express Freight',
-                    'iconName' => 'airplane-outline',
-                    'iconColor' => '#E11D48',
-                    'badge' => 'Freight Partner',
-                ],
-                [
-                    'id' => 'partner_5',
-                    'name' => 'Ecobank Cameroon',
-                    'category' => 'Bank Settlement Partner',
-                    'iconName' => 'business-outline',
-                    'iconColor' => '#2563EB',
-                    'badge' => 'Bank Partner',
-                ],
-            ],
+            'hero_banners' => $heroBanners,
+            'partners' => $partners,
             'categories' => ['All', 'Electronics', 'Health & Beauty', 'Fashion', 'Food & Groceries', 'Automotive'],
             'best_sellers' => $products,
-            'special_offer' => [
-                'eyebrow' => 'Special Offer',
-                'title' => 'Up to 30% Off',
-                'subtitle' => 'On selected verified products across Douala stores',
-                'discount_percent' => 30,
-                'image_url' => 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=800&q=80',
-            ],
+            'special_offer' => $specialOffer,
         ]);
     }
 
@@ -193,7 +171,7 @@ class CommerceController extends Controller
     /**
      * Single product details with store and reviews.
      */
-    public function getProduct(string $id): JsonResponse
+    public function getProduct(Request $request, string $id): JsonResponse
     {
         $product = Str::isUuid($id)
             ? Product::with('store')->find($id)
@@ -201,6 +179,15 @@ class CommerceController extends Controller
 
         if (!$product) {
             return $this->respondError('NOT_FOUND', 'Product not found', null, 404);
+        }
+
+        // Calculate real spatial distance if buyer lat/lng provided
+        $buyerLat = $request->query('lat');
+        $buyerLng = $request->query('lng');
+        if ($buyerLat && $buyerLng && $product->store) {
+            $sLat = (float) ($product->store->latitude ?? 4.0510);
+            $sLng = (float) ($product->store->longitude ?? 9.7678);
+            $product->distance_km = $this->logisticsService->calculateHaversineDistance((float) $buyerLat, (float) $buyerLng, $sLat, $sLng);
         }
 
         $reviews = Review::where('target_type', 'product')
@@ -217,31 +204,29 @@ class CommerceController extends Controller
     /**
      * Create product listing (Seller).
      */
+    /**
+     * Create product listing (Seller).
+     */
     public function createProduct(Request $request): JsonResponse
     {
         $sellerUser = $this->resolveUser($request);
-        $store = null;
-        if ($sellerUser) {
-            $store = $sellerUser->store;
-            if (!$store && in_array('seller', $sellerUser->available_roles ?? [])) {
-                $store = Store::create([
-                    'id' => (string) Str::uuid(),
-                    'owner_id' => $sellerUser->id,
-                    'store_name' => ($sellerUser->full_name ?: 'Merchant') . "'s Store",
-                    'description' => 'Verified merchant store on Wunabuy Marketplace.',
-                    'category' => 'Electronics',
-                    'address_text' => 'Douala, Cameroon',
-                    'rating_avg' => 5.0,
-                    'total_reviews' => 0,
-                    'is_verified' => true,
-                    'is_active' => true,
-                ]);
+        if (!$sellerUser) {
+            return $this->respondError('UNAUTHORIZED', 'Authentication required to create a product listing', null, 401);
+        }
+
+        $store = $sellerUser->store;
+        if (!$store) {
+            $storeId = $request->input('store_id');
+            if ($storeId && Str::isUuid($storeId)) {
+                $candidate = Store::find($storeId);
+                if ($candidate && $candidate->user_id === $sellerUser->id) {
+                    $store = $candidate;
+                }
             }
         }
 
         if (!$store) {
-            $storeId = $request->input('store_id');
-            $store = ($storeId && Str::isUuid($storeId)) ? Store::find($storeId) : Store::first();
+            return $this->respondError('STORE_NOT_FOUND', 'Active seller store required to list products', null, 422);
         }
 
         $quantity = (int) ($request->input('quantity') ?? $request->input('stock_quantity', 10));
@@ -256,7 +241,7 @@ class CommerceController extends Controller
 
         $product = Product::create([
             'id' => (string) Str::uuid(),
-            'store_id' => $store ? $store->id : (string) Str::uuid(),
+            'store_id' => $store->id,
             'name' => $request->input('name', 'New Product'),
             'description' => $request->input('description', ''),
             'price' => (float) $request->input('price', 10000),
@@ -278,9 +263,19 @@ class CommerceController extends Controller
      */
     public function updateProduct(Request $request, string $id): JsonResponse
     {
+        $sellerUser = $this->resolveUser($request);
+        if (!$sellerUser) {
+            return $this->respondError('UNAUTHORIZED', 'Authentication required', null, 401);
+        }
+
         $product = Str::isUuid($id) ? Product::find($id) : null;
         if (!$product) {
             return $this->respondError('NOT_FOUND', 'Product not found', null, 404);
+        }
+
+        $store = $sellerUser->store;
+        if ((!$store || $product->store_id !== $store->id) && !in_array($sellerUser->role, ['admin', 'superadmin'])) {
+            return $this->respondError('FORBIDDEN', 'Unauthorized: product belongs to another store', null, 403);
         }
 
         $data = $request->all();
@@ -297,12 +292,24 @@ class CommerceController extends Controller
     /**
      * Delete product listing.
      */
-    public function deleteProduct(string $id): JsonResponse
+    public function deleteProduct(Request $request, string $id): JsonResponse
     {
-        $product = Str::isUuid($id) ? Product::find($id) : null;
-        if ($product) {
-            $product->delete();
+        $sellerUser = $this->resolveUser($request);
+        if (!$sellerUser) {
+            return $this->respondError('UNAUTHORIZED', 'Authentication required', null, 401);
         }
+
+        $product = Str::isUuid($id) ? Product::find($id) : null;
+        if (!$product) {
+            return $this->respondError('NOT_FOUND', 'Product not found', null, 404);
+        }
+
+        $store = $sellerUser->store;
+        if ((!$store || $product->store_id !== $store->id) && !in_array($sellerUser->role, ['admin', 'superadmin'])) {
+            return $this->respondError('FORBIDDEN', 'Unauthorized: product belongs to another store', null, 403);
+        }
+
+        $product->delete();
 
         return $this->respondSuccess(['message' => 'Product deleted successfully']);
     }
@@ -310,9 +317,26 @@ class CommerceController extends Controller
     /**
      * Store details.
      */
-    public function getStore(string $id): JsonResponse
+    public function getStore(Request $request, string $id): JsonResponse
     {
-        $store = (Str::isUuid($id) ? Store::with('products')->find($id) : null) ?? Store::with('products')->first();
+        if ($id === 'my_store' || $id === 'me') {
+            $user = $this->resolveUser($request);
+            if (!$user) {
+                return $this->respondError('UNAUTHENTICATED', 'User session expired or not found', null, 401);
+            }
+            $store = $user->store ?? Store::where('user_id', $user->id)->first();
+            if (!$store) {
+                return $this->respondError('NOT_FOUND', 'You do not have a registered store yet.', null, 404);
+            }
+            $store->load('products');
+            return $this->respondSuccess($store);
+        }
+
+        if (!Str::isUuid($id)) {
+            return $this->respondError('NOT_FOUND', 'Invalid store identifier', null, 404);
+        }
+
+        $store = Store::with('products')->find($id);
         if (!$store) {
             return $this->respondError('NOT_FOUND', 'Store not found', null, 404);
         }
@@ -323,9 +347,17 @@ class CommerceController extends Controller
     /**
      * Store 2D pickup specifications.
      */
-    public function getStorePickupLocation(string $id): JsonResponse
+    public function getStorePickupLocation(Request $request, string $id): JsonResponse
     {
-        $store = (Str::isUuid($id) ? Store::find($id) : null) ?? Store::first();
+        if ($id === 'my_store' || $id === 'me') {
+            $user = $this->resolveUser($request);
+            $store = $user?->store ?? ($user ? Store::where('user_id', $user->id)->first() : null);
+        } elseif (Str::isUuid($id)) {
+            $store = Store::find($id);
+        } else {
+            $store = null;
+        }
+
         if (!$store) {
             return $this->respondError('NOT_FOUND', 'Store not found', null, 404);
         }
@@ -388,5 +420,25 @@ class CommerceController extends Controller
             ->get();
 
         return $this->respondPaginated($reviews, false, null, 15);
+    }
+
+    /**
+     * Get active adverts / tips / partners for client apps.
+     */
+    public function getAdverts(Request $request): JsonResponse
+    {
+        $query = Advert::where('is_active', true);
+
+        if ($audience = $request->query('audience')) {
+            $query->whereIn('target_audience', [$audience, 'all']);
+        }
+
+        if ($type = $request->query('type')) {
+            $query->where('type', $type);
+        }
+
+        $adverts = $query->orderBy('sort_order', 'asc')->get();
+
+        return $this->respondSuccess($adverts);
     }
 }

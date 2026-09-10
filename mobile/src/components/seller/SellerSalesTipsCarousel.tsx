@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Text } from '../ui/Text';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
+import { SellerService } from '../../services/api/sellerService';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const BANNER_WIDTH = SCREEN_WIDTH - spacing.base * 2;
@@ -95,13 +96,28 @@ export const SellerSalesTipsCarousel: React.FC<SellerSalesTipsCarouselProps> = (
 }) => {
   const { theme, isDark } = useThemeStore();
   const [activeIndex, setActiveIndex] = useState(0);
+  const [slides, setSlides] = useState<SalesTipSlide[]>(SALES_TIP_SLIDES);
   const scrollViewRef = useRef<ScrollView>(null);
+
+  // Fetch dynamic tips from backend
+  useEffect(() => {
+    let isMounted = true;
+    SellerService.getSalesTips().then((fetched) => {
+      if (isMounted && fetched && fetched.length > 0) {
+        setSlides(fetched);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Auto-slide every 4.5 seconds
   useEffect(() => {
+    if (slides.length <= 1) return;
     const timer = setInterval(() => {
       setActiveIndex((prevIndex) => {
-        const nextIndex = (prevIndex + 1) % SALES_TIP_SLIDES.length;
+        const nextIndex = (prevIndex + 1) % slides.length;
         scrollViewRef.current?.scrollTo({
           x: nextIndex * BANNER_WIDTH,
           animated: true,
@@ -111,12 +127,12 @@ export const SellerSalesTipsCarousel: React.FC<SellerSalesTipsCarouselProps> = (
     }, 4500);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [slides.length]);
 
   const handleScroll = (event: any) => {
     const scrollOffset = event.nativeEvent.contentOffset.x;
     const currentIndex = Math.round(scrollOffset / BANNER_WIDTH);
-    if (currentIndex >= 0 && currentIndex < SALES_TIP_SLIDES.length && currentIndex !== activeIndex) {
+    if (currentIndex >= 0 && currentIndex < slides.length && currentIndex !== activeIndex) {
       setActiveIndex(currentIndex);
     }
   };
@@ -133,7 +149,7 @@ export const SellerSalesTipsCarousel: React.FC<SellerSalesTipsCarouselProps> = (
         scrollEventThrottle={16}
         decelerationRate="fast"
       >
-        {SALES_TIP_SLIDES.map((item) => (
+        {slides.map((item) => (
           <TouchableOpacity
             key={item.id}
             activeOpacity={0.92}
@@ -188,7 +204,7 @@ export const SellerSalesTipsCarousel: React.FC<SellerSalesTipsCarouselProps> = (
 
       {/* Slide Pagination Dots */}
       <View style={styles.paginationRow}>
-        {SALES_TIP_SLIDES.map((slide, idx) => (
+        {slides.map((slide, idx) => (
           <View
             key={slide.id}
             style={[

@@ -34,9 +34,9 @@ const TABLE_TOTAL_WIDTH = COL1_WIDTH + COL2_WIDTH;
 
 export const StorePickupTable: React.FC<StorePickupTableProps> = ({
   pickupPin = '84920',
-  storeName = 'Douala Tech Hub (Akwa Branch)',
-  addressText = 'Rue Joss, Quartier Akwa, Douala, Cameroon',
-  landmarkDirections = 'Opposite Place du Gouvernement, Next to Akwa Mall (1st Floor, Suite 104)',
+  storeName = 'Official Verified Store',
+  addressText = 'Merchant Counter Hub, Cameroon',
+  landmarkDirections = 'Designated Wunabuy Merchant Counter',
   primaryPhone = '+237 670 123 456',
   secondaryPhone = '+237 699 876 543',
   operatingHours = 'Mon - Sat: 8:00 AM - 6:30 PM',

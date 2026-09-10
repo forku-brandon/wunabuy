@@ -27,6 +27,7 @@ import {
   Send,
   PlayCircle,
   AlertTriangle,
+  RefreshCw,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -106,21 +107,23 @@ const INITIAL_ASSIGNED_TASKS: AssignedStaffTask[] = [
   },
 ];
 
-const MOCK_CHART_DATA = [
-  { day: 'Mon', gmv: 4200000, escrow: 1850000 },
-  { day: 'Tue', gmv: 5800000, escrow: 2400000 },
-  { day: 'Wed', gmv: 3900000, escrow: 1600000 },
-  { day: 'Thu', gmv: 7100000, escrow: 3200000 },
-  { day: 'Fri', gmv: 8900000, escrow: 4100000 },
-  { day: 'Sat', gmv: 11200000, escrow: 5300000 },
-  { day: 'Sun', gmv: 9500000, escrow: 4400000 },
+import { dashboardApi, DashboardStats } from '../services';
+
+const DEFAULT_CHART_DATA = [
+  { day: 'Mon', gmv: 0, escrow: 0 },
+  { day: 'Tue', gmv: 0, escrow: 0 },
+  { day: 'Wed', gmv: 0, escrow: 0 },
+  { day: 'Thu', gmv: 0, escrow: 0 },
+  { day: 'Fri', gmv: 0, escrow: 0 },
+  { day: 'Sat', gmv: 0, escrow: 0 },
+  { day: 'Sun', gmv: 0, escrow: 0 },
 ];
 
-const MOCK_DONUT_DATA = [
-  { name: 'Completed Escrow', value: 66, color: '#0D9488' },
-  { name: '48h Hold Frozen', value: 20, color: '#3B82F6' },
-  { name: 'Disputed Hold', value: 9, color: '#F59E0B' },
-  { name: 'Platform Yield', value: 5, color: '#6366F1' },
+const DEFAULT_DONUT_DATA = [
+  { name: 'Completed Escrow', value: 0, count: 0, color: '#0D9488' },
+  { name: '48h Hold Frozen', value: 0, count: 0, color: '#3B82F6' },
+  { name: 'Disputed Hold', value: 0, count: 0, color: '#F59E0B' },
+  { name: 'Platform Yield', value: 0, count: 0, color: '#6366F1' },
 ];
 
 // LARGE ENTERPRISE DIGITAL EMPLOYEE WORKING CLOCK COMPONENT
@@ -418,6 +421,35 @@ export const DashboardPage: React.FC = () => {
   // Toast State
   const [toastMessage, setToastMessage] = useState('');
 
+  // Live Dashboard Statistics from PostgreSQL
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [isLoadingStats, setIsLoadingStats] = useState(true);
+
+  const fetchStats = (silent = false) => {
+    if (!silent) setIsLoadingStats(true);
+    dashboardApi
+      .getDashboardStats()
+      .then((res) => {
+        if (res.data) {
+          setStats(res.data);
+        }
+      })
+      .catch((err) => {
+        console.warn('[DashboardPage] Failed to fetch live dashboard stats', err);
+      })
+      .finally(() => {
+        if (!silent) setIsLoadingStats(false);
+      });
+  };
+
+  useEffect(() => {
+    fetchStats();
+    const interval = setInterval(() => {
+      fetchStats(true);
+    }, 8000);
+    return () => clearInterval(interval);
+  }, []);
+
   useEffect(() => {
     localStorage.setItem('wunabuy_assigned_staff_tasks', JSON.stringify(assignedTasks));
   }, [assignedTasks]);
@@ -518,6 +550,18 @@ export const DashboardPage: React.FC = () => {
     <PageContainer
       title="Executive Overview Dashboard"
       subtitle="Real-time Platform GMV, Mobile Money Disbursal Reconciliation & Escrow Telemetry"
+      action={
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => fetchStats(false)}
+          disabled={isLoadingStats}
+          className="flex items-center space-x-1.5"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${isLoadingStats ? 'animate-spin' : ''}`} />
+          <span>Refresh Metrics</span>
+        </Button>
+      }
     >
       {/* TOAST NOTIFICATION */}
       {toastMessage && (
@@ -534,8 +578,8 @@ export const DashboardPage: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
         <StatCard
           title="TOTAL PLATFORM GMV"
-          value={formatXAF(50600000)}
-          change="+18.4%"
+          value={isLoadingStats ? 'Calculating...' : formatXAF(stats?.total_gmv ?? 0)}
+          change="Live DB Sync"
           changeType="positive"
           icon={<TrendingUp className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />}
           iconBg="bg-emerald-50 dark:bg-emerald-950/60"
@@ -544,19 +588,19 @@ export const DashboardPage: React.FC = () => {
 
         <StatCard
           title="LOCKED IN ESCROW"
-          value={formatXAF(22850000)}
+          value={isLoadingStats ? 'Calculating...' : formatXAF(stats?.locked_in_escrow ?? 0)}
           change="48h Hold"
           changeType="neutral"
           icon={<Lock className="w-4 h-4 text-amber-600 dark:text-amber-400" />}
           iconBg="bg-amber-50 dark:bg-amber-950/60"
-          description="42 active order holds"
+          description="Active escrow order holds"
         />
 
         <StatCard
           title="PENDING STORE KYC"
-          value="4 Stores"
-          change="Action Req."
-          changeType="warning"
+          value={isLoadingStats ? '...' : `${stats?.pending_kyc_count ?? 0} Submissions`}
+          change={stats && stats.pending_kyc_count > 0 ? 'Action Req.' : 'Clear Queue'}
+          changeType={stats && stats.pending_kyc_count > 0 ? 'warning' : 'positive'}
           icon={<FileCheck className="w-4 h-4 text-blue-600 dark:text-blue-400" />}
           iconBg="bg-blue-50 dark:bg-blue-950/60"
           description="Awaiting staff document audit"
@@ -564,9 +608,9 @@ export const DashboardPage: React.FC = () => {
 
         <StatCard
           title="OPEN DISPUTES"
-          value="2 Cases"
-          change="Under Review"
-          changeType="negative"
+          value={isLoadingStats ? '...' : `${stats?.open_disputes_count ?? 0} Cases`}
+          change={stats && stats.open_disputes_count > 0 ? 'Under Review' : 'Zero Claims'}
+          changeType={stats && stats.open_disputes_count > 0 ? 'negative' : 'positive'}
           icon={<ShieldAlert className="w-4 h-4 text-red-600 dark:text-red-400" />}
           iconBg="bg-red-50 dark:bg-red-950/60"
           description="Requires staff adjudication"
@@ -774,7 +818,7 @@ export const DashboardPage: React.FC = () => {
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={MOCK_DONUT_DATA}
+                    data={stats?.donut_data && stats.donut_data.length > 0 ? stats.donut_data : DEFAULT_DONUT_DATA}
                     cx="50%"
                     cy="50%"
                     innerRadius={60}
@@ -782,7 +826,7 @@ export const DashboardPage: React.FC = () => {
                     paddingAngle={4}
                     dataKey="value"
                   >
-                    {MOCK_DONUT_DATA.map((entry, index) => (
+                    {(stats?.donut_data && stats.donut_data.length > 0 ? stats.donut_data : DEFAULT_DONUT_DATA).map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
@@ -798,7 +842,9 @@ export const DashboardPage: React.FC = () => {
                 </PieChart>
               </ResponsiveContainer>
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-lg font-extrabold text-slate-900 dark:text-slate-100 font-mono">100%</span>
+                <span className="text-lg font-extrabold text-slate-900 dark:text-slate-100 font-mono">
+                  {stats ? '100%' : '...'}
+                </span>
                 <span className="text-[10px] text-slate-400 font-mono uppercase">Escrow Total</span>
               </div>
             </div>
@@ -806,7 +852,7 @@ export const DashboardPage: React.FC = () => {
 
           {/* Donut Legend */}
           <div className="grid grid-cols-2 gap-2 pt-4 border-t border-slate-100 dark:border-slate-800 text-[11px] font-semibold">
-            {MOCK_DONUT_DATA.map((item) => (
+            {(stats?.donut_data && stats.donut_data.length > 0 ? stats.donut_data : DEFAULT_DONUT_DATA).map((item) => (
               <div key={item.name} className="flex items-center space-x-2">
                 <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }} />
                 <span className="truncate text-slate-600 dark:text-slate-400">{item.name} ({item.value}%)</span>
@@ -832,7 +878,10 @@ export const DashboardPage: React.FC = () => {
 
             <div className="h-64 mt-4">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={MOCK_CHART_DATA} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <AreaChart
+                  data={stats?.chart_data && stats.chart_data.length > 0 ? stats.chart_data : DEFAULT_CHART_DATA}
+                  margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                >
                   <defs>
                     <linearGradient id="gmvGradient" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#0D9488" stopOpacity={0.4} />

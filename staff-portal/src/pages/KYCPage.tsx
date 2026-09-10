@@ -16,6 +16,7 @@ import {
   XCircle,
   Eye,
   Lock,
+  RefreshCw,
 } from 'lucide-react';
 
 interface KYCSubmissionItem {
@@ -33,40 +34,10 @@ interface KYCSubmissionItem {
   storefront_or_vehicle_photo: string;
 }
 
-const MOCK_KYC_QUEUE: KYCSubmissionItem[] = [
-  {
-    id: 'kyc_101',
-    applicant_name: 'Emmanuel Nsangou',
-    applicant_type: 'STORE_SELLER',
-    entity_title: 'Douala Tech Hub',
-    phone: '+237 670 123 456',
-    city_quarter: 'Akwa, Douala',
-    cni_number: 'CNI-118940291',
-    submitted_at: '2026-09-02 09:30',
-    status: 'PENDING_REVIEW',
-    cni_front_url: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=400&q=80',
-    cni_back_url: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=400&q=80',
-    storefront_or_vehicle_photo: 'https://images.unsplash.com/photo-1555421689-491a97ff2040?auto=format&fit=crop&w=400&q=80',
-  },
-  {
-    id: 'kyc_102',
-    applicant_name: 'Jean-Paul Nkoum',
-    applicant_type: 'DRIVER_TRANSPORTER',
-    entity_title: 'Yamaha Crux 110cc (Bike)',
-    phone: '+237 670 112 233',
-    city_quarter: 'Bonanjo, Douala',
-    cni_number: 'CNI-109283741',
-    submitted_at: '2026-09-02 10:15',
-    status: 'PENDING_REVIEW',
-    cni_front_url: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=400&q=80',
-    cni_back_url: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=400&q=80',
-    storefront_or_vehicle_photo: 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&w=400&q=80',
-  },
-];
-
 export const KYCPage: React.FC = () => {
   const { addAuditLog, hasPermission } = useStaffAuth();
-  const [queue, setQueue] = useState<KYCSubmissionItem[]>(MOCK_KYC_QUEUE);
+  const [queue, setQueue] = useState<KYCSubmissionItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   
   // Interactive Modal
   const [inspectTarget, setInspectTarget] = useState<KYCSubmissionItem | null>(null);
@@ -74,17 +45,30 @@ export const KYCPage: React.FC = () => {
 
   const canApprove = hasPermission('approve_kyc');
 
-  useEffect(() => {
+  const fetchQueue = (silent = false) => {
+    if (!silent) setIsLoading(true);
     kycApi
       .getKYCQueue()
       .then((res) => {
-        if (res.data && res.data.length > 0) {
+        if (res.data) {
           setQueue(res.data);
         }
       })
-      .catch(() => {
-        // Fallback to local mock data when API server is offline
+      .catch((err) => {
+        console.warn('[KYCPage] Failed to fetch live KYC queue', err);
+      })
+      .finally(() => {
+        if (!silent) setIsLoading(false);
       });
+  };
+
+  useEffect(() => {
+    fetchQueue();
+    // Real-time polling every 8 seconds
+    const interval = setInterval(() => {
+      fetchQueue(true);
+    }, 8000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleDecision = async (decision: 'APPROVED' | 'REJECTED') => {
@@ -181,14 +165,26 @@ export const KYCPage: React.FC = () => {
     <PageContainer
       title="Store Merchant &amp; Driver KYC Verification Queue"
       subtitle="Inspect National CNI Front/Back Photos, Storefront Verification &amp; Approve Platform Access"
+      action={
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => fetchQueue(false)}
+          disabled={isLoading}
+          className="flex items-center space-x-1.5"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+          <span>Refresh Queue</span>
+        </Button>
+      }
     >
       {/* Top Stat Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard
           title="PENDING KYC REVIEWS"
-          value="4 Submissions"
-          change="Action Required"
-          changeType="warning"
+          value={isLoading ? 'Loading...' : `${queue.filter((q) => q.status === 'PENDING_REVIEW').length} Submissions`}
+          change={queue.some((q) => q.status === 'PENDING_REVIEW') ? 'Action Required' : 'Queue Clear'}
+          changeType={queue.some((q) => q.status === 'PENDING_REVIEW') ? 'warning' : 'positive'}
           icon={<FileCheck className="w-5 h-5 text-amber-600 dark:text-amber-400" />}
           iconBg="bg-amber-50 dark:bg-amber-950/60"
           description="Awaiting staff document verification"
@@ -196,8 +192,8 @@ export const KYCPage: React.FC = () => {
 
         <StatCard
           title="MERCHANT STORE KYC"
-          value="1,840 Approved"
-          change="98.2% Pass Rate"
+          value={isLoading ? '...' : `${queue.filter((q) => q.applicant_type === 'STORE_SELLER').length} Stores`}
+          change="Document Registered"
           changeType="positive"
           icon={<Building2 className="w-5 h-5 text-teal-600 dark:text-teal-400" />}
           iconBg="bg-teal-50 dark:bg-teal-950/60"
@@ -206,8 +202,8 @@ export const KYCPage: React.FC = () => {
 
         <StatCard
           title="DRIVER PERMIT KYC"
-          value="420 Approved"
-          change="Carte Grise Checked"
+          value={isLoading ? '...' : `${queue.filter((q) => q.applicant_type === 'DRIVER_TRANSPORTER').length} Drivers`}
+          change="Vehicle Permit"
           changeType="positive"
           icon={<Bike className="w-5 h-5 text-blue-600 dark:text-blue-400" />}
           iconBg="bg-blue-50 dark:bg-blue-950/60"
@@ -216,9 +212,9 @@ export const KYCPage: React.FC = () => {
 
         <StatCard
           title="REJECTED SUBMISSIONS"
-          value="12 Cases"
-          change="Document Mismatch"
-          changeType="negative"
+          value={isLoading ? '...' : `${queue.filter((q) => q.status === 'REJECTED').length} Cases`}
+          change={queue.some((q) => q.status === 'REJECTED') ? 'Issues Flagged' : '0 Rejected'}
+          changeType={queue.some((q) => q.status === 'REJECTED') ? 'negative' : 'positive'}
           icon={<XCircle className="w-5 h-5 text-red-600 dark:text-red-400" />}
           iconBg="bg-red-50 dark:bg-red-950/60"
           description="Submissions rejected by staff"

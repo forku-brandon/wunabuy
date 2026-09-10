@@ -12,6 +12,7 @@ export interface DriverProfileData {
   vehicle: {
     type: string;
     plate_number: string;
+    license_number?: string;
     operating_quarter: string;
     insurance_status: string;
     permit_status: string;
@@ -215,18 +216,18 @@ export const TransporterService = {
         return response.data.data;
       }
       return {
-        driver_id: 'DRV-2026-884',
-        full_name: 'Jean-Paul Kamga',
-        phone: '+237 670 123 456',
-        rating_avg: 4.95,
-        completed_deliveries: 248,
-        is_verified: true,
+        driver_id: '',
+        full_name: '',
+        phone: '',
+        rating_avg: 5.0,
+        completed_deliveries: 0,
+        is_verified: false,
         vehicle: {
-          type: 'Yamaha YBR 125 🏍️',
-          plate_number: 'LT-214-AA',
-          operating_quarter: 'Akwa / Bonanjo',
-          insurance_status: 'Active (Dec 2026)',
-          permit_status: 'Douala Council',
+          type: '',
+          plate_number: '',
+          operating_quarter: '',
+          insurance_status: '',
+          permit_status: '',
         },
         earnings: {
           available_cashout: 0,
@@ -236,18 +237,18 @@ export const TransporterService = {
       };
     } catch {
       return {
-        driver_id: 'DRV-2026-884',
-        full_name: 'Driver Partner',
-        phone: '+237 670 000 000',
+        driver_id: '',
+        full_name: '',
+        phone: '',
         rating_avg: 5.0,
         completed_deliveries: 0,
         is_verified: false,
         vehicle: {
-          type: 'Moto / Courier 🏍️',
-          plate_number: 'LT-000-XX',
-          operating_quarter: 'Douala',
-          insurance_status: 'Active',
-          permit_status: 'Pending',
+          type: '',
+          plate_number: '',
+          operating_quarter: '',
+          insurance_status: '',
+          permit_status: '',
         },
         earnings: {
           available_cashout: 0,
@@ -255,6 +256,30 @@ export const TransporterService = {
           total_lifetime_earned: 0,
         },
       };
+    }
+  },
+
+  /**
+   * Update driver profile and vehicle specs
+   */
+  async updateDriverProfile(payload: {
+    vehicle_type?: string;
+    vehicle_plate?: string;
+    plate_number?: string;
+    license_number?: string;
+    full_name?: string;
+  }): Promise<DriverProfileData | null> {
+    try {
+      const response = await apiClient.post<{ success: boolean; data: DriverProfileData }>(
+        '/transporter/profile',
+        payload
+      );
+      if (response.data?.success && response.data.data) {
+        return response.data.data;
+      }
+      return null;
+    } catch {
+      return null;
     }
   },
 

@@ -28,17 +28,35 @@ EXPO_PUBLIC_REVERB_PORT=8080
 EXPO_PUBLIC_REVERB_SCHEME=http
 ```
 
-### 2. Live Backend Integration
-- **Auth Flow:** Dedicated **6-Digit PIN Authentication** (`PinLoginScreen.tsx` & `RegisterScreen.tsx`) communicating directly with `POST /api/v1/auth/login-pin` & `POST /api/v1/auth/register`. Zero SMS carrier dependency for reliable, instant login. Sanctum Bearer tokens are persisted securely in `SecureTokenService`, and dynamic permissions & eager-loaded user attributes (wallet, address, role profile) are hydrated in `useAuthStore`.
+### 2. Live Backend Integration & Self-Healing Architecture
+- **Auth Flow & Session Self-Healing:** Dedicated **6-Digit PIN Authentication** (`PinLoginScreen.tsx` & `RegisterScreen.tsx`) communicating directly with `POST /api/v1/auth/login-pin` & `POST /api/v1/auth/register`. Zero SMS carrier dependency for reliable, instant login. Sanctum Bearer tokens are persisted securely in `SecureTokenService`, and dynamic permissions & eager-loaded user attributes (wallet, address, role profile) are hydrated in `useAuthStore`.
+- **Token Auto-Refresh & Dev Session Minting:** `apiClient.ts` intercepts HTTP 401 unauthenticated errors and automatically issues a refresh via `POST /api/v1/auth/refresh`. In local development, it mints a fresh developer testing token (`POST /api/v1/auth/dev-session`), preventing repetitive 401 console loops without kicking the developer to the login screen.
+- **Seller Dashboard Live Hydration:** `SellerDashboardScreen.tsx` loads `SellerService.getStoreProducts()` and `SellerService.getFulfillmentOrders()` in parallel on startup, ensuring the merchant's 25 products and live orders immediately render without requiring navigation to sub-tabs.
+- **Anti-IDOR & Zero-Demo Profile Architecture:** Completely purged all static mock data (fake store names, dummy revenues like 500,000 FCFA, fake license plates, hardcoded store IDs). Buyer, Seller, and Transporter profiles render clean empty default states ready for user input, while order and catalog actions enforce strict backend ownership checks.
+- **Android 15 Edge-to-Edge UI Compliance:** Fully conforms to modern Android edge-to-edge transparent navigation window specifications without deprecated background color calls.
 - **Checkout & Escrow:** `CheckoutPaymentScreen.tsx` submits orders to `POST /api/v1/orders` and initiates MoMo USSD payment push (`POST /api/v1/checkout/pay`).
 - **Orders & Tracking:** `BuyerOrdersScreen.tsx` & `OrderTrackingScreen.tsx` execute live delivery confirmations (`confirmReceipt` -> escrow release with 3.5% commission split) and dispute freezes (`dispute`).
 - **Wallet & Ledger:** `WalletScreen.tsx` fetches live PostgreSQL balances and transactions (`GET /api/v1/wallet`, `GET /api/v1/wallet/transactions`) and processes MTN MoMo/Orange Money top-ups (`POST /api/v1/wallet/fund`).
 
-### 3. Run Mobile App
+### 3. Running & Testing the Mobile App
+
 ```bash
 # From mobile directory
 npx expo start
 ```
+
+#### 📱 Testing on Physical Android Phone via Expo Go (Recommended)
+1. Install **Expo Go** from Google Play Store on your Android phone.
+2. Ensure your computer and phone are connected to the **same Wi-Fi network**.
+3. In `mobile/.env`, set `EXPO_PUBLIC_API_URL=http://<YOUR_COMPUTER_LAN_IP>:8000/api/v1` (e.g. `http://192.168.1.243:8000/api/v1`).
+4. Run `npx expo start` in the `mobile/` directory.
+5. In the Expo Go app on your phone, scan the QR code from your terminal or tap "Enter URL manually" and enter `exp://<YOUR_COMPUTER_LAN_IP>:8081`.
+
+#### ⚠️ Troubleshooting: `Error: 'adb' is not recognized` / `Failed to resolve the Android SDK path`
+- If you see `› Opening on Android... Failed to resolve the Android SDK path` in the terminal, it is because the letter `a` was pressed in the Expo CLI terminal.
+- Pressing `a` instructs Expo to open an Android emulator or launch over USB via the Android Debug Bridge (`adb`).
+- If you are testing on your physical phone with Expo Go over Wi-Fi, **do not press `a`**. Simply scan the QR code or enter the Expo URL in Expo Go.
+- If you want to test via USB `adb` or Android emulator, install Android Studio and add `C:\Users\<Username>\AppData\Local\Android\Sdk\platform-tools` to your Windows system `PATH`.
 
 ---
 
@@ -56,7 +74,7 @@ npx expo start
 | **Order Tracking** | `OrderTrackingScreen.tsx` | Real-time rider GPS marker, polyline route, ETA countdown, call/chat triggers |
 | **My Wallet** | `WalletScreen.tsx` | Available Balance card, privacy eye toggle (`👁`), 4-stage MoMo funding/withdrawal modal, `RecentTransactionsWidget` |
 | **Transactions History** | `TransactionHistoryScreen.tsx` | Full-screen history with text search (`🔍`), date pills (`7d`, `15d`, `1m`, `Custom`), date grouping, PDF statement download (`📥`) |
-| **Profile** | `ProfileScreen.tsx` | 52px 3D clay avatar with camera picker, Wallet Quick-Access card, My Orders status shortcuts, My Tools shortcuts, smart role access buttons |
+| **Profile** | `ProfileScreen.tsx` | Zero-Demo Profile architecture: dynamically binds live authenticated phone number & name, live order count badges from PostgreSQL, Wallet Quick-Access card, smart role switching buttons |
 | **Followed Stores** | `FollowedStoresScreen.tsx` | Followed merchant feed with latest product previews and 1-tap cart addition |
 | **Favorites** | `FavoritesScreen.tsx` | 2-column wishlist grid hooked into `useFavoritesStore` |
 | **Footprints** | `FootprintScreen.tsx` | Chronological browsing history logging up to 50 items with timestamps |
@@ -72,7 +90,8 @@ npx expo start
 | **Store Analytics** | `StoreAnalyticsScreen.tsx` | Revenue telemetry, available vs 48H escrow split, weekly Sales Velocity bar graph, key store KPIs, top products table, and PDF report export |
 | **Orders Queue** | `SellerOrdersScreen.tsx` | 2-hour auto-cancel countdown timer (`⏳ 01:45:00`), Dual Delivery Dispatch Modal (Express Transporter vs In-House Rider), step-by-step lifecycle actions |
 | **Store Wallet** | `SellerWalletScreen.tsx` | Available & Escrow balances, privacy eye toggle (`👁`), instant Mobile Money payout modal, `RecentTransactionsWidget` |
-| **Store Profile** | `SellerProfileScreen.tsx` | Store photo camera picker, Store ID copy, Store Wallet card, Fulfillment Queue status grid, Store Tools grid with Store Analytics link |
+| **Store Profile** | `SellerProfileScreen.tsx` | Zero-Demo Profile architecture: real-time store branding, unconfigured empty state prompt, live store order badges from PostgreSQL, Store Tools grid with Store Analytics link |
+| **Edit Store Profile** | `EditStoreProfileScreen.tsx` | Full merchant profile customization: Store Name, Category, Tagline, Address, Landmark Directions, Hours, Rider Pickup Instructions, and Photo upload |
 | **Seller Welcome** | `SellerWelcomeScreen.tsx` | 70% automated benefit carousel and capsule CTA button with smart role redirection |
 | **Store KYC** | `StoreKYCScreen.tsx` | 4-stage wizard with 80% form / 20% button split, multiline description textarea, category chips, and celebration modal |
 
@@ -84,6 +103,7 @@ npx expo start
 | **Job Offers** | `TransporterJobsScreen.tsx` | Nearby transport offers sorted by spatial distance, pickup/drop-off cards, and `QRScannerModal` (3 scanning modes) |
 | **Driver Earnings** | `TransporterEarningsScreen.tsx` | Available balance card, MoMo payout trigger, `RecentTransactionsWidget` |
 | **Active Delivery** | `TransporterActiveTripScreen.tsx` | GPS route navigation, store pickup confirmation, live location broadcasting, digital signature proof of delivery |
+| **Driver Profile** | `TransporterProfileScreen.tsx` | Zero-Demo Profile architecture: vehicle type & plate number customization via `POST /api/v1/transporter/profile`, unconfigured placeholder prompts, live trip count and rating stats |
 
 ---
 

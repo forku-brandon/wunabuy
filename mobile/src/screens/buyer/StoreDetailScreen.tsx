@@ -27,138 +27,21 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 type StoreTab = 'home' | 'products' | 'reviews' | 'about';
 
 // Sample Store Data Fallback
-const SAMPLE_STORE_DATA: FollowedStoreData = {
-  id: 'store_101',
-  name: 'Douala Tech Hub (Akwa)',
-  category: 'Electronics & Smart Devices',
-  rating_avg: 4.9,
-  total_reviews: 1420,
-  followers_count: 2840,
-  is_verified: true,
-  avatar_url: 'https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=400',
-  cover_url: 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=800',
-  location: 'Rue Joss, Akwa, Douala, Cameroon (1.2 km away)',
+// Sample Store Data Fallback
+const EMPTY_STORE_DATA: FollowedStoreData = {
+  id: '',
+  name: '',
+  category: '',
+  rating_avg: 0,
+  total_reviews: 0,
+  followers_count: 0,
+  is_verified: false,
+  avatar_url: '',
+  cover_url: '',
+  location: '',
   followedAt: new Date().toISOString(),
   featured_products: [],
 };
-
-const SAMPLE_STORE_PRODUCTS: Product[] = [
-  {
-    id: 'sp_1',
-    store_id: 'store_101',
-    name: 'Samsung Galaxy A54 5G (128GB)',
-    description: 'Crisp Super AMOLED 120Hz display, 50MP OIS camera, 5000mAh battery with fast charging.',
-    category: ProductCategory.ELECTRONICS,
-    price: 185000,
-    currency: 'XAF',
-    quantity: 14,
-    quality_tier: QualityTier.NEW,
-    images: [
-      'https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=800',
-      'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800',
-    ],
-    is_active: true,
-    rating_avg: 4.8,
-    total_reviews: 32,
-    distance_km: 1.2,
-    store: { id: 'store_101', store_name: 'Douala Tech Hub', rating_avg: 4.9, is_verified: true },
-    created_at: '2026-08-20T10:00:00Z',
-    updated_at: '2026-08-28T12:00:00Z',
-  },
-  {
-    id: 'sp_2',
-    store_id: 'store_101',
-    name: 'Wireless Bluetooth Earbuds Pro ANC',
-    description: 'Active noise cancellation, deep bass, 30h battery life with wireless charging case.',
-    category: ProductCategory.ELECTRONICS,
-    price: 25000,
-    currency: 'XAF',
-    quantity: 8,
-    quality_tier: QualityTier.NEW,
-    images: [
-      'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=800',
-    ],
-    is_active: true,
-    rating_avg: 4.6,
-    total_reviews: 19,
-    distance_km: 1.2,
-    store: { id: 'store_101', store_name: 'Douala Tech Hub', rating_avg: 4.9, is_verified: true },
-    created_at: '2026-08-21T11:00:00Z',
-    updated_at: '2026-08-28T12:00:00Z',
-  },
-  {
-    id: 'sp_3',
-    store_id: 'store_101',
-    name: '4K Ultra HD Action Camera + Accessories',
-    description: 'Waterproof up to 30m, dual screens, image stabilization, WiFi app control.',
-    category: ProductCategory.ELECTRONICS,
-    price: 45000,
-    currency: 'XAF',
-    quantity: 6,
-    quality_tier: QualityTier.LIKE_NEW,
-    images: [
-      'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=800',
-    ],
-    is_active: true,
-    rating_avg: 4.7,
-    total_reviews: 14,
-    distance_km: 1.2,
-    store: { id: 'store_101', store_name: 'Douala Tech Hub', rating_avg: 4.9, is_verified: true },
-    created_at: '2026-08-22T09:00:00Z',
-    updated_at: '2026-08-28T12:00:00Z',
-  },
-  {
-    id: 'sp_4',
-    store_id: 'store_101',
-    name: 'Fast Charging Power Bank 20000mAh',
-    description: '22.5W Super Charge, dual USB + Type-C ports, LED digital display.',
-    category: ProductCategory.ELECTRONICS,
-    price: 18000,
-    currency: 'XAF',
-    quantity: 12,
-    quality_tier: QualityTier.NEW,
-    images: [
-      'https://images.unsplash.com/photo-1609592424368-e4b2d18cbfe1?w=800',
-    ],
-    is_active: true,
-    rating_avg: 4.9,
-    total_reviews: 41,
-    distance_km: 1.2,
-    store: { id: 'store_101', store_name: 'Douala Tech Hub', rating_avg: 4.9, is_verified: true },
-    created_at: '2026-08-23T14:00:00Z',
-    updated_at: '2026-08-28T12:00:00Z',
-  },
-];
-
-const SAMPLE_REVIEWS = [
-  {
-    id: 'rev_1',
-    author: 'Jean-Paul K.',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200',
-    rating: 5,
-    date: 'Aug 28, 2026',
-    comment: 'Extremely fast delivery in Akwa! The Samsung Galaxy A54 was 100% original factory sealed. Escrow protection gave me total peace of mind.',
-    productName: 'Samsung Galaxy A54 5G',
-  },
-  {
-    id: 'rev_2',
-    author: 'Chantal Mballa',
-    avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200',
-    rating: 5,
-    date: 'Aug 24, 2026',
-    comment: 'Great store service! The seller answered all my questions within 5 minutes on chat. Will definitely buy again from Douala Tech Hub.',
-    productName: 'Wireless Bluetooth Earbuds Pro ANC',
-  },
-  {
-    id: 'rev_3',
-    author: 'Samuel Ebode',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200',
-    rating: 4,
-    date: 'Aug 18, 2026',
-    comment: 'Action camera works perfectly. Package arrived well packed by the express rider.',
-    productName: '4K Ultra HD Action Camera',
-  },
-];
 
 interface ExtendedStoreData extends FollowedStoreData {
   tagline?: string;
@@ -178,12 +61,13 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
   const sellerStore = useSellerStore();
 
   const passedStore = route?.params?.store;
-  const storeId = route?.params?.storeId || passedStore?.id || 'store_101';
+  const storeId = route?.params?.storeId || passedStore?.id || sellerStore.storeId || 'my_store';
 
-  const isOwnStore = storeId === 'store_1' || storeId === 'store_101' || !passedStore;
+  const isOwnStore = (sellerStore.storeId && storeId === sellerStore.storeId) || storeId === 'my_store' || !!route?.params?.preview;
 
   const [storeData, setStoreData] = useState<any>(null);
   const [storeProducts, setStoreProducts] = useState<Product[]>([]);
+  const [storeReviews, setStoreReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -191,16 +75,26 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
     const fetchStore = async () => {
       setLoading(true);
       try {
-        const res = await api.client.get(`/stores/${storeId}`).catch(() => null);
-        if (res?.data?.data && isMounted) {
-          setStoreData(res.data.data);
-          if (res.data.data.products && Array.isArray(res.data.data.products) && res.data.data.products.length > 0) {
-            setStoreProducts(res.data.data.products);
+        const effectiveStoreId = (storeId === 'my_store' && sellerStore.storeId) ? sellerStore.storeId : storeId;
+        const [storeRes, prodRes, reviewsRes] = await Promise.all([
+          api.client.get(`/stores/${effectiveStoreId}`).catch(() => null),
+          ProductsService.getProducts({ store_id: effectiveStoreId === 'my_store' ? undefined : effectiveStoreId }).catch(() => []),
+          api.client.get(`/reviews/store/${effectiveStoreId}`).catch(() => null),
+        ]);
+
+        if (storeRes?.data?.data && isMounted) {
+          setStoreData(storeRes.data.data);
+          if (storeRes.data.data.products && Array.isArray(storeRes.data.data.products) && storeRes.data.data.products.length > 0) {
+            setStoreProducts(storeRes.data.data.products);
           }
         }
-        const prodRes = await ProductsService.getProducts({ store_id: storeId });
         if (prodRes && prodRes.length > 0 && isMounted) {
           setStoreProducts(prodRes);
+        } else if (isOwnStore && sellerStore.products && sellerStore.products.length > 0 && isMounted) {
+          setStoreProducts(sellerStore.products);
+        }
+        if (reviewsRes?.data?.data && Array.isArray(reviewsRes.data.data) && isMounted) {
+          setStoreReviews(reviewsRes.data.data);
         }
       } catch (err) {
         console.warn('Failed to load store data:', err);
@@ -210,26 +104,27 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
     };
     fetchStore();
     return () => { isMounted = false; };
-  }, [storeId]);
+  }, [storeId, sellerStore.storeId, isOwnStore]);
 
   const storeInfo: ExtendedStoreData = {
-    ...SAMPLE_STORE_DATA,
+    ...EMPTY_STORE_DATA,
     id: storeId,
-    name: storeData?.store_name || passedStore?.name || passedStore?.store_name || (isOwnStore ? sellerStore.storeName : SAMPLE_STORE_DATA.name),
-    category: storeData?.category || passedStore?.category || (isOwnStore ? sellerStore.category : SAMPLE_STORE_DATA.category),
-    location: storeData?.address_text || passedStore?.location || (isOwnStore ? sellerStore.address : SAMPLE_STORE_DATA.location),
-    avatar_url: storeData?.logo_url || passedStore?.avatar_url || (isOwnStore ? sellerStore.logoUrl : SAMPLE_STORE_DATA.avatar_url),
-    cover_url: storeData?.banner_url || passedStore?.cover_url || (isOwnStore ? sellerStore.coverPhotoUrl : SAMPLE_STORE_DATA.cover_url),
-    tagline: storeData?.tagline || passedStore?.tagline || (isOwnStore ? sellerStore.tagline : 'Premier Certified Merchant'),
-    description: storeData?.description || passedStore?.description || (isOwnStore ? sellerStore.description : 'Certified merchant specializing in authentic products with Escrow warranty.'),
-    landmarkDirections: storeData?.landmark || passedStore?.landmarkDirections || (isOwnStore ? sellerStore.landmarkDirections : 'Opposite Place du Gouvernement, Next to Akwa Mall'),
-    primaryPhone: storeData?.phone || passedStore?.primaryPhone || (isOwnStore ? sellerStore.primaryPhone : '+237 670 123 456'),
-    secondaryPhone: passedStore?.secondaryPhone || (isOwnStore ? sellerStore.secondaryPhone : '+237 699 876 543'),
-    operatingHours: storeData?.counter_hours || passedStore?.operatingHours || (isOwnStore ? sellerStore.operatingHours : 'Mon - Sat: 8:00 AM - 6:30 PM'),
-    riderPickupInstructions: storeData?.rider_instructions || passedStore?.riderPickupInstructions || (isOwnStore ? sellerStore.riderPickupInstructions : 'Present 5-digit PIN at counter #2.'),
-    rating_avg: storeData?.rating_avg ?? (passedStore?.rating_avg ?? SAMPLE_STORE_DATA.rating_avg),
-    total_reviews: storeData?.total_reviews ?? (passedStore?.total_reviews ?? SAMPLE_STORE_DATA.total_reviews),
-    is_verified: storeData?.is_verified ?? (passedStore?.is_verified ?? SAMPLE_STORE_DATA.is_verified),
+    name: passedStore?.name || passedStore?.store_name || storeData?.store_name || (isOwnStore ? sellerStore.storeName : '') || 'Store',
+    category: passedStore?.category || storeData?.category || (isOwnStore ? sellerStore.category : '') || '',
+    location: passedStore?.location || storeData?.address_text || (isOwnStore ? sellerStore.address : '') || '',
+    avatar_url: passedStore?.avatar_url || storeData?.logo_url || (isOwnStore ? sellerStore.logoUrl : '') || '',
+    cover_url: passedStore?.cover_url || storeData?.banner_url || (isOwnStore ? sellerStore.coverPhotoUrl : '') || '',
+    tagline: passedStore?.tagline || storeData?.tagline || (isOwnStore ? sellerStore.tagline : '') || '',
+    description: passedStore?.description || storeData?.description || (isOwnStore ? sellerStore.description : '') || '',
+    landmarkDirections: passedStore?.landmarkDirections || storeData?.landmark || (isOwnStore ? sellerStore.landmarkDirections : '') || '',
+    primaryPhone: passedStore?.primaryPhone || storeData?.phone || (isOwnStore ? sellerStore.primaryPhone : '') || '',
+    secondaryPhone: passedStore?.secondaryPhone || (isOwnStore ? sellerStore.secondaryPhone : '') || '',
+    operatingHours: passedStore?.operatingHours || storeData?.counter_hours || (isOwnStore ? sellerStore.operatingHours : '') || '',
+    riderPickupInstructions: passedStore?.riderPickupInstructions || storeData?.rider_instructions || (isOwnStore ? sellerStore.riderPickupInstructions : '') || '',
+    rating_avg: passedStore?.rating_avg ?? storeData?.rating_avg ?? (isOwnStore ? sellerStore.ratingAvg : 0),
+    total_reviews: passedStore?.total_reviews ?? storeData?.total_reviews ?? (isOwnStore ? sellerStore.totalReviews : 0),
+    is_verified: passedStore?.is_verified ?? storeData?.is_verified ?? (isOwnStore ? sellerStore.isVerified : false),
+    followers_count: passedStore?.followers_count ?? (isOwnStore ? sellerStore.followersCount : 0),
   };
 
   const following = isFollowing(storeInfo.id);
@@ -242,7 +137,11 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
   const cartCount = getItemCount();
 
   const handleCallStore = (phoneNum?: string) => {
-    const raw = phoneNum || storeInfo.primaryPhone || '+237670123456';
+    const raw = phoneNum || storeInfo.primaryPhone;
+    if (!raw) {
+      setToastMessage('Merchant has not provided a phone number.');
+      return;
+    }
     const firstNumber = raw.split('/')[0].split(',')[0].trim();
     const cleaned = firstNumber.replace(/[^+\d]/g, '');
     if (cleaned) {
@@ -272,7 +171,7 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
     setToastMessage(`Added ${product.name} to cart! 🛒`);
   };
 
-  const allProducts = storeProducts.length > 0 ? storeProducts : SAMPLE_STORE_PRODUCTS;
+  const allProducts = storeProducts;
 
   const filteredProducts = allProducts.filter((prod) => {
     const matchesSearch = prod.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -330,7 +229,13 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 90 }}>
         {/* ── Store Cover Banner & Profile Card ────────────────────────────── */}
         <View style={styles.heroWrapper}>
-          <Image source={{ uri: storeInfo.cover_url }} style={styles.coverImage} resizeMode="cover" />
+          {storeInfo.cover_url ? (
+            <Image source={{ uri: storeInfo.cover_url }} style={styles.coverImage} resizeMode="cover" />
+          ) : (
+            <View style={[styles.coverImage, { backgroundColor: isDark ? colors.neutral[800] : colors.primary[100], justifyContent: 'center', alignItems: 'center' }]}>
+              <Ionicons name="storefront-outline" size={44} color={isDark ? colors.neutral[600] : colors.primary[300]} />
+            </View>
+          )}
           <View style={styles.coverOverlay} />
 
           {/* Floating Store Profile Card */}
@@ -338,10 +243,20 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
             <View style={styles.storeTopRow}>
               {/* Store Avatar */}
               <View style={styles.avatarWrapper}>
-                <Image source={{ uri: storeInfo.avatar_url }} style={styles.avatarImage} />
-                <View style={styles.verifiedBadgeIcon}>
-                  <Ionicons name="checkmark-circle" size={16} color={colors.primary[500]} />
-                </View>
+                {storeInfo.avatar_url ? (
+                  <Image source={{ uri: storeInfo.avatar_url }} style={styles.avatarImage} />
+                ) : (
+                  <View style={[styles.avatarImage, { backgroundColor: colors.primary[500], justifyContent: 'center', alignItems: 'center' }]}>
+                    <Text variant="h2" bold color="#FFFFFF">
+                      {storeInfo.name ? storeInfo.name.charAt(0).toUpperCase() : 'S'}
+                    </Text>
+                  </View>
+                )}
+                {storeInfo.is_verified && (
+                  <View style={styles.verifiedBadgeIcon}>
+                    <Ionicons name="checkmark-circle" size={16} color={colors.primary[500]} />
+                  </View>
+                )}
               </View>
 
               <View style={{ flex: 1, marginLeft: spacing.sm }}>
@@ -349,13 +264,19 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
                   {storeInfo.name}
                 </Text>
                 <Text variant="caption" secondary numberOfLines={1} style={{ marginTop: 2 }}>
-                  📍 {storeInfo.location}
+                  📍 {storeInfo.location || 'Location not specified'}
                 </Text>
 
                 {/* Seller Badges */}
                 <View style={styles.credentialsRow}>
-                  <Badge label="🥇 GOLD SUPPLIER" variant="primary" size="small" />
-                  <Badge label="🏬 VERIFIED STORE" variant="success" size="small" />
+                  {storeInfo.is_verified ? (
+                    <Badge label="🏬 VERIFIED STORE" variant="success" size="small" />
+                  ) : (
+                    <Badge label="🏬 REGISTERED MERCHANT" variant="neutral" size="small" />
+                  )}
+                  {storeInfo.category ? (
+                    <Badge label={storeInfo.category.toUpperCase()} variant="primary" size="small" />
+                  ) : null}
                 </View>
               </View>
             </View>
@@ -403,13 +324,13 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
               </TouchableOpacity>
             </View>
 
-            {/* De-cluttered 2x2 Seller Telemetry Grid */}
+            {/* Real Seller Telemetry Grid */}
             <View style={styles.telemetryGrid}>
               <View style={[styles.telemetryBox, { backgroundColor: isDark ? colors.neutral[800] : colors.neutral[100] }]}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                   <Ionicons name="star" size={14} color={colors.accent[500]} />
                   <Text variant="bodyMedium" bold>
-                    {storeInfo.rating_avg.toFixed(1)} / 5.0
+                    {storeInfo.rating_avg > 0 ? storeInfo.rating_avg.toFixed(1) : '5.0'}
                   </Text>
                 </View>
                 <Text variant="caption" secondary style={{ fontSize: 11, marginTop: 2 }}>
@@ -419,19 +340,19 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
 
               <View style={[styles.telemetryBox, { backgroundColor: isDark ? colors.neutral[800] : colors.neutral[100] }]}>
                 <Text variant="bodyMedium" bold color={colors.primary[600]}>
-                  99.4%
+                  {allProducts.length}
                 </Text>
                 <Text variant="caption" secondary style={{ fontSize: 11, marginTop: 2 }}>
-                  On-Time Shipping Rate
+                  Items in Store
                 </Text>
               </View>
 
               <View style={[styles.telemetryBox, { backgroundColor: isDark ? colors.neutral[800] : colors.neutral[100] }]}>
                 <Text variant="bodyMedium" bold color={colors.semantic.success[500]}>
-                  &lt; 10 Mins
+                  100%
                 </Text>
                 <Text variant="caption" secondary style={{ fontSize: 11, marginTop: 2 }}>
-                  Seller Response Time
+                  Escrow Protected
                 </Text>
               </View>
 
@@ -484,7 +405,7 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
           {[
             { key: 'home', label: '🏠 Overview' },
             { key: 'products', label: `🛍️ Catalog (${allProducts.length})` },
-            { key: 'reviews', label: `⭐ Reviews (${SAMPLE_REVIEWS.length})` },
+            { key: 'reviews', label: `⭐ Reviews (${storeReviews.length})` },
             { key: 'about', label: 'ℹ️ Store Info' },
           ].map((tab) => {
             const isActive = activeTab === tab.key;
@@ -513,21 +434,20 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
         {/* ── TAB 1: OVERVIEW ────────────────────────────────────────────────── */}
         {activeTab === 'home' && (
           <View style={styles.tabContentContainer}>
-            {/* Promo Banner Card */}
-            <Card style={[styles.promoBannerCard, { backgroundColor: isDark ? colors.neutral[800] : '#FFFBEB', borderColor: colors.accent[400] }]}>
-              <View style={styles.promoHeader}>
-                <Badge label="⚡ SPECIAL STORE PROMO" variant="warning" size="small" />
-                <Text variant="caption" bold color={colors.accent[600]}>
-                  LIMITED TIME SALE
+            {/* Promo / Tagline Banner Card - only if merchant specified a tagline */}
+            {storeInfo.tagline ? (
+              <Card style={[styles.promoBannerCard, { backgroundColor: isDark ? colors.neutral[800] : '#FFFBEB', borderColor: colors.accent[400] }]}>
+                <View style={styles.promoHeader}>
+                  <Badge label="⚡ STORE ANNOUNCEMENT" variant="warning" size="small" />
+                </View>
+                <Text variant="h2" bold style={{ marginTop: spacing.xs }}>
+                  {storeInfo.tagline}
                 </Text>
-              </View>
-              <Text variant="h2" bold style={{ marginTop: spacing.xs }}>
-                Grand Electronics Clearance • Up to 25% OFF
-              </Text>
-              <Text variant="caption" secondary style={{ marginTop: 4 }}>
-                All purchases protected by 48-hour escrow. Fast delivery across Douala &amp; Yaoundé.
-              </Text>
-            </Card>
+                <Text variant="caption" secondary style={{ marginTop: 4 }}>
+                  All purchases protected by 48-hour escrow. Fast delivery across Cameroon.
+                </Text>
+              </Card>
+            ) : null}
 
             {/* Store Story Card */}
             <Card style={styles.storyCard}>
@@ -538,63 +458,77 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
                 </Text>
               </View>
               <Text variant="bodyMedium" secondary style={{ lineHeight: 20 }}>
-                {storeInfo.description || `${storeInfo.name} is a premier certified merchant specializing in authentic products with official brand warranties and 48-hour escrow guarantee.`}
+                {storeInfo.description || `${storeInfo.name} is a merchant on Wunabuy. All purchases are backed by our 48-hour escrow protection.`}
               </Text>
             </Card>
 
-            {/* Top Selling Products */}
+            {/* Top Selling / Featured Products */}
             <View style={styles.sectionHeaderRow}>
               <Text variant="h2" bold>
-                🔥 Top Selling Products
+                🔥 Featured Products
               </Text>
-              <TouchableOpacity onPress={() => setActiveTab('products')}>
-                <Text variant="caption" bold color={colors.primary[600]}>
-                  See All ({allProducts.length}) ›
-                </Text>
-              </TouchableOpacity>
+              {allProducts.length > 0 && (
+                <TouchableOpacity onPress={() => setActiveTab('products')}>
+                  <Text variant="caption" bold color={colors.primary[600]}>
+                    See All ({allProducts.length}) ›
+                  </Text>
+                </TouchableOpacity>
+              )}
             </View>
 
-            <View style={styles.productsGrid}>
-              {allProducts.slice(0, 4).map((prod) => (
-                <TouchableOpacity
-                  key={prod.id}
-                  activeOpacity={0.88}
-                  onPress={() => navigation.navigate('ProductDetail', { product: prod })}
-                  style={[styles.productCard, { backgroundColor: theme.card, borderColor: theme.border }]}
-                >
-                  <Image source={{ uri: prod.images[0] }} style={styles.productImage} />
-                  <View style={styles.productCardBody}>
-                    <Text variant="caption" secondary bold numberOfLines={1}>
-                      {prod.category}
-                    </Text>
-                    <Text variant="bodyMedium" bold numberOfLines={2} style={{ marginTop: 2 }}>
-                      {prod.name}
-                    </Text>
-                    <View style={styles.priceRow}>
-                      <Text variant="bodyLarge" bold color={colors.primary[600]}>
-                        {formatXAF(prod.price)}
+            {allProducts.length === 0 ? (
+              <Card style={{ alignItems: 'center', paddingVertical: spacing.xl, marginTop: spacing.xs }}>
+                <Ionicons name="cube-outline" size={40} color={theme.textTertiary} />
+                <Text variant="bodyLarge" bold style={{ marginTop: spacing.sm }}>
+                  No Products Listed Yet
+                </Text>
+                <Text variant="caption" secondary align="center" style={{ marginTop: 4, maxWidth: 260 }}>
+                  This merchant hasn't published any items yet. Check back soon!
+                </Text>
+              </Card>
+            ) : (
+              <View style={styles.productsGrid}>
+                {allProducts.slice(0, 4).map((prod) => (
+                  <TouchableOpacity
+                    key={prod.id}
+                    activeOpacity={0.88}
+                    onPress={() => navigation.navigate('ProductDetail', { product: prod })}
+                    style={[styles.productCard, { backgroundColor: theme.card, borderColor: theme.border }]}
+                  >
+                    <Image source={{ uri: prod.images[0] }} style={styles.productImage} />
+                    <View style={styles.productCardBody}>
+                      <Text variant="caption" secondary bold numberOfLines={1}>
+                        {prod.category}
                       </Text>
-                    </View>
-
-                    <View style={styles.productFooterRow}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-                        <Ionicons name="star" size={12} color={colors.accent[500]} />
-                        <Text variant="caption" bold>
-                          {prod.rating_avg}
+                      <Text variant="bodyMedium" bold numberOfLines={2} style={{ marginTop: 2 }}>
+                        {prod.name}
+                      </Text>
+                      <View style={styles.priceRow}>
+                        <Text variant="bodyLarge" bold color={colors.primary[600]}>
+                          {formatXAF(prod.price)}
                         </Text>
                       </View>
-                      <TouchableOpacity
-                        activeOpacity={0.8}
-                        onPress={() => handleAddToCart(prod)}
-                        style={styles.quickAddBtn}
-                      >
-                        <Ionicons name="add" size={16} color="#FFFFFF" />
-                      </TouchableOpacity>
+
+                      <View style={styles.productFooterRow}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+                          <Ionicons name="star" size={12} color={colors.accent[500]} />
+                          <Text variant="caption" bold>
+                            {prod.rating_avg}
+                          </Text>
+                        </View>
+                        <TouchableOpacity
+                          activeOpacity={0.8}
+                          onPress={() => handleAddToCart(prod)}
+                          style={styles.quickAddBtn}
+                        >
+                          <Ionicons name="add" size={16} color="#FFFFFF" />
+                        </TouchableOpacity>
+                      </View>
                     </View>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
           </View>
         )}
 
@@ -602,142 +536,163 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
         {activeTab === 'products' && (
           <View style={styles.tabContentContainer}>
             {/* Category Chips */}
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterChipsRow}>
-              {['All', 'Electronics', 'Phones', 'Audio', 'Accessories'].map((cat) => {
-                const isSelected = selectedCategoryFilter === cat;
-                return (
-                  <TouchableOpacity
-                    key={cat}
-                    activeOpacity={0.8}
-                    onPress={() => setSelectedCategoryFilter(cat)}
-                    style={[
-                      styles.filterChip,
-                      {
-                        backgroundColor: isSelected ? colors.primary[500] : theme.card,
-                        borderColor: isSelected ? colors.primary[500] : theme.border,
-                      },
-                    ]}
-                  >
-                    <Text variant="caption" bold color={isSelected ? '#FFFFFF' : theme.text}>
-                      {cat}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-
-            <View style={styles.productsGrid}>
-              {filteredProducts.map((prod) => (
-                <TouchableOpacity
-                  key={prod.id}
-                  activeOpacity={0.88}
-                  onPress={() => navigation.navigate('ProductDetail', { product: prod })}
-                  style={[styles.productCard, { backgroundColor: theme.card, borderColor: theme.border }]}
-                >
-                  <Image source={{ uri: prod.images[0] }} style={styles.productImage} />
-                  <View style={styles.productCardBody}>
-                    <Text variant="caption" secondary bold numberOfLines={1}>
-                      {prod.category}
-                    </Text>
-                    <Text variant="bodyMedium" bold numberOfLines={2} style={{ marginTop: 2 }}>
-                      {prod.name}
-                    </Text>
-                    <View style={styles.priceRow}>
-                      <Text variant="bodyLarge" bold color={colors.primary[600]}>
-                        {formatXAF(prod.price)}
+            {allProducts.length > 0 && (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterChipsRow}>
+                {['All', ...Array.from(new Set(allProducts.map((p) => p.category).filter(Boolean)))].map((cat) => {
+                  const isSelected = selectedCategoryFilter === cat;
+                  return (
+                    <TouchableOpacity
+                      key={cat}
+                      activeOpacity={0.8}
+                      onPress={() => setSelectedCategoryFilter(cat)}
+                      style={[
+                        styles.filterChip,
+                        {
+                          backgroundColor: isSelected ? colors.primary[500] : theme.card,
+                          borderColor: isSelected ? colors.primary[500] : theme.border,
+                        },
+                      ]}
+                    >
+                      <Text variant="caption" bold color={isSelected ? '#FFFFFF' : theme.text}>
+                        {cat}
                       </Text>
-                    </View>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            )}
 
-                    <View style={styles.productFooterRow}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-                        <Ionicons name="star" size={12} color={colors.accent[500]} />
-                        <Text variant="caption" bold>
-                          {prod.rating_avg}
+            {filteredProducts.length === 0 ? (
+              <Card style={{ alignItems: 'center', paddingVertical: spacing.xl, marginTop: spacing.md }}>
+                <Ionicons name="bag-remove-outline" size={44} color={theme.textTertiary} />
+                <Text variant="bodyLarge" bold style={{ marginTop: spacing.sm }}>
+                  {searchQuery ? 'No Matching Products' : 'No Products Available'}
+                </Text>
+                <Text variant="caption" secondary align="center" style={{ marginTop: 4, maxWidth: 280 }}>
+                  {searchQuery
+                    ? `No products found matching "${searchQuery}". Try another search term.`
+                    : 'This store has no active products listed in this category.'}
+                </Text>
+              </Card>
+            ) : (
+              <View style={styles.productsGrid}>
+                {filteredProducts.map((prod) => (
+                  <TouchableOpacity
+                    key={prod.id}
+                    activeOpacity={0.88}
+                    onPress={() => navigation.navigate('ProductDetail', { product: prod })}
+                    style={[styles.productCard, { backgroundColor: theme.card, borderColor: theme.border }]}
+                  >
+                    <Image source={{ uri: prod.images[0] }} style={styles.productImage} />
+                    <View style={styles.productCardBody}>
+                      <Text variant="caption" secondary bold numberOfLines={1}>
+                        {prod.category}
+                      </Text>
+                      <Text variant="bodyMedium" bold numberOfLines={2} style={{ marginTop: 2 }}>
+                        {prod.name}
+                      </Text>
+                      <View style={styles.priceRow}>
+                        <Text variant="bodyLarge" bold color={colors.primary[600]}>
+                          {formatXAF(prod.price)}
                         </Text>
                       </View>
-                      <TouchableOpacity
-                        activeOpacity={0.8}
-                        onPress={() => handleAddToCart(prod)}
-                        style={styles.quickAddBtn}
-                      >
-                        <Ionicons name="add" size={16} color="#FFFFFF" />
-                      </TouchableOpacity>
+
+                      <View style={styles.productFooterRow}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+                          <Ionicons name="star" size={12} color={colors.accent[500]} />
+                          <Text variant="caption" bold>
+                            {prod.rating_avg}
+                          </Text>
+                        </View>
+                        <TouchableOpacity
+                          activeOpacity={0.8}
+                          onPress={() => handleAddToCart(prod)}
+                          style={styles.quickAddBtn}
+                        >
+                          <Ionicons name="add" size={16} color="#FFFFFF" />
+                        </TouchableOpacity>
+                      </View>
                     </View>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
           </View>
         )}
 
         {/* ── TAB 3: REVIEWS ─────────────────────────────────────────────────── */}
         {activeTab === 'reviews' && (
           <View style={styles.tabContentContainer}>
-            {/* Rating Breakdown Header */}
-            <Card style={styles.ratingSummaryCard}>
-              <View style={styles.ratingLeftCol}>
-                <Text style={styles.bigRatingText}>4.9</Text>
-                <View style={{ flexDirection: 'row', gap: 2, marginVertical: 4 }}>
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Ionicons key={star} name="star" size={16} color={colors.accent[500]} />
-                  ))}
-                </View>
-                <Text variant="caption" secondary>
-                  Based on 1,420 Verified Buyer Reviews
+            {storeReviews.length === 0 ? (
+              <Card style={{ alignItems: 'center', paddingVertical: spacing.xl, marginTop: spacing.xs }}>
+                <Ionicons name="star-outline" size={44} color={theme.textTertiary} />
+                <Text variant="bodyLarge" bold style={{ marginTop: spacing.sm }}>
+                  No Customer Reviews Yet
                 </Text>
-              </View>
-
-              <View style={styles.ratingRightCol}>
-                {[
-                  { star: '5★', pct: 88 },
-                  { star: '4★', pct: 9 },
-                  { star: '3★', pct: 2 },
-                  { star: '2★', pct: 1 },
-                  { star: '1★', pct: 0 },
-                ].map((row, idx) => (
-                  <View key={idx} style={styles.starBarRow}>
-                    <Text variant="caption" secondary style={{ width: 22 }}>
-                      {row.star}
+                <Text variant="caption" secondary align="center" style={{ marginTop: 4, maxWidth: 280 }}>
+                  Reviews and verified buyer ratings will appear here once orders are fulfilled.
+                </Text>
+              </Card>
+            ) : (
+              <>
+                {/* Rating Breakdown Header */}
+                <Card style={styles.ratingSummaryCard}>
+                  <View style={styles.ratingLeftCol}>
+                    <Text style={styles.bigRatingText}>
+                      {storeInfo.rating_avg ? storeInfo.rating_avg.toFixed(1) : '5.0'}
                     </Text>
-                    <View style={styles.starBarTrack}>
-                      <View style={[styles.starBarFill, { width: `${row.pct}%` }]} />
-                    </View>
-                    <Text variant="caption" secondary style={{ width: 28, textAlign: 'right' }}>
-                      {row.pct}%
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            </Card>
-
-            <View style={{ gap: spacing.md }}>
-              {SAMPLE_REVIEWS.map((rev) => (
-                <Card key={rev.id} style={styles.reviewCard}>
-                  <View style={styles.reviewHeader}>
-                    <Image source={{ uri: rev.avatar }} style={styles.reviewerAvatar} />
-                    <View style={{ flex: 1, marginLeft: spacing.sm }}>
-                      <Text variant="bodyMedium" bold>
-                        {rev.author}
-                      </Text>
-                      <Text variant="caption" secondary>
-                        {rev.date} • Verified Escrow Purchase
-                      </Text>
-                    </View>
-                    <View style={{ flexDirection: 'row', gap: 2 }}>
-                      {[...Array(rev.rating)].map((_, i) => (
-                        <Ionicons key={i} name="star" size={14} color={colors.accent[500]} />
+                    <View style={{ flexDirection: 'row', gap: 2, marginVertical: 4 }}>
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Ionicons
+                          key={star}
+                          name={star <= Math.round(storeInfo.rating_avg || 5) ? 'star' : 'star-outline'}
+                          size={16}
+                          color={colors.accent[500]}
+                        />
                       ))}
                     </View>
+                    <Text variant="caption" secondary>
+                      {storeReviews.length} Verified Reviews
+                    </Text>
                   </View>
-
-                  <Text variant="bodyMedium" style={{ marginVertical: spacing.xs, lineHeight: 20 }}>
-                    "{rev.comment}"
-                  </Text>
-
-                  <Badge label={`Purchased: ${rev.productName}`} variant="info" size="small" />
                 </Card>
-              ))}
-            </View>
+
+                <View style={{ gap: spacing.md, marginTop: spacing.sm }}>
+                  {storeReviews.map((rev, idx) => (
+                    <Card key={rev.id || idx} style={styles.reviewCard}>
+                      <View style={styles.reviewHeader}>
+                        <View style={[styles.reviewerAvatar, { backgroundColor: colors.primary[500], justifyContent: 'center', alignItems: 'center' }]}>
+                          <Text variant="caption" bold color="#FFFFFF">
+                            {(rev.author_name || rev.user_name || 'B').charAt(0).toUpperCase()}
+                          </Text>
+                        </View>
+                        <View style={{ flex: 1, marginLeft: spacing.sm }}>
+                          <Text variant="bodyMedium" bold>
+                            {rev.author_name || rev.user_name || 'Verified Buyer'}
+                          </Text>
+                          <Text variant="caption" secondary>
+                            {rev.created_at ? new Date(rev.created_at).toLocaleDateString() : 'Recent'} • Verified Escrow Purchase
+                          </Text>
+                        </View>
+                        <View style={{ flexDirection: 'row', gap: 2 }}>
+                          {[...Array(Math.min(5, rev.rating || 5))].map((_, i) => (
+                            <Ionicons key={i} name="star" size={14} color={colors.accent[500]} />
+                          ))}
+                        </View>
+                      </View>
+
+                      <Text variant="bodyMedium" style={{ marginVertical: spacing.xs, lineHeight: 20 }}>
+                        "{rev.comment || rev.review_text || 'Great service and authentic products!'}"
+                      </Text>
+
+                      {rev.product_name && (
+                        <Badge label={`Purchased: ${rev.product_name}`} variant="info" size="small" />
+                      )}
+                    </Card>
+                  ))}
+                </View>
+              </>
+            )}
           </View>
         )}
 
@@ -767,12 +722,12 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
                     Physical Store Address
                   </Text>
                   <Text variant="bodyMedium" bold>
-                    {storeInfo.location}
+                    {storeInfo.location || 'Location not specified by merchant'}
                   </Text>
                 </View>
               </View>
 
-              {storeInfo.landmarkDirections && (
+              {storeInfo.landmarkDirections ? (
                 <View style={styles.infoRow}>
                   <Ionicons name="compass-outline" size={18} color={colors.primary[500]} />
                   <View style={{ marginLeft: spacing.sm, flex: 1 }}>
@@ -784,9 +739,9 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
                     </Text>
                   </View>
                 </View>
-              )}
+              ) : null}
 
-              {storeInfo.riderPickupInstructions && (
+              {storeInfo.riderPickupInstructions ? (
                 <View style={styles.infoRow}>
                   <Ionicons name="bicycle-outline" size={18} color={colors.primary[500]} />
                   <View style={{ marginLeft: spacing.sm, flex: 1 }}>
@@ -798,7 +753,7 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
                     </Text>
                   </View>
                 </View>
-              )}
+              ) : null}
 
               <TouchableOpacity activeOpacity={0.7} onPress={() => handleCallStore(storeInfo.primaryPhone)} style={styles.infoRow}>
                 <Ionicons name="call-outline" size={18} color={colors.primary[500]} />
@@ -807,7 +762,7 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
                     Store Contact Phone Numbers (Tap to Call 📞)
                   </Text>
                   <Text variant="bodyMedium" bold color={colors.primary[600]}>
-                    {storeInfo.primaryPhone} {storeInfo.secondaryPhone ? `/ ${storeInfo.secondaryPhone}` : ''}
+                    {storeInfo.primaryPhone || 'Contact number not specified'} {storeInfo.secondaryPhone ? `/ ${storeInfo.secondaryPhone}` : ''}
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -819,7 +774,7 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
                     KYC Compliance Status
                   </Text>
                   <Text variant="bodyMedium" bold color={colors.semantic.success[500]}>
-                    ✓ Approved &amp; Verified Merchant (CNI + Storefront Inspection)
+                    {storeInfo.is_verified ? '✓ Approved & Verified Merchant (CNI + Storefront Inspection)' : 'Registered Merchant on Wunabuy Escrow Platform'}
                   </Text>
                 </View>
               </View>
@@ -836,7 +791,7 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
                     Operating Hours
                   </Text>
                   <Text variant="bodyMedium" bold>
-                    {storeInfo.operatingHours || 'Monday – Saturday: 08:00 AM – 06:30 PM'}
+                    {storeInfo.operatingHours || 'Contact merchant for store operating schedule'}
                   </Text>
                 </View>
               </View>

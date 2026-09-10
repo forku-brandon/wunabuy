@@ -16,13 +16,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScreenContainer, Text, Card, Avatar, Toast, Button, Badge } from '../../components/ui';
 import { ProductCard } from '../../components/product/ProductCard';
-import { Product, UserRole } from '@wunabuy/types';
+import { Product, UserRole, Order } from '@wunabuy/types';
 import { useAuthStore } from '../../stores/auth.store';
 import { useThemeStore } from '../../stores/theme.store';
 import { formatPhone, formatXAF } from '@wunabuy/utils';
 import { spacing, colors, borderRadius, shadows } from '@wunabuy/design-tokens';
-import { WalletService, AuthService, ProductsService } from '../../services/api';
+import { WalletService, AuthService, ProductsService, OrdersService } from '../../services/api';
 import * as ImagePicker from 'expo-image-picker';
+import { EditProfileModal } from './EditProfileModal';
 
 export const ProfileScreen = ({ navigation }: any) => {
   const insets = useSafeAreaInsets();
@@ -30,9 +31,11 @@ export const ProfileScreen = ({ navigation }: any) => {
   const { theme, isDark } = useThemeStore();
   const [walletBalance, setWalletBalance] = useState<number>(0);
   const [curatedProducts, setCuratedProducts] = useState<Product[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [isBalanceVisible, setIsBalanceVisible] = useState<boolean>(true);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [isEditProfileModalVisible, setIsEditProfileModalVisible] = useState<boolean>(false);
 
   // Avatar Modal State
   const [isAvatarModalVisible, setIsAvatarModalVisible] = useState<boolean>(false);
@@ -41,15 +44,19 @@ export const ProfileScreen = ({ navigation }: any) => {
 
   const loadProfileData = useCallback(async () => {
     try {
-      const [walletData, products] = await Promise.all([
+      const [walletData, products, ordersList] = await Promise.all([
         WalletService.getWallet(),
         ProductsService.getProducts({ sort_by: 'rating' }),
+        OrdersService.getOrders(),
       ]);
       if (walletData) {
         setWalletBalance(walletData.balance_available);
       }
       if (products && products.length > 0) {
         setCuratedProducts(products);
+      }
+      if (ordersList && Array.isArray(ordersList)) {
+        setOrders(ordersList);
       }
     } catch {
       // Safe fallback
@@ -162,6 +169,10 @@ export const ProfileScreen = ({ navigation }: any) => {
     }
   };
 
+  const toShipCount = orders.filter((o) => ['preparing', 'ready_for_pickup', 'paid_escrow', 'pending'].includes(o.status)).length;
+  const toReceiveCount = orders.filter((o) => ['in_transit', 'en_route'].includes(o.status)).length;
+  const toReviewCount = orders.filter((o) => ['delivered', 'completed', 'received'].includes(o.status)).length;
+
   const ListHeader = (
     <>
       {/* Top Header Row with Settings Gear Icon (Matching media_1787828841561.png) */}
@@ -189,33 +200,26 @@ export const ProfileScreen = ({ navigation }: any) => {
 
           <TouchableOpacity
             activeOpacity={0.85}
-            onPress={() => navigation.navigate('Settings')}
+            onPress={() => setIsEditProfileModalVisible(true)}
             style={styles.userHeaderTextCol}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
               <Text variant="h2" bold numberOfLines={1}>
-                {activeRole === UserRole.SELLER ? ((user as any)?.store?.store_name || user?.full_name || 'Seller Store') : (user?.full_name ?? 'Member')}
+                {activeRole === UserRole.SELLER ? ((user as any)?.store?.store_name || user?.full_name || 'Set Up Store') : (user?.full_name || 'Set Up Profile')}
               </Text>
               <Badge
                 label={activeRole === UserRole.SELLER ? 'SELLER' : activeRole === UserRole.TRANSPORTER ? 'TRANSPORTER' : 'BUYER'}
                 variant={activeRole === UserRole.SELLER ? 'seller' : activeRole === UserRole.TRANSPORTER ? 'warning' : 'primary'}
                 size="small"
               />
+              <Ionicons name="pencil-outline" size={13} color={colors.primary[500]} />
             </View>
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={() => {
-                const p = user?.phone || '';
-                const cleaned = p.replace(/[^+\d]/g, '');
-                if (cleaned) Linking.openURL(`tel:${cleaned}`).catch(() => {});
-              }}
-              style={styles.userPhoneRow}
-            >
+            <View style={styles.userPhoneRow}>
               <Ionicons name="call-outline" size={12} color={colors.primary[500]} style={{ marginRight: 4 }} />
               <Text variant="caption" color={colors.primary[600]} numberOfLines={1}>
-                {user?.phone ? `${formatPhone(user.phone)} 📞` : ''}
+                {user?.phone ? formatPhone(user.phone) : 'Tap to set phone number +'}
               </Text>
-            </TouchableOpacity>
+            </View>
           </TouchableOpacity>
         </View>
 
@@ -317,11 +321,13 @@ export const ProfileScreen = ({ navigation }: any) => {
           >
             <View style={styles.iconBadgeWrapper}>
               <Ionicons name="archive-outline" size={26} color={theme.text} />
-              <View style={styles.statusBadge}>
-                <Text variant="caption" bold color={colors.neutral[0]} style={styles.statusBadgeText}>
-                  3
-                </Text>
-              </View>
+              {toShipCount > 0 && (
+                <View style={styles.statusBadge}>
+                  <Text variant="caption" bold color={colors.neutral[0]} style={styles.statusBadgeText}>
+                    {toShipCount}
+                  </Text>
+                </View>
+              )}
             </View>
             <Text variant="caption" style={styles.statusText}>
               To Ship
@@ -336,11 +342,13 @@ export const ProfileScreen = ({ navigation }: any) => {
           >
             <View style={styles.iconBadgeWrapper}>
               <Ionicons name="bus-outline" size={26} color={theme.text} />
-              <View style={styles.statusBadge}>
-                <Text variant="caption" bold color={colors.neutral[0]} style={styles.statusBadgeText}>
-                  15
-                </Text>
-              </View>
+              {toReceiveCount > 0 && (
+                <View style={styles.statusBadge}>
+                  <Text variant="caption" bold color={colors.neutral[0]} style={styles.statusBadgeText}>
+                    {toReceiveCount}
+                  </Text>
+                </View>
+              )}
             </View>
             <Text variant="caption" style={styles.statusText}>
               To Receive
@@ -355,11 +363,13 @@ export const ProfileScreen = ({ navigation }: any) => {
           >
             <View style={styles.iconBadgeWrapper}>
               <Ionicons name="chatbox-ellipses-outline" size={26} color={theme.text} />
-              <View style={styles.statusBadge}>
-                <Text variant="caption" bold color={colors.neutral[0]} style={styles.statusBadgeText}>
-                  1
-                </Text>
-              </View>
+              {toReviewCount > 0 && (
+                <View style={styles.statusBadge}>
+                  <Text variant="caption" bold color={colors.neutral[0]} style={styles.statusBadgeText}>
+                    {toReviewCount}
+                  </Text>
+                </View>
+              )}
             </View>
             <Text variant="caption" style={styles.statusText}>
               To Review
@@ -671,6 +681,12 @@ export const ProfileScreen = ({ navigation }: any) => {
           </View>
         </View>
       </Modal>
+
+      <EditProfileModal
+        visible={isEditProfileModalVisible}
+        onClose={() => setIsEditProfileModalVisible(false)}
+        onSuccess={(msg) => setToastMessage(msg)}
+      />
 
       {toastMessage && <Toast message={toastMessage} type="info" />}
     </View>

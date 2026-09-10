@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Models\Advert;
 use App\Models\AuditLog;
 use App\Models\Dispute;
 use App\Models\Order;
@@ -108,38 +109,109 @@ class StaffPortalController extends Controller
      */
     public function getPayoutLedger(): JsonResponse
     {
-        $payouts = [
-            [
-                'id' => 'po_001',
-                'reference_code' => 'WNB-PO-98124',
-                'entity_name' => 'Akwa Super Store (Amadou Bello)',
-                'entity_type' => 'SELLER',
-                'payment_method' => 'MTN_MOMO',
-                'account_number' => '+237 671 223 344',
-                'amount' => 125000,
-                'commission_deducted' => 4375,
-                'net_payout' => 120625,
-                'status' => 'PENDING_APPROVAL',
-                'requested_at' => now()->subHours(3)->toIso8601String(),
-                'risk_score' => 'LOW',
-            ],
-            [
-                'id' => 'po_002',
-                'reference_code' => 'WNB-PO-98125',
-                'entity_name' => 'Paul Eto\'o (Moto LT-8492-AB)',
-                'entity_type' => 'TRANSPORTER',
-                'payment_method' => 'ORANGE_MONEY',
-                'account_number' => '+237 699 445 566',
-                'amount' => 48500,
-                'commission_deducted' => 0,
-                'net_payout' => 48500,
-                'status' => 'PROCESSED',
-                'requested_at' => now()->subDay()->toIso8601String(),
-                'risk_score' => 'LOW',
-            ],
-        ];
+        $transactions = WalletTransaction::with(['wallet.user.store', 'wallet.user.transporter'])
+            ->whereIn('type', ['debit', 'withdrawal', 'payout', 'escrow_release', 'delivery_earning'])
+            ->orWhere('amount', '<', 0)
+            ->latest()
+            ->take(50)
+            ->get();
+
+        $payouts = [];
+        foreach ($transactions as $tx) {
+            $user = $tx->wallet?->user;
+            $store = $user?->store;
+            $transporter = $user?->transporter;
+
+            $entityType = 'BUYER';
+            if ($store) {
+                $entityType = 'SELLER';
+            } elseif ($transporter) {
+                $entityType = 'TRANSPORTER';
+            } elseif ($user?->role === 'seller') {
+                $entityType = 'SELLER';
+            } elseif ($user?->role === 'transporter') {
+                $entityType = 'TRANSPORTER';
+            }
+
+            $entityName = $user?->full_name ?? 'Platform User';
+            if ($store) {
+                $entityName = $store->store_name . ' (' . $user->full_name . ')';
+            } elseif ($transporter) {
+                $entityName = $user->full_name . ' (' . ($transporter->vehicle_plate ?? 'Driver') . ')';
+            }
+
+            $rawAmount = abs((float) $tx->amount);
+            $commission = round($rawAmount * 0.035, 2);
+            $netPayout = round($rawAmount - $commission, 2);
+
+            $provider = strtoupper($tx->provider ?? '');
+            $ref = strtoupper($tx->reference ?? '');
+            $isOrange = str_contains($provider, 'ORANGE') || str_contains($ref, 'OM') || str_contains($ref, 'ORANGE');
+            $paymentMethod = $isOrange ? 'ORANGE_MONEY' : 'MTN_MOMO';
+
+            $status = 'PROCESSED';
+            if ($tx->status === 'pending') {
+                $status = 'PENDING_APPROVAL';
+            } elseif ($tx->status === 'failed' || $tx->status === 'cancelled') {
+                $status = 'FLAGGED';
+            }
+
+            $riskScore = 'LOW';
+            if ($rawAmount > 500000) {
+                $riskScore = 'HIGH';
+            } elseif ($rawAmount > 100000) {
+                $riskScore = 'MEDIUM';
+            }
+
+            $payouts[] = [
+                'id' => $tx->id,
+                'reference_code' => $tx->reference ?: ('WNB-PO-' . strtoupper(substr($tx->id, 0, 8))),
+                'entity_name' => $entityName,
+                'entity_type' => $entityType,
+                'payment_method' => $paymentMethod,
+                'account_number' => $user?->phone ?? '+237 670 000 000',
+                'amount' => $rawAmount,
+                'commission_deducted' => $commission,
+                'net_payout' => $netPayout,
+                'status' => $status,
+                'requested_at' => $tx->created_at?->toIso8601String() ?? now()->toIso8601String(),
+                'risk_score' => $riskScore,
+            ];
+        }
 
         return $this->respondSuccess($payouts);
+    }
+
+    /**
+     * Live platform financial stats for treasury operations.
+     */
+    public function getFinancialStats(): JsonResponse
+    {
+        $escrowReserves = (float) Order::whereIn('status', [
+            'paid_escrow', 'confirmed', 'ready_for_pickup', 'in_transit', 'picked_up', 'en_route'
+        ])->sum('total');
+
+        $pendingPayouts = WalletTransaction::where('status', 'pending')
+            ->whereIn('type', ['debit', 'withdrawal', 'payout']);
+        $pendingCount = $pendingPayouts->count();
+        $pendingAmount = abs((float) $pendingPayouts->sum('amount'));
+
+        $commissionNetYTD = (float) Order::sum('commission');
+        if ($commissionNetYTD <= 0) {
+            $commissionNetYTD = round((float) Order::sum('total') * 0.035, 2);
+        }
+
+        $dailyMoMoSettlement = (float) WalletTransaction::whereDate('created_at', now()->toDateString())
+            ->where('status', 'completed')
+            ->sum(DB::raw('ABS(amount)'));
+
+        return $this->respondSuccess([
+            'escrow_reserves' => $escrowReserves,
+            'pending_disbursals_count' => $pendingCount,
+            'pending_disbursals_amount' => $pendingAmount,
+            'commission_net_ytd' => $commissionNetYTD,
+            'daily_momo_settlement' => $dailyMoMoSettlement,
+        ]);
     }
 
     /**
@@ -233,42 +305,35 @@ class StaffPortalController extends Controller
      */
     public function getDisputes(): JsonResponse
     {
-        $disputes = Dispute::with(['order.store', 'raisedBy'])->get();
+        $disputes = Dispute::with(['order.store', 'order.customer', 'order.transporter.user', 'raisedBy'])
+            ->latest()
+            ->get();
 
         $list = [];
         foreach ($disputes as $d) {
+            $order = $d->order;
+            $buyer = $d->raisedBy ?? $order?->customer;
+            $sellerStore = $order?->store;
+            $transporterUser = $order?->transporter?->user;
+
+            $photos = $d->evidence_photos;
+            if (is_string($photos)) {
+                $decoded = json_decode($photos, true);
+                $photos = is_array($decoded) ? $decoded : [$photos];
+            }
+
             $list[] = [
                 'id' => $d->id,
-                'order_code' => $d->order->order_code ?? 'WB-2026-9842',
-                'buyer_name' => $d->raisedBy->full_name ?? 'Jean Dupont',
-                'seller_name' => $d->order?->store?->store_name ?? 'Akwa Super Store',
-                'transporter_name' => 'Paul Eto\'o',
-                'dispute_reason' => $d->reason ?? 'Damaged item',
-                'dispute_description' => $d->description ?? 'Item arrived with damages upon inspection.',
-                'escrow_amount' => (float) ($d->order->total_amount ?? 85000),
+                'order_code' => $order?->order_code ?? ('WB-DISP-' . substr($d->id, 0, 6)),
+                'buyer_name' => $buyer?->full_name ?? 'Buyer Account',
+                'seller_name' => $sellerStore?->store_name ?? 'Sigate Electronics Ltd',
+                'transporter_name' => $transporterUser?->full_name ?? 'Paul Eto\'o',
+                'dispute_reason' => $d->reason ?? 'Order Dispute',
+                'dispute_description' => $d->description ?? 'Dispute filed by customer awaiting review.',
+                'escrow_amount' => (float) ($order?->total ?? $d->refund_amount ?? 0),
                 'status' => strtoupper($d->status ?? 'OPEN'),
-                'filed_at' => $d->created_at?->toIso8601String() ?? now()->subDay()->toIso8601String(),
-                'evidence_photos' => !empty($d->evidence_photos) ? $d->evidence_photos : [
-                    'https://images.unsplash.com/photo-1592750475338-74b7b21085ab?auto=format&fit=crop&w=600&q=80',
-                ],
-            ];
-        }
-
-        if (empty($list)) {
-            $list[] = [
-                'id' => 'disp_001',
-                'order_code' => 'WB-2026-9842',
-                'buyer_name' => 'Jean Dupont',
-                'seller_name' => 'Akwa Super Store',
-                'transporter_name' => 'Paul Eto\'o',
-                'dispute_reason' => 'Damaged screen upon unboxing',
-                'dispute_description' => 'Buyer unboxed the smartphone in presence of transporter and noticed deep hairline fracture on glass panel.',
-                'escrow_amount' => 85000,
-                'status' => 'OPEN',
-                'filed_at' => now()->subHours(6)->toIso8601String(),
-                'evidence_photos' => [
-                    'https://images.unsplash.com/photo-1592750475338-74b7b21085ab?auto=format&fit=crop&w=600&q=80',
-                ],
+                'filed_at' => $d->created_at?->toIso8601String() ?? now()->toIso8601String(),
+                'evidence_photos' => !empty($photos) ? $photos : [],
             ];
         }
 
@@ -283,10 +348,12 @@ class StaffPortalController extends Controller
         $ruling = $request->input('ruling_type', 'BUYER_REFUND');
         $rationale = $request->input('rationale', 'Adjudicated per photographic evidence inspection');
 
-        $dispute = (\Illuminate\Support\Str::isUuid($id) ? Dispute::find($id) : null) ?? Dispute::first();
-        if ($dispute) {
-            $this->escrowService->adjudicateDispute($dispute->id, $ruling, $rationale, 'Compliance Staff');
+        $dispute = \Illuminate\Support\Str::isUuid($id) ? Dispute::find($id) : null;
+        if (!$dispute) {
+            return $this->respondError('NOT_FOUND', 'Dispute record not found', null, 404);
         }
+
+        $this->escrowService->adjudicateDispute($dispute->id, $ruling, $rationale, 'Compliance Staff');
 
         return $this->respondSuccess([
             'id' => $id,
@@ -302,46 +369,77 @@ class StaffPortalController extends Controller
      */
     public function getActiveTrips(): JsonResponse
     {
-        $trips = [
-            [
-                'id' => 'trp_001',
-                'trip_code' => 'TRIP-WB-9842',
-                'driver_name' => 'Paul Eto\'o',
-                'driver_phone' => '+237 699 445 566',
-                'driver_vehicle' => 'Moto Yamaha YBR 125 (LT-8492-AB)',
-                'store_name' => 'Akwa Super Store',
-                'pickup_quarter' => 'Akwa',
-                'buyer_name' => 'Jean Dupont',
-                'delivery_quarter' => 'Bonanjo',
-                'delivery_fee' => 1500,
-                'stage' => 3,
-                'stage_name' => 'En Route to Customer',
-                'distance_km' => 2.4,
-                'elapsed_mins' => 14,
-                'status' => 'en_route',
-                'latitude' => 4.0560,
-                'longitude' => 9.7750,
-            ],
-            [
-                'id' => 'trp_002',
-                'trip_code' => 'TRIP-WB-9843',
-                'driver_name' => 'Jean-Paul Kamga',
-                'driver_phone' => '+237 670 123 456',
-                'driver_vehicle' => 'Moto Boxer 150 (LT-214-AA)',
-                'store_name' => 'Kilo Shop Bonapriso',
-                'pickup_quarter' => 'Bonapriso',
-                'buyer_name' => 'Marie Claire Ngono',
-                'delivery_quarter' => 'Deido',
-                'delivery_fee' => 2500,
-                'stage' => 1,
-                'stage_name' => 'Arriving at Merchant Counter',
-                'distance_km' => 1.8,
-                'elapsed_mins' => 6,
-                'status' => 'picked_up',
-                'latitude' => 4.0321,
-                'longitude' => 9.6987,
-            ],
-        ];
+        $orders = Order::whereIn('status', [
+            'paid_escrow', 'confirmed', 'ready_for_pickup', 'in_transit', 'picked_up', 'en_route', 'delivered'
+        ])
+        ->with(['store', 'customer', 'transporter.user'])
+        ->latest()
+        ->get();
+
+        $trips = [];
+        foreach ($orders as $order) {
+            $transporter = $order->transporter;
+            $transporterUser = $transporter?->user;
+            $store = $order->store;
+            $customer = $order->customer;
+
+            $stage = 1;
+            $stageName = 'Merchant Packaging';
+            $tripStatus = 'en_route';
+
+            switch ($order->status) {
+                case 'ready_for_pickup':
+                    $stage = 1;
+                    $stageName = 'Merchant Handover Pending';
+                    $tripStatus = 'picked_up';
+                    break;
+                case 'picked_up':
+                    $stage = 2;
+                    $stageName = 'Package Picked Up (QR Verified)';
+                    $tripStatus = 'picked_up';
+                    break;
+                case 'in_transit':
+                case 'en_route':
+                    $stage = 3;
+                    $stageName = 'En Route to Buyer';
+                    $tripStatus = 'en_route';
+                    break;
+                case 'delivered':
+                    $stage = 4;
+                    $stageName = 'Arrived & Delivered to Customer';
+                    $tripStatus = 'delivered';
+                    break;
+                default:
+                    $stage = 1;
+                    $stageName = 'Dispatched to Fleet';
+                    $tripStatus = 'en_route';
+                    break;
+            }
+
+            $driverName = $transporterUser?->full_name ?? 'Paul Eto\'o (Express Courier)';
+            $driverPhone = $transporterUser?->phone ?? '+237680445566';
+            $vehicleStr = ($transporter?->vehicle_type ?? 'Motorcycle') . ' (' . ($transporter?->vehicle_plate ?? 'LT-CAM-2026') . ')';
+
+            $trips[] = [
+                'id' => $order->id,
+                'trip_code' => 'TRIP-' . ($order->order_code ?? substr($order->id, 0, 8)),
+                'driver_name' => $driverName,
+                'driver_phone' => $driverPhone,
+                'driver_vehicle' => $vehicleStr,
+                'store_name' => $store?->store_name ?? 'Sigate Electronics Ltd',
+                'pickup_quarter' => $store?->city ?? 'Akwa, Douala',
+                'buyer_name' => $customer?->full_name ?? 'Customer',
+                'delivery_quarter' => $order->delivery_address ?? 'Douala',
+                'delivery_fee' => (float) ($order->delivery_fee ?? 1500),
+                'stage' => $stage,
+                'stage_name' => $stageName,
+                'distance_km' => 3.2,
+                'elapsed_mins' => max(5, round(now()->diffInMinutes($order->updated_at ?? now()))),
+                'status' => $tripStatus,
+                'latitude' => 4.051055,
+                'longitude' => 9.7678687,
+            ];
+        }
 
         return $this->respondSuccess($trips);
     }
@@ -354,7 +452,21 @@ class StaffPortalController extends Controller
         $stage = (int) $request->input('stage', 4);
         $reason = $request->input('reason', 'Manual staff override');
 
+        $order = Order::find($id);
+        if ($order) {
+            if ($stage === 4) {
+                $order->status = 'delivered';
+                $order->delivered_at = now();
+            } elseif ($stage === 3) {
+                $order->status = 'in_transit';
+            } elseif ($stage === 2) {
+                $order->status = 'picked_up';
+            }
+            $order->save();
+        }
+
         AuditLog::create([
+            'id' => (string) Str::uuid(),
             'action' => 'TRIP_STAGE_OVERRIDE',
             'staff_name' => 'Super Administrator',
             'staff_role' => 'DISPATCH_OPERATOR',
@@ -677,5 +789,347 @@ class StaffPortalController extends Controller
         }
 
         return $this->respondSuccess(['id' => $id, 'status' => $status]);
+    }
+
+    /**
+     * Staff Portal: Get all adverts / campaigns / partners.
+     */
+    public function getAdverts(Request $request): JsonResponse
+    {
+        $query = Advert::query();
+
+        if ($audience = $request->query('audience')) {
+            $query->where('target_audience', $audience);
+        }
+
+        if ($type = $request->query('type')) {
+            $query->where('type', $type);
+        }
+
+        if ($request->has('is_active')) {
+            $query->where('is_active', filter_var($request->query('is_active'), FILTER_VALIDATE_BOOLEAN));
+        }
+
+        $adverts = $query->orderBy('sort_order', 'asc')->orderBy('created_at', 'desc')->get();
+
+        return $this->respondSuccess($adverts);
+    }
+
+    /**
+     * Staff Portal: Create advert / banner / tip / partner.
+     */
+    public function createAdvert(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'type' => 'required|string|in:tip,banner,special_offer,partner',
+            'target_audience' => 'required|string|in:seller,buyer,transporter,all',
+            'badge' => 'nullable|string|max:100',
+            'badge_color' => 'nullable|string|max:50',
+            'subtitle' => 'nullable|string',
+            'cta_text' => 'nullable|string|max:100',
+            'action_screen' => 'nullable|string|max:100',
+            'action_url' => 'nullable|string|max:255',
+            'image_url' => 'nullable|string',
+            'icon_name' => 'nullable|string|max:100',
+            'icon_color' => 'nullable|string|max:50',
+            'category' => 'nullable|string|max:100',
+            'discount_percent' => 'nullable|integer',
+            'sort_order' => 'nullable|integer',
+            'is_active' => 'nullable|boolean',
+        ]);
+
+        $advert = Advert::create([
+            'id' => (string) Str::uuid(),
+            'target_audience' => $validated['target_audience'],
+            'type' => $validated['type'],
+            'badge' => $validated['badge'] ?? null,
+            'badge_color' => $validated['badge_color'] ?? null,
+            'title' => $validated['title'],
+            'subtitle' => $validated['subtitle'] ?? null,
+            'cta_text' => $validated['cta_text'] ?? null,
+            'action_screen' => $validated['action_screen'] ?? null,
+            'action_url' => $validated['action_url'] ?? null,
+            'image_url' => $validated['image_url'] ?? null,
+            'icon_name' => $validated['icon_name'] ?? null,
+            'icon_color' => $validated['icon_color'] ?? null,
+            'category' => $validated['category'] ?? null,
+            'discount_percent' => $validated['discount_percent'] ?? null,
+            'sort_order' => $validated['sort_order'] ?? 0,
+            'is_active' => $validated['is_active'] ?? true,
+            'created_by' => 'Staff Admin',
+        ]);
+
+        AuditLog::create([
+            'id' => (string) Str::uuid(),
+            'action' => 'ADVERT_CREATED',
+            'staff_id' => 'stf_001',
+            'staff_name' => 'Staff Administrator',
+            'staff_role' => 'SUPER_ADMIN',
+            'department' => 'MARKETING',
+            'target_resource' => 'advert:' . $advert->id,
+            'status' => 'SUCCESS',
+            'details' => ['title' => $advert->title, 'type' => $advert->type, 'target_audience' => $advert->target_audience],
+        ]);
+
+        return $this->respondSuccess($advert, [], 201);
+    }
+
+    /**
+     * Staff Portal: Get single advert details.
+     */
+    public function getAdvert(string $id): JsonResponse
+    {
+        $advert = Advert::find($id);
+        if (!$advert) {
+            return $this->respondError('NOT_FOUND', 'Advert not found', null, 404);
+        }
+
+        return $this->respondSuccess($advert);
+    }
+
+    /**
+     * Staff Portal: Update advert.
+     */
+    public function updateAdvert(Request $request, string $id): JsonResponse
+    {
+        $advert = Advert::find($id);
+        if (!$advert) {
+            return $this->respondError('NOT_FOUND', 'Advert not found', null, 404);
+        }
+
+        $fields = [
+            'target_audience', 'type', 'badge', 'badge_color', 'title',
+            'subtitle', 'cta_text', 'action_screen', 'action_url', 'image_url',
+            'icon_name', 'icon_color', 'category', 'discount_percent', 'sort_order', 'is_active'
+        ];
+
+        foreach ($fields as $field) {
+            if ($request->has($field)) {
+                $advert->{$field} = $request->input($field);
+            }
+        }
+
+        $advert->save();
+
+        AuditLog::create([
+            'id' => (string) Str::uuid(),
+            'action' => 'ADVERT_UPDATED',
+            'staff_id' => 'stf_001',
+            'staff_name' => 'Staff Administrator',
+            'staff_role' => 'SUPER_ADMIN',
+            'department' => 'MARKETING',
+            'target_resource' => 'advert:' . $advert->id,
+            'status' => 'SUCCESS',
+            'details' => ['id' => $advert->id, 'title' => $advert->title, 'is_active' => $advert->is_active],
+        ]);
+
+        return $this->respondSuccess($advert);
+    }
+
+    /**
+     * Staff Portal: Delete advert.
+     */
+    public function deleteAdvert(string $id): JsonResponse
+    {
+        $advert = Advert::find($id);
+        if (!$advert) {
+            return $this->respondError('NOT_FOUND', 'Advert not found', null, 404);
+        }
+
+        $advertTitle = $advert->title;
+        $advert->delete();
+
+        AuditLog::create([
+            'id' => (string) Str::uuid(),
+            'action' => 'ADVERT_DELETED',
+            'staff_id' => 'stf_001',
+            'staff_name' => 'Staff Administrator',
+            'staff_role' => 'SUPER_ADMIN',
+            'department' => 'MARKETING',
+            'target_resource' => 'advert:' . $id,
+            'status' => 'SUCCESS',
+            'details' => ['id' => $id, 'title' => $advertTitle],
+        ]);
+
+        return $this->respondSuccess(['message' => 'Advert deleted successfully']);
+    }
+
+    /**
+     * Real-time executive dashboard KPIs, GMV area curve, and status distribution donut.
+     */
+    public function getDashboardStats(): JsonResponse
+    {
+        $totalGMV = (float) Order::sum('total');
+        $lockedInEscrow = (float) Order::whereIn('status', [
+            'paid_escrow', 'confirmed', 'ready_for_pickup', 'in_transit', 'picked_up', 'en_route'
+        ])->sum('total');
+
+        $pendingKYC = DB::table('seller_kyc_submissions')->where('status', 'pending')->count()
+            + DB::table('transporter_kyc_submissions')->where('status', 'pending')->count();
+
+        $activeTripsCount = Order::whereIn('status', [
+            'ready_for_pickup', 'assigned', 'in_transit', 'picked_up', 'en_route'
+        ])->count();
+
+        $openDisputesCount = Dispute::whereIn('status', ['OPEN', 'pending', 'pending_review', 'under_review'])->count();
+
+        // 7-day GMV and Escrow daily progression
+        $chartData = [];
+        $daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        $now = now();
+        $startOfWeek = $now->copy()->startOfWeek();
+
+        for ($i = 0; $i < 7; $i++) {
+            $dayDate = $startOfWeek->copy()->addDays($i);
+            $dayStr = $dayDate->toDateString();
+            $dayLabel = $daysOfWeek[$i];
+
+            $dayGMV = (float) Order::whereDate('created_at', $dayStr)->sum('total');
+            $dayEscrow = (float) Order::whereDate('created_at', $dayStr)
+                ->whereIn('status', ['paid_escrow', 'confirmed', 'ready_for_pickup', 'in_transit', 'picked_up', 'en_route'])
+                ->sum('total');
+
+            $chartData[] = [
+                'day' => $dayLabel,
+                'gmv' => $dayGMV,
+                'escrow' => $dayEscrow,
+                'date' => $dayStr,
+            ];
+        }
+
+        // Donut Data: Order Stage Distribution
+        $completedCount = Order::whereIn('status', ['delivered', 'completed'])->count();
+        $escrowHoldCount = Order::whereIn('status', ['paid_escrow', 'confirmed', 'ready_for_pickup', 'in_transit', 'picked_up', 'en_route'])->count();
+        $disputeCount = $openDisputesCount;
+        $totalOrdersCount = max(1, $completedCount + $escrowHoldCount + $disputeCount);
+
+        $donutData = [
+            [
+                'name' => 'Completed Escrow',
+                'value' => round(($completedCount / $totalOrdersCount) * 100),
+                'count' => $completedCount,
+                'color' => '#0D9488',
+            ],
+            [
+                'name' => '48h Hold Frozen',
+                'value' => round(($escrowHoldCount / $totalOrdersCount) * 100),
+                'count' => $escrowHoldCount,
+                'color' => '#3B82F6',
+            ],
+            [
+                'name' => 'Disputed Hold',
+                'value' => round(($disputeCount / $totalOrdersCount) * 100),
+                'count' => $disputeCount,
+                'color' => '#F59E0B',
+            ],
+            [
+                'name' => 'Platform Yield',
+                'value' => round(((float) Order::sum('commission') / max(1, $totalGMV)) * 100),
+                'count' => Order::where('commission', '>', 0)->count(),
+                'color' => '#6366F1',
+            ],
+        ];
+
+        return $this->respondSuccess([
+            'total_gmv' => $totalGMV,
+            'locked_in_escrow' => $lockedInEscrow,
+            'pending_kyc_count' => $pendingKYC,
+            'active_trips_count' => $activeTripsCount,
+            'open_disputes_count' => $openDisputesCount,
+            'total_users_count' => User::count(),
+            'chart_data' => $chartData,
+            'donut_data' => $donutData,
+        ]);
+    }
+
+    /**
+     * Staff Directory: Get live platform users directory with filters.
+     */
+    public function getUsers(Request $request): JsonResponse
+    {
+        $query = User::with(['store', 'transporter', 'wallet']);
+
+        if ($role = $request->query('role')) {
+            $query->where('role', strtolower($role));
+        }
+
+        if ($status = $request->query('status')) {
+            $query->where('status', strtolower($status));
+        }
+
+        if ($search = $request->query('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('full_name', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        $users = $query->orderBy('created_at', 'desc')->get();
+
+        $formatted = $users->map(function ($u) {
+            $kycStatus = null;
+            if ($u->store) {
+                $sub = DB::table('seller_kyc_submissions')->where('user_id', $u->id)->latest()->first();
+                $kycStatus = $sub ? strtoupper($sub->status) : 'NOT_SUBMITTED';
+            } elseif ($u->transporter) {
+                $sub = DB::table('transporter_kyc_submissions')->where('user_id', $u->id)->latest()->first();
+                $kycStatus = $sub ? strtoupper($sub->status) : 'NOT_SUBMITTED';
+            }
+
+            $city = $u->store?->city ?? 'Douala';
+            $isSuspended = strtolower($u->status ?? 'active') === 'suspended';
+
+            return [
+                'id' => $u->id,
+                'full_name' => $u->full_name,
+                'phone' => $u->phone,
+                'email' => $u->email,
+                'role' => strtoupper($u->role ?? 'BUYER'),
+                'status' => strtoupper($u->status ?? 'ACTIVE'),
+                'is_phone_verified' => (bool) $u->is_phone_verified,
+                'kyc_status' => $kycStatus,
+                'city' => $city,
+                'registered_at' => $u->created_at?->toDateString() ?? now()->toDateString(),
+                'risk_level' => $isSuspended ? 'HIGH' : 'LOW',
+                'wallet_balance' => (float) ($u->wallet?->balance_available ?? 0),
+                'store_name' => $u->store?->store_name,
+                'vehicle_info' => $u->transporter ? (($u->transporter->vehicle_type ?? 'Vehicle') . ' - ' . ($u->transporter->vehicle_plate ?? 'N/A')) : null,
+            ];
+        });
+
+        return $this->respondSuccess($formatted);
+    }
+
+    /**
+     * Update user account status (suspend / reactivate).
+     */
+    public function updateUserStatus(Request $request, string $id): JsonResponse
+    {
+        $user = User::findOrFail($id);
+        $newStatus = strtolower($request->input('status', 'active'));
+        $reason = $request->input('reason', 'Administrative action');
+
+        $user->status = $newStatus;
+        $user->save();
+
+        AuditLog::create([
+            'id' => (string) Str::uuid(),
+            'action' => $newStatus === 'suspended' ? 'USER_ACCOUNT_SUSPEND' : 'USER_ACCOUNT_REACTIVATE',
+            'staff_id' => 'stf_001',
+            'staff_name' => 'Super Administrator',
+            'staff_role' => 'SUPER_ADMIN',
+            'department' => 'SECURITY',
+            'target_resource' => 'USER:' . $id,
+            'status' => 'SUCCESS',
+            'details' => ['user_name' => $user->full_name, 'reason' => $reason, 'new_status' => $newStatus],
+        ]);
+
+        return $this->respondSuccess([
+            'id' => $user->id,
+            'status' => strtoupper($user->status),
+            'message' => "User account status updated to {$newStatus}.",
+        ]);
     }
 }

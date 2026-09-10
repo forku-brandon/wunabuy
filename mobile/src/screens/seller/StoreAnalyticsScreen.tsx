@@ -17,21 +17,14 @@ interface ChartBarData {
   isPeak?: boolean;
 }
 
-const WEEKLY_SALES_DATA: ChartBarData[] = [
-  { day: 'Mon', amount: 85000, heightPercent: 45 },
-  { day: 'Tue', amount: 120000, heightPercent: 65 },
-  { day: 'Wed', amount: 95000, heightPercent: 50 },
-  { day: 'Thu', amount: 160000, heightPercent: 85 },
-  { day: 'Fri', amount: 195000, heightPercent: 100, isPeak: true },
-  { day: 'Sat', amount: 140000, heightPercent: 75 },
-  { day: 'Sun', amount: 110000, heightPercent: 60 },
-];
-
-const TOP_PRODUCTS_ANALYTICS = [
-  { id: 'p1', name: 'Samsung Galaxy A55 5G (8GB RAM, 256GB)', salesCount: 42, revenue: 945000 },
-  { id: 'p2', name: 'Nike Air Max 270 Sneakers (Size 42)', salesCount: 38, revenue: 570000 },
-  { id: 'p3', name: 'Wireless Bluetooth Earbuds Pro', salesCount: 29, revenue: 261000 },
-  { id: 'p4', name: 'Natural Organic Cameroon Palm Oil (5L)', salesCount: 24, revenue: 156000 },
+const DEFAULT_EMPTY_CHART: ChartBarData[] = [
+  { day: 'Mon', amount: 0, heightPercent: 0 },
+  { day: 'Tue', amount: 0, heightPercent: 0 },
+  { day: 'Wed', amount: 0, heightPercent: 0 },
+  { day: 'Thu', amount: 0, heightPercent: 0 },
+  { day: 'Fri', amount: 0, heightPercent: 0 },
+  { day: 'Sat', amount: 0, heightPercent: 0 },
+  { day: 'Sun', amount: 0, heightPercent: 0 },
 ];
 
 import { SellerService } from '../../services/api/sellerService';
@@ -62,10 +55,13 @@ export const StoreAnalyticsScreen = ({ navigation }: any) => {
     };
   }, [timeRange]);
 
-  const salesGraphData = analyticsData?.weekly_sales || WEEKLY_SALES_DATA;
-  const topProductsList = analyticsData?.top_products || TOP_PRODUCTS_ANALYTICS;
+  const salesGraphData: ChartBarData[] = analyticsData?.weekly_sales && analyticsData.weekly_sales.length > 0
+    ? analyticsData.weekly_sales
+    : DEFAULT_EMPTY_CHART;
+  const topProductsList: any[] = analyticsData?.top_products || [];
   const kpiData = analyticsData?.kpis;
-  const totalWeeklyRevenue = analyticsData?.total_revenue || salesGraphData.reduce((acc: number, curr: any) => acc + curr.amount, 0);
+  const totalRevenue = analyticsData?.total_revenue ?? 0;
+  const growthPercentage = analyticsData?.revenue_growth_percentage ?? 0;
 
   const handleExportReport = () => {
     setToastMessage('📊 Store Analytics PDF statement downloaded!');
@@ -188,17 +184,27 @@ export const StoreAnalyticsScreen = ({ navigation }: any) => {
           <View style={styles.heroHeaderRow}>
             <View>
               <Text variant="caption" color="rgba(255,255,255,0.78)">
-                TOTAL REVENUE (7 DAYS)
+                TOTAL REVENUE ({timeRange === '7d' ? '7 DAYS' : timeRange === '30d' ? '30 DAYS' : 'THIS YEAR'})
               </Text>
               <Text variant="h1" bold color="#FFFFFF" style={styles.heroAmountText}>
-                {formatXAF(totalWeeklyRevenue)}
+                {formatXAF(totalRevenue)}
               </Text>
             </View>
 
-            <View style={styles.growthBadge}>
-              <Ionicons name="trending-up" size={14} color="#10B981" style={{ marginRight: 3 }} />
-              <Text variant="caption" bold color="#10B981">
-                +18.4%
+            <View
+              style={[
+                styles.growthBadge,
+                growthPercentage < 0 && { backgroundColor: 'rgba(239, 68, 68, 0.2)' },
+              ]}
+            >
+              <Ionicons
+                name={growthPercentage >= 0 ? 'trending-up' : 'trending-down'}
+                size={14}
+                color={growthPercentage >= 0 ? '#10B981' : '#EF4444'}
+                style={{ marginRight: 3 }}
+              />
+              <Text variant="caption" bold color={growthPercentage >= 0 ? '#10B981' : '#EF4444'}>
+                {growthPercentage >= 0 ? `+${growthPercentage}%` : `${growthPercentage}%`}
               </Text>
             </View>
           </View>
@@ -234,14 +240,26 @@ export const StoreAnalyticsScreen = ({ navigation }: any) => {
                 Sales Velocity Graph
               </Text>
               <Text variant="caption" secondary>
-                Daily revenue breakdown for current week
+                {timeRange === '7d'
+                  ? 'Daily revenue breakdown for current week'
+                  : timeRange === '30d'
+                  ? 'Weekly revenue breakdown for past 30 days'
+                  : 'Monthly revenue breakdown for this year'}
               </Text>
             </View>
-            <Badge
-              label={`PEAK ${(salesGraphData.find((d: any) => d.isPeak)?.day || 'FRI').toUpperCase()}`}
-              variant="primary"
-              size="small"
-            />
+            {salesGraphData.some((d: any) => d.isPeak && d.amount > 0) ? (
+              <Badge
+                label={`PEAK ${(salesGraphData.find((d: any) => d.isPeak)?.day || '').toUpperCase()}`}
+                variant="primary"
+                size="small"
+              />
+            ) : (
+              <Badge
+                label="REAL-TIME"
+                variant="neutral"
+                size="small"
+              />
+            )}
           </View>
 
           {/* Bar Chart Bars Container */}
@@ -249,20 +267,25 @@ export const StoreAnalyticsScreen = ({ navigation }: any) => {
             {salesGraphData.map((item: any) => (
               <View key={item.day} style={styles.singleBarCol}>
                 <Text variant="caption" color={theme.textSecondary} style={{ fontSize: 9, marginBottom: 4 }}>
-                  {(item.amount / 1000).toFixed(0)}k
+                  {item.amount > 0 ? `${(item.amount / 1000).toFixed(0)}k` : '0'}
                 </Text>
                 <View style={styles.barTrack}>
                   <View
                     style={[
                       styles.barFill,
                       {
-                        height: `${item.heightPercent}%`,
-                        backgroundColor: item.isPeak ? colors.primary[500] : colors.primary[200],
+                        height: `${Math.max(item.heightPercent, item.amount > 0 ? 8 : 2)}%`,
+                        backgroundColor: item.isPeak && item.amount > 0 ? colors.primary[500] : colors.primary[200],
                       },
                     ]}
                   />
                 </View>
-                <Text variant="caption" bold color={item.isPeak ? colors.primary[600] : theme.text} style={{ marginTop: 6 }}>
+                <Text
+                  variant="caption"
+                  bold
+                  color={item.isPeak && item.amount > 0 ? colors.primary[600] : theme.text}
+                  style={{ marginTop: 6 }}
+                >
                   {item.day}
                 </Text>
               </View>
@@ -281,13 +304,13 @@ export const StoreAnalyticsScreen = ({ navigation }: any) => {
               <Ionicons name="bag-check" size={20} color="#16A34A" />
             </View>
             <Text variant="h2" bold style={{ marginTop: spacing.xs }}>
-              {kpiData?.completed_orders ?? 24}
+              {kpiData?.completed_orders ?? 0}
             </Text>
             <Text variant="caption" secondary>
               Completed Orders
             </Text>
             <Text variant="caption" bold color="#16A34A" style={{ marginTop: 2, fontSize: 10 }}>
-              {kpiData?.completion_rate ?? 96.2}% Success Rate
+              {(kpiData?.completion_rate ?? 100).toFixed(1)}% Success Rate
             </Text>
           </Card>
 
@@ -296,13 +319,13 @@ export const StoreAnalyticsScreen = ({ navigation }: any) => {
               <Ionicons name="star" size={20} color="#D97706" />
             </View>
             <Text variant="h2" bold style={{ marginTop: spacing.xs }}>
-              {(kpiData?.avg_rating ?? 4.9).toFixed(1)} / 5.0
+              {(kpiData?.avg_rating ?? 0).toFixed(1)} / 5.0
             </Text>
             <Text variant="caption" secondary>
               Customer Rating
             </Text>
             <Text variant="caption" bold color="#D97706" style={{ marginTop: 2, fontSize: 10 }}>
-              {kpiData?.total_reviews ?? 42} Verified Reviews
+              {kpiData?.total_reviews ?? 0} Verified Reviews
             </Text>
           </Card>
 
@@ -311,7 +334,7 @@ export const StoreAnalyticsScreen = ({ navigation }: any) => {
               <Ionicons name="repeat" size={20} color="#2563EB" />
             </View>
             <Text variant="h2" bold style={{ marginTop: spacing.xs }}>
-              {kpiData?.repeat_buyer_percentage ?? 31.5}%
+              {(kpiData?.repeat_buyer_percentage ?? 0).toFixed(1)}%
             </Text>
             <Text variant="caption" secondary>
               Repeat Buyers
@@ -326,13 +349,15 @@ export const StoreAnalyticsScreen = ({ navigation }: any) => {
               <Ionicons name="time" size={20} color="#6366F1" />
             </View>
             <Text variant="h2" bold style={{ marginTop: spacing.xs }}>
-              {kpiData?.avg_dispatch_minutes ?? 35} min
+              {kpiData?.avg_dispatch_minutes && kpiData.avg_dispatch_minutes > 0
+                ? `${kpiData.avg_dispatch_minutes} min`
+                : 'N/A'}
             </Text>
             <Text variant="caption" secondary>
               Avg. Dispatch Speed
             </Text>
             <Text variant="caption" bold color="#6366F1" style={{ marginTop: 2, fontSize: 10 }}>
-              Top Merchant Rank
+              {kpiData?.avg_dispatch_minutes && kpiData.avg_dispatch_minutes > 0 ? 'Fast Dispatch' : 'Telemetry Live'}
             </Text>
           </Card>
         </View>
@@ -348,28 +373,37 @@ export const StoreAnalyticsScreen = ({ navigation }: any) => {
             </Text>
           </View>
 
-          {topProductsList.map((item: any, idx: number) => (
-            <View key={item.id} style={[styles.productRow, idx !== topProductsList.length - 1 && styles.borderBottom]}>
-              <View style={styles.rankBadge}>
-                <Text variant="caption" bold color={colors.primary[600]}>
-                  #{idx + 1}
-                </Text>
-              </View>
-
-              <View style={{ flex: 1, marginHorizontal: spacing.sm }}>
-                <Text variant="bodyMedium" bold numberOfLines={1}>
-                  {item.name}
-                </Text>
-                <Text variant="caption" secondary>
-                  {item.salesCount} Units Sold
-                </Text>
-              </View>
-
-              <Text variant="bodyMedium" bold color={colors.primary[600]}>
-                {formatXAF(item.revenue)}
+          {topProductsList.length === 0 ? (
+            <View style={{ paddingVertical: spacing.xl, alignItems: 'center' }}>
+              <Ionicons name="cube-outline" size={36} color={theme.placeholder} style={{ marginBottom: 8 }} />
+              <Text variant="bodyMedium" secondary align="center">
+                No product sales recorded yet in this period.
               </Text>
             </View>
-          ))}
+          ) : (
+            topProductsList.map((item: any, idx: number) => (
+              <View key={item.id} style={[styles.productRow, idx !== topProductsList.length - 1 && styles.borderBottom]}>
+                <View style={styles.rankBadge}>
+                  <Text variant="caption" bold color={colors.primary[600]}>
+                    #{idx + 1}
+                  </Text>
+                </View>
+
+                <View style={{ flex: 1, marginHorizontal: spacing.sm }}>
+                  <Text variant="bodyMedium" bold numberOfLines={1}>
+                    {item.name}
+                  </Text>
+                  <Text variant="caption" secondary>
+                    {item.salesCount} Units Sold
+                  </Text>
+                </View>
+
+                <Text variant="bodyMedium" bold color={colors.primary[600]}>
+                  {formatXAF(item.revenue)}
+                </Text>
+              </View>
+            ))
+          )}
         </Card>
       </ScrollView>
 

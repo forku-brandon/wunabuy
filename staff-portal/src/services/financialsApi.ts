@@ -4,7 +4,7 @@ export interface PayoutTransactionItem {
   id: string;
   reference_code: string;
   entity_name: string;
-  entity_type: 'SELLER' | 'TRANSPORTER';
+  entity_type: 'SELLER' | 'TRANSPORTER' | 'BUYER';
   payment_method: 'MTN_MOMO' | 'ORANGE_MONEY';
   account_number: string;
   amount: number;
@@ -15,6 +15,14 @@ export interface PayoutTransactionItem {
   risk_score: 'LOW' | 'MEDIUM' | 'HIGH';
 }
 
+export interface FinancialStats {
+  escrow_reserves: number;
+  pending_disbursals_count: number;
+  pending_disbursals_amount: number;
+  commission_net_ytd: number;
+  daily_momo_settlement: number;
+}
+
 export const financialsApi = {
   /**
    * Fetch Mobile Money payout reconciliation ledger.
@@ -22,6 +30,16 @@ export const financialsApi = {
    */
   getPayoutLedger: async () => {
     return apiRequest<PayoutTransactionItem[]>('/staff/financials/payouts', {
+      method: 'GET',
+    });
+  },
+
+  /**
+   * Fetch live platform financial stats for treasury operations.
+   * API Endpoint: GET /api/v1/staff/financials/stats
+   */
+  getFinancialStats: async () => {
+    return apiRequest<FinancialStats>('/staff/financials/stats', {
       method: 'GET',
     });
   },

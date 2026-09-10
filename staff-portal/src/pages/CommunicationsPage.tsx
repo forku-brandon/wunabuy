@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PageContainer } from '../components/layout/PageContainer';
 import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
-import { useStaffAuth, DEMO_STAFF_PERSONAS } from '../stores/staffAuthStore';
+import { useStaffAuth } from '../stores/staffAuthStore';
 import {
   MessageSquare,
   Megaphone,
@@ -43,97 +43,44 @@ interface AnnouncementItem {
   is_pinned?: boolean;
 }
 
-const MOCK_CHANNELS: ChatChannel[] = [
-  { id: 'ch_1', name: 'general-hq', department: 'Company-Wide', unread_count: 2 },
-  { id: 'ch_2', name: 'finance-treasury', department: 'Finance & Payouts', unread_count: 0 },
-  { id: 'ch_3', name: 'compliance-kyc', department: 'Legal & Merchant KYC', unread_count: 1 },
-  { id: 'ch_4', name: 'logistics-fleet', department: 'Operations & Riders', unread_count: 4 },
-  { id: 'ch_5', name: 'executive-board', department: 'Management L4/L5', unread_count: 0 },
-];
-
-const INITIAL_MESSAGES: Record<string, ChatMessageItem[]> = {
-  'ch_1': [
-    {
-      id: 'm1',
-      sender_name: 'Pauline Mbarga',
-      sender_role: 'SUPER_ADMIN',
-      sender_avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=150&q=80',
-      content: 'Good morning team! Please review the Q3 merchant growth incentives posted in the announcements tab.',
-      timestamp: '09:15 AM',
-    },
-    {
-      id: 'm2',
-      sender_name: 'Christian Atangana',
-      sender_role: 'FINANCE_OFFICER',
-      sender_avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80',
-      content: 'Noted Pauline! All MTN MoMo & Orange Money reconciliation statements for yesterday are 100% matched.',
-      timestamp: '09:22 AM',
-    },
-  ],
-  'ch_4': [
-    {
-      id: 'm3',
-      sender_name: 'Jean-Luc Fotso',
-      sender_role: 'OPS_MANAGER',
-      sender_avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80',
-      content: 'Rider Jean-Paul Nkoum has arrived at Akwa store hub for pickup #WB-TRIP-9842.',
-      timestamp: '10:04 AM',
-    },
-  ],
-};
-
-const INITIAL_ANNOUNCEMENTS: AnnouncementItem[] = [
-  {
-    id: 'ann_101',
-    title: '🚨 Scheduled MTN MoMo Gateway Maintenance (Tonight 02:00 - 04:00 WAT)',
-    severity: 'URGENT',
-    author_name: 'Pauline Mbarga',
-    author_role: 'SUPER_ADMIN',
-    target_audience: 'All Staff Personnel',
-    content: 'MTN Mobile Money USSD gateway *126# will undergo scheduled database maintenance tonight. Payout requests initiated during this window will be queued for auto-processing at 04:15 WAT.',
-    published_at: '2026-09-02 08:00',
-    is_pinned: true,
-  },
-  {
-    id: 'ann_102',
-    title: '🎉 Q3 Merchant Growth Incentive Target Met (Douala Region)',
-    severity: 'GENERAL',
-    author_name: 'Marie-Noelle Bikoe',
-    author_role: 'COMPLIANCE_OFFICER',
-    target_audience: 'All Staff Personnel',
-    content: 'Over 150 verified merchant stores in Douala (Akwa, Bonanjo, Makepe) have maintained a 4.9★ rating. Zero escrow fee promo is now active for eligible sellers.',
-    published_at: '2026-09-01 14:30',
-    is_pinned: false,
-  },
-  {
-    id: 'ann_103',
-    title: '📋 UPDATED POLICY: 48-Hour Escrow Hold Adjudication Guidelines',
-    severity: 'POLICY',
-    author_name: 'Pauline Mbarga',
-    author_role: 'SUPER_ADMIN',
-    target_audience: 'Support & Finance Departments',
-    content: 'When adjudicating 3-way disputes for damaged items, support agents must verify CNI front/back photos and signed proof-of-delivery signatures prior to executing 100% buyer refunds.',
-    published_at: '2026-08-28 11:00',
-    is_pinned: true,
-  },
+const CORPORATE_CHANNELS: ChatChannel[] = [
+  { id: 'ch_general', name: 'general-hq', department: 'Company-Wide', unread_count: 0 },
+  { id: 'ch_finance', name: 'finance-treasury', department: 'Finance & Payouts', unread_count: 0 },
+  { id: 'ch_compliance', name: 'compliance-kyc', department: 'Legal & Merchant KYC', unread_count: 0 },
+  { id: 'ch_logistics', name: 'logistics-fleet', department: 'Operations & Riders', unread_count: 0 },
+  { id: 'ch_executive', name: 'executive-board', department: 'Management L4/L5', unread_count: 0 },
 ];
 
 export const CommunicationsPage: React.FC = () => {
-  const { user, addAuditLog } = useStaffAuth();
+  const { user, addAuditLog, staffMembers } = useStaffAuth();
   const [activeTab, setActiveTab] = useState<'chat' | 'announcements'>('chat');
-  const [activeChannelId, setActiveChannelId] = useState('ch_1');
-  const [chatMessagesState, setChatMessagesState] = useState(INITIAL_MESSAGES);
+  const [activeChannelId, setActiveChannelId] = useState('ch_general');
+  const [chatMessagesState, setChatMessagesState] = useState<Record<string, ChatMessageItem[]>>(() => {
+    const saved = localStorage.getItem('wunabuy_staff_chat_messages');
+    return saved ? JSON.parse(saved) : {};
+  });
   const [messageInput, setMessageInput] = useState('');
   
   // Announcements State
-  const [announcements, setAnnouncements] = useState<AnnouncementItem[]>(INITIAL_ANNOUNCEMENTS);
+  const [announcements, setAnnouncements] = useState<AnnouncementItem[]>(() => {
+    const saved = localStorage.getItem('wunabuy_staff_announcements');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [announcementModalOpen, setAnnouncementModalOpen] = useState(false);
   const [annTitle, setAnnTitle] = useState('');
   const [annSeverity, setAnnSeverity] = useState<'URGENT' | 'POLICY' | 'GENERAL'>('GENERAL');
   const [annAudience, setAnnAudience] = useState('All Staff Personnel');
   const [annContent, setAnnContent] = useState('');
 
-  const currentChannel = MOCK_CHANNELS.find((c) => c.id === activeChannelId) || MOCK_CHANNELS[0];
+  useEffect(() => {
+    localStorage.setItem('wunabuy_staff_chat_messages', JSON.stringify(chatMessagesState));
+  }, [chatMessagesState]);
+
+  useEffect(() => {
+    localStorage.setItem('wunabuy_staff_announcements', JSON.stringify(announcements));
+  }, [announcements]);
+
+  const currentChannel = CORPORATE_CHANNELS.find((c) => c.id === activeChannelId) || CORPORATE_CHANNELS[0];
   const currentMessages = chatMessagesState[activeChannelId] || [];
 
   const handleSendMessage = (e: React.FormEvent) => {
@@ -235,7 +182,7 @@ export const CommunicationsPage: React.FC = () => {
 
               {/* Channels List */}
               <div className="space-y-1">
-                {MOCK_CHANNELS.map((channel) => (
+                {CORPORATE_CHANNELS.map((channel) => (
                   <button
                     key={channel.id}
                     onClick={() => setActiveChannelId(channel.id)}
@@ -261,22 +208,26 @@ export const CommunicationsPage: React.FC = () => {
               {/* Staff Personas Directory */}
               <div className="pt-3 border-t border-slate-100 dark:border-slate-800">
                 <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-2">
-                  DIRECT COLLEAGUES ({DEMO_STAFF_PERSONAS.length})
+                  DIRECT COLLEAGUES ({staffMembers.length})
                 </span>
-                <div className="space-y-2">
-                  {DEMO_STAFF_PERSONAS.map((p) => (
-                    <div key={p.id} className="flex items-center space-x-2 text-xs">
-                      <img
-                        src={p.avatar_url || ''}
-                        alt={p.full_name}
-                        className="w-6 h-6 rounded-full object-cover border border-slate-200 dark:border-slate-700"
-                      />
-                      <div className="min-w-0 flex-1">
-                        <p className="font-bold text-slate-800 dark:text-slate-200 truncate">{p.full_name.split(' ')[0]}</p>
-                        <p className="text-[9px] text-slate-400 dark:text-slate-500 truncate">{p.staff_department_role}</p>
+                <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                  {staffMembers.length === 0 ? (
+                    <p className="text-[10px] text-slate-400 italic">No staff members in directory</p>
+                  ) : (
+                    staffMembers.map((p) => (
+                      <div key={p.id} className="flex items-center space-x-2 text-xs">
+                        <img
+                          src={p.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80'}
+                          alt={p.full_name}
+                          className="w-6 h-6 rounded-full object-cover border border-slate-200 dark:border-slate-700"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className="font-bold text-slate-800 dark:text-slate-200 truncate">{p.full_name.split(' ')[0]}</p>
+                          <p className="text-[9px] text-slate-400 dark:text-slate-500 truncate">{p.staff_department_role}</p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
               </div>
             </div>
@@ -300,27 +251,35 @@ export const CommunicationsPage: React.FC = () => {
 
             {/* Message Feed Area */}
             <div className="flex-1 overflow-y-auto py-4 space-y-4 pr-2">
-              {currentMessages.map((msg) => (
-                <div key={msg.id} className="flex items-start space-x-3">
-                  <img
-                    src={msg.sender_avatar}
-                    alt={msg.sender_name}
-                    className="w-8 h-8 rounded-full object-cover border border-slate-200 dark:border-slate-700 mt-1"
-                  />
-                  <div className="flex-1 bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700 rounded-2xl p-3.5">
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="flex items-center space-x-2">
-                        <span className="font-extrabold text-slate-900 dark:text-slate-100 text-xs">{msg.sender_name}</span>
-                        <span className="px-1.5 py-0.5 text-[9px] font-mono font-bold rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
-                          {msg.sender_role}
-                        </span>
-                      </div>
-                      <span className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold">{msg.timestamp}</span>
-                    </div>
-                    <p className="text-xs text-slate-700 dark:text-slate-300 font-medium">{msg.content}</p>
-                  </div>
+              {currentMessages.length === 0 ? (
+                <div className="text-center py-16 text-slate-400 dark:text-slate-500">
+                  <MessageSquare className="w-10 h-10 mx-auto mb-2 opacity-40 text-teal-600" />
+                  <p className="text-xs font-bold">No messages in #{currentChannel.name} yet</p>
+                  <p className="text-[10px] mt-1">Send a message below to start communicating with the team.</p>
                 </div>
-              ))}
+              ) : (
+                currentMessages.map((msg) => (
+                  <div key={msg.id} className="flex items-start space-x-3">
+                    <img
+                      src={msg.sender_avatar}
+                      alt={msg.sender_name}
+                      className="w-8 h-8 rounded-full object-cover border border-slate-200 dark:border-slate-700 mt-1"
+                    />
+                    <div className="flex-1 bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700 rounded-2xl p-3.5">
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center space-x-2">
+                          <span className="font-extrabold text-slate-900 dark:text-slate-100 text-xs">{msg.sender_name}</span>
+                          <span className="px-1.5 py-0.5 text-[9px] font-mono font-bold rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
+                            {msg.sender_role}
+                          </span>
+                        </div>
+                        <span className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold">{msg.timestamp}</span>
+                      </div>
+                      <p className="text-xs text-slate-700 dark:text-slate-300 font-medium">{msg.content}</p>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
 
             {/* Input Composer */}
@@ -362,10 +321,17 @@ export const CommunicationsPage: React.FC = () => {
 
             {/* Announcements Card Feed */}
             <div className="space-y-4">
-              {announcements.map((item) => (
-                <div
-                  key={item.id}
-                  className={`p-5 rounded-2xl border transition-all ${
+              {announcements.length === 0 ? (
+                <div className="text-center py-16 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
+                  <Megaphone className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+                  <p className="text-xs font-bold text-slate-700 dark:text-slate-300">No System Broadcasts Yet</p>
+                  <p className="text-[10px] text-slate-400 mt-1">Official platform notices and policy updates will appear here when published.</p>
+                </div>
+              ) : (
+                announcements.map((item) => (
+                  <div
+                    key={item.id}
+                    className={`p-5 rounded-2xl border transition-all ${
                     item.is_pinned
                       ? 'bg-teal-50/40 dark:bg-teal-950/30 border-teal-200 dark:border-teal-900'
                       : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700'
@@ -409,7 +375,7 @@ export const CommunicationsPage: React.FC = () => {
                     <span>Audience: <strong className="text-teal-700 dark:text-teal-400">{item.target_audience}</strong></span>
                   </div>
                 </div>
-              ))}
+              )))}
             </div>
           </Card>
         </div>

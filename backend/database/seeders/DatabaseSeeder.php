@@ -239,176 +239,44 @@ class DatabaseSeeder extends Seeder
         // 2. SEED 5 VERIFIED STORES
         // ─────────────────────────────────────────────────────────────────────
 
+        $brandonStoreId = '01a0872b-a556-7183-b186-9bcec9d61ca4';
         $storesData = [
             [
-                'id' => 'c6ed6a51-aa38-4d68-b27a-66331c85c858',
-                'seller_phone' => '+237699112233',
-                'seller_name' => 'Amadou Bello (Akwa Super Store)',
-                'store_name' => 'Akwa Super Store',
-                'tagline' => 'Best Electronics & Gadgets in Douala',
-                'description' => 'Authentic smartphones, accessories, audio gear, and certified electronics with warranty.',
+                'id' => $brandonStoreId,
+                'seller_phone' => '+237682656287',
+                'seller_name' => 'Forku Brandon',
+                'store_name' => 'Brandon Official Tech Store',
+                'tagline' => 'Premium Electronics, Smart Gadgets & Escrow Protected Gear',
+                'description' => 'Official authorized distributor of premium smartphones, laptops, audio systems, and original accessories with verified manufacturer warranty in Douala.',
                 'category' => 'Electronics',
-                'address_text' => 'Akwa Main Blvd, Opposite Pharmacie du Centre, Douala',
-                'landmark' => 'Near Rond-point Deido / Pharmacie du Centre',
+                'address_text' => 'Akwa Main Boulevard, Douala',
+                'landmark' => 'Opposite Pharmacie du Centre, Akwa',
                 'city' => 'Douala',
                 'latitude' => 4.0510564,
                 'longitude' => 9.7678687,
                 'counter_hours' => 'Mon - Sat: 08:00 AM - 07:30 PM',
-                'phone' => '+237699112233',
-                'email' => 'akwa.store@wunabuy.com',
-                'rider_instructions' => 'Counter pickup at Gate B. Ask for Manager Jean.',
+                'phone' => '+237682656287',
+                'email' => 'forku.brandon@wunabuy.com',
+                'rider_instructions' => 'Counter pickup at Gate B. Present rider handover PIN to store manager.',
                 'logo_url' => 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?auto=format&fit=crop&w=400&q=80',
                 'banner_url' => 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1200&q=80',
-                'rating_avg' => 4.90,
-                'total_reviews' => 142,
-            ],
-            [
-                'id' => '7b39a820-410d-4892-8021-998811223344',
-                'seller_phone' => '+237675223344',
-                'seller_name' => 'Fatima Njoya (Douala Glam)',
-                'store_name' => 'Douala Glam Beauty & Cosmetics',
-                'tagline' => 'Natural Radiance & Certified French Cosmetics',
-                'description' => 'Premium dermatological skincare, organic shea body care, makeup, and hair tonics.',
-                'category' => 'Health & Beauty',
-                'address_text' => 'Rue Joss, Bonanjo Business District, Douala',
-                'landmark' => 'Opposite Total Bonanjo, 2nd Floor',
-                'city' => 'Douala',
-                'latitude' => 4.0450,
-                'longitude' => 9.6912,
-                'counter_hours' => 'Mon - Sat: 08:30 AM - 06:30 PM',
-                'phone' => '+237675223344',
-                'email' => 'contact@doualaglam.cm',
-                'rider_instructions' => 'Enter lobby, express pickup counter on right.',
-                'logo_url' => 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=400&q=80',
-                'banner_url' => 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=1200&q=80',
-                'rating_avg' => 4.95,
-                'total_reviews' => 186,
-            ],
-            [
-                'id' => '1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d',
-                'seller_phone' => '+237691334455',
-                'seller_name' => 'Cedric Tagne (K-Town Fashion)',
-                'store_name' => 'K-Town Fashion Hub',
-                'tagline' => 'Contemporary African Prints & Urban Streetwear',
-                'description' => 'Authentic Bamenda Toghu, tailored wax shirts, sneakers, and premium streetwear.',
-                'category' => 'Fashion',
-                'address_text' => 'Boulevard de la Liberté, Bali, Douala',
-                'landmark' => 'Adjacent to Bicec Bali Branch',
-                'city' => 'Douala',
-                'latitude' => 4.0390,
-                'longitude' => 9.7020,
-                'counter_hours' => 'Mon - Sat: 09:00 AM - 08:00 PM',
-                'phone' => '+237691334455',
-                'email' => 'orders@ktownfashion.cm',
-                'rider_instructions' => 'Dispatch door facing Boulevard. Ask for Cedric.',
-                'logo_url' => 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=400&q=80',
-                'banner_url' => 'https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&w=1200&q=80',
-                'rating_avg' => 4.88,
-                'total_reviews' => 95,
-            ],
-            [
-                'id' => '5d6e7f8a-9b0c-1d2e-3f4a-5b6c7d8e9f0a',
-                'seller_phone' => '+237678445566',
-                'seller_name' => 'Mama Helene (Marché Central)',
-                'store_name' => 'Marché Central Fresh & Organics',
-                'tagline' => 'Fresh Farm Harvest & Cameroon Spices',
-                'description' => 'Penja white pepper, Foumbot Arabica coffee, pure forest honey, and organic dry goods.',
-                'category' => 'Food & Groceries',
-                'address_text' => 'Avenue des Cocotiers, Marché Central, New Bell, Douala',
-                'landmark' => 'Secteur Épices, Counter 14B',
-                'city' => 'Douala',
-                'latitude' => 4.0340,
-                'longitude' => 9.7150,
-                'counter_hours' => 'Mon - Sun: 07:00 AM - 06:00 PM',
-                'phone' => '+237678445566',
-                'email' => 'marche.central@wunabuy.com',
-                'rider_instructions' => 'Motorbike parking behind Sector Epices.',
-                'logo_url' => 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=400&q=80',
-                'banner_url' => 'https://images.unsplash.com/photo-1488459716781-31db52582fe9?auto=format&fit=crop&w=1200&q=80',
-                'rating_avg' => 4.92,
-                'total_reviews' => 210,
-            ],
-            [
-                'id' => '8e9f0a1b-2c3d-4e5f-6a7b-8c9d0e1f2a3b',
-                'seller_phone' => '+237694556677',
-                'seller_name' => 'Ingénieur Roger (Bassa Tech)',
-                'store_name' => 'Bassa Auto Spares & Hardware',
-                'tagline' => 'Certified Auto Parts, Diagnostic Tools & Home Gadgets',
-                'description' => 'Car electronics, OBD2 scanners, tire inflators, power tools, and high-efficiency home lighting.',
-                'category' => 'Automotive',
-                'address_text' => 'Zone Industrielle Bassa, Douala',
-                'landmark' => 'Near Brasseries du Cameroun Factory Gate 3',
-                'city' => 'Douala',
-                'latitude' => 4.0620,
-                'longitude' => 9.7480,
-                'counter_hours' => 'Mon - Sat: 07:30 AM - 06:00 PM',
-                'phone' => '+237694556677',
-                'email' => 'roger.bassa@wunabuy.com',
-                'rider_instructions' => 'Heavy parcel loading dock at side entrance.',
-                'logo_url' => 'https://images.unsplash.com/photo-1486006920555-c77dce18193b?auto=format&fit=crop&w=400&q=80',
-                'banner_url' => 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1200&q=80',
-                'rating_avg' => 4.82,
-                'total_reviews' => 78,
+                'rating_avg' => 5.0,
+                'total_reviews' => 12,
             ],
         ];
 
         foreach ($storesData as $s) {
             $existingUser = DB::table('users')->where('phone', $s['seller_phone'])->first();
-            if ($existingUser) {
-                $sellerUserId = $existingUser->id;
-                DB::table('users')->where('id', $sellerUserId)->update([
-                    'email' => $s['email'],
-                    'full_name' => $s['seller_name'],
-                    'role' => 'seller',
-                    'status' => 'active',
-                    'pin' => Hash::make('123456'),
-                    'avatar_url' => $s['logo_url'],
-                    'is_phone_verified' => true,
-                    'available_roles' => json_encode(['buyer', 'seller']),
-                    'updated_at' => now(),
-                ]);
-            } else {
-                $sellerUserId = (string) Str::uuid();
-                DB::table('users')->insert([
-                    'id' => $sellerUserId,
-                    'phone' => $s['seller_phone'],
-                    'email' => $s['email'],
-                    'full_name' => $s['seller_name'],
-                    'role' => 'seller',
-                    'status' => 'active',
-                    'pin' => Hash::make('123456'),
-                    'avatar_url' => $s['logo_url'],
-                    'is_phone_verified' => true,
-                    'available_roles' => json_encode(['buyer', 'seller']),
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
-
-            // Seller Wallet
-            $existingSellerWallet = DB::table('wallets')->where('user_id', $sellerUserId)->first();
-            if ($existingSellerWallet) {
-                DB::table('wallets')->where('user_id', $sellerUserId)->update([
-                    'balance_available' => 0.00,
-                    'balance_escrow_locked' => 0.00,
-                    'registration_bonus' => 0.00,
-                    'currency' => 'XAF',
-                    'is_active' => true,
-                    'updated_at' => now(),
-                ]);
-            } else {
-                DB::table('wallets')->insert([
-                    'id' => (string) Str::uuid(),
-                    'user_id' => $sellerUserId,
-                    'balance_available' => 0.00,
-                    'balance_escrow_locked' => 0.00,
-                    'registration_bonus' => 0.00,
-                    'currency' => 'XAF',
-                    'is_active' => true,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
+            $sellerUserId = $existingUser ? $existingUser->id : $devId;
+            DB::table('users')->where('id', $sellerUserId)->update([
+                'email' => $s['email'],
+                'full_name' => $s['seller_name'],
+                'role' => 'seller',
+                'status' => 'active',
+                'is_phone_verified' => true,
+                'available_roles' => json_encode(['buyer', 'seller', 'transporter']),
+                'updated_at' => now(),
+            ]);
 
             DB::table('stores')->updateOrInsert(
                 ['id' => $s['id']],
@@ -749,7 +617,7 @@ class DatabaseSeeder extends Seeder
             DB::table('products')->updateOrInsert(
                 ['id' => $p['id']],
                 [
-                    'store_id' => $p['store_id'],
+                    'store_id' => $brandonStoreId,
                     'name' => $p['name'],
                     'description' => $p['description'],
                     'category' => $p['category'],
@@ -885,6 +753,7 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($ordersData as $o) {
+            $o['store_id'] = $brandonStoreId;
             DB::table('orders')->updateOrInsert(
                 ['id' => $o['id']],
                 array_merge($o, ['updated_at' => now()])

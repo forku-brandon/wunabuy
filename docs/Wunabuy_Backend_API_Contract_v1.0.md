@@ -1,12 +1,12 @@
 # Wunabuy Backend API Specification & Integration Contract v1.0
 
-**Document Version:** 2.9 (Direct Native Phone Dialer Integration & End-to-End API Receive Points Baseline)  
-**Date:** September 4, 2026  
+**Document Version:** 3.5 (Zero-Demo RBAC, Anti-IDOR Security Hardening, Real Store Affiliation Baseline)  
+**Date:** September 10, 2026  
 **Target Audience:** Backend Engineering Team (Laravel 13 / PostgreSQL / Redis / Sanctum)  
 **Standard:** RESTful JSON API + WebSocket Real-Time Telemetry  
 **Currency Standard:** Central African CFA Franc (`XAF` / `FCFA`)  
 **Locale Default:** French / English Cameroon (`+237` E.164 phone numbers)  
-**Document Status:** 🟢 **APPROVED & SYNCHRONIZED WITH MOBILE APP v2.9**
+**Document Status:** 🟢 **APPROVED & SYNCHRONIZED WITH MOBILE APP v3.5**
 
 ---
 
@@ -246,27 +246,108 @@ X-Idempotency-Key: <uuid-v4>                 (Required on all mutations: orders,
 
 ---
 
-### 2.3 Get Current User Profile
+### 2.4 Refresh Sanctum Access Token
+`POST /api/v1/auth/refresh`
+
+- **Headers**: `Authorization: Bearer <sanctum_token>`
+- **Description**: Refreshes an active or recently expired Sanctum Bearer token. Revokes the existing token and returns a fresh Bearer token along with the eager-loaded User entity, role permissions, and wallet balances.
+- **Request Body**: Optional `{ "user_id": "<uuid>" }` (used in fallback modes)
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": {
+    "access_token": "6|d7F4k9qLw0Zp9yRt8Nm4bV1cX7aK3jH6pE5gT2sA1e9c8b7",
+    "token_type": "Bearer",
+    "user": {
+      "id": "01a0811d-27f9-7298-9b64-7cff01362fbe",
+      "phone": "+237682656287",
+      "email": "brandon@wunabuy.com",
+      "full_name": "Forku Brandon",
+      "role": "seller",
+      "status": "active",
+      "available_roles": ["buyer", "seller", "transporter"]
+    }
+  }
+}
+```
+- **Response `401 UNAUTHENTICATED`**: If the caller has no valid token and cannot be resolved.
+
+---
+
+### 2.5 Mint Local Developer Session Token
+`POST /api/v1/auth/dev-session`
+
+- **Headers**: `Content-Type: application/json`
+- **Description**: Available exclusively in local/staging environments (`APP_ENV=local`). Allows the mobile application (`apiClient.ts`) to auto-recover developer testing sessions without prompting manual re-login when local tokens expire. Accepts developer `phone` or `user_id`, authenticates the developer account, and mints a fresh valid Sanctum access token.
+- **Request Body**:
+```json
+{
+  "phone": "+237682656287",
+  "user_id": "01a0811d-27f9-7298-9b64-7cff01362fbe"
+}
+```
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": {
+    "access_token": "7|m1R9pQ8aB2cD3eF4gH5jK6lN7oP8qR9sT0uV1wX2yZ3a4b5",
+    "token_type": "Bearer",
+    "user": {
+      "id": "01a0811d-27f9-7298-9b64-7cff01362fbe",
+      "phone": "+237682656287",
+      "email": "brandon@wunabuy.com",
+      "full_name": "Forku Brandon",
+      "role": "seller",
+      "status": "active",
+      "available_roles": ["buyer", "seller", "transporter"]
+    }
+  }
+}
+```
+- **Response `404 NOT FOUND`**: If the requested developer user does not exist.
+
+---
+
+### 2.6 Get Current User Profile
 `GET /api/v1/users/me`
 
 - **Headers**: `Authorization: Bearer <token>`
+- **Description**: Returns current authenticated User entity with eager-loaded `wallet`, `default_address`, `store`, and `transporter` relations. Zero mock data is returned; if relations have not yet been registered, they are returned as `null`.
 - **Response `200 OK`**: Returns current User entity.
 
 ---
 
-### 2.4 Update User Profile
+### 2.7 Update User Profile
 `PUT /api/v1/users/me` or `PATCH /api/v1/user/profile`
 
 - **Headers**: `Authorization: Bearer <token>`
+- **Description**: Updates user profile attributes with strict uniqueness validation on `phone` and `email`. If another account is already registered with the specified phone or email, the backend rejects the request with HTTP 422.
 - **Request Body**:
 ```json
 {
-  "full_name": "Jean-Paul Dupont",
-  "email": "jp.dupont@wunabuy.com",
+  "full_name": "Forku Brandon",
+  "email": "brandon@wunabuy.com",
+  "phone": "+237682656287",
   "avatar_url": "https://api.wunabuy.com/storage/avatars/new.jpg"
 }
 ```
 - **Response `200 OK`**: Returns updated User entity.
+- **Response `422 UNPROCESSABLE ENTITY` (Uniqueness Violation)**:
+```json
+{
+  "success": false,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "The given data was invalid.",
+    "details": {
+      "phone": ["This phone number is already registered to another account."],
+      "email": ["This email address is already associated with an existing account."]
+    }
+  }
+}
+```
 
 ---
 
@@ -1318,5 +1399,131 @@ CREATE TABLE wallets (
   }
 }
 ```
+
+---
+
+## 13. Transporter Driver Profile & Vehicle Endpoints (v3.4)
+
+### 13.1 Get Transporter Driver Profile
+- **HTTP Method:** `GET`
+- **Endpoint:** `/api/v1/transporter/profile`
+- **Headers:** `Authorization: Bearer <sanctum_token>`, `Accept: application/json`
+- **Description:** Returns the authenticated driver's operational profile, vehicle registration details, driving license status, verification state, and real-time telemetry stats (rating, total completed trips, active delivery status). Zero mock values are returned: if the transporter record does not yet exist or has not been customized, unconfigured fields return `null`.
+- **Response (200 OK):**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "01a086ea-1234-7cff-8b9a-112233445566",
+    "user_id": "01a0811d-27f9-7298-9b64-7cff01362fbe",
+    "driver_name": "Forku Brandon",
+    "phone": "+237682656287",
+    "vehicle_type": "Motorcycle",
+    "vehicle_plate_number": "LT 482 AB",
+    "driver_license": "DL-237-9921",
+    "vehicle_registration": "CG-237-4401",
+    "insurance_certificate": "ASSUR-AXA-992",
+    "is_available": true,
+    "is_verified": true,
+    "kyc_status": "approved",
+    "rating_avg": 5.0,
+    "total_trips": 12,
+    "current_latitude": 4.0510564,
+    "current_longitude": 9.7678687,
+    "updated_at": "2026-09-10T07:15:00Z"
+  }
+}
+```
+
+### 13.2 Update Transporter Driver Profile & Vehicle Specs
+- **HTTP Method:** `POST`
+- **Endpoint:** `/api/v1/transporter/profile`
+- **Headers:** `Authorization: Bearer <sanctum_token>`, `Content-Type: application/json`
+- **Description:** Allows transporter drivers to update their vehicle specifications, license plate, operating license, and availability toggle.
+- **Request Body:**
+```json
+{
+  "vehicle_type": "Motorcycle",
+  "vehicle_plate_number": "LT 482 AB",
+  "driver_license": "DL-237-9921",
+  "vehicle_registration": "CG-237-4401",
+  "insurance_certificate": "ASSUR-AXA-992",
+  "is_available": true
+}
+```
+- **Response (200 OK):**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "01a086ea-1234-7cff-8b9a-112233445566",
+    "user_id": "01a0811d-27f9-7298-9b64-7cff01362fbe",
+    "vehicle_type": "Motorcycle",
+    "vehicle_plate_number": "LT 482 AB",
+    "driver_license": "DL-237-9921",
+    "is_available": true,
+    "message": "Transporter profile updated successfully."
+  }
+}
+```
+
+---
+
+## 14. Zero-Demo Architecture & Real-Time Synchronization Protocol (v3.4)
+
+### 14.1 Zero-Demo Policy Across All Workspaces
+1. **Buyer Workspace (`BuyerProfileScreen`)**:
+   - Zero hardcoded mock badges or static review counters.
+   - Profile defaults: Phone number and name from live authenticated user.
+   - Orders summary badges (`Pending`, `Processing`, `Delivered`, `Completed`) dynamically computed from live PostgreSQL `orders` table filtered by `customer_id`.
+   - Empty states rendered cleanly when user has no active address, orders, or transactions.
+2. **Seller Workspace (`SellerProfileScreen` & `EditStoreProfileScreen`)**:
+   - Zero static mock revenue (`500,000 FCFA`) or mock store names.
+   - If store has not yet been registered, store profile fields default to empty placeholders, guiding user to register their store.
+   - Store order counts (`New`, `Preparing`, `Ready`, `In Transit`, `Completed`) dynamically computed from live `orders` where `store_id = user.store.id`.
+3. **Transporter Workspace (`TransporterProfileScreen`)**:
+   - Zero demo vehicle plates (`LT 123 AB`) or pre-populated mock ratings.
+   - Vehicle specifications, license numbers, and insurance details remain empty until explicitly submitted by driver.
+   - Delivery job counts and earnings fetched directly from live `orders` where `transporter_id = user.id`.
+
+### 14.2 Order Lifecycle Filtering & Completed Tab Contract
+- **Querying Orders by Status (`GET /api/v1/orders` & `GET /api/v1/seller/orders`)**:
+  - `status=completed` strictly returns orders that have completed the full escrow release cycle (`status = 'completed'` and `completed_at IS NOT NULL`).
+  - Supports comma-delimited or array parameters for composite states.
+  - Returns empty list `[]` with HTTP 200 rather than mock fallbacks when zero orders match the filter.
+
+### 14.3 Anti-IDOR Authorization Enforcement & Elimination of Database Fallbacks (v3.5)
+1. **Financial Escrow Authorization**:
+   - `POST /api/v1/seller/orders/:id/complete`: Authenticated user must own the fulfilling store (`$order->store_id === $seller->store->id`). Unauthorized attempts return `HTTP 403 FORBIDDEN`.
+   - `POST /api/v1/orders/:id/confirm`: Authenticated user must be the buyer who placed the order (`$order->customer_id === $user->id`). Unauthorized attempts return `HTTP 403 FORBIDDEN`.
+2. **Order Lifecycle Mutations**:
+   - `POST /api/v1/orders/:id/cancel`: Restricted strictly to the purchasing buyer or the fulfilling store owner.
+   - `POST /api/v1/orders/:id/dispute`: Restricted strictly to the purchasing buyer. Freezes escrow automatically.
+3. **Product Catalog Security**:
+   - `POST /api/v1/products`, `PUT /api/v1/products/:id`, `DELETE /api/v1/products/:id`, `PATCH /api/v1/seller/products/:id/status`, `PATCH /api/v1/seller/products/:id/stock`:
+   - Enforce authenticated store ownership. Rejects foreign product modifications with `HTTP 403 FORBIDDEN`.
+4. **Zero Fallback Invariants**:
+   - `Store::first()`, `Order::first()`, and `Product::first()` are strictly eliminated. Any non-matching query returns `HTTP 404 NOT_FOUND` with error code `NOT_FOUND`.
+5. **Transporter Job Security**:
+   - `POST /api/v1/transporter/jobs/:id/accept`: Rejects job claiming if the order is already assigned (`HTTP 409 JOB_ALREADY_ASSIGNED`).
+   - `GET /api/v1/transporter/active-trip`: Returns `HTTP 404 NOT_FOUND` when zero trips are assigned to the requesting transporter. Never leaks other riders' or customers' active orders.
+   - `POST /api/v1/transporter/trips/:id/stage` & `POST /api/v1/transporter/trips/:id/proof-of-delivery`: Requires the caller to be the assigned transporter (`HTTP 403 FORBIDDEN`).
+
+### 14.4 Dynamic Adverts, Platform Partners & Store Analytics Telemetry Contract (v3.6)
+1. **Public & Mobile Adverts Contract (`GET /api/v1/adverts`)**:
+   - Query Parameters: `audience` (`buyer`, `seller`, `all`), `type` (`banner`, `tip`, `partner`, `special_offer`).
+   - Returns active items ordered by `sort_order ASC`.
+   - Hydrates Seller Dashboard sales tips carousel, Buyer Home Feed banners, and official partners dynamically from the `adverts` database table.
+2. **Staff Portal Adverts Management Contract (`/api/v1/staff/adverts`)**:
+   - `GET /api/v1/staff/adverts`: List all adverts with filtering (`audience`, `type`, `is_active`).
+   - `POST /api/v1/staff/adverts`: Create advert/partner with audit log entry.
+   - `PUT /api/v1/staff/adverts/:id`: Update fields or toggle active status.
+   - `DELETE /api/v1/staff/adverts/:id`: Delete advert with security audit log entry.
+3. **Authentic Store Analytics Telemetry (`GET /api/v1/seller/analytics`)**:
+   - Query Parameter: `time_range` (`7d`, `30d`, `1y`).
+   - Resolves store ownership dynamically; computes actual daily/weekly sales breakdowns from completed store orders in PostgreSQL.
+   - Zero Mock Policy: If store has 0 sales in the period, returns 0 FCFA with clean baseline bars and empty top products `[]`. No dummy fallback products or mock percentages are returned.
+
+
 
 

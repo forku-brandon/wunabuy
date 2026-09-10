@@ -15,6 +15,7 @@ import { ScreenContainer, Text, Card, Button, Badge, Toast } from '../../compone
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
 import { useSellerStore } from '../../stores/seller.store';
+import { useAuthStore } from '../../stores/auth.store';
 import { ProductCategory } from '@wunabuy/types';
 import { SellerService } from '../../services/api';
 
@@ -50,12 +51,8 @@ export const EditStoreProfileScreen = ({ navigation }: any) => {
   );
   const [latitude, setLatitude] = useState(sellerStore.latitude ? sellerStore.latitude.toString() : '4.0510');
   const [longitude, setLongitude] = useState(sellerStore.longitude ? sellerStore.longitude.toString() : '9.7679');
-  const [logoUrl, setLogoUrl] = useState(
-    sellerStore.logoUrl || 'https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=400'
-  );
-  const [coverPhotoUrl, setCoverPhotoUrl] = useState(
-    sellerStore.coverPhotoUrl || 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=800'
-  );
+  const [logoUrl, setLogoUrl] = useState(sellerStore.logoUrl || '');
+  const [coverPhotoUrl, setCoverPhotoUrl] = useState(sellerStore.coverPhotoUrl || '');
 
   const [saving, setSaving] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -135,7 +132,10 @@ export const EditStoreProfileScreen = ({ navigation }: any) => {
     });
 
     SellerService.updateStoreProfile(payload)
-      .then(() => {
+      .then((res) => {
+        if (res?.data?.id) {
+          sellerStore.updateStoreProfile({ storeId: res.data.id });
+        }
         setToastMessage('Store Profile updated successfully! 🏬✓');
       })
       .catch(() => {
@@ -151,11 +151,13 @@ export const EditStoreProfileScreen = ({ navigation }: any) => {
     handleSaveProfile();
 
     // Navigate to StoreDetailScreen with updated values
+    const targetStoreId = sellerStore.storeId || useAuthStore.getState().user?.store?.id || 'my_store';
     navigation.navigate('StoreDetail', {
-      storeId: 'store_1',
+      storeId: targetStoreId,
+      preview: true,
       storeName: storeName.trim() || sellerStore.storeName,
       store: {
-        id: 'store_1',
+        id: targetStoreId,
         name: storeName.trim() || sellerStore.storeName,
         category,
         location: address.trim() || sellerStore.address,
@@ -229,12 +231,21 @@ export const EditStoreProfileScreen = ({ navigation }: any) => {
             onPress={() => handlePickImage('cover')}
             style={styles.coverBannerBox}
           >
-            <Image source={{ uri: coverPhotoUrl }} style={styles.coverImage} resizeMode="cover" />
+            {coverPhotoUrl ? (
+              <Image source={{ uri: coverPhotoUrl }} style={styles.coverImage} resizeMode="cover" />
+            ) : (
+              <View style={[styles.coverImage, { backgroundColor: isDark ? colors.neutral[800] : colors.neutral[200], justifyContent: 'center', alignItems: 'center' }]}>
+                <Ionicons name="image-outline" size={32} color={theme.placeholder} />
+                <Text variant="caption" secondary style={{ marginTop: 4, fontSize: 11 }}>
+                  Tap to upload Store Cover Banner
+                </Text>
+              </View>
+            )}
             <View style={styles.coverOverlay} />
             <View style={styles.coverChangePill}>
               <Ionicons name="camera" size={14} color="#FFFFFF" style={{ marginRight: 4 }} />
               <Text variant="caption" bold color="#FFFFFF">
-                Change Store Banner
+                {coverPhotoUrl ? 'Change Banner' : 'Upload Banner'}
               </Text>
             </View>
           </TouchableOpacity>
@@ -246,7 +257,13 @@ export const EditStoreProfileScreen = ({ navigation }: any) => {
               onPress={() => handlePickImage('logo')}
               style={styles.logoImageWrapper}
             >
-              <Image source={{ uri: logoUrl }} style={styles.logoImage} />
+              {logoUrl ? (
+                <Image source={{ uri: logoUrl }} style={styles.logoImage} />
+              ) : (
+                <View style={[styles.logoImage, { backgroundColor: colors.primary[50], justifyContent: 'center', alignItems: 'center' }]}>
+                  <Ionicons name="storefront-outline" size={28} color={colors.primary[500]} />
+                </View>
+              )}
               <View style={styles.logoCameraBadge}>
                 <Ionicons name="camera" size={12} color="#FFFFFF" />
               </View>

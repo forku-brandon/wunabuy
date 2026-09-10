@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PageContainer } from '../components/layout/PageContainer';
 import { Card } from '../components/ui/Card';
 import { StatCard } from '../components/ui/StatCard';
@@ -74,92 +74,6 @@ interface LeaveRequest {
   status: 'APPROVED' | 'PENDING' | 'REJECTED';
 }
 
-const MOCK_PAYROLL_DATA: PayrollRecord[] = [
-  {
-    id: 'pay_101',
-    employee_id: 'WNB-EMP-001',
-    staff_name: 'Pauline Mbarga',
-    department: 'Executive Management',
-    job_title: 'Chief Operations Officer',
-    base_salary: 1250000,
-    transport_allowance: 150000,
-    bonus: 200000,
-    cnps_deduction: 52500,
-    tax_deduction: 87500,
-    net_salary: 1460000,
-    payment_status: 'PAID',
-    pay_period: 'August 2026',
-    payment_date: '2026-08-28',
-  },
-  {
-    id: 'pay_102',
-    employee_id: 'WNB-EMP-014',
-    staff_name: 'Christian Atangana',
-    department: 'Finance & Treasury',
-    job_title: 'Finance & Treasury Officer',
-    base_salary: 850000,
-    transport_allowance: 80000,
-    bonus: 50000,
-    cnps_deduction: 35700,
-    tax_deduction: 59500,
-    net_salary: 884800,
-    payment_status: 'PAID',
-    pay_period: 'August 2026',
-    payment_date: '2026-08-28',
-  },
-  {
-    id: 'pay_103',
-    employee_id: 'WNB-EMP-007',
-    staff_name: 'Chantal Nguesso',
-    department: 'Human Resources & People Ops',
-    job_title: 'HR & People Operations Lead',
-    base_salary: 950000,
-    transport_allowance: 100000,
-    bonus: 75000,
-    cnps_deduction: 39900,
-    tax_deduction: 66500,
-    net_salary: 1018600,
-    payment_status: 'PAID',
-    pay_period: 'August 2026',
-    payment_date: '2026-08-28',
-  },
-];
-
-const MOCK_DOCUMENTS_DATA: StaffDocument[] = [
-  {
-    id: 'doc_201',
-    employee_id: 'WNB-EMP-001',
-    staff_name: 'Pauline Mbarga',
-    doc_type: 'Employment Contract',
-    file_name: 'Pauline_Mbarga_Executive_Contract_2026.pdf',
-    upload_date: '2026-01-15',
-    verification_status: 'VERIFIED',
-  },
-  {
-    id: 'doc_202',
-    employee_id: 'WNB-EMP-014',
-    staff_name: 'Christian Atangana',
-    doc_type: 'CNI ID Card',
-    file_name: 'CNI_Christian_Atangana_109283.pdf',
-    upload_date: '2026-02-01',
-    verification_status: 'VERIFIED',
-  },
-];
-
-const MOCK_LEAVE_DATA: LeaveRequest[] = [
-  {
-    id: 'lv_301',
-    employee_id: 'WNB-EMP-038',
-    staff_name: 'Jean-Luc Fotso',
-    leave_type: 'Annual Leave',
-    start_date: '2026-09-10',
-    end_date: '2026-09-24',
-    days_count: 14,
-    reason: 'Annual family vacation leave in Yaounde.',
-    status: 'PENDING',
-  },
-];
-
 const DEPARTMENT_OPTIONS = [
   { value: 'Executive Management', label: 'Executive Management', description: 'Board Executives & C-Level Admin' },
   { value: 'Human Resources & People Ops', label: 'Human Resources & People Ops', description: 'Staffing, Payroll & CNPS Compliance' },
@@ -207,8 +121,30 @@ export const HROpsPage: React.FC = () => {
   const canManageStaff = hasPermission('manage_staff_crud') || user?.security_clearance_level === 5;
 
   const [activeTab, setActiveTab] = useState<'payroll' | 'documents' | 'leave' | 'staff_directory'>('staff_directory');
-  const [payrollList] = useState<PayrollRecord[]>(MOCK_PAYROLL_DATA);
-  const [leaveList, setLeaveList] = useState<LeaveRequest[]>(MOCK_LEAVE_DATA);
+  const [payrollList, setPayrollList] = useState<PayrollRecord[]>(() => {
+    const saved = localStorage.getItem('wunabuy_hr_payroll');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [leaveList, setLeaveList] = useState<LeaveRequest[]>(() => {
+    const saved = localStorage.getItem('wunabuy_hr_leave');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [documentsList, setDocumentsList] = useState<StaffDocument[]>(() => {
+    const saved = localStorage.getItem('wunabuy_hr_documents');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('wunabuy_hr_payroll', JSON.stringify(payrollList));
+  }, [payrollList]);
+
+  useEffect(() => {
+    localStorage.setItem('wunabuy_hr_leave', JSON.stringify(leaveList));
+  }, [leaveList]);
+
+  useEffect(() => {
+    localStorage.setItem('wunabuy_hr_documents', JSON.stringify(documentsList));
+  }, [documentsList]);
 
   // Payslip Modal State
   const [selectedPayslip, setSelectedPayslip] = useState<PayrollRecord | null>(null);
@@ -615,7 +551,7 @@ export const HROpsPage: React.FC = () => {
           }`}
         >
           <FileText className="w-4 h-4" />
-          <span>Staff Documents ({MOCK_DOCUMENTS_DATA.length})</span>
+          <span>Staff Documents ({documentsList.length})</span>
         </button>
 
         <button
@@ -637,7 +573,7 @@ export const HROpsPage: React.FC = () => {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
             <div>
               <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100 font-heading">
-                Corporate Staff Roster &amp; Account Provisioning
+                Corporate Staff Roster & Provisioning
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                 Create corporate accounts with email, phone, security clearance, and dual OTP/Password login.
@@ -669,10 +605,10 @@ export const HROpsPage: React.FC = () => {
                 Monthly Staff Payroll Disbursal Ledger
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                Period: August 2026 • Itemized CNPS &amp; IRPP Tax Deductions (XAF)
+                Period: August 2026 • Itemized CNPS & IRPP Tax Deductions (XAF)
               </p>
             </div>
-            <Button variant="primary" disabled={!canManagePayroll} onClick={() => alert('Batch salary disbursal initiated to staff bank/MoMo accounts!')}>
+            <Button variant="primary" disabled={!canManagePayroll || payrollList.length === 0} onClick={() => alert('Batch salary disbursal initiated to staff bank/MoMo accounts!')}>
               <Wallet className="w-4 h-4 mr-1.5" />
               Disburse All Pending Payroll
             </Button>
@@ -693,28 +629,36 @@ export const HROpsPage: React.FC = () => {
           <div className="flex items-center justify-between mb-6 pb-4">
             <div>
               <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100 font-heading">
-                Staff Document Vault &amp; Legal Contracts
+                Staff Document Vault & Legal Contracts
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                Verified CNI Cards, Employment Contracts &amp; NIU Tax Certificates
+                Verified CNI Cards, Employment Contracts & NIU Tax Certificates
               </p>
             </div>
           </div>
 
-          <div className="space-y-3">
-            {MOCK_DOCUMENTS_DATA.map((doc) => (
-              <div key={doc.id} className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <FileText className="w-6 h-6 text-teal-600 dark:text-teal-400" />
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100">{doc.doc_type} — {doc.staff_name}</h4>
-                    <p className="text-[10px] text-slate-400 font-mono">{doc.file_name} • Uploaded {doc.upload_date}</p>
+          {documentsList.length === 0 ? (
+            <div className="text-center py-12 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
+              <FileText className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+              <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300">No Documents Uploaded</h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Staff contract and identity documents will appear here once submitted.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {documentsList.map((doc) => (
+                <div key={doc.id} className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <FileText className="w-6 h-6 text-teal-600 dark:text-teal-400" />
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100">{doc.doc_type} — {doc.staff_name}</h4>
+                      <p className="text-[10px] text-slate-400 font-mono">{doc.file_name} • Uploaded {doc.upload_date}</p>
+                    </div>
                   </div>
+                  <Badge variant="success">{doc.verification_status}</Badge>
                 </div>
-                <Badge variant="success">VERIFIED</Badge>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </Card>
       )}
 

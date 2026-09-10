@@ -324,10 +324,24 @@ export const ProductDetailScreen = ({ route, navigation }: any) => {
             <Text variant="bodyLarge" secondary style={styles.struckPrice}>
               {formatXAF(originalPrice)}
             </Text>
-            <View style={styles.inStockBadge}>
-              <View style={styles.inStockDot} />
-              <Text variant="caption" bold color={colors.semantic.success[700]}>
-                In Stock ({product.quantity} left)
+            <View
+              style={[
+                styles.inStockBadge,
+                (product.quantity ?? 0) <= 0 && { backgroundColor: colors.semantic.error[50] },
+              ]}
+            >
+              <View
+                style={[
+                  styles.inStockDot,
+                  (product.quantity ?? 0) <= 0 && { backgroundColor: colors.semantic.error[500] },
+                ]}
+              />
+              <Text
+                variant="caption"
+                bold
+                color={(product.quantity ?? 0) > 0 ? colors.semantic.success[700] : colors.semantic.error[700]}
+              >
+                {(product.quantity ?? 0) > 0 ? `In Stock (${product.quantity} left)` : 'Out of Stock'}
               </Text>
             </View>
           </View>
@@ -337,32 +351,38 @@ export const ProductDetailScreen = ({ route, navigation }: any) => {
             <View style={styles.ratingBox}>
               <Ionicons name="star" size={15} color={colors.accent[500]} style={{ marginRight: 4 }} />
               <Text variant="bodyMedium" bold color={colors.accent[500]}>
-                {product.rating_avg?.toFixed(1) ?? '4.9'}
+                {(product.rating_avg ?? (product.store as any)?.rating_avg ?? 0) > 0
+                  ? (product.rating_avg ?? (product.store as any)?.rating_avg ?? 0).toFixed(1)
+                  : 'New'}
               </Text>
               <Text variant="caption" secondary style={{ marginLeft: 4 }}>
-                ({product.total_reviews ?? 42} verified reviews)
+                ({product.total_reviews ?? (product.store as any)?.total_reviews ?? 0} {(product.total_reviews ?? (product.store as any)?.total_reviews ?? 0) === 1 ? 'review' : 'reviews'})
               </Text>
             </View>
 
-            {product.distance_km !== null && (
-              <View style={styles.locationPill}>
-                <Ionicons name="location-outline" size={13} color={colors.primary[500]} />
-                <Text variant="caption" color={colors.primary[500]} bold style={{ marginLeft: 2 }}>
-                  {formatDistance(product.distance_km)} away • Akwa, Douala
-                </Text>
-              </View>
-            )}
+            <View style={styles.locationPill}>
+              <Ionicons name="location-outline" size={13} color={colors.primary[500]} />
+              <Text variant="caption" color={colors.primary[500]} bold style={{ marginLeft: 2 }} numberOfLines={1}>
+                {product.distance_km !== null && product.distance_km !== undefined
+                  ? `${formatDistance(product.distance_km)} away • `
+                  : ''}
+                {(product.store as any)?.address_text || (product.store as any)?.city || 'Cameroon'}
+              </Text>
+            </View>
           </View>
 
           {/* ── Verified Store Card ───────────────────────────────────────── */}
           <TouchableOpacity
             activeOpacity={0.88}
-            onPress={() =>
-              navigation.navigate('StoreDetail', {
-                store: product.store,
-                storeId: product.store?.id || 'store_101',
-              })
-            }
+            onPress={() => {
+              const targetStoreId = product.store?.id || (product as any)?.store_id;
+              if (targetStoreId) {
+                navigation.navigate('StoreDetail', {
+                  store: product.store,
+                  storeId: targetStoreId,
+                });
+              }
+            }}
           >
             <Card style={styles.storeCard}>
               <View style={styles.storeRow}>
@@ -372,12 +392,12 @@ export const ProductDetailScreen = ({ route, navigation }: any) => {
                 <View style={styles.storeInfo}>
                   <View style={styles.storeTitleRow}>
                     <Text variant="bodyMedium" bold numberOfLines={1}>
-                      {product.store?.store_name ?? 'Douala Tech Hub (Akwa)'}
+                      {product.store?.store_name ?? 'Official Verified Store'}
                     </Text>
                     <Ionicons name="checkmark-circle" size={16} color={colors.primary[500]} style={{ marginLeft: 4 }} />
                   </View>
                   <Text variant="caption" secondary numberOfLines={1}>
-                    Official Verified Merchant • 99.4% Fulfillment Rate
+                    Official Verified Merchant
                   </Text>
                 </View>
 
@@ -421,7 +441,7 @@ export const ProductDetailScreen = ({ route, navigation }: any) => {
                   Express Transporter Delivery
                 </Text>
                 <Text variant="caption" color={isDark ? '#FCD34D' : '#92400E'} style={styles.trustSubtext}>
-                  Live GPS tracked motorbike courier to your doorstep in Douala.
+                  Live GPS tracked motorbike courier to your doorstep in {(product.store as any)?.city || 'Cameroon'}.
                 </Text>
               </View>
             </View>
@@ -480,7 +500,7 @@ export const ProductDetailScreen = ({ route, navigation }: any) => {
                   You May Also Like ✨
                 </Text>
                 <Text variant="caption" secondary>
-                  Hand-picked related items from verified Douala stores
+                  Hand-picked related items from verified stores
                 </Text>
               </View>
             </View>

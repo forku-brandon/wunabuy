@@ -7,7 +7,7 @@ import { StatCard } from '../components/ui/StatCard';
 import { DataTable, Column } from '../components/ui/DataTable';
 import { DualControlConfirmModal } from '../components/ui/DualControlConfirmModal';
 import { useStaffAuth } from '../stores/staffAuthStore';
-import { financialsApi } from '../services';
+import { financialsApi, PayoutTransactionItem, FinancialStats } from '../services';
 import { rateLimiter, maskPhone } from '../services/security';
 import { formatXAF } from '@wunabuy/utils';
 import {
@@ -18,100 +18,41 @@ import {
   Smartphone,
 } from 'lucide-react';
 
-interface PayoutTransactionItem {
-  id: string;
-  reference_code: string;
-  entity_name: string;
-  entity_type: 'SELLER' | 'TRANSPORTER';
-  payment_method: 'MTN_MOMO' | 'ORANGE_MONEY';
-  account_number: string;
-  amount: number;
-  commission_deducted: number;
-  net_payout: number;
-  status: 'PENDING_APPROVAL' | 'PROCESSED' | 'FLAGGED';
-  requested_at: string;
-  risk_score: 'LOW' | 'MEDIUM' | 'HIGH';
-}
-
-const MOCK_PAYOUT_LEDGER: PayoutTransactionItem[] = [
-  {
-    id: 'pay_901',
-    reference_code: 'WB-PAY-8841',
-    entity_name: 'Douala Tech Hub',
-    entity_type: 'SELLER',
-    payment_method: 'MTN_MOMO',
-    account_number: '+237 670 123 456',
-    amount: 850000,
-    commission_deducted: 29750,
-    net_payout: 820250,
-    status: 'PENDING_APPROVAL',
-    requested_at: '2026-09-02 11:20',
-    risk_score: 'LOW',
-  },
-  {
-    id: 'pay_902',
-    reference_code: 'WB-PAY-8842',
-    entity_name: 'Penja Organic Farm',
-    entity_type: 'SELLER',
-    payment_method: 'ORANGE_MONEY',
-    account_number: '+237 699 887 766',
-    amount: 450000,
-    commission_deducted: 15750,
-    net_payout: 434250,
-    status: 'PROCESSED',
-    requested_at: '2026-09-02 09:45',
-    risk_score: 'LOW',
-  },
-  {
-    id: 'pay_903',
-    reference_code: 'WB-PAY-8843',
-    entity_name: 'Jean-Paul Nkoum (Rider)',
-    entity_type: 'TRANSPORTER',
-    payment_method: 'MTN_MOMO',
-    account_number: '+237 670 112 233',
-    amount: 68500,
-    commission_deducted: 2397,
-    net_payout: 66103,
-    status: 'PROCESSED',
-    requested_at: '2026-09-01 16:30',
-    risk_score: 'LOW',
-  },
-  {
-    id: 'pay_904',
-    reference_code: 'WB-PAY-8844',
-    entity_name: 'Heritage African Couture',
-    entity_type: 'SELLER',
-    payment_method: 'ORANGE_MONEY',
-    account_number: '+237 675 443 322',
-    amount: 1250000,
-    commission_deducted: 43750,
-    net_payout: 1206250,
-    status: 'FLAGGED',
-    requested_at: '2026-09-01 10:15',
-    risk_score: 'HIGH',
-  },
-];
-
 export const FinancialsPage: React.FC = () => {
   const { user, addAuditLog, hasPermission } = useStaffAuth();
-  const [ledger, setLedger] = useState<PayoutTransactionItem[]>(MOCK_PAYOUT_LEDGER);
+  const [ledger, setLedger] = useState<PayoutTransactionItem[]>([]);
+  const [stats, setStats] = useState<FinancialStats | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   
   // Interactive Dual-Control Modal State
   const [authorizeTarget, setAuthorizeTarget] = useState<PayoutTransactionItem | null>(null);
 
   const canApprovePayout = hasPermission('approve_payouts');
 
-  useEffect(() => {
-    financialsApi
-      .getPayoutLedger()
-      .then((res) => {
-        if (res.data && res.data.length > 0) {
-          setLedger(res.data);
+  const fetchFinancialData = () => {
+    setIsLoading(true);
+    Promise.all([
+      financialsApi.getPayoutLedger(),
+      financialsApi.getFinancialStats(),
+    ])
+      .then(([ledgerRes, statsRes]) => {
+        if (ledgerRes.data) {
+          setLedger(ledgerRes.data);
+        }
+        if (statsRes.data) {
+          setStats(statsRes.data);
         }
       })
-      .catch(() => {
-        // Fallback to local mock ledger when API server is offline
+      .catch((err) => {
+        console.warn('[FinancialsPage] Failed to fetch financial records', err);
+      })
+      .finally(() => {
+        setIsLoading(false);
       });
+  };
+
+  useEffect(() => {
+    fetchFinancialData();
   }, []);
 
   const handleConfirmPayoutAction = async (reason: string) => {
@@ -244,29 +185,29 @@ export const FinancialsPage: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <StatCard
           title="Escrow Lockbox Reserves"
-          value={formatXAF(142850000)}
-          change="+14.2% vs last week"
+          value={isLoading ? 'Calculating...' : formatXAF(stats?.escrow_reserves ?? 0)}
+          change="Protected Escrow"
           changeType="positive"
           icon={<Lock className="w-5 h-5 text-teal-600 dark:text-teal-400" />}
         />
         <StatCard
           title="Pending Disbursals"
-          value={formatXAF(2550000)}
-          change="3 requests pending authorization"
+          value={isLoading ? '...' : formatXAF(stats?.pending_disbursals_amount ?? 0)}
+          change={`${stats?.pending_disbursals_count ?? 0} requests pending`}
           changeType="neutral"
           icon={<Wallet className="w-5 h-5 text-amber-600 dark:text-amber-400" />}
         />
         <StatCard
           title="Platform Commission Net YTD"
-          value={formatXAF(18420000)}
+          value={isLoading ? '...' : formatXAF(stats?.commission_net_ytd ?? 0)}
           change="3.5% automated deduction"
           changeType="positive"
           icon={<ArrowUpRight className="w-5 h-5 text-blue-600 dark:text-blue-400" />}
         />
         <StatCard
           title="Daily MoMo Settlement"
-          value={formatXAF(34500000)}
-          change="MTN 62% • Orange 38%"
+          value={isLoading ? '...' : formatXAF(stats?.daily_momo_settlement ?? 0)}
+          change="MTN & Orange Settlements"
           changeType="neutral"
           icon={<Smartphone className="w-5 h-5 text-purple-600 dark:text-purple-400" />}
         />

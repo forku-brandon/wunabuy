@@ -39,69 +39,10 @@ interface ActiveTripItem {
   longitude: number;
 }
 
-const MOCK_ACTIVE_TRIPS: ActiveTripItem[] = [
-  {
-    id: 'trip_101',
-    trip_code: 'WB-TRIP-9842',
-    driver_name: 'Jean-Paul Nkoum',
-    driver_phone: '+237 670 112 233',
-    driver_vehicle: 'Yamaha Crux 110cc (Bike 🏍️)',
-    store_name: 'Douala Tech Hub',
-    pickup_quarter: 'Akwa',
-    buyer_name: 'Amadou Bello',
-    delivery_quarter: 'Bonanjo',
-    delivery_fee: 1500,
-    stage: 3,
-    stage_name: 'En Route to Buyer',
-    distance_km: 2.4,
-    elapsed_mins: 14,
-    status: 'en_route',
-    latitude: 4.051,
-    longitude: 9.7679,
-  },
-  {
-    id: 'trip_102',
-    trip_code: 'WB-TRIP-9843',
-    driver_name: 'Samuel Ebobe',
-    driver_phone: '+237 699 443 322',
-    driver_vehicle: 'Toyota Yaris (Taxi 🚕)',
-    store_name: 'Heritage African Couture',
-    pickup_quarter: 'Makepe',
-    buyer_name: 'Chantal Ngo',
-    delivery_quarter: 'Bonamoussadi',
-    delivery_fee: 2500,
-    stage: 2,
-    stage_name: 'Package Picked Up (QR Verified)',
-    distance_km: 4.8,
-    elapsed_mins: 22,
-    status: 'picked_up',
-    latitude: 4.072,
-    longitude: 9.7891,
-  },
-  {
-    id: 'trip_103',
-    trip_code: 'WB-TRIP-9844',
-    driver_name: 'Alain Tchakounte',
-    driver_phone: '+237 675 889 900',
-    driver_vehicle: 'Suzuki Carry (Van 🚐)',
-    store_name: 'Kilo Shop Bonapriso',
-    pickup_quarter: 'Bonapriso',
-    buyer_name: 'Pauline Mbarga',
-    delivery_quarter: 'Bastos (Yaoundé Hub)',
-    delivery_fee: 8500,
-    stage: 4,
-    stage_name: 'Arrived at Destination',
-    distance_km: 18.5,
-    elapsed_mins: 45,
-    status: 'delivered',
-    latitude: 3.8667,
-    longitude: 11.5167,
-  },
-];
-
 export const LogisticsOpsPage: React.FC = () => {
   const { user, addAuditLog, hasPermission } = useStaffAuth();
-  const [trips, setTrips] = useState<ActiveTripItem[]>(MOCK_ACTIVE_TRIPS);
+  const [trips, setTrips] = useState<ActiveTripItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   
   // Interactive Modals
   const [detailsTrip, setDetailsTrip] = useState<ActiveTripItem | null>(null);
@@ -111,17 +52,25 @@ export const LogisticsOpsPage: React.FC = () => {
 
   const canOverride = hasPermission('override_logistics');
 
-  useEffect(() => {
+  const fetchTrips = () => {
+    setIsLoading(true);
     logisticsApi
       .getActiveTrips()
       .then((res) => {
-        if (res.data && res.data.length > 0) {
+        if (res.data) {
           setTrips(res.data);
         }
       })
-      .catch(() => {
-        // Fallback to local mock trips when API server is offline
+      .catch((err) => {
+        console.warn('[LogisticsOpsPage] Failed to fetch live active trips', err);
+      })
+      .finally(() => {
+        setIsLoading(false);
       });
+  };
+
+  useEffect(() => {
+    fetchTrips();
   }, []);
 
   const handleManualOverride = async () => {
@@ -249,8 +198,8 @@ export const LogisticsOpsPage: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard
           title="ACTIVE ON-DUTY RIDERS"
-          value="48 Drivers"
-          change="Douala & Yaoundé"
+          value={isLoading ? 'Loading...' : `${new Set(trips.map((t) => t.driver_name)).size} Drivers`}
+          change="GPS Active"
           changeType="positive"
           icon={<Radio className="w-5 h-5 text-teal-600 dark:text-teal-400" />}
           iconBg="bg-teal-50 dark:bg-teal-950/60"
@@ -259,8 +208,8 @@ export const LogisticsOpsPage: React.FC = () => {
 
         <StatCard
           title="PACKAGES EN-ROUTE"
-          value="28 Active Trips"
-          change="Avg. 24 mins"
+          value={isLoading ? '...' : `${trips.filter((t) => t.status === 'en_route').length} Active Trips`}
+          change="Real-time Dispatch"
           changeType="neutral"
           icon={<Truck className="w-5 h-5 text-blue-600 dark:text-blue-400" />}
           iconBg="bg-blue-50 dark:bg-blue-950/60"
@@ -269,8 +218,8 @@ export const LogisticsOpsPage: React.FC = () => {
 
         <StatCard
           title="DISPATCH SUCCESS RATE"
-          value="98.6%"
-          change="Last 7 Days"
+          value={isLoading ? '...' : `${trips.length > 0 ? Math.round((trips.filter((t) => t.status === 'delivered').length / trips.length) * 100) : 100}%`}
+          change="Delivery Milestones"
           changeType="positive"
           icon={<CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />}
           iconBg="bg-emerald-50 dark:bg-emerald-950/60"
@@ -279,12 +228,12 @@ export const LogisticsOpsPage: React.FC = () => {
 
         <StatCard
           title="ACTIVE EMERGENCY SOS"
-          value="0 Incidents"
-          change="Normal Node"
-          changeType="positive"
+          value={isLoading ? '...' : `${trips.filter((t) => t.status === 'sos').length} Incidents`}
+          change={trips.some((t) => t.status === 'sos') ? 'SOS Active' : 'Normal Fleet'}
+          changeType={trips.some((t) => t.status === 'sos') ? 'negative' : 'positive'}
           icon={<ShieldAlert className="w-5 h-5 text-slate-400 dark:text-slate-500" />}
           iconBg="bg-slate-100 dark:bg-slate-800"
-          description="Zero rider distress signals active"
+          description="Rider distress signals monitored"
         />
       </div>
 

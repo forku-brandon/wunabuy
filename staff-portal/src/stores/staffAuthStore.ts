@@ -343,6 +343,11 @@ let currentUser: StaffUser | null = userDecrypted.data || currentStaffList[0];
 let currentToken: string | null = currentUser ? ('1|mock_sanctum_staff_token_' + currentUser.employee_id) : null;
 let rolesMatrix: StaffRoleDefinition[] = INITIAL_ROLES_MATRIX;
 
+// Ensure token is persisted to localStorage for apiClient.ts
+if (currentToken && !localStorage.getItem('wunabuy_staff_token')) {
+  localStorage.setItem('wunabuy_staff_token', currentToken);
+}
+
 const listeners = new Set<() => void>();
 
 function notify() {
@@ -350,8 +355,12 @@ function notify() {
   encryptStorageItem('wunabuy_staff_audit_logs', currentAuditLogs);
   if (currentUser) {
     encryptStorageItem('wunabuy_staff_session_user', currentUser);
+    if (currentToken) {
+      localStorage.setItem('wunabuy_staff_token', currentToken);
+    }
   } else {
     localStorage.removeItem('wunabuy_staff_session_user');
+    localStorage.removeItem('wunabuy_staff_token');
   }
   listeners.forEach((l) => l());
 }

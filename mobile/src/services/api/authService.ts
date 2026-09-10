@@ -31,7 +31,7 @@ export const AuthService = {
   /**
    * Update profile info (Name, Email, Phone, Avatar)
    */
-  async updateProfile(payload: { full_name?: string; email?: string; avatar_url?: string }): Promise<User> {
+  async updateProfile(payload: { full_name?: string; email?: string; avatar_url?: string; phone?: string }): Promise<User> {
     try {
       const response = await api.auth.updateMe(payload);
       if (response && response.data) {

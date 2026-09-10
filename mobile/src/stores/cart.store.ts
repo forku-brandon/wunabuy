@@ -54,6 +54,7 @@ export const useCartStore = create<CartState>()(
             quantity: Math.min(quantity, product.quantity),
             image_url: product.images[0] || '',
             max_quantity: product.quantity,
+            store_name: product.store?.store_name,
           };
           newItems = [...items, newItem];
         }
