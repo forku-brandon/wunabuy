@@ -117,7 +117,7 @@ export const SellerProductsScreen = ({ navigation }: any) => {
       ) : (
         <FlatList
           data={filteredProducts}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item, index) => (item.id ? `${item.id}-${index}` : `prod-${index}`)}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
           refreshControl={

@@ -56,7 +56,7 @@ class TransporterController extends Controller
             }
 
             $jobs[] = [
-                'id' => 'job_' . substr($order->id, 0, 8),
+                'id' => 'job_' . $order->id,
                 'order_id' => $order->id,
                 'order_code' => $order->order_code,
                 'store' => [
@@ -66,7 +66,7 @@ class TransporterController extends Controller
                     'is_verified' => (bool) ($store->is_verified ?? true),
                 ],
                 'pickup_address' => [
-                    'id' => 'p_' . substr($order->id, 0, 4),
+                    'id' => 'p_' . $order->id,
                     'label' => 'Store Pickup',
                     'latitude' => $sLat,
                     'longitude' => $sLng,
@@ -75,7 +75,7 @@ class TransporterController extends Controller
                     'is_default' => false,
                 ],
                 'delivery_address' => [
-                    'id' => 'd_' . substr($order->id, 0, 4),
+                    'id' => 'd_' . $order->id,
                     'label' => 'Buyer Location',
                     'latitude' => $dLat,
                     'longitude' => $dLng,
@@ -154,31 +154,74 @@ class TransporterController extends Controller
      */
     public function getActiveTrip(Request $request): JsonResponse
     {
-        $jobId = $request->query('job_id', 'job_1');
-        $order = Order::with(['store', 'customer'])->where('status', 'in_transit')->first() ?? Order::with(['store', 'customer'])->first();
+        $jobId = $request->query('job_id');
+        $cleanId = $jobId ? (str_starts_with($jobId, 'job_') ? substr($jobId, 4) : $jobId) : null;
 
-        $store = $order?->store;
-        $customer = $order?->customer;
-        $dAddress = $order?->delivery_address ?? [];
+        $user = $this->resolveUser($request);
+        $transporter = $user?->transporter ?? Transporter::where('user_id', $user?->id)->first();
+
+        $query = Order::with(['store', 'customer', 'items']);
+        if ($transporter) {
+            $query->where('transporter_id', $transporter->id);
+        }
+
+        $order = null;
+        if ($cleanId) {
+            $order = (Str::isUuid($cleanId) ? (clone $query)->find($cleanId) : null)
+                ?? (clone $query)->where('id', 'like', "{$cleanId}%")->first()
+                ?? (clone $query)->where('order_code', $cleanId)->first()
+                ?? (Str::isUuid($cleanId) ? Order::with(['store', 'customer', 'items'])->find($cleanId) : null);
+        }
+
+        if (!$order) {
+            $order = (clone $query)->where('status', 'in_transit')->latest()->first()
+                ?? Order::with(['store', 'customer', 'items'])->where('status', 'in_transit')->latest()->first()
+                ?? Order::with(['store', 'customer', 'items'])->latest()->first();
+        }
+
+        if (!$order) {
+            return $this->respondError('NOT_FOUND', 'No active delivery trip found.', null, 404);
+        }
+
+        $store = $order->store;
+        $customer = $order->customer;
+        $dAddress = $order->delivery_address ?? [];
+        $dText = is_array($dAddress) ? ($dAddress['address_text'] ?? ($dAddress['label'] ?? 'Douala, Cameroon')) : (string) $dAddress;
+
+        $itemsSummary = $order->items->map(function ($it) {
+            return "{$it->quantity}x {$it->name}";
+        })->join(', ');
+        if (empty($itemsSummary)) {
+            $itemsSummary = '1x Wunabuy Verified Package';
+        }
+
+        $stage = 1;
+        if ($order->status === 'delivered') {
+            $stage = 4;
+        } elseif ($order->status === 'in_transit') {
+            $stage = 3;
+        } elseif ($order->status === 'ready_for_pickup') {
+            $stage = 1;
+        }
 
         return $this->respondSuccess([
-            'job_id' => $jobId,
+            'job_id' => 'job_' . $order->id,
             'order_code' => $order->order_code ?? 'WB-2026-9842',
-            'current_stage' => 1,
+            'current_stage' => $stage,
             'verification_code' => $order->pickup_verification_pin ?? '7842',
             'delivery_fee' => (float) ($order->delivery_fee ?? 1500),
-            'items_summary' => 'Samsung Galaxy A54 5G (128GB - Factory Sealed)',
-            'package_specs' => 'Fragile Electronics â€¢ Small Box (< 2 kg)',
-            'store_name' => $store->store_name ?? 'Douala Tech Hub (Akwa Branch)',
-            'store_address' => $store->address_text ?? 'Rue Joss, Quartier Akwa, Douala, Cameroon',
-            'store_landmark_directions' => 'Opposite Place du Gouvernement, Next to Akwa Mall (Suite 104)',
-            'store_phone' => $store->phone ?? '+237 670 123 456',
+            'items_summary' => $itemsSummary,
+            'package_specs' => 'Standard Package (< 5 kg)',
+            'store_name' => $store->store_name ?? 'Merchant Store',
+            'store_address' => $store->address_text ?? 'Douala, Cameroon',
+            'store_landmark_directions' => 'Merchant Store Front',
+            'store_phone' => $store->phone ?? ($store->user?->phone ?? '+237 670 123 456'),
             'store_operating_hours' => $store->counter_hours ?? 'Mon - Sat: 8:00 AM - 6:30 PM',
-            'store_handover_instructions' => 'ðŸ”‘ Handover Code Verification: Present rider ID & ask merchant for the 4-digit pickup PIN upon parcel collection.',
-            'buyer_name' => $customer->full_name ?? 'Marie Claire Ngono',
-            'buyer_address' => $dAddress['address_text'] ?? 'Boulevard de la LibertÃ©, Quartier Akwa, Douala, Cameroon',
-            'buyer_landmark_directions' => 'Near BICEC Bank Main Gate, White 2-Story Building with Blue Gate',
-            'buyer_phone' => $customer->phone ?? '+237 671 234 567',
+            'store_handover_instructions' => 'Handover Code Verification: Present rider ID & ask merchant for the 4-digit pickup PIN upon parcel collection.',
+            'buyer_name' => $customer->full_name ?? ($dAddress['full_name'] ?? 'Buyer Customer'),
+            'buyer_address' => $dText,
+            'buyer_landmark_directions' => 'Customer Delivery Address',
+            'buyer_phone' => $customer->phone ?? ($dAddress['phone'] ?? '+237 671 234 567'),
             'buyer_delivery_instructions' => 'Call buyer on arrival. Buyer will inspect parcel & sign proof of delivery on phone.',
         ]);
     }
@@ -189,13 +232,21 @@ class TransporterController extends Controller
     public function updateTripStage(Request $request, string $id): JsonResponse
     {
         $stage = (int) $request->input('stage', 1);
+        $cleanId = str_starts_with($id, 'job_') ? substr($id, 4) : $id;
 
-        $order = Order::where('status', 'in_transit')->first() ?? Order::first();
+        $order = (Str::isUuid($cleanId) ? Order::find($cleanId) : null)
+            ?? Order::where('id', 'like', "{$cleanId}%")->first()
+            ?? Order::where('order_code', $cleanId)->first()
+            ?? Order::where('status', 'in_transit')->first()
+            ?? Order::first();
+
         if ($order) {
             if ($stage === 4) {
                 $order->status = 'delivered';
-                $order->save();
+            } elseif ($stage === 3) {
+                $order->status = 'in_transit';
             }
+            $order->save();
         }
 
         return $this->respondSuccess([
@@ -210,7 +261,14 @@ class TransporterController extends Controller
      */
     public function submitProofOfDelivery(Request $request, string $id): JsonResponse
     {
-        $order = Order::where('status', 'in_transit')->first() ?? Order::first();
+        $cleanId = str_starts_with($id, 'job_') ? substr($id, 4) : $id;
+
+        $order = (Str::isUuid($cleanId) ? Order::find($cleanId) : null)
+            ?? Order::where('id', 'like', "{$cleanId}%")->first()
+            ?? Order::where('order_code', $cleanId)->first()
+            ?? Order::where('status', 'in_transit')->first()
+            ?? Order::first();
+
         if ($order) {
             $order->status = 'delivered';
             $order->save();
@@ -268,7 +326,7 @@ class TransporterController extends Controller
             'completed_deliveries' => (int) ($transporter->completed_trips ?? 0),
             'is_verified' => (bool) ($transporter->is_verified ?? false),
             'vehicle' => [
-                'type' => $transporter->vehicle_type ?? 'Yamaha YBR 125 ðŸï¸',
+                'type' => $transporter->vehicle_type ?? 'Yamaha YBR 125',
                 'plate_number' => $transporter->license_plate ?? 'LT-8492-AB',
                 'operating_quarter' => 'Akwa / Bonanjo',
                 'insurance_status' => 'Active (Dec 2026)',

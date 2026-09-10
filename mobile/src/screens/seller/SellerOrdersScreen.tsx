@@ -288,7 +288,7 @@ export const SellerOrdersScreen = ({ navigation }: any) => {
       ) : (
         <FlatList
           data={filteredOrders}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item, index) => (item.id ? `${item.id}-${index}` : `order-${index}`)}
           contentContainerStyle={styles.ordersListContent}
           showsVerticalScrollIndicator={false}
           refreshControl={

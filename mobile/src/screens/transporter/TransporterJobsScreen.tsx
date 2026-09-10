@@ -221,7 +221,7 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
       {/* Jobs Feed */}
       <FlatList
         data={filteredJobs}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item, index) => (item.id ? `${item.id}-${index}` : `job-${index}`)}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         refreshControl={
