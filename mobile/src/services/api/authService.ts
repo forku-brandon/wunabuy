@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import { api } from './apiClient';
 import { User, UserRole, UserStatus, Address } from '@wunabuy/types';
 import { useAuthStore } from '../../stores/auth.store';
@@ -63,38 +64,95 @@ export const AuthService = {
   },
 
   /**
-   * Upload user avatar photo
+   * Upload user avatar photo to the backend.
+   * Updates authStore with the real server URL on success.
    */
-  async uploadAvatar(imageUri: string): Promise<{ success: boolean; avatar_url: string }> {
+  async uploadAvatar(imageUri: string): Promise<{ success: boolean; avatar_url: string; error?: string }> {
     try {
+      // 1. If already a web URL, just update profile
+      if (imageUri.startsWith('http://') || imageUri.startsWith('https://')) {
+        const res = await api.client.post<{ success: boolean; data: { avatar_url: string } }>('/user/avatar', {
+          avatar_url: imageUri,
+        });
+        const serverUrl = res.data?.data?.avatar_url || imageUri;
+        useAuthStore.getState().updateUser({ avatar_url: serverUrl });
+        return { success: true, avatar_url: serverUrl };
+      }
+
+      // 2. If base64 data URI
+      if (imageUri.startsWith('data:image/')) {
+        const res = await api.client.post<{ success: boolean; data: { avatar_url: string } }>('/user/avatar', {
+          avatar_base64: imageUri,
+        });
+        const serverUrl = res.data?.data?.avatar_url || imageUri;
+        useAuthStore.getState().updateUser({ avatar_url: serverUrl });
+        return { success: true, avatar_url: serverUrl };
+      }
+
+      // 3. Native device file upload via FormData
       const formData = new FormData();
-      const filename = imageUri.split('/').pop() || 'avatar.jpg';
+      const filename = imageUri.split('/').pop() || `avatar_${Date.now()}.jpg`;
       const match = /\.(\w+)$/.exec(filename);
-      const type = match ? `image/${match[1]}` : 'image/jpeg';
+      const type = match ? `image/${match[1].toLowerCase()}` : 'image/jpeg';
+      const cleanUri = Platform.OS === 'android' ? imageUri : imageUri.replace('file://', '');
 
       formData.append('avatar', {
-        uri: imageUri,
+        uri: cleanUri,
         name: filename,
         type,
       } as any);
 
       const response = await api.client.post<{ success: boolean; data: { avatar_url: string } }>(
         '/user/avatar',
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        }
+        formData
       );
 
       if (response.data?.data?.avatar_url) {
-        useAuthStore.getState().updateUser({ avatar_url: response.data.data.avatar_url });
-        return { success: true, avatar_url: response.data.data.avatar_url };
+        const serverUrl = response.data.data.avatar_url;
+        useAuthStore.getState().updateUser({ avatar_url: serverUrl });
+        return { success: true, avatar_url: serverUrl };
       }
       return { success: true, avatar_url: imageUri };
+    } catch (err: any) {
+      console.warn('Avatar upload fallback to local URI:', err?.message);
+      useAuthStore.getState().updateUser({ avatar_url: imageUri });
+      return { success: false, avatar_url: imageUri, error: err?.message };
+    }
+  },
+
+  /**
+   * Upload general image (store logo, banner, review photos) to the backend.
+   */
+  async uploadImage(imageUri: string, folder: string = 'general'): Promise<string> {
+    try {
+      if (imageUri.startsWith('http://') || imageUri.startsWith('https://')) {
+        return imageUri;
+      }
+
+      const formData = new FormData();
+      const filename = imageUri.split('/').pop() || `img_${Date.now()}.jpg`;
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `image/${match[1].toLowerCase()}` : 'image/jpeg';
+      const cleanUri = Platform.OS === 'android' ? imageUri : imageUri.replace('file://', '');
+
+      formData.append('image', {
+        uri: cleanUri,
+        name: filename,
+        type,
+      } as any);
+      formData.append('folder', folder);
+
+      const response = await api.client.post<{ success: boolean; data: { url: string } }>(
+        '/upload/image',
+        formData
+      );
+
+      if (response.data?.data?.url) {
+        return response.data.data.url;
+      }
+      return imageUri;
     } catch {
-      return { success: true, avatar_url: imageUri };
+      return imageUri;
     }
   },
 

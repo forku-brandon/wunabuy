@@ -55,6 +55,7 @@ Route::prefix('v1')->group(function () {
     Route::post('/users/addresses', [AuthController::class, 'addAddress']);
     Route::put('/user/preferences', [AuthController::class, 'updatePreferences']);
     Route::post('/user/avatar', [AuthController::class, 'uploadAvatar']);
+    Route::post('/upload/image', [AuthController::class, 'uploadImage']);
     Route::post('/user/switch-role', [AuthController::class, 'switchRole']);
 
     // ─── COMMERCE, CATALOG & DISCOVERY ───
@@ -176,5 +177,6 @@ Route::prefix('v1')->group(function () {
     Route::get('/staff/adverts/{id}', [StaffPortalController::class, 'getAdvert']);
     Route::put('/staff/adverts/{id}', [StaffPortalController::class, 'updateAdvert']);
     Route::delete('/staff/adverts/{id}', [StaffPortalController::class, 'deleteAdvert']);
+    Route::post('/staff/profile/avatar', [StaffPortalController::class, 'uploadAvatar']);
 
 });

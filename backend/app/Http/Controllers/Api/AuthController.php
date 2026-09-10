@@ -10,6 +10,7 @@ use App\Models\Wallet;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
@@ -408,7 +409,11 @@ class AuthController extends Controller
     }
 
     /**
-     * Upload user avatar.
+     * Upload user avatar photo.
+     * Supports:
+     * 1. Direct file upload via multipart/form-data (avatar, photo, image, file).
+     * 2. Base64 encoded image string (avatar_base64 or data:image/... URI).
+     * 3. Direct URL (avatar_url).
      */
     public function uploadAvatar(Request $request): JsonResponse
     {
@@ -417,14 +422,137 @@ class AuthController extends Controller
             return $this->respondError('UNAUTHENTICATED', 'User session expired or not found', null, 401);
         }
 
-        $url = $request->input('avatar_url', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80');
-        $user->avatar_url = $url;
+        $avatarDirectory = public_path('uploads/avatars');
+        if (!File::exists($avatarDirectory)) {
+            File::makeDirectory($avatarDirectory, 0755, true, true);
+        }
+
+        $savedUrl = null;
+
+        // 1. Check for multipart file upload
+        $file = $request->file('avatar') ?? $request->file('photo') ?? $request->file('image') ?? $request->file('file');
+        if ($file && $file->isValid()) {
+            $extension = strtolower($file->getClientOriginalExtension() ?: $file->guessExtension() ?: 'jpg');
+            $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+            if (!in_array($extension, $allowedExtensions)) {
+                $extension = 'jpg';
+            }
+
+            $fileName = 'avatar_' . $user->id . '_' . time() . '_' . Str::random(8) . '.' . $extension;
+            $file->move($avatarDirectory, $fileName);
+            $savedUrl = url('uploads/avatars/' . $fileName);
+        }
+
+        // 2. Check for base64 encoded image
+        if (!$savedUrl) {
+            $base64Data = $request->input('avatar_base64') ?? $request->input('avatar');
+            if (!$base64Data && $request->has('avatar_url') && str_starts_with($request->input('avatar_url'), 'data:image')) {
+                $base64Data = $request->input('avatar_url');
+            }
+
+            if ($base64Data && is_string($base64Data) && str_contains($base64Data, ';base64,')) {
+                $parts = explode(';base64,', $base64Data);
+                $mimeType = str_replace('data:', '', $parts[0] ?? 'image/jpeg');
+                $extension = match ($mimeType) {
+                    'image/png' => 'png',
+                    'image/webp' => 'webp',
+                    'image/gif' => 'gif',
+                    default => 'jpg',
+                };
+                $decoded = base64_decode($parts[1] ?? '', true);
+                if ($decoded !== false && strlen($decoded) > 0) {
+                    $fileName = 'avatar_' . $user->id . '_' . time() . '_' . Str::random(8) . '.' . $extension;
+                    file_put_contents($avatarDirectory . DIRECTORY_SEPARATOR . $fileName, $decoded);
+                    $savedUrl = url('uploads/avatars/' . $fileName);
+                }
+            }
+        }
+
+        // 3. Check for direct URL string
+        if (!$savedUrl && $request->has('avatar_url') && !empty($request->input('avatar_url'))) {
+            $candidateUrl = $request->input('avatar_url');
+            if (filter_var($candidateUrl, FILTER_VALIDATE_URL) || str_starts_with($candidateUrl, 'http')) {
+                $savedUrl = $candidateUrl;
+            }
+        }
+
+        // Fallback default if nothing provided
+        if (!$savedUrl) {
+            $savedUrl = $user->avatar_url ?: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80';
+        }
+
+        $user->avatar_url = $savedUrl;
         $user->save();
 
+        // If target is store logo and user has a store, update store logo as well
+        if ($request->input('target') === 'store_logo' || $request->boolean('is_store_logo')) {
+            $store = $user->store;
+            if ($store) {
+                $store->logo_url = $savedUrl;
+                $store->save();
+            }
+        }
+
         return $this->respondSuccess([
-            'avatar_url' => $url,
+            'avatar_url' => $savedUrl,
             'user' => $user->fresh()->toAuthProfileArray(),
-        ]);
+        ], ['message' => 'Profile picture updated successfully']);
+    }
+
+    /**
+     * General image upload endpoint (store logos, banners, review photos).
+     */
+    public function uploadImage(Request $request): JsonResponse
+    {
+        $user = $this->resolveUser($request);
+        $folder = $request->input('folder', 'general');
+        $safeFolder = preg_replace('/[^a-zA-Z0-9_-]/', '', $folder) ?: 'general';
+        
+        $directory = public_path('uploads/' . $safeFolder);
+        if (!File::exists($directory)) {
+            File::makeDirectory($directory, 0755, true, true);
+        }
+
+        $savedUrl = null;
+
+        // 1. Multipart file
+        $file = $request->file('image') ?? $request->file('photo') ?? $request->file('file') ?? $request->file('avatar');
+        if ($file && $file->isValid()) {
+            $extension = strtolower($file->getClientOriginalExtension() ?: $file->guessExtension() ?: 'jpg');
+            $fileName = 'img_' . ($user ? $user->id : 'guest') . '_' . time() . '_' . Str::random(8) . '.' . $extension;
+            $file->move($directory, $fileName);
+            $savedUrl = url('uploads/' . $safeFolder . '/' . $fileName);
+        }
+
+        // 2. Base64
+        if (!$savedUrl) {
+            $base64Data = $request->input('image_base64') ?? $request->input('data');
+            if ($base64Data && is_string($base64Data) && str_contains($base64Data, ';base64,')) {
+                $parts = explode(';base64,', $base64Data);
+                $mimeType = str_replace('data:', '', $parts[0] ?? 'image/jpeg');
+                $extension = match ($mimeType) {
+                    'image/png' => 'png',
+                    'image/webp' => 'webp',
+                    'image/gif' => 'gif',
+                    default => 'jpg',
+                };
+                $decoded = base64_decode($parts[1] ?? '', true);
+                if ($decoded !== false) {
+                    $fileName = 'img_' . ($user ? $user->id : 'guest') . '_' . time() . '_' . Str::random(8) . '.' . $extension;
+                    file_put_contents($directory . DIRECTORY_SEPARATOR . $fileName, $decoded);
+                    $savedUrl = url('uploads/' . $safeFolder . '/' . $fileName);
+                }
+            }
+        }
+
+        if (!$savedUrl) {
+            return $this->respondError('VALIDATION_ERROR', 'No valid image file or data provided', null, 422);
+        }
+
+        return $this->respondSuccess([
+            'url' => $savedUrl,
+            'image_url' => $savedUrl,
+        ], ['message' => 'Image uploaded successfully']);
     }
 
     /**

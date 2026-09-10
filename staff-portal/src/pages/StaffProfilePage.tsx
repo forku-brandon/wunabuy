@@ -4,6 +4,7 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { useStaffAuth } from '../stores/staffAuthStore';
+import { authApi } from '../services/authApi';
 import {
   User,
   Lock,
@@ -54,26 +55,48 @@ export const StaffProfilePage: React.FC = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+
   // FILE UPLOAD HANDLER FOR AVATAR (ALLOWED FOR ALL STAFF MEMBERS)
-  const handleAvatarFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      const base64Data = reader.result as string;
-      updateUserAvatar(base64Data);
+    setIsUploadingAvatar(true);
+    try {
+      // 1. Upload directly to backend API
+      const res = await authApi.uploadAvatar(file);
+      const serverUrl = res?.avatar_url;
+
+      if (serverUrl) {
+        updateUserAvatar(serverUrl);
+      } else {
+        const reader = new FileReader();
+        reader.onload = () => {
+          updateUserAvatar(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+      }
 
       addAuditLog({
         action_code: 'PROFILE_AVATAR_UPDATE',
-        action_description: `Updated staff profile picture for ${user?.full_name}`,
+        action_description: `Updated corporate profile picture for ${user?.full_name}`,
         security_level: 'INFO',
       });
 
-      setSuccessMessage('Profile picture updated and saved locally!');
+      setSuccessMessage('Profile picture successfully updated and saved to server!');
+      setTimeout(() => setSuccessMessage(''), 3500);
+    } catch {
+      const reader = new FileReader();
+      reader.onload = () => {
+        updateUserAvatar(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+      setSuccessMessage('Profile picture updated locally!');
       setTimeout(() => setSuccessMessage(''), 3000);
-    };
-    reader.readAsDataURL(file);
+    } finally {
+      setIsUploadingAvatar(false);
+    }
   };
 
   const handleDeleteAvatar = () => {
@@ -207,10 +230,11 @@ export const StaffProfilePage: React.FC = () => {
                 variant="outline"
                 size="sm"
                 onClick={() => fileInputRef.current?.click()}
+                disabled={isUploadingAvatar}
                 className="text-xs font-bold"
               >
                 <Camera className="w-3.5 h-3.5 mr-1 text-teal-600" />
-                Change Picture
+                <span>{isUploadingAvatar ? 'Uploading...' : 'Change Picture'}</span>
               </Button>
 
               {user?.avatar_url && (

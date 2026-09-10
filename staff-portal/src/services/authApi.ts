@@ -54,5 +54,32 @@ export const authApi = {
       method: 'GET',
     });
   },
+
+  /**
+   * Upload staff corporate avatar.
+   * API Endpoint: POST /api/v1/staff/profile/avatar
+   */
+  uploadAvatar: async (fileOrBase64: File | string) => {
+    if (typeof fileOrBase64 === 'string') {
+      return apiRequest<{ avatar_url: string }>('/staff/profile/avatar', {
+        method: 'POST',
+        body: JSON.stringify({ avatar_base64: fileOrBase64 }),
+      });
+    }
+
+    const formData = new FormData();
+    formData.append('avatar', fileOrBase64);
+
+    const token = localStorage.getItem('wunabuy_staff_token') || '';
+    const res = await fetch('/api/v1/staff/profile/avatar', {
+      method: 'POST',
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: formData,
+    });
+    const json = await res.json();
+    return json?.data || { avatar_url: '' };
+  },
 };
 

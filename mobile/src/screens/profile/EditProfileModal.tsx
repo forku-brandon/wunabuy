@@ -5,9 +5,12 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { BottomSheet, Text, Input, Button } from '../../components/ui';
+import * as ImagePicker from 'expo-image-picker';
+import { BottomSheet, Text, Input, Button, Avatar } from '../../components/ui';
 import { useAuthStore } from '../../stores/auth.store';
 import { useThemeStore } from '../../stores/theme.store';
 import { colors, spacing, borderRadius } from '@wunabuy/design-tokens';
@@ -30,6 +33,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [avatarUri, setAvatarUri] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,9 +42,33 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
       setFullName(user.full_name || '');
       setEmail(user.email || '');
       setPhone(user.phone || '');
+      setAvatarUri(user.avatar_url || null);
       setError(null);
     }
   }, [visible, user]);
+
+  const handlePickAvatar = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Photo library permission is needed to change your profile picture.');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets && result.assets[0]?.uri) {
+        setAvatarUri(result.assets[0].uri);
+      }
+    } catch {
+      Alert.alert('Error', 'Could not open photo library.');
+    }
+  };
 
   const handleSave = async () => {
     if (!fullName.trim()) {
@@ -52,8 +80,19 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
     setError(null);
 
     try {
-      const payload: { full_name: string; email?: string; phone?: string } = {
+      // 1. If avatar was changed, upload to server
+      let finalAvatarUrl = user?.avatar_url;
+      if (avatarUri && avatarUri !== user?.avatar_url) {
+        const uploadRes = await AuthService.uploadAvatar(avatarUri);
+        if (uploadRes.success && uploadRes.avatar_url) {
+          finalAvatarUrl = uploadRes.avatar_url;
+        }
+      }
+
+      // 2. Update profile details
+      const payload: { full_name: string; email?: string; phone?: string; avatar_url?: string } = {
         full_name: fullName.trim(),
+        avatar_url: finalAvatarUrl || undefined,
       };
       if (email.trim()) {
         payload.email = email.trim();
@@ -91,6 +130,30 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
               </Text>
             </View>
           )}
+
+          {/* Avatar Photo Edit Widget */}
+          <View style={styles.avatarEditContainer}>
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={handlePickAvatar}
+              style={styles.avatarPickerWrapper}
+            >
+              <Avatar
+                url={avatarUri}
+                name={fullName || user?.full_name || 'Member'}
+                size={72}
+                showBorder
+              />
+              <View style={styles.cameraIconBadge}>
+                <Ionicons name="camera" size={14} color="#FFFFFF" />
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity activeOpacity={0.7} onPress={handlePickAvatar} style={{ marginTop: 6 }}>
+              <Text variant="caption" bold color={colors.primary[500]}>
+                Change Profile Photo
+              </Text>
+            </TouchableOpacity>
+          </View>
 
           <View style={styles.fieldWrapper}>
             <Input
@@ -178,6 +241,27 @@ const styles = StyleSheet.create({
   },
   fieldWrapper: {
     marginBottom: spacing.md,
+  },
+  avatarEditContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.md,
+  },
+  avatarPickerWrapper: {
+    position: 'relative',
+  },
+  cameraIconBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: colors.primary[500],
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   btnRow: {
     flexDirection: 'row',

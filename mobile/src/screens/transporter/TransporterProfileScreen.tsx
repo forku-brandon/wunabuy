@@ -189,9 +189,14 @@ export const TransporterProfileScreen = ({ navigation }: any) => {
     setIsUploadingAvatar(true);
     try {
       useAuthStore.getState().updateUser({ avatar_url: selectedAvatarUri });
-      AuthService.uploadAvatar(selectedAvatarUri).catch(() => {});
+      const res = await AuthService.uploadAvatar(selectedAvatarUri);
+      if (res.success && res.avatar_url) {
+        useAuthStore.getState().updateUser({ avatar_url: res.avatar_url });
+        setToastMessage('Driver photo updated and saved to server! 📸');
+      } else {
+        setToastMessage('Driver photo updated! 📸');
+      }
       setIsAvatarModalVisible(false);
-      setToastMessage('Driver photo updated successfully! 📸');
     } catch {
       Alert.alert('Upload Failed', 'Could not update driver profile photo.');
     } finally {

@@ -151,16 +151,19 @@ export const ProfileScreen = ({ navigation }: any) => {
 
     setIsUploadingAvatar(true);
     try {
-      // 1. Store temporally in local device state & AsyncStorage
+      // 1. Optimistic local preview
       useAuthStore.getState().updateUser({ avatar_url: selectedAvatarUri });
 
-      // 2. Dispatch background sync for awaiting backend API endpoint
-      AuthService.uploadAvatar(selectedAvatarUri).catch(() => {
-        AuthService.updateProfile({ avatar_url: selectedAvatarUri }).catch(() => {});
-      });
+      // 2. Upload to backend server and obtain permanent web URL
+      const result = await AuthService.uploadAvatar(selectedAvatarUri);
+      if (result.success && result.avatar_url) {
+        useAuthStore.getState().updateUser({ avatar_url: result.avatar_url });
+        setToastMessage('Profile photo updated and saved to server! 📸');
+      } else {
+        setToastMessage('Profile photo updated! 📸');
+      }
 
       setIsAvatarModalVisible(false);
-      setToastMessage('Profile photo updated successfully! 📸');
     } catch {
       setToastMessage('Profile photo saved locally.');
       setIsAvatarModalVisible(false);

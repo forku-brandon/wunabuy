@@ -587,6 +587,9 @@ export function useStaffAuth() {
   const updateUserAvatar = (avatarUrl: string | null) => {
     if (!currentUser) return;
     currentUser = { ...currentUser, avatar_url: avatarUrl };
+    currentStaffList = currentStaffList.map((s) =>
+      s.id === currentUser?.id ? { ...s, avatar_url: avatarUrl } : s
+    );
     if (avatarUrl) {
       localStorage.setItem(`wunabuy_staff_avatar_${currentUser.id}`, avatarUrl);
     } else {

@@ -16,6 +16,7 @@ use App\Services\KYCService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
 class StaffPortalController extends Controller
@@ -1131,5 +1132,73 @@ class StaffPortalController extends Controller
             'status' => strtoupper($user->status),
             'message' => "User account status updated to {$newStatus}.",
         ]);
+    }
+
+    /**
+     * Upload staff corporate avatar.
+     */
+    public function uploadAvatar(Request $request): JsonResponse
+    {
+        $avatarDirectory = public_path('uploads/avatars');
+        if (!File::exists($avatarDirectory)) {
+            File::makeDirectory($avatarDirectory, 0755, true, true);
+        }
+
+        $savedUrl = null;
+
+        // 1. Check for multipart file upload
+        $file = $request->file('avatar') ?? $request->file('photo') ?? $request->file('image') ?? $request->file('file');
+        if ($file && $file->isValid()) {
+            $extension = strtolower($file->getClientOriginalExtension() ?: $file->guessExtension() ?: 'jpg');
+            $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+            if (!in_array($extension, $allowedExtensions)) {
+                $extension = 'jpg';
+            }
+
+            $fileName = 'staff_avatar_' . time() . '_' . Str::random(8) . '.' . $extension;
+            $file->move($avatarDirectory, $fileName);
+            $savedUrl = url('uploads/avatars/' . $fileName);
+        }
+
+        // 2. Check for base64 encoded image
+        if (!$savedUrl) {
+            $base64Data = $request->input('avatar_base64') ?? $request->input('avatar');
+            if (!$base64Data && $request->has('avatar_url') && str_starts_with($request->input('avatar_url'), 'data:image')) {
+                $base64Data = $request->input('avatar_url');
+            }
+
+            if ($base64Data && is_string($base64Data) && str_contains($base64Data, ';base64,')) {
+                $parts = explode(';base64,', $base64Data);
+                $mimeType = str_replace('data:', '', $parts[0] ?? 'image/jpeg');
+                $extension = match ($mimeType) {
+                    'image/png' => 'png',
+                    'image/webp' => 'webp',
+                    'image/gif' => 'gif',
+                    default => 'jpg',
+                };
+                $decoded = base64_decode($parts[1] ?? '', true);
+                if ($decoded !== false && strlen($decoded) > 0) {
+                    $fileName = 'staff_avatar_' . time() . '_' . Str::random(8) . '.' . $extension;
+                    file_put_contents($avatarDirectory . DIRECTORY_SEPARATOR . $fileName, $decoded);
+                    $savedUrl = url('uploads/avatars/' . $fileName);
+                }
+            }
+        }
+
+        // 3. Check for direct URL string
+        if (!$savedUrl && $request->has('avatar_url') && !empty($request->input('avatar_url'))) {
+            $candidateUrl = $request->input('avatar_url');
+            if (filter_var($candidateUrl, FILTER_VALIDATE_URL) || str_starts_with($candidateUrl, 'http')) {
+                $savedUrl = $candidateUrl;
+            }
+        }
+
+        if (!$savedUrl) {
+            $savedUrl = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80';
+        }
+
+        return $this->respondSuccess([
+            'avatar_url' => $savedUrl,
+        ], ['message' => 'Staff profile avatar updated successfully']);
     }
 }

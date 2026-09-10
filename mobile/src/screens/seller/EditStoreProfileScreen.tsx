@@ -17,7 +17,7 @@ import { useThemeStore } from '../../stores/theme.store';
 import { useSellerStore } from '../../stores/seller.store';
 import { useAuthStore } from '../../stores/auth.store';
 import { ProductCategory } from '@wunabuy/types';
-import { SellerService } from '../../services/api';
+import { SellerService, AuthService } from '../../services/api';
 
 const CATEGORIES = [
   ProductCategory.ELECTRONICS,
@@ -76,8 +76,18 @@ export const EditStoreProfileScreen = ({ navigation }: any) => {
       });
 
       if (!result.canceled && result.assets && result.assets[0]?.uri) {
-        if (target === 'logo') setLogoUrl(result.assets[0].uri);
-        else setCoverPhotoUrl(result.assets[0].uri);
+        const pickedUri = result.assets[0].uri;
+        if (target === 'logo') {
+          setLogoUrl(pickedUri); // Immediate local preview
+          AuthService.uploadImage(pickedUri, 'store_logos').then((serverUrl) => {
+            if (serverUrl) setLogoUrl(serverUrl);
+          }).catch(() => {});
+        } else {
+          setCoverPhotoUrl(pickedUri); // Immediate local preview
+          AuthService.uploadImage(pickedUri, 'store_covers').then((serverUrl) => {
+            if (serverUrl) setCoverPhotoUrl(serverUrl);
+          }).catch(() => {});
+        }
       }
     } catch {
       Alert.alert('Error', 'Failed to pick image from library.');
