@@ -20,6 +20,7 @@ import { SellerQRScannerModal } from '../../components/seller/SellerQRScannerMod
 import { KYCStatus, UserRole, Product } from '@wunabuy/types';
 import { formatXAF, formatRelativeTime } from '@wunabuy/utils';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
+import { useFocusEffect } from '@react-navigation/native';
 import { useThemeStore } from '../../stores/theme.store';
 import { useSellerStore } from '../../stores/seller.store';
 import { useAuthStore } from '../../stores/auth.store';
@@ -101,6 +102,12 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
   useEffect(() => {
     loadDashboardData();
   }, [loadDashboardData]);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadDashboardData();
+    }, [loadDashboardData])
+  );
 
   const handleRefresh = useCallback(() => {
     setRefreshing(true);
@@ -483,6 +490,7 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
       </View>
 
       <SellerSalesTipsCarousel
+        refreshTrigger={refreshing}
         onPressTip={(tip) => {
           if (tip.actionScreen) {
             navigation.navigate(tip.actionScreen);

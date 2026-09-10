@@ -89,10 +89,12 @@ const SALES_TIP_SLIDES: SalesTipSlide[] = [
 
 export interface SellerSalesTipsCarouselProps {
   onPressTip?: (slide: SalesTipSlide) => void;
+  refreshTrigger?: any;
 }
 
 export const SellerSalesTipsCarousel: React.FC<SellerSalesTipsCarouselProps> = ({
   onPressTip,
+  refreshTrigger,
 }) => {
   const { theme, isDark } = useThemeStore();
   const [activeIndex, setActiveIndex] = useState(0);
@@ -110,7 +112,7 @@ export const SellerSalesTipsCarousel: React.FC<SellerSalesTipsCarouselProps> = (
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [refreshTrigger]);
 
   // Auto-slide every 4.5 seconds
   useEffect(() => {

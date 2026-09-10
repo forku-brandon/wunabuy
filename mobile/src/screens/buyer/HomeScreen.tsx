@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import { Text } from '../../components/ui';
 import { CategoryChip } from '../../components/product/CategoryChip';
 import { ProductCard } from '../../components/product/ProductCard';
@@ -65,6 +66,12 @@ export const HomeScreen = ({ navigation }: any) => {
   useEffect(() => {
     loadHomeFeed();
   }, [loadHomeFeed]);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadHomeFeed();
+    }, [loadHomeFeed])
+  );
 
   useEffect(() => {
     loadProducts(selectedCategory);

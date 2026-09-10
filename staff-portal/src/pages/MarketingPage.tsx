@@ -18,6 +18,7 @@ import {
   Layers,
   Trash2,
   RefreshCw,
+  Pencil,
 } from 'lucide-react';
 
 interface PromoCampaignItem {
@@ -45,19 +46,41 @@ export const MarketingPage: React.FC = () => {
   const [adverts, setAdverts] = useState<AdvertItem[]>([]);
   const [advertTypeFilter, setAdvertTypeFilter] = useState<'all' | 'banner' | 'tip' | 'partner' | 'special_offer'>('all');
   const [createAdvertModalOpen, setCreateAdvertModalOpen] = useState(false);
+  const [editingAdvert, setEditingAdvert] = useState<AdvertItem | null>(null);
   const [advertLoading, setAdvertLoading] = useState(false);
 
   // New Advert Form State
   const [advTitle, setAdvTitle] = useState('');
   const [advType, setAdvType] = useState<'banner' | 'tip' | 'partner' | 'special_offer'>('banner');
-  const [advAudience, setAdvAudience] = useState<'buyer' | 'seller' | 'all'>('buyer');
+  const [advAudience, setAdvAudience] = useState<'buyer' | 'seller' | 'transporter' | 'all'>('buyer');
   const [advBadge, setAdvBadge] = useState('');
   const [advBadgeColor, setAdvBadgeColor] = useState('#0D9488');
   const [advSubtitle, setAdvSubtitle] = useState('');
   const [advCtaText, setAdvCtaText] = useState('Explore');
   const [advImageUrl, setAdvImageUrl] = useState('');
   const [advCategory, setAdvCategory] = useState('');
+  const [advIconName, setAdvIconName] = useState('shield-checkmark-outline');
+  const [advIconColor, setAdvIconColor] = useState('#0D9488');
+  const [advDiscountPercent, setAdvDiscountPercent] = useState('');
   const [advSortOrder, setAdvSortOrder] = useState('1');
+
+  // Edit Advert Form State
+  const [editForm, setEditForm] = useState({
+    title: '',
+    type: 'banner' as 'banner' | 'tip' | 'partner' | 'special_offer',
+    target_audience: 'buyer' as 'buyer' | 'seller' | 'transporter' | 'all',
+    badge: '',
+    badge_color: '#0D9488',
+    subtitle: '',
+    category: '',
+    cta_text: 'Explore',
+    image_url: '',
+    icon_name: 'shield-checkmark-outline',
+    icon_color: '#0D9488',
+    discount_percent: '',
+    sort_order: '1',
+    is_active: true,
+  });
 
   // ─── VOUCHERS STATE ───
   const [campaigns, setCampaigns] = useState<PromoCampaignItem[]>(() => {
@@ -116,6 +139,9 @@ export const MarketingPage: React.FC = () => {
         cta_text: advCtaText.trim() || undefined,
         image_url: advImageUrl.trim() || undefined,
         category: advCategory.trim() || undefined,
+        icon_name: advType === 'partner' ? advIconName.trim() : undefined,
+        icon_color: advType === 'partner' ? advIconColor.trim() : undefined,
+        discount_percent: advDiscountPercent ? parseInt(advDiscountPercent) : undefined,
         sort_order: parseInt(advSortOrder) || 0,
         is_active: true,
       });
@@ -136,6 +162,9 @@ export const MarketingPage: React.FC = () => {
       setAdvSubtitle('');
       setAdvImageUrl('');
       setAdvCategory('');
+      setAdvIconName('shield-checkmark-outline');
+      setAdvIconColor('#0D9488');
+      setAdvDiscountPercent('');
     } catch {
       // Handled
     }
@@ -177,6 +206,68 @@ export const MarketingPage: React.FC = () => {
       setAdverts((prev) => prev.filter((a) => a.id !== id));
     } catch {
       // Handled
+    }
+  };
+
+  // Handle Opening Advert for Edit
+  const handleOpenEditAdvert = (item: AdvertItem) => {
+    setEditingAdvert(item);
+    setEditForm({
+      title: item.title || '',
+      type: item.type,
+      target_audience: item.target_audience,
+      badge: item.badge || '',
+      badge_color: item.badge_color || '#0D9488',
+      subtitle: item.subtitle || '',
+      category: item.category || '',
+      cta_text: item.cta_text || 'Explore',
+      image_url: item.image_url || '',
+      icon_name: item.icon_name || 'shield-checkmark-outline',
+      icon_color: item.icon_color || '#0D9488',
+      discount_percent: item.discount_percent != null ? String(item.discount_percent) : '',
+      sort_order: String(item.sort_order || 1),
+      is_active: item.is_active,
+    });
+  };
+
+  // Handle Saving Edited Advert
+  const handleSaveEditAdvert = async () => {
+    if (!editingAdvert || !editForm.title.trim()) return;
+
+    try {
+      const updates = {
+        title: editForm.title.trim(),
+        type: editForm.type,
+        target_audience: editForm.target_audience,
+        badge: editForm.badge.trim() || undefined,
+        badge_color: editForm.badge_color || undefined,
+        subtitle: editForm.subtitle.trim() || undefined,
+        category: editForm.category.trim() || undefined,
+        cta_text: editForm.cta_text.trim() || undefined,
+        image_url: editForm.image_url.trim() || undefined,
+        icon_name: editForm.icon_name.trim() || undefined,
+        icon_color: editForm.icon_color || undefined,
+        discount_percent: editForm.discount_percent ? parseInt(editForm.discount_percent) : undefined,
+        sort_order: parseInt(editForm.sort_order) || 1,
+        is_active: editForm.is_active,
+      };
+
+      await advertsApi.updateAdvert(editingAdvert.id, updates);
+
+      addAuditLog({
+        action_code: 'ADVERT_UPDATE',
+        action_description: `Updated ${editForm.type} "${editForm.title}" for ${editForm.target_audience}`,
+        target_id: editingAdvert.id,
+        security_level: 'INFO',
+      });
+
+      setAdverts((prev) =>
+        prev.map((a) => (a.id === editingAdvert.id ? { ...a, ...updates } : a))
+      );
+
+      setEditingAdvert(null);
+    } catch (err) {
+      console.warn('[MarketingPage] Failed to save advert updates', err);
     }
   };
 
@@ -232,6 +323,38 @@ export const MarketingPage: React.FC = () => {
 
   // ─── ADVERTS TABLE COLUMNS ───
   const advertColumns: Column<AdvertItem>[] = [
+    {
+      key: 'preview',
+      header: 'Visual',
+      render: (item) => (
+        <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-xs">
+          {item.image_url ? (
+            <img
+              src={item.image_url}
+              alt={item.title}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                (e.target as HTMLElement).style.display = 'none';
+              }}
+            />
+          ) : item.icon_name ? (
+            <div
+              className="w-full h-full flex flex-col items-center justify-center font-bold text-[10px] text-center p-1"
+              style={{
+                backgroundColor: (item.icon_color || '#0D9488') + '22',
+                color: item.icon_color || '#0D9488',
+              }}
+            >
+              <span className="font-mono text-[9px] uppercase tracking-tighter truncate max-w-full">
+                {item.icon_name.replace('-outline', '').replace('-sharp', '')}
+              </span>
+            </div>
+          ) : (
+            <span className="text-[10px] font-bold text-slate-400">WB</span>
+          )}
+        </div>
+      ),
+    },
     {
       key: 'title',
       header: 'Advert / Title & Badge',
@@ -298,6 +421,15 @@ export const MarketingPage: React.FC = () => {
         <div className="flex items-center justify-end space-x-2">
           {canManageMarketing && (
             <>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleOpenEditAdvert(item)}
+                className="flex items-center space-x-1"
+              >
+                <Pencil className="w-3.5 h-3.5 mr-1" />
+                <span>Edit</span>
+              </Button>
               <Button
                 size="sm"
                 variant={item.is_active ? 'outline' : 'primary'}
@@ -576,6 +708,7 @@ export const MarketingPage: React.FC = () => {
               >
                 <option value="buyer">Buyer Mobile App</option>
                 <option value="seller">Seller Dashboard</option>
+                <option value="transporter">Transporter Mobile App</option>
                 <option value="all">All Audiences (Universal)</option>
               </select>
             </div>
@@ -662,12 +795,274 @@ export const MarketingPage: React.FC = () => {
             />
           </div>
 
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Category / Tag</label>
+              <input
+                type="text"
+                placeholder="e.g. Flash Sales, Electronics, Fintech"
+                value={advCategory}
+                onChange={(e) => setAdvCategory(e.target.value)}
+                className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100"
+              />
+            </div>
+
+            <div>
+              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Discount % (if special offer)</label>
+              <input
+                type="number"
+                placeholder="e.g. 25"
+                value={advDiscountPercent}
+                onChange={(e) => setAdvDiscountPercent(e.target.value)}
+                className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100"
+              />
+            </div>
+          </div>
+
+          {advType === 'partner' && (
+            <div className="grid grid-cols-2 gap-3 p-3 bg-teal-50 dark:bg-teal-950/40 rounded-xl border border-teal-200 dark:border-teal-800">
+              <div>
+                <label className="block font-bold text-teal-900 dark:text-teal-200 mb-1">Partner Icon (Ionicons)</label>
+                <input
+                  type="text"
+                  placeholder="phone-portrait-outline, shield-checkmark-outline, card-outline"
+                  value={advIconName}
+                  onChange={(e) => setAdvIconName(e.target.value)}
+                  className="w-full p-2 bg-white dark:bg-slate-900 border border-teal-300 dark:border-teal-700 rounded-lg text-slate-900 dark:text-slate-100 font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-teal-900 dark:text-teal-200 mb-1">Icon Color Hex</label>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="color"
+                    value={advIconColor || '#0D9488'}
+                    onChange={(e) => setAdvIconColor(e.target.value)}
+                    className="w-8 h-8 p-0.5 rounded border border-teal-300 cursor-pointer bg-transparent"
+                  />
+                  <input
+                    type="text"
+                    value={advIconColor}
+                    onChange={(e) => setAdvIconColor(e.target.value)}
+                    className="flex-1 p-2 bg-white dark:bg-slate-900 border border-teal-300 dark:border-teal-700 rounded-lg text-slate-900 dark:text-slate-100 font-mono"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="flex justify-end space-x-3 pt-3 border-t border-slate-100 dark:border-slate-800">
             <Button variant="outline" onClick={() => setCreateAdvertModalOpen(false)}>
               Cancel
             </Button>
             <Button variant="primary" disabled={!advTitle.trim()} onClick={handleCreateAdvert}>
               Publish Advert &amp; Sync to Mobile
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* EDIT ADVERT / PARTNER MODAL */}
+      <Modal
+        isOpen={Boolean(editingAdvert)}
+        onClose={() => setEditingAdvert(null)}
+        title={editingAdvert ? `Edit ${editingAdvert.type === 'partner' ? 'Official Partner' : editingAdvert.type === 'tip' ? 'Seller Tip' : 'Campaign'}: ${editingAdvert.title}` : 'Edit Campaign'}
+      >
+        <div className="space-y-4 text-xs">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Campaign Type *</label>
+              <select
+                value={editForm.type}
+                onChange={(e) => setEditForm((prev) => ({ ...prev, type: e.target.value as any }))}
+                className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-slate-900 dark:text-slate-100"
+              >
+                <option value="banner">Buyer Hero Banner</option>
+                <option value="tip">Seller Sales Tip &amp; Growth</option>
+                <option value="partner">Official Platform Partner</option>
+                <option value="special_offer">Special Offer</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Target Audience *</label>
+              <select
+                value={editForm.target_audience}
+                onChange={(e) => setEditForm((prev) => ({ ...prev, target_audience: e.target.value as any }))}
+                className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-slate-900 dark:text-slate-100"
+              >
+                <option value="buyer">Buyer Mobile App</option>
+                <option value="seller">Seller Dashboard</option>
+                <option value="transporter">Transporter Mobile App</option>
+                <option value="all">All Audiences (Universal)</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Title / Headline *</label>
+            <input
+              type="text"
+              placeholder="e.g. Flash Clearance Weekend or MTN MoMo"
+              value={editForm.title}
+              onChange={(e) => setEditForm((prev) => ({ ...prev, title: e.target.value }))}
+              className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-slate-900 dark:text-slate-100"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Badge / Eyebrow Text</label>
+              <input
+                type="text"
+                placeholder="e.g. ⚡ 30% OFF or 1-Tap Cashout"
+                value={editForm.badge}
+                onChange={(e) => setEditForm((prev) => ({ ...prev, badge: e.target.value }))}
+                className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100"
+              />
+            </div>
+
+            <div>
+              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Badge Color Hex</label>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="color"
+                  value={editForm.badge_color || '#0D9488'}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, badge_color: e.target.value }))}
+                  className="w-9 h-9 p-0.5 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer bg-transparent"
+                />
+                <input
+                  type="text"
+                  placeholder="#0D9488"
+                  value={editForm.badge_color}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, badge_color: e.target.value }))}
+                  className="flex-1 p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-mono"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Subtitle / Description</label>
+            <textarea
+              rows={2}
+              placeholder="Brief copy shown on the mobile card or banner..."
+              value={editForm.subtitle}
+              onChange={(e) => setEditForm((prev) => ({ ...prev, subtitle: e.target.value }))}
+              className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Category / Tag</label>
+              <input
+                type="text"
+                placeholder="e.g. Flash Sales, Electronics, Fintech"
+                value={editForm.category}
+                onChange={(e) => setEditForm((prev) => ({ ...prev, category: e.target.value }))}
+                className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100"
+              />
+            </div>
+
+            <div>
+              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Display Sort Order</label>
+              <input
+                type="number"
+                value={editForm.sort_order}
+                onChange={(e) => setEditForm((prev) => ({ ...prev, sort_order: e.target.value }))}
+                className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Button CTA Text</label>
+              <input
+                type="text"
+                placeholder="e.g. Shop Now or View Queue"
+                value={editForm.cta_text}
+                onChange={(e) => setEditForm((prev) => ({ ...prev, cta_text: e.target.value }))}
+                className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100"
+              />
+            </div>
+
+            <div>
+              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Discount % (if special offer)</label>
+              <input
+                type="number"
+                placeholder="e.g. 20"
+                value={editForm.discount_percent}
+                onChange={(e) => setEditForm((prev) => ({ ...prev, discount_percent: e.target.value }))}
+                className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Image URL (Unsplash or CDN)</label>
+            <input
+              type="text"
+              placeholder="https://images.unsplash.com/..."
+              value={editForm.image_url}
+              onChange={(e) => setEditForm((prev) => ({ ...prev, image_url: e.target.value }))}
+              className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Partner Icon (Ionicons name)</label>
+              <input
+                type="text"
+                placeholder="phone-portrait-outline, shield-checkmark-outline, card-outline"
+                value={editForm.icon_name}
+                onChange={(e) => setEditForm((prev) => ({ ...prev, icon_name: e.target.value }))}
+                className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-mono"
+              />
+            </div>
+
+            <div>
+              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Partner Icon Color Hex</label>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="color"
+                  value={editForm.icon_color || '#0D9488'}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, icon_color: e.target.value }))}
+                  className="w-9 h-9 p-0.5 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer bg-transparent"
+                />
+                <input
+                  type="text"
+                  placeholder="#0D9488"
+                  value={editForm.icon_color}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, icon_color: e.target.value }))}
+                  className="flex-1 p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 font-mono"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-2 pt-2">
+            <input
+              type="checkbox"
+              id="editAdvertActive"
+              checked={editForm.is_active}
+              onChange={(e) => setEditForm((prev) => ({ ...prev, is_active: e.target.checked }))}
+              className="w-4 h-4 rounded text-teal-600 focus:ring-teal-500 cursor-pointer"
+            />
+            <label htmlFor="editAdvertActive" className="text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
+              Campaign is Active &amp; Live on Mobile App
+            </label>
+          </div>
+
+          <div className="flex justify-end space-x-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+            <Button variant="outline" onClick={() => setEditingAdvert(null)}>
+              Cancel
+            </Button>
+            <Button variant="primary" disabled={!editForm.title.trim()} onClick={handleSaveEditAdvert}>
+              Save Changes &amp; Update App
             </Button>
           </div>
         </div>
