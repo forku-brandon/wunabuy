@@ -1,18 +1,15 @@
 import { ApiResponse, ApiError } from '@wunabuy/types';
 
-// Dynamically resolve API Base URL so local network/mobile devices can connect to backend
-const getApiBaseUrl = (): string => {
-  if (typeof window !== 'undefined' && window.location && window.location.hostname) {
-    const host = window.location.hostname;
-    if (host !== 'localhost' && host !== '127.0.0.1') {
-      return `http://${host}:8000/api/v1`;
-    }
+// Dynamically resolve API Base URL. In the browser, /api/v1 proxies seamlessly via Vite or reverse proxy.
+export const getApiBaseUrl = (): string => {
+  const envUrl = (import.meta.env.VITE_API_URL as string) || (import.meta.env.VITE_API_BASE_URL as string);
+  if (envUrl && envUrl.startsWith('https://')) {
+    return envUrl;
   }
-  return (
-    (import.meta.env.VITE_API_URL as string) ||
-    (import.meta.env.VITE_API_BASE_URL as string) ||
-    'http://localhost:8000/api/v1'
-  );
+  if (typeof window !== 'undefined') {
+    return envUrl || '/api/v1';
+  }
+  return envUrl || 'http://127.0.0.1:8000/api/v1';
 };
 
 const API_BASE_URL = getApiBaseUrl();
@@ -49,7 +46,8 @@ export async function apiRequest<T>(
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const url = `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
+  const baseUrl = getApiBaseUrl();
+  const url = `${baseUrl}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
 
   try {
     const response = await fetch(url, {
