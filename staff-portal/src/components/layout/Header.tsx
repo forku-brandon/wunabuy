@@ -270,6 +270,9 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobileSidebar }) => {
             <img
               src={user?.avatar_url || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=100&q=80'}
               alt={user?.full_name}
+              onError={(e) => {
+                e.currentTarget.src = 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=100&q=80';
+              }}
               className="w-7 h-7 rounded-full object-cover border border-teal-500"
             />
             <span className="hidden md:block text-xs font-extrabold text-slate-900 dark:text-slate-100 max-w-[120px] truncate">

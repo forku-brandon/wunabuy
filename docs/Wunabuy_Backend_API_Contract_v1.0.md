@@ -1,12 +1,12 @@
 # Wunabuy Backend API Specification & Integration Contract v1.0
 
-**Document Version:** 3.5 (Zero-Demo RBAC, Anti-IDOR Security Hardening, Real Store Affiliation Baseline)  
-**Date:** September 10, 2026  
+**Document Version:** 3.6 (Universal Avatar Upload, Marketing Adverts Engine, Real-Time Order Lifecycle & Escrow Settlement)  
+**Date:** September 11, 2026  
 **Target Audience:** Backend Engineering Team (Laravel 13 / PostgreSQL / Redis / Sanctum)  
 **Standard:** RESTful JSON API + WebSocket Real-Time Telemetry  
 **Currency Standard:** Central African CFA Franc (`XAF` / `FCFA`)  
 **Locale Default:** French / English Cameroon (`+237` E.164 phone numbers)  
-**Document Status:** 🟢 **APPROVED & SYNCHRONIZED WITH MOBILE APP v3.5**
+**Document Status:** 🟢 **APPROVED & SYNCHRONIZED WITH MOBILE APP & STAFF PORTAL v3.6**
 
 ---
 
@@ -1524,6 +1524,80 @@ CREATE TABLE wallets (
    - Resolves store ownership dynamically; computes actual daily/weekly sales breakdowns from completed store orders in PostgreSQL.
    - Zero Mock Policy: If store has 0 sales in the period, returns 0 FCFA with clean baseline bars and empty top products `[]`. No dummy fallback products or mock percentages are returned.
 
+### 14.5 Universal Avatar & Media Upload API Contracts (v3.6)
+1. **User Profile Avatar Upload (`POST /api/v1/user/avatar`)**:
+   - **Auth Required:** `Bearer <sanctum_token>`
+   - **Supported Content Types:** `multipart/form-data` or `application/json` (Base64)
+   - **Request Form-Data Parameters:**
+     - `avatar` (File, binary image): Validated extensions `jpg`, `jpeg`, `png`, `webp`, `gif` (max 5MB).
+     - `target` (String, optional): `store_logo` — if specified, synchronizes uploaded image to seller store logo as well.
+   - **Request JSON Parameters:**
+     - `avatar_base64` (String): Data URL string (`data:image/jpeg;base64,...`).
+     - `avatar_url` (String, optional): Direct remote image URL.
+   - **Success Response (`200 OK`)**:
+     ```json
+     {
+       "success": true,
+       "data": {
+         "avatar_url": "http://192.168.100.1:8000/uploads/avatars/avatar_user123_1726040000_abcd1234.jpg",
+         "relative_url": "/uploads/avatars/avatar_user123_1726040000_abcd1234.jpg",
+         "user": {
+           "id": "01a0872b-a556-7183-b186-9bcec9d61ca4",
+           "avatar_url": "http://192.168.100.1:8000/uploads/avatars/avatar_user123_1726040000_abcd1234.jpg",
+           ...
+         }
+       },
+       "meta": { "message": "Profile picture updated successfully" }
+     }
+     ```
 
+2. **General Image Upload (`POST /api/v1/upload/image`)**:
+   - **Auth Required:** `Bearer <sanctum_token>` (or guest if configured)
+   - **Content-Type:** `multipart/form-data`
+   - **Parameters:**
+     - `image` (File): Binary image.
+     - `folder` (String, default: `general`): Safe target subfolder (`stores`, `products`, `reviews`, `receipts`).
+   - **Success Response (`200 OK`)**:
+     ```json
+     {
+       "success": true,
+       "data": {
+         "url": "http://192.168.100.1:8000/uploads/stores/img_user123_1726040000_abcd1234.jpg"
+       }
+     }
+     ```
 
+3. **Staff Operations Portal Avatar Upload (`POST /api/v1/staff/profile/avatar`)**:
+   - **Auth Required:** `Bearer <staff_sanctum_token>`
+   - **Content-Type:** `multipart/form-data` or `application/json`
+   - **Parameters:** `avatar` (File) or `avatar_base64` (String)
+   - **Success Response (`200 OK`)**:
+     ```json
+     {
+       "success": true,
+       "data": {
+         "avatar_url": "http://192.168.100.1:8000/uploads/avatars/staff_avatar_1726040000_abcd1234.jpg",
+         "relative_url": "/uploads/avatars/staff_avatar_1726040000_abcd1234.jpg"
+       },
+       "meta": { "message": "Staff profile avatar updated successfully" }
+     }
+     ```
 
+### 14.6 Static Media Serving & Dev Reverse Proxy Architecture (v3.6)
+1. **Direct Public Disk Serving**:
+   - Files stored under `backend/public/uploads/` are publicly accessible over HTTP via the active web server without requiring storage symlinks.
+2. **Vite Reverse Proxy Routing (`staff-portal/vite.config.ts`)**:
+   ```typescript
+   server: {
+     port: 3001,
+     host: true,
+     proxy: {
+       '/api': { target: 'http://127.0.0.1:8000', changeOrigin: true },
+       '/uploads': { target: 'http://127.0.0.1:8000', changeOrigin: true },
+       '/storage': { target: 'http://127.0.0.1:8000', changeOrigin: true }
+     }
+   }
+   ```
+   Ensures seamless same-origin `/uploads/*` image retrieval across all LAN IP addresses (e.g. `http://192.168.100.1:3001/uploads/avatars/...`), completely eliminating CORS 500 errors and mixed content blocks.
+3. **Mobile Client Resolution (`normalizeMobileImageUrl`)**:
+   - Dynamically checks incoming URL strings. If URL contains `localhost:8000` or begins with `/uploads/` or `/storage/`, it automatically converts it into `${API_BASE_URL.replace(/\/api.*$/, '')}${cleanPath}` to guarantee physical Android/iOS devices load media from the reachable local network server IP.

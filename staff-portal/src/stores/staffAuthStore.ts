@@ -586,12 +586,25 @@ export function useStaffAuth() {
 
   const updateUserAvatar = (avatarUrl: string | null) => {
     if (!currentUser) return;
-    currentUser = { ...currentUser, avatar_url: avatarUrl };
+    let cleanUrl = avatarUrl;
+    if (cleanUrl && typeof cleanUrl === 'string') {
+      const trimmed = cleanUrl.trim();
+      const uploadIdx = trimmed.indexOf('/uploads/');
+      if (uploadIdx !== -1 && !trimmed.startsWith('data:')) {
+        cleanUrl = trimmed.substring(uploadIdx);
+      } else {
+        const storageIdx = trimmed.indexOf('/storage/');
+        if (storageIdx !== -1 && !trimmed.startsWith('data:')) {
+          cleanUrl = trimmed.substring(storageIdx);
+        }
+      }
+    }
+    currentUser = { ...currentUser, avatar_url: cleanUrl };
     currentStaffList = currentStaffList.map((s) =>
-      s.id === currentUser?.id ? { ...s, avatar_url: avatarUrl } : s
+      s.id === currentUser?.id ? { ...s, avatar_url: cleanUrl } : s
     );
-    if (avatarUrl) {
-      localStorage.setItem(`wunabuy_staff_avatar_${currentUser.id}`, avatarUrl);
+    if (cleanUrl) {
+      localStorage.setItem(`wunabuy_staff_avatar_${currentUser.id}`, cleanUrl);
     } else {
       localStorage.removeItem(`wunabuy_staff_avatar_${currentUser.id}`);
     }

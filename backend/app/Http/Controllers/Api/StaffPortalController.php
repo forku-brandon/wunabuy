@@ -1144,7 +1144,9 @@ class StaffPortalController extends Controller
             File::makeDirectory($avatarDirectory, 0755, true, true);
         }
 
+        $requestHost = $request->getSchemeAndHttpHost();
         $savedUrl = null;
+        $savedFileName = null;
 
         // 1. Check for multipart file upload
         $file = $request->file('avatar') ?? $request->file('photo') ?? $request->file('image') ?? $request->file('file');
@@ -1157,7 +1159,8 @@ class StaffPortalController extends Controller
 
             $fileName = 'staff_avatar_' . time() . '_' . Str::random(8) . '.' . $extension;
             $file->move($avatarDirectory, $fileName);
-            $savedUrl = url('uploads/avatars/' . $fileName);
+            $savedFileName = $fileName;
+            $savedUrl = $requestHost . '/uploads/avatars/' . $fileName;
         }
 
         // 2. Check for base64 encoded image
@@ -1180,7 +1183,8 @@ class StaffPortalController extends Controller
                 if ($decoded !== false && strlen($decoded) > 0) {
                     $fileName = 'staff_avatar_' . time() . '_' . Str::random(8) . '.' . $extension;
                     file_put_contents($avatarDirectory . DIRECTORY_SEPARATOR . $fileName, $decoded);
-                    $savedUrl = url('uploads/avatars/' . $fileName);
+                    $savedFileName = $fileName;
+                    $savedUrl = $requestHost . '/uploads/avatars/' . $fileName;
                 }
             }
         }
@@ -1197,8 +1201,15 @@ class StaffPortalController extends Controller
             $savedUrl = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80';
         }
 
+        $user = $request->user();
+        if ($user) {
+            $user->avatar_url = $savedUrl;
+            $user->save();
+        }
+
         return $this->respondSuccess([
             'avatar_url' => $savedUrl,
+            'relative_url' => $savedFileName ? '/uploads/avatars/' . $savedFileName : null,
         ], ['message' => 'Staff profile avatar updated successfully']);
     }
 }

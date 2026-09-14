@@ -104,7 +104,12 @@ export const AuthService = {
 
       const response = await api.client.post<{ success: boolean; data: { avatar_url: string } }>(
         '/user/avatar',
-        formData
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
       );
 
       if (response.data?.data?.avatar_url) {
@@ -144,7 +149,12 @@ export const AuthService = {
 
       const response = await api.client.post<{ success: boolean; data: { url: string } }>(
         '/upload/image',
-        formData
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
       );
 
       if (response.data?.data?.url) {

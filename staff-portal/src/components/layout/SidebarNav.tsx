@@ -121,6 +121,9 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
             <img
               src={user.avatar_url || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=150&q=80'}
               alt={user.full_name}
+              onError={(e) => {
+                e.currentTarget.src = 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=150&q=80';
+              }}
               className="w-8 h-8 rounded-full object-cover border border-teal-500/40"
             />
             <div className="min-w-0 flex-1">

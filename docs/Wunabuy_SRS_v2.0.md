@@ -1,10 +1,43 @@
 # Software Requirements Specification (SRS)
 # Wunabuy — Multi-Sided E-Commerce & Web Staff Operations Platform
 
-**Document Version:** 3.5 (Zero-Demo RBAC, Strict IDOR Protections & Real Store Catalog Architecture)  
-**Date:** September 10, 2026  
+**Document Version:** 3.6 (Universal Avatar Upload, Marketing Adverts Engine, Real-Time Order Lifecycle & Escrow Settlement)  
+**Date:** September 11, 2026  
 **Status:** Approved / In Production Use  
-**Companion Documents:** Wunabuy PRD v3.5, Wunabuy Frontend Tech Spec v3.5, Wunabuy Backend Tech Spec v3.5, Wunabuy Backend API Contract v3.5  
+**Companion Documents:** Wunabuy PRD v3.6, Wunabuy Frontend Tech Spec v3.6, Wunabuy Backend Tech Spec v3.6, Wunabuy Backend API Contract v3.6  
+
+---
+
+## 📸 Universal Avatar Upload, Marketing Adverts Engine & Real-Time Order Lifecycle (September 11, 2026 - v3.6)
+
+- **Universal Avatar & Profile Picture Architecture Across Web, Mobile & Backend**:
+  - **Web Staff Portal Upload (`StaffProfilePage.tsx`)**: Instant 0ms optimistic local preview using HTML5 `FileReader` (`readAsDataURL`), responsive `Loader2` spinner state during active server transport, seamless upload to `POST /api/v1/staff/profile/avatar`, fallback recovery via `onError` image routing to high-fidelity Unsplash default, and immediate session updates in `staffAuthStore.ts` with clean `/uploads/avatars/` relative path normalization.
+  - **Mobile Expo React Native App (`Avatar.tsx`, `authService.ts`, Profile Screens)**: Dynamic avatar image picker integration supporting native device file URIs (`Platform.OS === 'android' ? imageUri : imageUri.replace('file://', '')`) with automatic MIME type detection (`image/jpeg`, `image/png`, `image/webp`) and multipart form data transport to `POST /api/v1/user/avatar`. Supports general store branding, banners, and review photos via `POST /api/v1/upload/image`.
+  - **Dynamic URL Normalization Engine (`normalizeMobileImageUrl`)**: Intelligently inspects image URLs on physical devices; dynamically strips `localhost:8000` / `127.0.0.1:8000` and relative storage prefixes (`/uploads/avatars/...`, `/storage/...`), prepending the device's reachable active API base server host (`API_BASE_URL`). Prevents broken image icons across all Android and iOS hardware form factors.
+  - **Vite Dev Server Reverse Proxy (`vite.config.ts`)**: Configured reverse proxy routes for `/uploads` and `/storage` targeting `http://127.0.0.1:8000`, guaranteeing zero-CORS same-origin static file serving across all local LAN Wi-Fi IP addresses without browser security blocks.
+  - **Laravel Backend Media Controller (`AuthController.php`, `StaffPortalController.php`)**: Multi-part and base64 data-URI payload ingestion, automated directory generation (`public/uploads/avatars/`), cryptographically secure filename generation, dynamic host resolution (`$request->getSchemeAndHttpHost()`), and dual URL response returns (`avatar_url` absolute URL + `relative_url`).
+
+- **Staff Portal Enterprise UI/UX Redesign & Marketing Adverts Management Engine**:
+  - **Enterprise Layout & Typography Overhaul**: Redesigned navigation, streamlined sidebar hierarchy, unified slate palettes, decluttered inactive legacy modules, and modernized telemetry stat cards (`StatCard.tsx`, `DataTable.tsx`, `Card.tsx`). Top navbar includes persistent notifications drawer routing (`/notifications`) and direct support broadcast center (`/communications`).
+  - **Live Marketing Adverts & Commercial Partnerships Engine (`MarketingAdvertsPage.tsx`)**:
+    - Complete CRUD management for platform advertisements and featured merchant partnerships (`GET/POST /api/v1/staff/adverts`, `GET/PUT/DELETE /api/v1/staff/adverts/{id}`).
+    - Configurable badge text, custom badge hex color picker, discount percentage tags, custom Ionicons identifier mapping, sorting priority weight, and active toggle state.
+    - Real-time synchronization to mobile discovery feeds (`HomeScreen.tsx`, `PartnersCarousel`, promotional discount cards), permanently replacing static mock banners.
+  - **Real-Time KYC & Dispute Polling**: Hardened continuous polling against `/api/v1/staff/kyc/queue` and `/api/v1/staff/disputes` with instant dual-control modal confirmations.
+
+- **End-to-End Real-Time Order Lifecycle & Escrow Settlement Engine**:
+  - **Synchronized 5-Phase Transaction Lifecycle**:
+    1. **Catalog Publishing**: Verified merchant publishes product with pricing and stock inventory.
+    2. **Escrow Checkout**: Buyer places order via In-App Wallet or Mobile Money (MTN MoMo `*126#` / Orange Money `#150*50#`); funds atomically lock into `balance_escrow_locked`.
+    3. **Store Fulfillment**: Merchant accepts order and packages items for pickup.
+    4. **Logistics Dispatch & Chain of Custody**: Transporter claims dispatch job, verifies encrypted HMAC-SHA256 parcel QR code tag, and initiates live GPS tracking.
+    5. **Receipt Confirmation & Escrow Release**: Buyer confirms receipt via delivery OTP or digital signature; `EscrowService.php` automatically deducts 3.5% marketplace commission, instantly releases net sales to the seller wallet, credits the delivery fee to the transporter wallet, and transitions order status to `completed`.
+  - **Tab State Synchronization**: Synchronized Buyer and Seller `Completed` order tabs filtering strictly by `status === 'completed'`.
+  - **React Key & FlatList Stabilization**: Resolved duplicate key collisions by generating unique job identifiers and hardening `keyExtractor` across transporter dispatch feeds.
+
+- **Authentication & Wallet Ledger Hardening**:
+  - **Multi-Role Session Protection**: Developer and administrative accounts are protected during role transitions, preventing session termination and token invalidation on role switch.
+  - **Registration Security Baseline**: Enforced 100 FCFA registration reward with non-withdrawable security constraints and clean, zero-fake-transaction ledger across all newly registered accounts.
 
 ---
 

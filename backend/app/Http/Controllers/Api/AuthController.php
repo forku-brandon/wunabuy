@@ -427,7 +427,9 @@ class AuthController extends Controller
             File::makeDirectory($avatarDirectory, 0755, true, true);
         }
 
+        $requestHost = $request->getSchemeAndHttpHost();
         $savedUrl = null;
+        $savedFileName = null;
 
         // 1. Check for multipart file upload
         $file = $request->file('avatar') ?? $request->file('photo') ?? $request->file('image') ?? $request->file('file');
@@ -440,7 +442,8 @@ class AuthController extends Controller
 
             $fileName = 'avatar_' . $user->id . '_' . time() . '_' . Str::random(8) . '.' . $extension;
             $file->move($avatarDirectory, $fileName);
-            $savedUrl = url('uploads/avatars/' . $fileName);
+            $savedFileName = $fileName;
+            $savedUrl = $requestHost . '/uploads/avatars/' . $fileName;
         }
 
         // 2. Check for base64 encoded image
@@ -463,7 +466,8 @@ class AuthController extends Controller
                 if ($decoded !== false && strlen($decoded) > 0) {
                     $fileName = 'avatar_' . $user->id . '_' . time() . '_' . Str::random(8) . '.' . $extension;
                     file_put_contents($avatarDirectory . DIRECTORY_SEPARATOR . $fileName, $decoded);
-                    $savedUrl = url('uploads/avatars/' . $fileName);
+                    $savedFileName = $fileName;
+                    $savedUrl = $requestHost . '/uploads/avatars/' . $fileName;
                 }
             }
         }
@@ -495,6 +499,7 @@ class AuthController extends Controller
 
         return $this->respondSuccess([
             'avatar_url' => $savedUrl,
+            'relative_url' => $savedFileName ? '/uploads/avatars/' . $savedFileName : null,
             'user' => $user->fresh()->toAuthProfileArray(),
         ], ['message' => 'Profile picture updated successfully']);
     }
@@ -513,6 +518,7 @@ class AuthController extends Controller
             File::makeDirectory($directory, 0755, true, true);
         }
 
+        $requestHost = $request->getSchemeAndHttpHost();
         $savedUrl = null;
 
         // 1. Multipart file
@@ -521,7 +527,7 @@ class AuthController extends Controller
             $extension = strtolower($file->getClientOriginalExtension() ?: $file->guessExtension() ?: 'jpg');
             $fileName = 'img_' . ($user ? $user->id : 'guest') . '_' . time() . '_' . Str::random(8) . '.' . $extension;
             $file->move($directory, $fileName);
-            $savedUrl = url('uploads/' . $safeFolder . '/' . $fileName);
+            $savedUrl = $requestHost . '/uploads/' . $safeFolder . '/' . $fileName;
         }
 
         // 2. Base64
@@ -540,7 +546,7 @@ class AuthController extends Controller
                 if ($decoded !== false) {
                     $fileName = 'img_' . ($user ? $user->id : 'guest') . '_' . time() . '_' . Str::random(8) . '.' . $extension;
                     file_put_contents($directory . DIRECTORY_SEPARATOR . $fileName, $decoded);
-                    $savedUrl = url('uploads/' . $safeFolder . '/' . $fileName);
+                    $savedUrl = $requestHost . '/uploads/' . $safeFolder . '/' . $fileName;
                 }
             }
         }

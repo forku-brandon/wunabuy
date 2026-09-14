@@ -17,6 +17,7 @@ import {
   Key,
   ShieldAlert,
   Info,
+  Loader2,
 } from 'lucide-react';
 
 export const StaffProfilePage: React.FC = () => {
@@ -62,20 +63,23 @@ export const StaffProfilePage: React.FC = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // 1. Instant local preview (0ms latency)
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        updateUserAvatar(reader.result);
+      }
+    };
+    reader.readAsDataURL(file);
+
     setIsUploadingAvatar(true);
     try {
-      // 1. Upload directly to backend API
+      // 2. Upload to backend API
       const res = await authApi.uploadAvatar(file);
       const serverUrl = res?.avatar_url;
 
       if (serverUrl) {
         updateUserAvatar(serverUrl);
-      } else {
-        const reader = new FileReader();
-        reader.onload = () => {
-          updateUserAvatar(reader.result as string);
-        };
-        reader.readAsDataURL(file);
       }
 
       addAuditLog({
@@ -87,15 +91,13 @@ export const StaffProfilePage: React.FC = () => {
       setSuccessMessage('Profile picture successfully updated and saved to server!');
       setTimeout(() => setSuccessMessage(''), 3500);
     } catch {
-      const reader = new FileReader();
-      reader.onload = () => {
-        updateUserAvatar(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-      setSuccessMessage('Profile picture updated locally!');
+      setSuccessMessage('Profile picture preview active!');
       setTimeout(() => setSuccessMessage(''), 3000);
     } finally {
       setIsUploadingAvatar(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -198,15 +200,24 @@ export const StaffProfilePage: React.FC = () => {
                   'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=300&q=80'
                 }
                 alt={user?.full_name || 'Staff User'}
+                onError={(e) => {
+                  e.currentTarget.src =
+                    'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=300&q=80';
+                }}
                 className="w-28 h-28 rounded-full object-cover border-4 border-white dark:border-slate-800 shadow-md transition-transform group-hover:scale-105"
               />
               <button
                 type="button"
+                disabled={isUploadingAvatar}
                 onClick={() => fileInputRef.current?.click()}
-                className="absolute bottom-0 right-0 p-2 bg-teal-600 hover:bg-teal-700 text-white rounded-full shadow-lg transition-all transform hover:scale-110"
+                className="absolute bottom-0 right-0 p-2 bg-teal-600 hover:bg-teal-700 disabled:opacity-70 text-white rounded-full shadow-lg transition-all transform hover:scale-110"
                 title="Upload Profile Picture"
               >
-                <Camera className="w-4 h-4" />
+                {isUploadingAvatar ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Camera className="w-4 h-4" />
+                )}
               </button>
             </div>
 

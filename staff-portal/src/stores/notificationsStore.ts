@@ -92,8 +92,15 @@ export const INITIAL_NOTIFICATIONS: SystemNotification[] = [
 ];
 
 // Persistent state
-const savedNotifs = localStorage.getItem('wunabuy_staff_notifications');
-let currentNotifications: SystemNotification[] = savedNotifs ? JSON.parse(savedNotifs) : INITIAL_NOTIFICATIONS;
+let currentNotifications: SystemNotification[] = INITIAL_NOTIFICATIONS;
+try {
+  const savedNotifs = localStorage.getItem('wunabuy_staff_notifications');
+  if (savedNotifs) {
+    currentNotifications = JSON.parse(savedNotifs);
+  }
+} catch {
+  currentNotifications = INITIAL_NOTIFICATIONS;
+}
 
 const listeners = new Set<() => void>();
 
