@@ -179,7 +179,9 @@ class OrderController extends Controller
             }
 
             $deliveryFee = (float) $order->delivery_fee;
+            $commission = (float) round($subtotal * 0.035);
             $order->subtotal = $subtotal;
+            $order->commission = $commission;
             $order->total = $subtotal + $deliveryFee;
             $order->save();
 

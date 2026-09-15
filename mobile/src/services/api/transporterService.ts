@@ -178,14 +178,18 @@ export const TransporterService = {
   /**
    * Update active trip stage (1: Pickup, 2: Verification, 3: En Route, 4: POD)
    */
-  async updateTripStage(jobId: string, stage: number): Promise<boolean> {
+  async updateTripStage(jobId: string, stage: number): Promise<{ success: boolean; message?: string }> {
     try {
-      const response = await apiClient.post<{ success: boolean }>(`/transporter/trips/${jobId}/stage`, {
+      const response = await apiClient.post<{ success: boolean; message?: string }>(`/transporter/trips/${jobId}/stage`, {
         stage,
       });
-      return response.data?.success ?? true;
-    } catch {
-      return true;
+      if (response.data?.success) {
+        return { success: true };
+      }
+      return { success: false, message: response.data?.message || 'Failed to update stage' };
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Failed to update stage';
+      return { success: false, message: msg };
     }
   },
 

@@ -83,21 +83,32 @@ export const TransporterActiveTripScreen = ({ route, navigation }: any) => {
   const verificationCode = tripData.verification_code;
 
   const handleNextStage = async () => {
-    let nextStage = currentStage;
     if (currentStage === 1) {
-      nextStage = 2;
-      setCurrentStage(2);
-      setToastMessage('Arrived at store! Inspect package & verify handover PIN.');
+      const res = await TransporterService.updateTripStage(jobId, 2);
+      if (res.success) {
+        setCurrentStage(2);
+        setToastMessage('Arrived at store! Present your 4-digit PIN to the merchant.');
+      } else {
+        Alert.alert('Stage Update Error', res.message || 'Could not update stage to Arrived.');
+      }
     } else if (currentStage === 2) {
-      nextStage = 3;
-      setCurrentStage(3);
-      setToastMessage('Package picked up! En route to buyer destination 🏠');
+      // Trying to advance to Stage 3 (En Route to Buyer).
+      // STRICT HANDSHAKE: Backend enforces that the merchant must have confirmed the PIN first.
+      const res = await TransporterService.updateTripStage(jobId, 3);
+      if (res.success) {
+        setCurrentStage(3);
+        setToastMessage('✅ Handover confirmed! En route to buyer destination 🏠');
+      } else {
+        Alert.alert(
+          '⚠️ Handover Not Confirmed Yet',
+          res.message || `The merchant has not confirmed your 4-digit code (#${verificationCode}) in their system.\n\nPlease show your 4-digit PIN to the store merchant so they can enter it in their Seller App to authorize parcel release before you depart.`
+        );
+      }
     } else if (currentStage === 3) {
-      nextStage = 4;
+      const res = await TransporterService.updateTripStage(jobId, 4);
       setCurrentStage(4);
       setIsSignModalOpen(true);
     }
-    await TransporterService.updateTripStage(jobId, nextStage);
   };
 
   const handleCompleteDelivery = async (signatureData: string) => {
@@ -446,15 +457,55 @@ export const TransporterActiveTripScreen = ({ route, navigation }: any) => {
           {/* Stage 2 Verification PIN Card */}
           {currentStage === 2 && (
             <View style={[styles.pinVerificationBox, { backgroundColor: isDark ? '#1E293B' : '#EEF2FF', borderColor: '#6366F1' }]}>
-              <Text variant="caption" bold color="#6366F1">
-                🔑 MERCHANT HANDOVER VERIFICATION PIN
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                <Text variant="caption" bold color="#6366F1">
+                  🔑 4-DIGIT STORE HANDOVER PIN
+                </Text>
+                <Badge label="SHOW TO SELLER" variant="primary" size="small" />
+              </View>
               <Text variant="h1" bold align="center" color="#6366F1" style={styles.pinCodeText}>
                 {verificationCode}
               </Text>
-              <Text variant="caption" secondary align="center">
-                Ask merchant to confirm PIN #{verificationCode} before loading package.
+              <Text variant="caption" secondary align="center" style={{ lineHeight: 18, marginHorizontal: spacing.xs }}>
+                Present your Rider ID and show this 4-digit code to the merchant. The merchant must enter this PIN in their Seller App to confirm handover before you can start transit.
               </Text>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={async () => {
+                  const updated = await TransporterService.getActiveTrip(jobId);
+                  setTripData(updated);
+                  if (updated.current_stage >= 3) {
+                    setCurrentStage(3);
+                    setToastMessage('✅ Merchant confirmed handover! En route to buyer 🏠');
+                  } else {
+                    const testRes = await TransporterService.updateTripStage(jobId, 3);
+                    if (testRes.success) {
+                      setCurrentStage(3);
+                      setToastMessage('✅ Merchant confirmed handover! En route to buyer 🏠');
+                    } else {
+                      Alert.alert(
+                        'Awaiting Merchant Confirmation',
+                        `Merchant has not confirmed PIN #${verificationCode} yet. Please ask the merchant to enter the code in their Seller app.`
+                      );
+                    }
+                  }
+                }}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginTop: spacing.sm,
+                  paddingVertical: 8,
+                  backgroundColor: isDark ? 'rgba(99,102,241,0.2)' : '#E0E7FF',
+                  borderRadius: borderRadius.md,
+                  gap: 6,
+                }}
+              >
+                <Ionicons name="refresh-outline" size={16} color="#4F46E5" />
+                <Text variant="caption" bold color="#4F46E5">
+                  Check If Merchant Confirmed PIN 🔄
+                </Text>
+              </TouchableOpacity>
             </View>
           )}
 

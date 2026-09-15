@@ -102,9 +102,9 @@ class EscrowService
                 $buyerWallet->save();
             }
 
-            // Calculate fees and splits
+            // Calculate fees and splits (integer rounding for XAF currency)
             $subtotal = (float) $order->subtotal;
-            $commission = round($subtotal * self::COMMISSION_RATE, 2);
+            $commission = (float) round($subtotal * self::COMMISSION_RATE);
             $sellerNet = max(0, $subtotal - $commission);
             $deliveryFee = (float) $order->delivery_fee;
 

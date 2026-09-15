@@ -116,15 +116,19 @@ export const SellerService = {
   /**
    * Handover parcel to rider after PIN verification
    */
-  async handoverOrder(orderId: string, pin: string): Promise<boolean> {
+  async handoverOrder(orderId: string, pin: string): Promise<{ success: boolean; message?: string }> {
     try {
-      const response = await apiClient.post<{ success: boolean }>(
+      const response = await apiClient.post<{ success: boolean; message?: string }>(
         `/seller/orders/${orderId}/handover`,
         { pin }
       );
-      return response.data?.success ?? true;
-    } catch {
-      return true;
+      if (response.data?.success) {
+        return { success: true, message: response.data?.message };
+      }
+      return { success: false, message: response.data?.message || 'Handover verification failed' };
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Failed to verify PIN';
+      return { success: false, message: msg };
     }
   },
 

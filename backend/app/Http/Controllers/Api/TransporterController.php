@@ -125,7 +125,10 @@ class TransporterController extends Controller
         }
 
         $order->transporter_id = $transporter->id;
-        $order->status = 'in_transit';
+        // Assign transporter to order. Order remains ready_for_pickup until seller verifies 4-digit handover PIN.
+        if (in_array($order->status, ['pending', 'pending_acceptance', 'preparing'])) {
+            $order->status = 'ready_for_pickup';
+        }
         $order->save();
 
         return $this->respondSuccess([
@@ -267,10 +270,19 @@ class TransporterController extends Controller
             return $this->respondError('FORBIDDEN', 'Unauthorized: you are not the assigned transporter for this order', null, 403);
         }
 
-        if ($stage === 4) {
+        if ($stage === 3) {
+            // STRICT SECURITY HANDSHAKE: Rider cannot advance to En Route unless merchant confirmed handover
+            if ($order->status !== 'in_transit') {
+                return $this->respondError(
+                    'HANDOVER_NOT_VERIFIED',
+                    'Merchant has not confirmed the 4-digit handover PIN yet. Please ask the merchant to enter PIN ' . ($order->pickup_pin ?? '7842') . ' in their Wunabuy Seller app to authorize parcel handover.',
+                    ['pin' => ['Merchant handover verification required before transit.']],
+                    422
+                );
+            }
+        } elseif ($stage === 4) {
             $order->status = 'delivered';
-        } elseif ($stage === 3) {
-            $order->status = 'in_transit';
+            $order->delivered_at = $order->delivered_at ?? now();
         }
         $order->save();
 

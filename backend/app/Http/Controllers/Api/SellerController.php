@@ -47,7 +47,7 @@ class SellerController extends Controller
                     COUNT(*) FILTER (WHERE status IN ('pending', 'paid_escrow', 'pending_acceptance', 'pending_payment')) as pending_count,
                     COUNT(*) FILTER (WHERE status = 'preparing') as preparing_count,
                     COUNT(*) FILTER (WHERE status = 'ready_for_pickup') as ready_count,
-                    COALESCE(SUM(total) FILTER (WHERE status IN ('delivered', 'completed', 'received')), 0) as total_revenue
+                    COALESCE(SUM(subtotal - commission) FILTER (WHERE status IN ('delivered', 'completed', 'received')), 0) as total_revenue
                 ")
                 ->first();
 
@@ -299,10 +299,28 @@ class SellerController extends Controller
             return $this->respondError('FORBIDDEN', 'Unauthorized: Order belongs to another store', null, 403);
         }
 
+        // STRICT SECURITY HANDSHAKE: Validate 4-digit Handover PIN from transporter
+        $submittedPin = trim((string) $request->input('pin', ''));
+        $expectedPin = trim((string) ($order->pickup_pin ?? ''));
+
+        if (empty($submittedPin) || empty($expectedPin) || $submittedPin !== $expectedPin) {
+            return $this->respondError(
+                'INVALID_PICKUP_PIN',
+                'Invalid 4-digit verification code! The PIN entered does not match the code shown on the rider\'s device.',
+                ['pin' => ['Invalid 4-digit verification code. Please ask the rider for the code displayed on their screen.']],
+                422
+            );
+        }
+
         $order->status = 'in_transit';
         $order->save();
 
-        return $this->respondSuccess(['handed_over' => true, 'order_id' => $id]);
+        return $this->respondSuccess([
+            'handed_over' => true,
+            'order_id' => $order->id,
+            'status' => 'in_transit',
+            'message' => 'Parcel handover successfully verified. Order is now in transit.',
+        ]);
     }
 
     /**

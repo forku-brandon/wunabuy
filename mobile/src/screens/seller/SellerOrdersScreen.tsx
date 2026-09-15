@@ -175,20 +175,21 @@ export const SellerOrdersScreen = ({ navigation }: any) => {
     setIsHandoverModalVisible(true);
   };
 
-  const handleConfirmHandoverVerification = () => {
+  const handleConfirmHandoverVerification = async () => {
     if (!selectedOrderForHandover) return;
-    if (!enteredPin || enteredPin.length !== 5) {
-      setPinError('Please enter the complete 5-digit verification PIN provided by the rider.');
+    const cleanPin = enteredPin.trim();
+    if (!cleanPin || cleanPin.length !== 4) {
+      setPinError('Please enter the complete 4-digit verification PIN provided by the rider.');
       return;
     }
-    const expectedPin = selectedOrderForHandover.pickup_pin || '84920';
-    if (enteredPin !== expectedPin) {
-      setPinError('❌ Invalid verification code! Code does not match the 5-digit PIN sent to the rider.');
+
+    const res = await SellerService.handoverOrder(selectedOrderForHandover.id, cleanPin);
+    if (!res.success) {
+      setPinError(res.message || '❌ Invalid verification code! Code does not match the 4-digit PIN sent to the rider.');
       return;
     }
 
     markOrderInTransit(selectedOrderForHandover.id);
-    SellerService.handoverOrder(selectedOrderForHandover.id, enteredPin);
     setIsHandoverModalVisible(false);
     setToastMessage(`✅ Rider verified! Order #${selectedOrderForHandover.order_code} handed over successfully.`);
     loadOrders();
@@ -421,7 +422,7 @@ export const SellerOrdersScreen = ({ navigation }: any) => {
                   </View>
                   <View style={styles.summaryRow}>
                     <Text variant="caption" secondary>
-                      Platform Commission (5%)
+                      Platform Commission (3.5%)
                     </Text>
                     <Text variant="caption" color="#DC2626">
                       - {formatXAF(item.commission)}
@@ -454,12 +455,12 @@ export const SellerOrdersScreen = ({ navigation }: any) => {
                   </View>
                 )}
 
-                {/* 5-Digit Handover Verification PIN Info Tag */}
+                {/* 4-Digit Handover Verification PIN Info Tag */}
                 {isReady && item.pickup_pin && (
                   <View style={[styles.pinInfoBanner, { backgroundColor: isDark ? 'rgba(13,148,136,0.15)' : '#ECFDF5', borderColor: colors.primary[400] }]}>
                     <Ionicons name="key" size={16} color={colors.primary[600]} />
                     <Text variant="caption" bold color={colors.primary[700]} style={{ flex: 1, marginLeft: 6 }}>
-                      Rider Pickup 5-Digit Verification PIN: #{item.pickup_pin}
+                      Rider Pickup 4-Digit Verification PIN: #{item.pickup_pin}
                     </Text>
                   </View>
                 )}
@@ -737,36 +738,36 @@ export const SellerOrdersScreen = ({ navigation }: any) => {
                   Rider Identification 🔑
                 </Text>
                 <Text variant="caption" color={colors.primary[600]} bold>
-                  5-DIGIT HANDOVER PIN VERIFICATION
+                  4-DIGIT HANDOVER PIN VERIFICATION
                 </Text>
               </View>
             </View>
 
             <Text variant="caption" secondary style={{ marginVertical: spacing.xs }}>
-              Ask rider <Text bold color={theme.text}>{selectedOrderForHandover?.transporter_name || 'assigned rider'}</Text> for the 5-digit verification PIN shown on their app for Order <Text bold>#{selectedOrderForHandover?.order_code}</Text>.
+              Ask rider <Text bold color={theme.text}>{selectedOrderForHandover?.transporter_name || 'assigned rider'}</Text> for the 4-digit verification PIN shown on their app for Order <Text bold>#{selectedOrderForHandover?.order_code}</Text>.
             </Text>
 
             <View style={[styles.pinInstructionCard, { backgroundColor: isDark ? colors.neutral[800] : colors.primary[50] }]}>
               <Ionicons name="information-circle-outline" size={18} color={colors.primary[600]} />
               <Text variant="caption" color={theme.text} style={{ flex: 1, marginLeft: 6 }}>
-                Hand over the parcel ONLY when the system verifies the 5-digit code is correct.
+                Hand over the parcel ONLY when the system verifies the 4-digit code is correct.
               </Text>
             </View>
 
             <View style={{ marginVertical: spacing.md }}>
               <Text variant="caption" bold secondary style={{ marginBottom: 6 }}>
-                ENTER RIDER 5-DIGIT VERIFICATION CODE:
+                ENTER RIDER 4-DIGIT VERIFICATION CODE:
               </Text>
               <TextInput
                 value={enteredPin}
                 onChangeText={(val) => {
-                  setEnteredPin(val.replace(/[^0-9]/g, '').slice(0, 5));
+                  setEnteredPin(val.replace(/[^0-9]/g, '').slice(0, 4));
                   if (pinError) setPinError('');
                 }}
-                placeholder="e.g. 84920"
+                placeholder="e.g. 7842"
                 placeholderTextColor={theme.textTertiary}
                 keyboardType="number-pad"
-                maxLength={5}
+                maxLength={4}
                 style={[
                   styles.pinInputField,
                   {

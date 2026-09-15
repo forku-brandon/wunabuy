@@ -26,8 +26,7 @@ export const CheckoutPaymentScreen = ({ route, navigation }: any) => {
   const cartItems = useCartStore((state) => state.items);
   const cartStoreId = useCartStore((state) => state.storeId);
 
-  const commission = Math.round(subtotal * 0.035);
-  const totalAmount = subtotal + commission + deliveryFee;
+  const totalAmount = subtotal + deliveryFee;
 
   // Live dynamic available wallet balance
   const [walletBalance, setWalletBalance] = useState(0);

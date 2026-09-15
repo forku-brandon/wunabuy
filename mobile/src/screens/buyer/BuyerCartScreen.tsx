@@ -84,7 +84,7 @@ export const BuyerCartScreen = ({ navigation }: any) => {
 
   const handleProceedToPayment = () => {
     navigation.navigate('CheckoutPayment', {
-      subtotal,
+      subtotal: Math.max(0, subtotal - appliedDiscount),
       deliveryFee: shippingFee,
       deliveryMethod,
       pickupPin,
