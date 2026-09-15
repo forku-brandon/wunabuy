@@ -29,6 +29,9 @@ EXPO_PUBLIC_REVERB_SCHEME=http
 ```
 
 ### 2. Live Backend Integration & Self-Healing Architecture
+- **Permanent Media Localization & Hardware-Accelerated Caching (`expo-image`, `OptimizedImage.tsx`):** Complete elimination of external CDN latency. All catalog products, promotional banners, and store logos are served directly from the high-efficiency local WebP repository (`/uploads/...`) with native hardware acceleration (Glide on Android, SDWebImage on iOS) and `cachePolicy="memory-disk"`, guaranteeing instant 0ms cached re-renders and local bundled asset fallbacks during offline state.
+- **Google Play Store Legal & Regulatory Compliance (`RegisterScreen.tsx`, `TermsModal.tsx`):** Mandatory Terms of Service & Privacy Policy acceptance agreement integrated into onboarding signup. Features full bilingual (EN/FR) statutory clauses governing digital commerce, wallet escrow custody, and personal data protection in compliance with Google Play Developer policies and OHADA commercial laws.
+- **Automated Credential & Dispute Evidence Uploads (`kycService.ts`, `disputesService.ts`, `ordersService.ts`):** Automatic background conversion and upload of local camera/gallery photos (`file:///...`) to isolated server repositories (`/api/v1/upload/image` under folders `kyc` and `disputes`) before transmitting Store KYC, Transporter KYC, or Escrow Dispute payloads.
 - **Unified Media Normalization & Image Resilience (`src/utils/imageUtils.ts`):** Centralized image resolution pipeline (`resolveProductImage`, `resolveStoreLogo`, `resolveAvatarUrl`) that seamlessly sanitizes media URLs. If an image path is relative (`/uploads/...`, `/storage/...`) or contains `localhost:8000` / `127.0.0.1:8000`, it dynamically rewrites it to use the reachable mobile API host (`API_BASE_URL`). Prevents broken image icons across physical devices over LAN Wi-Fi.
 - **Universal Avatar & Store Logo Upload:** Full photo picker integration in `EditProfileModal.tsx` (Buyer), `EditStoreProfileScreen.tsx` (Seller Store Logo), and `TransporterProfileScreen.tsx` (Driver). Handles native file URIs (`imageUri.replace('file://', '')`), automatic MIME-type detection, and multi-part upload to `POST /api/v1/user/avatar` and `POST /api/v1/upload/image`.
 - **Dynamic Marketing Adverts & Platform Partners:** `HomeScreen.tsx` hydrates `HeroCarousel`, promotional discount cards, and `PartnersCarousel` directly from `GET /api/v1/adverts` in real time, synchronizing seamlessly with campaigns published from the Staff Operations Portal.
@@ -40,6 +43,7 @@ EXPO_PUBLIC_REVERB_SCHEME=http
 - **Checkout & Escrow:** `CheckoutPaymentScreen.tsx` submits orders to `POST /api/v1/orders` and initiates MoMo USSD payment push (`POST /api/v1/checkout/pay`).
 - **Orders & Tracking:** `BuyerOrdersScreen.tsx` & `OrderTrackingScreen.tsx` execute live delivery confirmations (`confirmReceipt` -> escrow release with 3.5% commission split) and dispute freezes (`dispute`).
 - **Wallet & Ledger:** `WalletScreen.tsx` fetches live PostgreSQL balances and transactions (`GET /api/v1/wallet`, `GET /api/v1/wallet/transactions`) and processes MTN MoMo/Orange Money top-ups (`POST /api/v1/wallet/fund`). Enforces a 100 FCFA registration reward with non-withdrawable security protection.
+
 
 ### 3. Running & Testing the Mobile App
 

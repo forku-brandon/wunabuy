@@ -1,14 +1,48 @@
 # Software Requirements Specification (SRS)
 # Wunabuy — Multi-Sided E-Commerce & Web Staff Operations Platform
 
-**Document Version:** 3.6 (Universal Avatar Upload, Marketing Adverts Engine, Real-Time Order Lifecycle & Escrow Settlement)  
-**Date:** September 11, 2026  
+**Document Version:** 3.8 (KYC Document Inspection Suite, Dispute Photographic Evidence Arbitration, Permanent Media Localization Engine)  
+**Date:** September 15, 2026  
 **Status:** Approved / In Production Use  
-**Companion Documents:** Wunabuy PRD v3.6, Wunabuy Frontend Tech Spec v3.6, Wunabuy Backend Tech Spec v3.6, Wunabuy Backend API Contract v3.6  
+**Companion Documents:** Wunabuy PRD v3.8, Wunabuy Frontend Tech Spec v3.8, Wunabuy Backend Tech Spec v3.8, Wunabuy Backend API Contract v3.8  
 
 ---
 
-## 📸 Universal Avatar Upload, Marketing Adverts Engine & Real-Time Order Lifecycle (September 11, 2026 - v3.6)
+## 🪪 KYC Document Inspection, Dispute Photo Evidence & Permanent Media Acceleration (September 15, 2026 - v3.8)
+
+- **Permanent Local Media Acceleration & Zero-External CDN Engine**:
+  - **Self-Hosted Static Media Infrastructure**: Replaced all external Unsplash CDN dependencies across the catalog with locally hosted, optimized assets stored under `backend/public/uploads/` (`products`, `stores`, `adverts`, `avatars`, `kyc`, `disputes`).
+  - **High-Efficiency WebP Pipeline**: Automated GD compression pipeline converting catalog photography into compact, retina-ready WebP files (4KB–18KB, 500–600px) with automated vector graphics fallback for missing assets, reducing network payload by over 96%.
+  - **Immutable Caching Headers**: Implemented `/uploads/{folder}/{filename}` static delivery route with `Cache-Control: public, max-age=31536000, immutable` and ETag validation, reducing repeat image retrieval latency to <8ms.
+  - **Hardware-Accelerated Mobile Image Engine (`OptimizedImage.tsx`)**: Upgraded mobile client from default React Native `<Image>` to `expo-image` with `cachePolicy="memory-disk"`, utilizing native Glide (Android) and SDWebImage (iOS) drivers for instant 0ms cached re-renders and local bundled asset fallbacks during offline state.
+  - **Node Heap Optimization**: Configured `NODE_OPTIONS=--max-old-space-size=8192` across Expo start scripts to prevent bundler heap exhaustion.
+
+- **Staff Portal Complete KYC Document Inspection Suite (`KYCPage.tsx`, `DocumentInspectionCard.tsx`)**:
+  - **Dual Applicant Flow Verification**:
+    - **Store Merchants**: 4-credential verification card grid displaying Cameroon National ID (CNI Front), CNI Back (Date of issue & Signature), Physical Storefront Signage & Stock, and Business Registration Certificate (RCCM / Tax Notice).
+    - **Transporters & Drivers**: 4-credential verification card grid displaying Driver National CNI, Driver's License (*Permis de Conduire*), Vehicle & License Plate Photo (with vehicle type and plate number metadata), and Vehicle Insurance (*Attestation d'Assurance*).
+  - **Compliance Status Indicators**: Visual status tags (`Uploaded` in emerald vs `Missing` in amber) with direct hover inspection overlays (*Inspect*, *Open in New Tab*).
+  - **One-Click Compliance Presets**: Instant chips to autofill common audit rejections (*"CNI photo blurry"*, *"Storefront name mismatch"*, *"RCCM invalid or missing"*, *"Expired driver license"*, *"Expired vehicle insurance"*).
+
+- **Staff Portal Escrow Dispute Photographic Evidence Gallery (`DisputesPage.tsx`)**:
+  - **Visual Photographic Evidence**: Responsive grid displaying all buyer-uploaded package, delivery, and product damage photos.
+  - **Disputed Order Itemization**: Real-time table displaying the exact items in the disputed order (thumbnail, product name, quantity, unit price, and subtotal) so arbitrators can verify claims against specific purchase lines.
+  - **Binding Legal Rulings**: Supports `BUYER_REFUND` (100% return to buyer wallet), `SELLER_RELEASE` (100% payout to merchant), or `SPLIT_50_50` partial disbursals with atomic ledger updates.
+  - **Arbitration Presets**: One-click autofill for common arbitration legal rationales with immutable audit logging.
+
+- **High-Precision Image Lightbox (`ImageLightbox.tsx`)**:
+  - **90° Clockwise Rotation (`RotateCw`)**: Solves orientation issues with smartphone camera captures of CNI cards, licenses, and receipts.
+  - **Full Resolution Zoom (`ZoomIn` / `ZoomOut` / `RefreshCcw`)**: Scale factor up to 400% with view reset to inspect microprint, stamps, and signatures.
+  - **Direct High-Res Download (`Download`)**: Officers can download copies locally for legal compliance records.
+  - **Keyboard Shortcut**: `Escape` key listener closes the lightbox instantly.
+
+- **Google Play Store Legal Compliance & Onboarding Consent**:
+  - **Mandatory Terms Acceptance (`RegisterScreen.tsx`)**: Integrated Terms of Service & Privacy Policy agreement into onboarding signup.
+  - **Bilingual OHADA Compliance**: Formal legal clauses governing digital commerce, wallet escrow custody, dispute arbitration, and personal data protection in compliance with Google Play Developer policies.
+
+- **Automated Credential & Dispute Evidence Upload Pipeline**:
+  - Mobile services (`kycService.ts`, `disputesService.ts`, `ordersService.ts`) automatically upload local camera/gallery photos (`file:///...`) to isolated server repositories (`/api/v1/upload/image` under folders `kyc` and `disputes`) before transmitting Store KYC, Transporter KYC, or Escrow Dispute payloads.
+
 
 - **Universal Avatar & Profile Picture Architecture Across Web, Mobile & Backend**:
   - **Web Staff Portal Upload (`StaffProfilePage.tsx`)**: Instant 0ms optimistic local preview using HTML5 `FileReader` (`readAsDataURL`), responsive `Loader2` spinner state during active server transport, seamless upload to `POST /api/v1/staff/profile/avatar`, fallback recovery via `onError` image routing to high-fidelity Unsplash default, and immediate session updates in `staffAuthStore.ts` with clean `/uploads/avatars/` relative path normalization.

@@ -1,12 +1,12 @@
 # Wunabuy Backend API Specification & Integration Contract v1.0
 
-**Document Version:** 3.6 (Universal Avatar Upload, Marketing Adverts Engine, Real-Time Order Lifecycle & Escrow Settlement)  
-**Date:** September 11, 2026  
+**Document Version:** 3.8 (KYC Document Inspection Suite, Dispute Photographic Evidence Arbitration, Permanent Media Localization Engine)  
+**Date:** September 15, 2026  
 **Target Audience:** Backend Engineering Team (Laravel 13 / PostgreSQL / Redis / Sanctum)  
 **Standard:** RESTful JSON API + WebSocket Real-Time Telemetry  
 **Currency Standard:** Central African CFA Franc (`XAF` / `FCFA`)  
 **Locale Default:** French / English Cameroon (`+237` E.164 phone numbers)  
-**Document Status:** 🟢 **APPROVED & SYNCHRONIZED WITH MOBILE APP & STAFF PORTAL v3.6**
+**Document Status:** 🟢 **APPROVED & SYNCHRONIZED WITH MOBILE APP & STAFF PORTAL v3.8**
 
 ---
 
@@ -1601,3 +1601,186 @@ CREATE TABLE wallets (
    Ensures seamless same-origin `/uploads/*` image retrieval across all LAN IP addresses (e.g. `http://192.168.100.1:3001/uploads/avatars/...`), completely eliminating CORS 500 errors and mixed content blocks.
 3. **Mobile Client Resolution (`normalizeMobileImageUrl`)**:
    - Dynamically checks incoming URL strings. If URL contains `localhost:8000` or begins with `/uploads/` or `/storage/`, it automatically converts it into `${API_BASE_URL.replace(/\/api.*$/, '')}${cleanPath}` to guarantee physical Android/iOS devices load media from the reachable local network server IP.
+
+---
+
+## 15. Staff Operations Portal: KYC Document Verification & Escrow Dispute Arbitration (v3.8)
+
+### 15.1 Pending KYC Verification Queue
+`GET /api/v1/staff/kyc/queue`
+
+- **Description**: Returns all merchant store and transporter driver KYC submissions requiring compliance review, with all document and credential image URLs normalized to active server host.
+- **Auth Required**: `Bearer <staff_sanctum_token>` (`VIEW_KYC` permission)
+- **Success Response (`200 OK`)**:
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "6b6bdd84-66ff-45d8-81e7-44f2af05d962",
+      "applicant_name": "Penn wilfred",
+      "applicant_type": "STORE_SELLER",
+      "entity_title": "Dedon electronics",
+      "phone": "+237677640726",
+      "city_quarter": "Douala / Commercial avenue",
+      "cni_number": "CNI-2026-LT-110293",
+      "submitted_at": "2026-09-10 13:39:11",
+      "status": "PENDING_REVIEW",
+      "cni_front_url": "http://127.0.0.1:8000/uploads/kyc/cni_front_dedon.webp",
+      "cni_back_url": "http://127.0.0.1:8000/uploads/kyc/cni_back_dedon.webp",
+      "storefront_or_vehicle_photo": "http://127.0.0.1:8000/uploads/kyc/storefront_dedon.webp",
+      "business_reg_url": "http://127.0.0.1:8000/uploads/kyc/rccm_dedon.webp",
+      "driver_license_url": null,
+      "vehicle_insurance_url": null,
+      "vehicle_plate": null,
+      "vehicle_type": null
+    },
+    {
+      "id": "7c12f9cd-55aa-43d9-91a1-f312ba9aa412",
+      "applicant_name": "Samuel Mbappe",
+      "applicant_type": "DRIVER_TRANSPORTER",
+      "entity_title": "Express Rider #204",
+      "phone": "+237699112233",
+      "city_quarter": "Douala / Bonaberi",
+      "cni_number": "CNI-2026-LT-554411",
+      "submitted_at": "2026-09-11 09:12:00",
+      "status": "PENDING_REVIEW",
+      "cni_front_url": "http://127.0.0.1:8000/uploads/kyc/cni_front_driver.webp",
+      "cni_back_url": "http://127.0.0.1:8000/uploads/kyc/cni_back_driver.webp",
+      "storefront_or_vehicle_photo": "http://127.0.0.1:8000/uploads/kyc/vehicle_moto.webp",
+      "business_reg_url": null,
+      "driver_license_url": "http://127.0.0.1:8000/uploads/kyc/license_moto.webp",
+      "vehicle_insurance_url": "http://127.0.0.1:8000/uploads/kyc/insurance_moto.webp",
+      "vehicle_plate": "LT-582-AB",
+      "vehicle_type": "Motorcycle"
+    }
+  ]
+}
+```
+
+---
+
+### 15.2 KYC Review Decision
+`POST /api/v1/staff/kyc/{id}/decision`
+
+- **Description**: Approves or rejects a KYC credential submission. Approving activates the merchant's store or driver dispatch access immediately; rejecting logs the rejection rationale and notifies the applicant.
+- **Auth Required**: `Bearer <staff_sanctum_token>` (`APPROVE_KYC` or `REJECT_KYC` permission)
+- **Request Body**:
+```json
+{
+  "decision": "APPROVED",
+  "notes": "CNI front/back and RCCM business certificate verified against national register."
+}
+```
+- **Success Response (`200 OK`)**:
+```json
+{
+  "success": true,
+  "data": {
+    "id": "6b6bdd84-66ff-45d8-81e7-44f2af05d962",
+    "status": "APPROVED",
+    "reviewed_at": "2026-09-15T16:20:00Z"
+  },
+  "meta": { "message": "KYC decision submitted successfully" }
+}
+```
+
+---
+
+### 15.3 Active Escrow Disputes Bench
+`GET /api/v1/staff/disputes`
+
+- **Description**: Returns all escrow dispute cases requiring staff arbitration, including normalized photographic evidence arrays (`evidence_photos`) and itemized order lines (`items`).
+- **Auth Required**: `Bearer <staff_sanctum_token>` (`VIEW_DISPUTES` permission)
+- **Success Response (`200 OK`)**:
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "01a08d16-eed8-72d2-aff4-1fb05d6099e1",
+      "order_code": "WB-2026-3254",
+      "buyer_name": "Penn wilfred",
+      "seller_name": "Sigate Electronics Ltd",
+      "transporter_name": "Paul Eto'o",
+      "dispute_reason": "damaged",
+      "dispute_description": "Speaker cabinet arrived cracked with severe transit puncture.",
+      "escrow_amount": 101500,
+      "status": "OPEN",
+      "filed_at": "2026-09-10T20:51:25+00:00",
+      "evidence_photos": [
+        "http://127.0.0.1:8000/uploads/disputes/disp_broken_box.webp",
+        "http://127.0.0.1:8000/uploads/disputes/disp_damaged_corner.webp"
+      ],
+      "items": [
+        {
+          "name": "Bluetooth Bass Speaker System",
+          "quantity": 5,
+          "price": 20000,
+          "image_url": "http://127.0.0.1:8000/uploads/products/prod_99887766_0.webp"
+        }
+      ]
+    }
+  ]
+}
+```
+
+---
+
+### 15.4 Adjudicate Dispute Escrow Ruling
+`POST /api/v1/staff/disputes/{id}/adjudicate`
+
+- **Description**: Executes a binding legal ruling on an escrow dispute claim (`BUYER_REFUND`, `SELLER_RELEASE`, `SPLIT_50_50`), credits or releases user wallets via atomic database transaction, and logs a critical audit entry.
+- **Auth Required**: `Bearer <staff_sanctum_token>` (`RESOLVE_DISPUTES` permission)
+- **Request Body**:
+```json
+{
+  "ruling_type": "BUYER_REFUND",
+  "rationale": "Photo evidence confirms severe transit damage; transporter insurance to cover seller claim."
+}
+```
+- **Success Response (`200 OK`)**:
+```json
+{
+  "success": true,
+  "data": {
+    "id": "01a08d16-eed8-72d2-aff4-1fb05d6099e1",
+    "status": "RESOLVED_REFUND",
+    "resolved_at": "2026-09-15T16:25:00Z"
+  },
+  "meta": { "message": "Dispute adjudicated successfully" }
+}
+```
+
+---
+
+### 15.5 Buyer Dispute Submission with Evidence Photos
+`POST /api/v1/orders/{id}/dispute`
+
+- **Description**: Allows the buyer who placed the order to freeze escrow funds within 48 hours of delivery and submit photographic evidence of wrong or damaged goods.
+- **Auth Required**: `Bearer <sanctum_token>`
+- **Request Body**:
+```json
+{
+  "reason": "Item Damaged / Broken",
+  "description": "The packaging box was crushed upon delivery and the inner screen is cracked.",
+  "evidence_photos": [
+    "http://127.0.0.1:8000/uploads/disputes/img_buyer1_1726040000_a1b2c3.webp",
+    "http://127.0.0.1:8000/uploads/disputes/img_buyer1_1726040001_d4e5f6.webp"
+  ]
+}
+```
+- **Success Response (`200 OK`)**:
+```json
+{
+  "success": true,
+  "data": {
+    "order_id": "01a08d16-eed8-72d2-aff4-1fb05d6099e1",
+    "order_code": "WB-2026-3254",
+    "status": "disputed",
+    "payment_status": "frozen"
+  },
+  "meta": { "message": "Dispute opened successfully. Escrow funds are frozen under staff review." }
+}
+```
+
