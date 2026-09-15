@@ -58,9 +58,9 @@ export const OrderTrackingScreen = ({ route, navigation }: any) => {
     setIsSignModalOpen(false);
   };
 
-  const handleSubmitDispute = async (reason: DisputeReason, description: string) => {
+  const handleSubmitDispute = async (reason: DisputeReason, description: string, evidencePhotos: string[] = []) => {
     try {
-      await OrdersService.fileDispute(orderId, { reason, description, evidence_photos: [] });
+      await OrdersService.fileDispute(orderId, { reason, description, evidence_photos: evidencePhotos });
     } catch {
       // Safe fallback
     }

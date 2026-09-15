@@ -212,9 +212,9 @@ class EscrowService
     /**
      * Freeze escrow funds and register formal dispute.
      */
-    public function freezeEscrow(Order $order, string $reason, string $filedByUserId, array $evidence = []): Dispute
+    public function freezeEscrow(Order $order, string $reason, string $filedByUserId, array $evidence = [], ?string $description = null): Dispute
     {
-        return DB::transaction(function () use ($order, $reason, $filedByUserId, $evidence) {
+        return DB::transaction(function () use ($order, $reason, $filedByUserId, $evidence, $description) {
             $order->status = 'disputed';
             $order->payment_status = 'frozen';
             $order->save();
@@ -223,7 +223,7 @@ class EscrowService
                 'order_id' => $order->id,
                 'user_id' => \Illuminate\Support\Str::isUuid($filedByUserId) ? $filedByUserId : ($order->customer_id ?? User::first()?->id),
                 'reason' => substr($reason, 0, 50),
-                'description' => $reason,
+                'description' => $description ?: $reason,
                 'status' => 'open',
                 'evidence_photos' => $evidence,
             ]);

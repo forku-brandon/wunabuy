@@ -110,10 +110,10 @@ export const BuyerOrdersScreen = ({ navigation }: any) => {
     loadOrders();
   };
 
-  const handleSubmitDispute = async (reason: DisputeReason, description: string) => {
+  const handleSubmitDispute = async (reason: DisputeReason, description: string, evidencePhotos: string[] = []) => {
     if (!activeOrderForModal) return;
     try {
-      await OrdersService.fileDispute(activeOrderForModal.id, { reason, description, evidence_photos: [] });
+      await OrdersService.fileDispute(activeOrderForModal.id, { reason, description, evidence_photos: evidencePhotos });
     } catch {
       // Safe fallback
     }

@@ -1,4 +1,5 @@
 import { apiClient } from './apiClient';
+import { AuthService } from './authService';
 
 export interface RefundItemData {
   id: string;
@@ -43,10 +44,25 @@ export const DisputesService = {
    */
   async fileDispute(payload: DisputePayload): Promise<{ success: boolean; dispute_id: string }> {
     try {
+      let uploadedPhotos = payload.evidence_photos || [];
+      if (Array.isArray(uploadedPhotos) && uploadedPhotos.length > 0) {
+        uploadedPhotos = await Promise.all(
+          uploadedPhotos.map(async (p) => {
+            if (p && !p.startsWith('http')) {
+              return await AuthService.uploadImage(p, 'disputes');
+            }
+            return p;
+          })
+        );
+      }
+
       const response = await apiClient.post<{
         success: boolean;
         data: { dispute_id: string; status: string; escrow_status: string };
-      }>(`/orders/${payload.order_id}/dispute`, payload);
+      }>(`/orders/${payload.order_id}/dispute`, {
+        ...payload,
+        evidence_photos: uploadedPhotos,
+      });
 
       return {
         success: response.data?.success ?? true,

@@ -19,6 +19,12 @@ export interface EscrowDisputeItem {
     | 'REFUNDED';
   filed_at: string;
   evidence_photos: string[];
+  items?: Array<{
+    name: string;
+    quantity: number;
+    price: number;
+    image_url?: string | null;
+  }>;
 }
 
 export const disputesApi = {

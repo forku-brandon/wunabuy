@@ -395,10 +395,11 @@ class OrderController extends Controller
         }
 
         $reason = $request->input('reason', 'Goods damaged or not received');
+        $description = $request->input('description', $reason);
         $userId = $user->id;
         $evidence = $request->input('evidence_photos', []);
 
-        $this->escrowService->freezeEscrow($order, $reason, $userId, $evidence);
+        $this->escrowService->freezeEscrow($order, $reason, $userId, $evidence, $description);
 
         return $this->respondSuccess($order->fresh()->load(['items', 'store']));
     }

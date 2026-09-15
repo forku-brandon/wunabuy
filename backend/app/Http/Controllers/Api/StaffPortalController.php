@@ -263,7 +263,8 @@ class StaffPortalController extends Controller
                 DB::raw("CASE WHEN seller_kyc_submissions.status = 'approved' THEN 'APPROVED' WHEN seller_kyc_submissions.status = 'rejected' THEN 'REJECTED' ELSE 'PENDING_REVIEW' END as status"),
                 'seller_kyc_submissions.id_card_front_url as cni_front_url',
                 'seller_kyc_submissions.id_card_back_url as cni_back_url',
-                'seller_kyc_submissions.storefront_photo_url as storefront_or_vehicle_photo'
+                'seller_kyc_submissions.storefront_photo_url as storefront_or_vehicle_photo',
+                'seller_kyc_submissions.business_reg_url'
             )->get();
 
         $transporterSubs = DB::table('transporter_kyc_submissions')
@@ -280,10 +281,28 @@ class StaffPortalController extends Controller
                 DB::raw("CASE WHEN transporter_kyc_submissions.status = 'approved' THEN 'APPROVED' WHEN transporter_kyc_submissions.status = 'rejected' THEN 'REJECTED' ELSE 'PENDING_REVIEW' END as status"),
                 'transporter_kyc_submissions.national_id_url as cni_front_url',
                 'transporter_kyc_submissions.national_id_url as cni_back_url',
-                'transporter_kyc_submissions.driver_license_url as storefront_or_vehicle_photo'
+                'transporter_kyc_submissions.driver_license_url as storefront_or_vehicle_photo',
+                'transporter_kyc_submissions.driver_license_url',
+                'transporter_kyc_submissions.vehicle_insurance_url',
+                'transporter_kyc_submissions.vehicle_plate',
+                'transporter_kyc_submissions.vehicle_type'
             )->get();
 
-        $merged = $sellerSubs->concat($transporterSubs)->sortByDesc('submitted_at')->values();
+        $merged = $sellerSubs->concat($transporterSubs)->sortByDesc('submitted_at')->values()->map(function ($item) {
+            $item->cni_front_url = \App\Traits\HasNormalizedImages::normalizeImageUrl($item->cni_front_url);
+            $item->cni_back_url = \App\Traits\HasNormalizedImages::normalizeImageUrl($item->cni_back_url);
+            $item->storefront_or_vehicle_photo = \App\Traits\HasNormalizedImages::normalizeImageUrl($item->storefront_or_vehicle_photo);
+            if (isset($item->business_reg_url)) {
+                $item->business_reg_url = \App\Traits\HasNormalizedImages::normalizeImageUrl($item->business_reg_url);
+            }
+            if (isset($item->driver_license_url)) {
+                $item->driver_license_url = \App\Traits\HasNormalizedImages::normalizeImageUrl($item->driver_license_url);
+            }
+            if (isset($item->vehicle_insurance_url)) {
+                $item->vehicle_insurance_url = \App\Traits\HasNormalizedImages::normalizeImageUrl($item->vehicle_insurance_url);
+            }
+            return $item;
+        });
 
         return $this->respondSuccess($merged);
     }
@@ -306,7 +325,7 @@ class StaffPortalController extends Controller
      */
     public function getDisputes(): JsonResponse
     {
-        $disputes = Dispute::with(['order.store', 'order.customer', 'order.transporter.user', 'raisedBy'])
+        $disputes = Dispute::with(['order.store', 'order.customer', 'order.transporter.user', 'order.items.product', 'raisedBy'])
             ->latest()
             ->get();
 
@@ -323,6 +342,27 @@ class StaffPortalController extends Controller
                 $photos = is_array($decoded) ? $decoded : [$photos];
             }
 
+            $normalizedPhotos = [];
+            if (is_array($photos)) {
+                foreach ($photos as $p) {
+                    if (!empty($p)) {
+                        $normalizedPhotos[] = \App\Traits\HasNormalizedImages::normalizeImageUrl($p);
+                    }
+                }
+            }
+
+            $orderItems = [];
+            if ($order && $order->items) {
+                foreach ($order->items as $it) {
+                    $orderItems[] = [
+                        'name' => $it->product?->name ?? 'Ordered Product',
+                        'quantity' => $it->quantity ?? 1,
+                        'price' => (float) ($it->price ?? 0),
+                        'image_url' => $it->product?->image_url ?? null,
+                    ];
+                }
+            }
+
             $list[] = [
                 'id' => $d->id,
                 'order_code' => $order?->order_code ?? ('WB-DISP-' . substr($d->id, 0, 6)),
@@ -334,7 +374,8 @@ class StaffPortalController extends Controller
                 'escrow_amount' => (float) ($order?->total ?? $d->refund_amount ?? 0),
                 'status' => strtoupper($d->status ?? 'OPEN'),
                 'filed_at' => $d->created_at?->toIso8601String() ?? now()->toIso8601String(),
-                'evidence_photos' => !empty($photos) ? $photos : [],
+                'evidence_photos' => $normalizedPhotos,
+                'items' => $orderItems,
             ];
         }
 

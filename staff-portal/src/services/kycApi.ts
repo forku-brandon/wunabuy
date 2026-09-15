@@ -13,6 +13,11 @@ export interface KYCQueueItem {
   cni_front_url: string;
   cni_back_url: string;
   storefront_or_vehicle_photo: string;
+  business_reg_url?: string | null;
+  driver_license_url?: string | null;
+  vehicle_insurance_url?: string | null;
+  vehicle_plate?: string | null;
+  vehicle_type?: string | null;
 }
 
 export const kycApi = {

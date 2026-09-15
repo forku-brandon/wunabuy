@@ -5,10 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\HasNormalizedImages;
 
 class Dispute extends Model
 {
-    use HasFactory, HasUuids;
+    use HasFactory, HasUuids, HasNormalizedImages;
 
     protected $fillable = [
         'order_id',
@@ -28,6 +29,19 @@ class Dispute extends Model
         'refund_amount' => 'float',
         'resolved_at' => 'datetime',
     ];
+
+    public function getEvidencePhotosAttribute($value): array
+    {
+        $decoded = is_string($value) ? json_decode($value, true) : (is_array($value) ? $value : []);
+        return self::normalizeImageArray($decoded);
+    }
+
+    public function setEvidencePhotosAttribute($value): void
+    {
+        $array = is_string($value) ? json_decode($value, true) : (is_array($value) ? $value : []);
+        $cleaned = self::cleanImageArrayForStorage($array);
+        $this->attributes['evidence_photos'] = json_encode($cleaned);
+    }
 
     public function order()
     {

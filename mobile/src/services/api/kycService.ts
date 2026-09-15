@@ -1,6 +1,7 @@
 import { api } from './apiClient';
 import { KYCSubmission, KYCReviewResult, Store } from '@wunabuy/types';
 import { TransporterKYCSubmission, TransporterKYCResult } from '@wunabuy/api-client';
+import { AuthService } from './authService';
 
 /**
  * Service to handle Seller Store & Transporter Driver KYC compliance submissions.
@@ -11,7 +12,34 @@ export const KYCService = {
    */
   async submitStoreKYC(payload: KYCSubmission): Promise<Store> {
     try {
-      const response = await api.kyc.submitKYC(payload);
+      // Upload local images to backend /uploads/kyc if needed
+      let frontUrl = payload.id_card_front;
+      let backUrl = payload.id_card_back;
+      let storefrontUrl = payload.storefront_photo;
+      let businessDocUrl = payload.business_reg_or_affidavit;
+
+      if (frontUrl && !frontUrl.startsWith('http')) {
+        frontUrl = await AuthService.uploadImage(frontUrl, 'kyc');
+      }
+      if (backUrl && !backUrl.startsWith('http')) {
+        backUrl = await AuthService.uploadImage(backUrl, 'kyc');
+      }
+      if (storefrontUrl && !storefrontUrl.startsWith('http')) {
+        storefrontUrl = await AuthService.uploadImage(storefrontUrl, 'kyc');
+      }
+      if (businessDocUrl && !businessDocUrl.startsWith('http')) {
+        businessDocUrl = await AuthService.uploadImage(businessDocUrl, 'kyc');
+      }
+
+      const normalizedPayload: KYCSubmission = {
+        ...payload,
+        id_card_front: frontUrl,
+        id_card_back: backUrl,
+        storefront_photo: storefrontUrl,
+        business_reg_or_affidavit: businessDocUrl,
+      };
+
+      const response = await api.kyc.submitKYC(normalizedPayload);
       return response.data;
     } catch {
       return {
@@ -55,7 +83,43 @@ export const KYCService = {
    */
   async submitTransporterKYC(payload: TransporterKYCSubmission): Promise<TransporterKYCResult> {
     try {
-      const response = await api.kyc.submitTransporterKYC(payload);
+      let cniFrontUrl = payload.id_card_front;
+      let cniBackUrl = payload.id_card_back;
+      let licenseUrl = payload.drivers_license_photo;
+      let carteGriseUrl = payload.carte_grise_photo;
+      let insuranceUrl = payload.vehicle_assurance_photo;
+      let exteriorUrl = payload.vehicle_exterior_photo;
+
+      if (cniFrontUrl && !cniFrontUrl.startsWith('http')) {
+        cniFrontUrl = await AuthService.uploadImage(cniFrontUrl, 'kyc');
+      }
+      if (cniBackUrl && !cniBackUrl.startsWith('http')) {
+        cniBackUrl = await AuthService.uploadImage(cniBackUrl, 'kyc');
+      }
+      if (licenseUrl && !licenseUrl.startsWith('http')) {
+        licenseUrl = await AuthService.uploadImage(licenseUrl, 'kyc');
+      }
+      if (carteGriseUrl && !carteGriseUrl.startsWith('http')) {
+        carteGriseUrl = await AuthService.uploadImage(carteGriseUrl, 'kyc');
+      }
+      if (insuranceUrl && !insuranceUrl.startsWith('http')) {
+        insuranceUrl = await AuthService.uploadImage(insuranceUrl, 'kyc');
+      }
+      if (exteriorUrl && !exteriorUrl.startsWith('http')) {
+        exteriorUrl = await AuthService.uploadImage(exteriorUrl, 'kyc');
+      }
+
+      const normalizedPayload: TransporterKYCSubmission = {
+        ...payload,
+        id_card_front: cniFrontUrl,
+        id_card_back: cniBackUrl,
+        drivers_license_photo: licenseUrl,
+        carte_grise_photo: carteGriseUrl,
+        vehicle_assurance_photo: insuranceUrl,
+        vehicle_exterior_photo: exteriorUrl,
+      };
+
+      const response = await api.kyc.submitTransporterKYC(normalizedPayload);
       return response.data;
     } catch {
       return {
