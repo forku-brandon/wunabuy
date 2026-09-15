@@ -61,6 +61,16 @@ class AuthController extends Controller
             );
         }
 
+        // Google Play & CEMAC Legal Compliance Check
+        if ($request->has('terms_accepted') && !$request->boolean('terms_accepted')) {
+            return $this->respondError(
+                'TERMS_NOT_ACCEPTED',
+                'You must agree to the Terms of Service and Privacy Policy to create an account.',
+                ['terms_accepted' => ['Terms of Service and Privacy Policy acceptance is required.']],
+                422
+            );
+        }
+
         // Least access privilege: all new accounts start strictly with Buyer access.
         // Access to Seller or Transporter workspaces requires document KYC verification.
         $user = User::create([

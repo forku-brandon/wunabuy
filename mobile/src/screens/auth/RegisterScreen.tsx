@@ -1,25 +1,37 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { ScreenContainer, Text, Input, Button } from '../../components/ui';
 import { SecureTokenService } from '../../services/SecureTokenService';
 import { useAuthStore } from '../../stores/auth.store';
 import { UserRole, UserStatus, Address } from '@wunabuy/types';
-import { spacing, colors } from '@wunabuy/design-tokens';
+import { spacing, colors, shadows } from '@wunabuy/design-tokens';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useThemeStore } from '../../stores/theme.store';
+import { LegalTermsModal, LegalDocType } from '../../components/legal/LegalTermsModal';
 
 import { api } from '../../services/api';
 
 export const RegisterScreen = ({ navigation, route }: any) => {
   const phone = route.params?.phone ?? '+237670000000';
   const { setAuth } = useAuthStore();
+  const { isDark } = useThemeStore();
   const insets = useSafeAreaInsets();
 
   const [fullName, setFullName] = useState('');
   const [addressText, setAddressText] = useState('');
   const [pin, setPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [legalModalVisible, setLegalModalVisible] = useState(false);
+  const [legalModalTab, setLegalModalTab] = useState<LegalDocType>('terms');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const openLegalModal = (tab: LegalDocType) => {
+    setLegalModalTab(tab);
+    setLegalModalVisible(true);
+  };
 
   const handleSubmit = async () => {
     if (!fullName.trim() || fullName.trim().length < 2) {
@@ -37,6 +49,11 @@ export const RegisterScreen = ({ navigation, route }: any) => {
       return;
     }
 
+    if (!agreedToTerms) {
+      setError('You must read and agree to the Terms of Service and Privacy Policy to register.');
+      return;
+    }
+
     setLoading(true);
     setError('');
 
@@ -47,6 +64,7 @@ export const RegisterScreen = ({ navigation, route }: any) => {
         role: 'buyer',
         pin: pin.trim(),
         address_text: addressText.trim() || undefined,
+        terms_accepted: true,
       });
 
       if (!res?.success || !res?.data) {
@@ -85,7 +103,7 @@ export const RegisterScreen = ({ navigation, route }: any) => {
             setError('');
             setFullName(text);
           }}
-          error={error}
+          error={error && !fullName.trim() ? error : undefined}
           containerStyle={styles.inputContainer}
           autoFocus
         />
@@ -126,6 +144,65 @@ export const RegisterScreen = ({ navigation, route }: any) => {
           containerStyle={styles.inputContainer}
         />
 
+        {/* Legal Agreement Checkbox (Google Play Store Compliance) */}
+        <View style={styles.termsWrapper}>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => {
+              setError('');
+              setAgreedToTerms(!agreedToTerms);
+            }}
+            style={styles.checkboxRow}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: agreedToTerms }}
+            accessibilityLabel="Agree to Terms of Service and Privacy Policy"
+          >
+            <View
+              style={[
+                styles.checkbox,
+                {
+                  borderColor: agreedToTerms
+                    ? colors.primary[500]
+                    : isDark
+                    ? colors.neutral[600]
+                    : colors.neutral[300],
+                  backgroundColor: agreedToTerms
+                    ? colors.primary[500]
+                    : isDark
+                    ? colors.neutral[800]
+                    : '#FFFFFF',
+                },
+              ]}
+            >
+              {agreedToTerms && <Ionicons name="checkmark" size={14} color="#FFFFFF" />}
+            </View>
+
+            <View style={styles.termsTextContainer}>
+              <Text variant="caption" style={[styles.termsText, { color: isDark ? colors.neutral[300] : colors.neutral[600] }]}>
+                I have read and agree to Wunabuy's{' '}
+                <Text
+                  variant="caption"
+                  bold
+                  style={[styles.termsLink, { color: colors.primary[500] }]}
+                  onPress={() => openLegalModal('terms')}
+                >
+                  Terms of Service
+                </Text>
+                {' '}and{' '}
+                <Text
+                  variant="caption"
+                  bold
+                  style={[styles.termsLink, { color: colors.primary[500] }]}
+                  onPress={() => openLegalModal('privacy')}
+                >
+                  Privacy Policy
+                </Text>
+                .
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+
         {error ? (
           <Text variant="caption" color={colors.semantic.error[500]} align="center" style={styles.errorText}>
             {error}
@@ -136,6 +213,7 @@ export const RegisterScreen = ({ navigation, route }: any) => {
           title="Create Account & Log In →"
           variant="primary"
           loading={loading}
+          disabled={!agreedToTerms && !loading}
           onPress={handleSubmit}
           style={styles.button}
         />
@@ -150,6 +228,18 @@ export const RegisterScreen = ({ navigation, route }: any) => {
           </Text>
         </TouchableOpacity>
       </View>
+
+      {/* Interactive Google Play Compliant Legal Document Viewer */}
+      <LegalTermsModal
+        visible={legalModalVisible}
+        initialTab={legalModalTab}
+        onClose={() => setLegalModalVisible(false)}
+        showAcceptButton={!agreedToTerms}
+        onAccept={() => {
+          setAgreedToTerms(true);
+          setError('');
+        }}
+      />
     </ScreenContainer>
   );
 };
@@ -176,7 +266,36 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
   },
   inputContainer: {
+    marginBottom: spacing.md,
+  },
+  termsWrapper: {
+    marginTop: spacing.xs,
     marginBottom: spacing.lg,
+    paddingHorizontal: spacing.xs,
+  },
+  checkboxRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 5,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 2,
+    marginRight: spacing.sm,
+  },
+  termsTextContainer: {
+    flex: 1,
+  },
+  termsText: {
+    lineHeight: 19,
+    fontSize: 12.5,
+  },
+  termsLink: {
+    textDecorationLine: 'underline',
   },
   errorText: {
     marginBottom: spacing.md,

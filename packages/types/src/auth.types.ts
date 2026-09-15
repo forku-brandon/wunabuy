@@ -144,6 +144,8 @@ export interface RegisterPayload {
   city?: string;
   /** Optional password */
   password?: string;
+  /** Whether user accepted Terms of Service and Privacy Policy */
+  terms_accepted?: boolean;
 }
 
 /**

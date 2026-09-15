@@ -6,6 +6,7 @@ import { ScreenContainer, Text, Card, Button, Toast } from '../../components/ui'
 import { RoleSwitcherCard } from '../../components/profile/RoleSwitcherCard';
 import { LanguageSelectorModal } from './LanguageSelectorModal';
 import { EditProfileModal } from './EditProfileModal';
+import { LegalTermsModal, LegalDocType } from '../../components/legal/LegalTermsModal';
 import { useAuthStore } from '../../stores/auth.store';
 import { useThemeStore } from '../../stores/theme.store';
 import { UserRole } from '@wunabuy/types';
@@ -20,8 +21,15 @@ export const SettingsScreen = ({ navigation }: any) => {
 
   const [isLangModalOpen, setIsLangModalOpen] = useState(false);
   const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState(false);
+  const [isLegalModalOpen, setIsLegalModalOpen] = useState(false);
+  const [legalModalTab, setLegalModalTab] = useState<LegalDocType>('terms');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+
+  const openLegalModal = (tab: LegalDocType) => {
+    setLegalModalTab(tab);
+    setIsLegalModalOpen(true);
+  };
 
   const handleRefresh = useCallback(() => {
     setRefreshing(true);
@@ -237,6 +245,38 @@ export const SettingsScreen = ({ navigation }: any) => {
           </TouchableOpacity>
         </Card>
 
+        {/* Section 4: Legal, Terms & Policies (Google Play Store Compliance) */}
+        <Text variant="caption" bold color={theme.textSecondary} style={styles.sectionHeader}>
+          LEGAL &amp; POLICIES
+        </Text>
+        <Card style={styles.groupedCard}>
+          <TouchableOpacity
+            activeOpacity={0.8}
+            style={styles.menuRow}
+            onPress={() => openLegalModal('terms')}
+          >
+            <View style={styles.menuLeft}>
+              <Ionicons name="document-text-outline" size={20} color={colors.primary[500]} style={styles.menuIcon} />
+              <Text variant="bodyLarge">Terms of Service</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={theme.placeholder} />
+          </TouchableOpacity>
+
+          <View style={[styles.divider, { backgroundColor: theme.border }]} />
+
+          <TouchableOpacity
+            activeOpacity={0.8}
+            style={styles.menuRow}
+            onPress={() => openLegalModal('privacy')}
+          >
+            <View style={styles.menuLeft}>
+              <Ionicons name="lock-closed-outline" size={20} color={colors.primary[500]} style={styles.menuIcon} />
+              <Text variant="bodyLarge">Privacy Policy</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={theme.placeholder} />
+          </TouchableOpacity>
+        </Card>
+
         {/* Dynamic Role Switcher (Transporter & Seller hidden until approved by Staff API) */}
         <RoleSwitcherCard navigation={navigation} />
 
@@ -258,6 +298,12 @@ export const SettingsScreen = ({ navigation }: any) => {
         visible={isEditProfileModalOpen}
         onClose={() => setIsEditProfileModalOpen(false)}
         onSuccess={(msg) => setToastMessage(msg)}
+      />
+
+      <LegalTermsModal
+        visible={isLegalModalOpen}
+        initialTab={legalModalTab}
+        onClose={() => setIsLegalModalOpen(false)}
       />
 
       {toastMessage && <Toast message={toastMessage} type="info" />}
