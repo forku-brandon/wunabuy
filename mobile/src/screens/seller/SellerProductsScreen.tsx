@@ -47,16 +47,25 @@ export const SellerProductsScreen = ({ navigation }: any) => {
     return true;
   });
 
-  const handleToggleActive = (product: Product) => {
+  const handleToggleActive = async (product: Product) => {
     toggleProductActive(product.id);
-    SellerService.toggleProductActive(product.id, !product.is_active);
-    setToastMessage(`Product "${product.name}" is now ${!product.is_active ? 'Active' : 'Paused'}.`);
+    const ok = await SellerService.toggleProductActive(product.id, !product.is_active);
+    if (ok) {
+      setToastMessage(`Product "${product.name}" is now ${!product.is_active ? 'Active' : 'Paused'}.`);
+    } else {
+      toggleProductActive(product.id);
+      setToastMessage(`Failed to update status for "${product.name}".`);
+    }
   };
 
-  const handleStockChange = (product: Product, delta: number) => {
+  const handleStockChange = async (product: Product, delta: number) => {
     updateStock(product.id, delta);
     const newQty = Math.max(0, product.quantity + delta);
-    SellerService.updateStock(product.id, newQty);
+    const ok = await SellerService.updateStock(product.id, newQty);
+    if (!ok) {
+      updateStock(product.id, -delta);
+      setToastMessage('Failed to update stock quantity on server.');
+    }
   };
 
   const handleDirectStockSet = (targetQty: number) => {
@@ -67,9 +76,15 @@ export const SellerProductsScreen = ({ navigation }: any) => {
     }
   };
 
-  const handleDeleteProduct = (productId: string) => {
+  const handleDeleteProduct = async (productId: string) => {
     deleteProduct(productId);
-    setToastMessage('Product removed from catalog.');
+    const res = await SellerService.deleteProduct(productId);
+    if (res.success) {
+      setToastMessage('Product removed from catalog.');
+    } else {
+      setToastMessage(res.message || 'Failed to remove product from server.');
+      await loadProducts();
+    }
   };
 
   return (

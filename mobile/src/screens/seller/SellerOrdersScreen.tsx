@@ -133,10 +133,15 @@ export const SellerOrdersScreen = ({ navigation }: any) => {
     return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
   };
 
-  const handleAcceptOrder = (order: SellerOrder) => {
+  const handleAcceptOrder = async (order: SellerOrder) => {
+    const res = await SellerService.acceptOrder(order.id);
+    if (!res.success) {
+      Alert.alert('Error Accepting Order', res.message || 'Unable to accept this order on the server.');
+      return;
+    }
     acceptOrder(order.id);
-    SellerService.acceptOrder(order.id);
     setToastMessage(`Order #${order.order_code} accepted! Moved to Preparing.`);
+    await loadOrders();
   };
 
   const handleOpenDeclineModal = (order: SellerOrder) => {
@@ -144,12 +149,17 @@ export const SellerOrdersScreen = ({ navigation }: any) => {
     setIsDeclineModalVisible(true);
   };
 
-  const handleConfirmDecline = () => {
+  const handleConfirmDecline = async () => {
     if (!selectedOrderForDecline) return;
+    const res = await SellerService.declineOrder(selectedOrderForDecline.id, declineReason);
+    if (!res.success) {
+      Alert.alert('Error Declining Order', res.message || 'Unable to decline this order on the server.');
+      return;
+    }
     declineOrder(selectedOrderForDecline.id, declineReason);
-    SellerService.declineOrder(selectedOrderForDecline.id, declineReason);
     setIsDeclineModalVisible(false);
     setToastMessage(`Order #${selectedOrderForDecline.order_code} declined.`);
+    await loadOrders();
   };
 
   const handleOpenReadyModal = (order: SellerOrder) => {
@@ -157,15 +167,20 @@ export const SellerOrdersScreen = ({ navigation }: any) => {
     setIsReadyModalVisible(true);
   };
 
-  const handleConfirmReady = () => {
+  const handleConfirmReady = async () => {
     if (!selectedOrderForReady) return;
-    markOrderReady(selectedOrderForReady.id, deliveryOption, inHouseRiderPhone);
-    SellerService.markReadyForPickup(selectedOrderForReady.id, {
+    const res = await SellerService.markReadyForPickup(selectedOrderForReady.id, {
       delivery_method: deliveryOption,
       driver_phone: inHouseRiderPhone,
     });
+    if (!res.success) {
+      Alert.alert('Error Updating Order', res.message || 'Unable to mark order ready on the server.');
+      return;
+    }
+    markOrderReady(selectedOrderForReady.id, deliveryOption, inHouseRiderPhone);
     setIsReadyModalVisible(false);
     setToastMessage(`Order #${selectedOrderForReady.order_code} ready for pickup!`);
+    await loadOrders();
   };
 
   const handleOpenHandoverModal = (order: SellerOrder) => {

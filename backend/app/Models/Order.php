@@ -26,6 +26,7 @@ class Order extends Model
         'payment_ref',
         'pickup_pin',
         'signature_data',
+        'rejected_transporters',
         'expires_at',
         'delivered_at',
     ];
@@ -36,6 +37,7 @@ class Order extends Model
         'commission' => 'float',
         'total' => 'float',
         'delivery_address' => 'array',
+        'rejected_transporters' => 'array',
         'expires_at' => 'datetime',
         'delivered_at' => 'datetime',
     ];

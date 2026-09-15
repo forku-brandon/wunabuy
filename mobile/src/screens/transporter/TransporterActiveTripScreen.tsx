@@ -60,7 +60,9 @@ export const TransporterActiveTripScreen = ({ route, navigation }: any) => {
   useEffect(() => {
     async function fetchTrip() {
       const data = await TransporterService.getActiveTrip(jobId);
-      setTripData(data);
+      if (data) {
+        setTripData(data);
+      }
     }
     fetchTrip();
   }, [jobId]);
@@ -473,21 +475,23 @@ export const TransporterActiveTripScreen = ({ route, navigation }: any) => {
                 activeOpacity={0.8}
                 onPress={async () => {
                   const updated = await TransporterService.getActiveTrip(jobId);
-                  setTripData(updated);
-                  if (updated.current_stage >= 3) {
+                  if (updated) {
+                    setTripData(updated);
+                    if (updated.current_stage >= 3) {
+                      setCurrentStage(3);
+                      setToastMessage('✅ Merchant confirmed handover! En route to buyer 🏠');
+                      return;
+                    }
+                  }
+                  const testRes = await TransporterService.updateTripStage(jobId, 3);
+                  if (testRes.success) {
                     setCurrentStage(3);
                     setToastMessage('✅ Merchant confirmed handover! En route to buyer 🏠');
                   } else {
-                    const testRes = await TransporterService.updateTripStage(jobId, 3);
-                    if (testRes.success) {
-                      setCurrentStage(3);
-                      setToastMessage('✅ Merchant confirmed handover! En route to buyer 🏠');
-                    } else {
-                      Alert.alert(
-                        'Awaiting Merchant Confirmation',
-                        `Merchant has not confirmed PIN #${verificationCode} yet. Please ask the merchant to enter the code in their Seller app.`
-                      );
-                    }
+                    Alert.alert(
+                      'Awaiting Merchant Confirmation',
+                      `Merchant has not confirmed PIN #${verificationCode} yet. Please ask the merchant to enter the code in their Seller app.`
+                    );
                   }
                 }}
                 style={{

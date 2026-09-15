@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { View, FlatList, StyleSheet, TouchableOpacity, RefreshControl, ScrollView, Modal, Linking } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
@@ -27,7 +28,17 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
   const loadJobs = useCallback(async () => {
     try {
       const data = await TransporterService.getAvailableJobs(activeFilter);
-      setJobs(data || []);
+      let localRejected: string[] = [];
+      try {
+        const stored = await AsyncStorage.getItem('@wunabuy_rejected_transporter_jobs');
+        if (stored) {
+          localRejected = JSON.parse(stored);
+        }
+      } catch {
+        // Storage read fallback
+      }
+      const validJobs = (data || []).filter((j) => !localRejected.includes(j.id));
+      setJobs(validJobs);
     } catch {
       setJobs([]);
     }
@@ -61,7 +72,21 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
   const handleRejectJob = async (job: DeliveryJob) => {
     setSelectedMapJob(null);
     setJobs((prev) => prev.filter((j) => j.id !== job.id));
-    setToastMessage(`Offer #${job.order_code} rejected. Surface next available job offer.`);
+    setToastMessage(`Offer #${job.order_code} rejected. Surfacing next available job.`);
+
+    // 1. Persist to local storage cache so it never flickers on quick re-renders
+    try {
+      const stored = await AsyncStorage.getItem('@wunabuy_rejected_transporter_jobs');
+      const rejectedList = stored ? JSON.parse(stored) : [];
+      if (!rejectedList.includes(job.id)) {
+        rejectedList.push(job.id);
+        await AsyncStorage.setItem('@wunabuy_rejected_transporter_jobs', JSON.stringify(rejectedList));
+      }
+    } catch {
+      // Storage fallback
+    }
+
+    // 2. Persist to PostgreSQL database
     await TransporterService.rejectJob(job.id);
   };
 

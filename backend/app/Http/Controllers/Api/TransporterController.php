@@ -29,11 +29,25 @@ class TransporterController extends Controller
      */
     public function getAvailableJobs(Request $request): JsonResponse
     {
+        $user = $this->resolveUser($request);
+        $transporter = $user?->transporter ?? ($user ? Transporter::where('user_id', $user->id)->first() : null);
+
         $orders = Order::with(['store', 'customer', 'items'])
             ->whereIn('status', ['ready_for_pickup', 'pending', 'preparing'])
             ->whereNull('transporter_id')
             ->latest()
             ->get();
+
+        // If transporter is resolved, filter out orders this transporter has rejected
+        if ($transporter) {
+            $orders = $orders->filter(function ($order) use ($transporter) {
+                $rejected = $order->rejected_transporters ?? [];
+                if (!is_array($rejected)) {
+                    $rejected = json_decode((string) $rejected, true) ?? [];
+                }
+                return !in_array($transporter->id, $rejected);
+            });
+        }
 
         $jobs = [];
         foreach ($orders as $order) {
@@ -140,11 +154,36 @@ class TransporterController extends Controller
     }
 
     /**
-     * Reject delivery job.
+     * Reject delivery job and persist rejection in PostgreSQL so it never reappears for this rider.
      */
-    public function rejectJob(string $id): JsonResponse
+    public function rejectJob(Request $request, string $id): JsonResponse
     {
-        return $this->respondSuccess(['rejected' => true, 'job_id' => $id]);
+        $user = $this->resolveUser($request);
+        $transporter = $user?->transporter ?? ($user ? Transporter::where('user_id', $user->id)->first() : null);
+
+        $cleanId = str_starts_with($id, 'job_') ? substr($id, 4) : $id;
+        $order = (Str::isUuid($cleanId) ? Order::find($cleanId) : null)
+            ?? Order::where('order_code', $cleanId)->first()
+            ?? Order::where('order_code', $id)->first();
+
+        if ($order && $transporter) {
+            $rejected = $order->rejected_transporters ?? [];
+            if (!is_array($rejected)) {
+                $rejected = json_decode((string) $rejected, true) ?? [];
+            }
+            if (!in_array($transporter->id, $rejected)) {
+                $rejected[] = $transporter->id;
+                $order->rejected_transporters = $rejected;
+                $order->save();
+            }
+        }
+
+        return $this->respondSuccess([
+            'rejected' => true,
+            'job_id' => $id,
+            'order_id' => $order?->id,
+            'transporter_id' => $transporter?->id,
+        ]);
     }
 
     /**

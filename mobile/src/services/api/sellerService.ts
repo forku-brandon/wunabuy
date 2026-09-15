@@ -72,26 +72,28 @@ export const SellerService = {
   /**
    * Accept an order within the 2-hour timeout window
    */
-  async acceptOrder(orderId: string): Promise<boolean> {
+  async acceptOrder(orderId: string): Promise<{ success: boolean; message?: string }> {
     try {
-      const response = await apiClient.post<{ success: boolean }>(`/seller/orders/${orderId}/accept`);
-      return response.data?.success ?? true;
-    } catch {
-      return true;
+      const response = await apiClient.post<{ success: boolean; message?: string }>(`/seller/orders/${orderId}/accept`);
+      return { success: response.data?.success ?? true, message: response.data?.message };
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Failed to accept order';
+      return { success: false, message: msg };
     }
   },
 
   /**
    * Decline an order with reason
    */
-  async declineOrder(orderId: string, reason: string): Promise<boolean> {
+  async declineOrder(orderId: string, reason: string): Promise<{ success: boolean; message?: string }> {
     try {
-      const response = await apiClient.post<{ success: boolean }>(`/seller/orders/${orderId}/decline`, {
+      const response = await apiClient.post<{ success: boolean; message?: string }>(`/seller/orders/${orderId}/decline`, {
         reason,
       });
-      return response.data?.success ?? true;
-    } catch {
-      return true;
+      return { success: response.data?.success ?? true, message: response.data?.message };
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Failed to decline order';
+      return { success: false, message: msg };
     }
   },
 
@@ -101,15 +103,16 @@ export const SellerService = {
   async markReadyForPickup(
     orderId: string,
     payload: { delivery_method: 'wunabuy_transporter' | 'in_house_rider'; driver_phone?: string }
-  ): Promise<boolean> {
+  ): Promise<{ success: boolean; message?: string }> {
     try {
-      const response = await apiClient.post<{ success: boolean }>(
+      const response = await apiClient.post<{ success: boolean; message?: string }>(
         `/seller/orders/${orderId}/ready`,
         payload
       );
-      return response.data?.success ?? true;
-    } catch {
-      return true;
+      return { success: response.data?.success ?? true, message: response.data?.message };
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Failed to mark order ready';
+      return { success: false, message: msg };
     }
   },
 
@@ -135,14 +138,15 @@ export const SellerService = {
   /**
    * Complete order and release escrow
    */
-  async completeOrder(orderId: string): Promise<boolean> {
+  async completeOrder(orderId: string): Promise<{ success: boolean; message?: string }> {
     try {
-      const response = await apiClient.post<{ success: boolean }>(
+      const response = await apiClient.post<{ success: boolean; message?: string }>(
         `/seller/orders/${orderId}/complete`
       );
-      return response.data?.success ?? true;
-    } catch {
-      return true;
+      return { success: response.data?.success ?? true, message: response.data?.message };
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Failed to complete order';
+      return { success: false, message: msg };
     }
   },
 
@@ -171,7 +175,7 @@ export const SellerService = {
       });
       return response.data?.success ?? true;
     } catch {
-      return true;
+      return false;
     }
   },
 
@@ -185,7 +189,20 @@ export const SellerService = {
       });
       return response.data?.success ?? true;
     } catch {
-      return true;
+      return false;
+    }
+  },
+
+  /**
+   * Delete product from store catalog
+   */
+  async deleteProduct(productId: string): Promise<{ success: boolean; message?: string }> {
+    try {
+      const response = await apiClient.delete<{ success: boolean; message?: string }>(`/seller/products/${productId}`);
+      return { success: response.data?.success ?? true, message: response.data?.message };
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Failed to delete product';
+      return { success: false, message: msg };
     }
   },
 

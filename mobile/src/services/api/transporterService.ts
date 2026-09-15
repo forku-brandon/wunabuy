@@ -94,14 +94,15 @@ export const TransporterService = {
   },
 
   /**
-   * Reject/Decline a dispatch offer
+   * Reject/Decline a dispatch offer and persist in database
    */
   async rejectJob(jobId: string): Promise<boolean> {
     try {
       const response = await apiClient.post<{ success: boolean }>(`/transporter/jobs/${jobId}/reject`);
       return response.data?.success ?? true;
-    } catch {
-      return true; // Optimistic fallback
+    } catch (err) {
+      console.warn('Transporter rejectJob failed:', err);
+      return false;
     }
   },
 
@@ -120,9 +121,9 @@ export const TransporterService = {
   },
 
   /**
-   * Get active trip details
+   * Get active trip details directly from PostgreSQL database
    */
-  async getActiveTrip(jobId?: string): Promise<ActiveTripPayload> {
+  async getActiveTrip(jobId?: string): Promise<ActiveTripPayload | null> {
     try {
       const response = await apiClient.get<{ success: boolean; data: ActiveTripPayload }>(
         '/transporter/active-trip',
@@ -131,47 +132,9 @@ export const TransporterService = {
       if (response.data?.success && response.data.data) {
         return response.data.data;
       }
-      return {
-        job_id: jobId || 'job_1',
-        order_code: 'WB-2026-9842',
-        current_stage: 1,
-        verification_code: '7842',
-        delivery_fee: 1500,
-        items_summary: 'Samsung Galaxy A54 5G (128GB - Factory Sealed)',
-        package_specs: 'Fragile Electronics • Small Box (< 2 kg)',
-        store_name: 'Douala Tech Hub (Akwa Branch)',
-        store_address: 'Rue Joss, Quartier Akwa, Douala, Cameroon',
-        store_landmark_directions: 'Opposite Place du Gouvernement, Next to Akwa Mall (1st Floor, Suite 104)',
-        store_phone: '+237 670 123 456 / +237 699 876 543',
-        store_operating_hours: 'Mon - Sat: 8:00 AM - 6:30 PM',
-        store_handover_instructions: '🔑 Handover Code Verification: Present rider ID & ask merchant for the 5-digit pickup PIN #7842 upon parcel collection. Package ready at Counter #2.',
-        buyer_name: 'Marie Claire Ngono',
-        buyer_address: 'Boulevard de la Liberté, Quartier Akwa, Douala, Cameroon',
-        buyer_landmark_directions: 'Near BICEC Bank Main Gate, White 2-Story Building with Blue Gate (2nd Floor)',
-        buyer_phone: '+237 671 234 567',
-        buyer_delivery_instructions: 'Ring doorbell at front gate or call buyer on arrival. Buyer will inspect parcel & sign proof of delivery on phone.',
-      };
+      return null;
     } catch {
-      return {
-        job_id: jobId || 'job_1',
-        order_code: 'WB-2026-9842',
-        current_stage: 1,
-        verification_code: '7842',
-        delivery_fee: 1500,
-        items_summary: 'Samsung Galaxy A54 5G (128GB - Factory Sealed)',
-        package_specs: 'Fragile Electronics • Small Box (< 2 kg)',
-        store_name: 'Douala Tech Hub (Akwa Branch)',
-        store_address: 'Rue Joss, Quartier Akwa, Douala, Cameroon',
-        store_landmark_directions: 'Opposite Place du Gouvernement, Next to Akwa Mall (1st Floor, Suite 104)',
-        store_phone: '+237 670 123 456 / +237 699 876 543',
-        store_operating_hours: 'Mon - Sat: 8:00 AM - 6:30 PM',
-        store_handover_instructions: '🔑 Handover Code Verification: Present rider ID & ask merchant for the 5-digit pickup PIN #7842 upon parcel collection. Package ready at Counter #2.',
-        buyer_name: 'Marie Claire Ngono',
-        buyer_address: 'Boulevard de la Liberté, Quartier Akwa, Douala, Cameroon',
-        buyer_landmark_directions: 'Near BICEC Bank Main Gate, White 2-Story Building with Blue Gate (2nd Floor)',
-        buyer_phone: '+237 671 234 567',
-        buyer_delivery_instructions: 'Ring doorbell at front gate or call buyer on arrival. Buyer will inspect parcel & sign proof of delivery on phone.',
-      };
+      return null;
     }
   },
 

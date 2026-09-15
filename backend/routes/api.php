@@ -95,6 +95,7 @@ Route::prefix('v1')->group(function () {
     Route::get('/seller/products', [SellerController::class, 'products']);
     Route::patch('/seller/products/{id}/status', [SellerController::class, 'toggleProductStatus']);
     Route::patch('/seller/products/{id}/stock', [SellerController::class, 'updateStock']);
+    Route::delete('/seller/products/{id}', [SellerController::class, 'deleteProduct']);
     Route::post('/seller/wallet/payout', [SellerController::class, 'requestPayout']);
     Route::get('/seller/analytics', [SellerController::class, 'analytics']);
     Route::post('/seller/store/profile', [SellerController::class, 'updateProfile']);
