@@ -29,6 +29,9 @@ EXPO_PUBLIC_REVERB_SCHEME=http
 ```
 
 ### 2. Live Backend Integration & Self-Healing Architecture
+- **Unified Media Normalization & Image Resilience (`src/utils/imageUtils.ts`):** Centralized image resolution pipeline (`resolveProductImage`, `resolveStoreLogo`, `resolveAvatarUrl`) that seamlessly sanitizes media URLs. If an image path is relative (`/uploads/...`, `/storage/...`) or contains `localhost:8000` / `127.0.0.1:8000`, it dynamically rewrites it to use the reachable mobile API host (`API_BASE_URL`). Prevents broken image icons across physical devices over LAN Wi-Fi.
+- **Universal Avatar & Store Logo Upload:** Full photo picker integration in `EditProfileModal.tsx` (Buyer), `EditStoreProfileScreen.tsx` (Seller Store Logo), and `TransporterProfileScreen.tsx` (Driver). Handles native file URIs (`imageUri.replace('file://', '')`), automatic MIME-type detection, and multi-part upload to `POST /api/v1/user/avatar` and `POST /api/v1/upload/image`.
+- **Dynamic Marketing Adverts & Platform Partners:** `HomeScreen.tsx` hydrates `HeroCarousel`, promotional discount cards, and `PartnersCarousel` directly from `GET /api/v1/adverts` in real time, synchronizing seamlessly with campaigns published from the Staff Operations Portal.
 - **Auth Flow & Session Self-Healing:** Dedicated **6-Digit PIN Authentication** (`PinLoginScreen.tsx` & `RegisterScreen.tsx`) communicating directly with `POST /api/v1/auth/login-pin` & `POST /api/v1/auth/register`. Zero SMS carrier dependency for reliable, instant login. Sanctum Bearer tokens are persisted securely in `SecureTokenService`, and dynamic permissions & eager-loaded user attributes (wallet, address, role profile) are hydrated in `useAuthStore`.
 - **Token Auto-Refresh & Dev Session Minting:** `apiClient.ts` intercepts HTTP 401 unauthenticated errors and automatically issues a refresh via `POST /api/v1/auth/refresh`. In local development, it mints a fresh developer testing token (`POST /api/v1/auth/dev-session`), preventing repetitive 401 console loops without kicking the developer to the login screen.
 - **Seller Dashboard Live Hydration:** `SellerDashboardScreen.tsx` loads `SellerService.getStoreProducts()` and `SellerService.getFulfillmentOrders()` in parallel on startup, ensuring the merchant's 25 products and live orders immediately render without requiring navigation to sub-tabs.
@@ -36,7 +39,7 @@ EXPO_PUBLIC_REVERB_SCHEME=http
 - **Android 15 Edge-to-Edge UI Compliance:** Fully conforms to modern Android edge-to-edge transparent navigation window specifications without deprecated background color calls.
 - **Checkout & Escrow:** `CheckoutPaymentScreen.tsx` submits orders to `POST /api/v1/orders` and initiates MoMo USSD payment push (`POST /api/v1/checkout/pay`).
 - **Orders & Tracking:** `BuyerOrdersScreen.tsx` & `OrderTrackingScreen.tsx` execute live delivery confirmations (`confirmReceipt` -> escrow release with 3.5% commission split) and dispute freezes (`dispute`).
-- **Wallet & Ledger:** `WalletScreen.tsx` fetches live PostgreSQL balances and transactions (`GET /api/v1/wallet`, `GET /api/v1/wallet/transactions`) and processes MTN MoMo/Orange Money top-ups (`POST /api/v1/wallet/fund`).
+- **Wallet & Ledger:** `WalletScreen.tsx` fetches live PostgreSQL balances and transactions (`GET /api/v1/wallet`, `GET /api/v1/wallet/transactions`) and processes MTN MoMo/Orange Money top-ups (`POST /api/v1/wallet/fund`). Enforces a 100 FCFA registration reward with non-withdrawable security protection.
 
 ### 3. Running & Testing the Mobile App
 

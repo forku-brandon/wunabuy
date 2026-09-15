@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   RefreshControl,
   Image,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -304,6 +305,15 @@ export const HomeScreen = ({ navigation }: any) => {
     </>
   );
 
+  const renderProductItem = useCallback(
+    ({ item }: { item: Product }) => (
+      <View style={styles.cardWrapper}>
+        <ProductCard product={item} onPress={handleSelectProduct} />
+      </View>
+    ),
+    [handleSelectProduct]
+  );
+
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <FlatList
@@ -314,6 +324,10 @@ export const HomeScreen = ({ navigation }: any) => {
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={ListHeader}
+        initialNumToRender={6}
+        maxToRenderPerBatch={6}
+        windowSize={5}
+        removeClippedSubviews={Platform.OS === 'android'}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -328,11 +342,7 @@ export const HomeScreen = ({ navigation }: any) => {
             description="Try adjusting your category filter or check back later."
           />
         }
-        renderItem={({ item }) => (
-          <View style={styles.cardWrapper}>
-            <ProductCard product={item} onPress={handleSelectProduct} />
-          </View>
-        )}
+        renderItem={renderProductItem}
       />
 
       {/* Slide-out Sidebar Drawer Overlay */}

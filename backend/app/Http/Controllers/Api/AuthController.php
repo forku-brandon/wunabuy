@@ -555,9 +555,12 @@ class AuthController extends Controller
             return $this->respondError('VALIDATION_ERROR', 'No valid image file or data provided', null, 422);
         }
 
+        $relativeUrl = isset($fileName) ? ('/uploads/' . $safeFolder . '/' . $fileName) : null;
+
         return $this->respondSuccess([
             'url' => $savedUrl,
             'image_url' => $savedUrl,
+            'relative_url' => $relativeUrl,
         ], ['message' => 'Image uploaded successfully']);
     }
 

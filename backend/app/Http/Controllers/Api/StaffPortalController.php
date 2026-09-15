@@ -975,35 +975,58 @@ class StaffPortalController extends Controller
 
         $openDisputesCount = Dispute::whereIn('status', ['OPEN', 'pending', 'pending_review', 'under_review'])->count();
 
-        // 7-day GMV and Escrow daily progression
+        // 7-day GMV and Escrow daily progression optimized via single grouped query
         $chartData = [];
         $daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
         $now = now();
         $startOfWeek = $now->copy()->startOfWeek();
+        $startOfWeekStr = $startOfWeek->toDateString();
+        $endOfWeekStr = $startOfWeek->copy()->addDays(6)->toDateString();
+
+        $dailyStats = DB::table('orders')
+            ->whereDate('created_at', '>=', $startOfWeekStr)
+            ->whereDate('created_at', '<=', $endOfWeekStr)
+            ->selectRaw("
+                DATE(created_at) as order_date,
+                COALESCE(SUM(total), 0) as day_gmv,
+                COALESCE(SUM(total) FILTER (WHERE status IN ('paid_escrow', 'confirmed', 'ready_for_pickup', 'in_transit', 'picked_up', 'en_route')), 0) as day_escrow
+            ")
+            ->groupBy(DB::raw('DATE(created_at)'))
+            ->get()
+            ->keyBy(function ($row) {
+                return (string) $row->order_date;
+            });
 
         for ($i = 0; $i < 7; $i++) {
             $dayDate = $startOfWeek->copy()->addDays($i);
             $dayStr = $dayDate->toDateString();
             $dayLabel = $daysOfWeek[$i];
 
-            $dayGMV = (float) Order::whereDate('created_at', $dayStr)->sum('total');
-            $dayEscrow = (float) Order::whereDate('created_at', $dayStr)
-                ->whereIn('status', ['paid_escrow', 'confirmed', 'ready_for_pickup', 'in_transit', 'picked_up', 'en_route'])
-                ->sum('total');
-
+            $stat = $dailyStats->get($dayStr);
             $chartData[] = [
                 'day' => $dayLabel,
-                'gmv' => $dayGMV,
-                'escrow' => $dayEscrow,
+                'gmv' => (float) ($stat->day_gmv ?? 0),
+                'escrow' => (float) ($stat->day_escrow ?? 0),
                 'date' => $dayStr,
             ];
         }
 
-        // Donut Data: Order Stage Distribution
-        $completedCount = Order::whereIn('status', ['delivered', 'completed'])->count();
-        $escrowHoldCount = Order::whereIn('status', ['paid_escrow', 'confirmed', 'ready_for_pickup', 'in_transit', 'picked_up', 'en_route'])->count();
+        // Donut Data: Order Stage Distribution with indexed aggregates
+        $stageStats = DB::table('orders')
+            ->selectRaw("
+                COUNT(*) FILTER (WHERE status IN ('delivered', 'completed')) as completed_count,
+                COUNT(*) FILTER (WHERE status IN ('paid_escrow', 'confirmed', 'ready_for_pickup', 'in_transit', 'picked_up', 'en_route')) as escrow_hold_count,
+                COUNT(*) FILTER (WHERE commission > 0) as yield_count,
+                COALESCE(SUM(commission), 0) as total_commission
+            ")
+            ->first();
+
+        $completedCount = (int) ($stageStats->completed_count ?? 0);
+        $escrowHoldCount = (int) ($stageStats->escrow_hold_count ?? 0);
         $disputeCount = $openDisputesCount;
         $totalOrdersCount = max(1, $completedCount + $escrowHoldCount + $disputeCount);
+        $totalCommission = (float) ($stageStats->total_commission ?? 0);
+        $yieldCount = (int) ($stageStats->yield_count ?? 0);
 
         $donutData = [
             [
@@ -1026,8 +1049,8 @@ class StaffPortalController extends Controller
             ],
             [
                 'name' => 'Platform Yield',
-                'value' => round(((float) Order::sum('commission') / max(1, $totalGMV)) * 100),
-                'count' => Order::where('commission', '>', 0)->count(),
+                'value' => round(($totalCommission / max(1, $totalGMV)) * 100),
+                'count' => $yieldCount,
                 'color' => '#6366F1',
             ],
         ];
@@ -1067,16 +1090,33 @@ class StaffPortalController extends Controller
             });
         }
 
-        $users = $query->orderBy('created_at', 'desc')->get();
+        $limit = min((int) $request->query('limit', $request->query('per_page', 100)), 200);
+        $page = max(1, (int) $request->query('page', 1));
 
-        $formatted = $users->map(function ($u) {
+        $users = $query->orderBy('created_at', 'desc')->forPage($page, $limit)->get();
+
+        // Batch fetch KYC submissions for the retrieved users to eliminate N+1 queries
+        $userIds = $users->pluck('id')->toArray();
+        $sellerKycMap = !empty($userIds) ? DB::table('seller_kyc_submissions')
+            ->whereIn('user_id', $userIds)
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->groupBy('user_id')
+            ->map(fn($items) => strtoupper($items->first()->status ?? 'NOT_SUBMITTED')) : collect();
+
+        $transporterKycMap = !empty($userIds) ? DB::table('transporter_kyc_submissions')
+            ->whereIn('user_id', $userIds)
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->groupBy('user_id')
+            ->map(fn($items) => strtoupper($items->first()->status ?? 'NOT_SUBMITTED')) : collect();
+
+        $formatted = $users->map(function ($u) use ($sellerKycMap, $transporterKycMap) {
             $kycStatus = null;
             if ($u->store) {
-                $sub = DB::table('seller_kyc_submissions')->where('user_id', $u->id)->latest()->first();
-                $kycStatus = $sub ? strtoupper($sub->status) : 'NOT_SUBMITTED';
+                $kycStatus = $sellerKycMap->get($u->id, 'NOT_SUBMITTED');
             } elseif ($u->transporter) {
-                $sub = DB::table('transporter_kyc_submissions')->where('user_id', $u->id)->latest()->first();
-                $kycStatus = $sub ? strtoupper($sub->status) : 'NOT_SUBMITTED';
+                $kycStatus = $transporterKycMap->get($u->id, 'NOT_SUBMITTED');
             }
 
             $city = $u->store?->city ?? 'Douala';
@@ -1100,7 +1140,13 @@ class StaffPortalController extends Controller
             ];
         });
 
-        return $this->respondSuccess($formatted);
+        return $this->respondSuccess($formatted, [
+            'pagination' => [
+                'page' => $page,
+                'limit' => $limit,
+                'count' => count($formatted),
+            ],
+        ]);
     }
 
     /**

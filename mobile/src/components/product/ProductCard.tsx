@@ -24,6 +24,7 @@ import { useFavoritesStore } from '../../stores/favorites.store';
 import { useFootprintStore } from '../../stores/footprint.store';
 
 import { ProductImageGalleryModal } from './ProductImageGalleryModal';
+import { normalizeMobileImageUrl } from '../../utils/imageUtils';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const PLACEHOLDER = require('../../../assets/placeholder_product.png');
@@ -35,7 +36,7 @@ export interface ProductCardProps {
   style?: ViewStyle;
 }
 
-export const ProductCard: React.FC<ProductCardProps> = ({
+const ProductCardComponent: React.FC<ProductCardProps> = ({
   product,
   onPress,
   horizontal = false,
@@ -57,12 +58,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
   const isFavorited = checkFavorite(product.id);
 
-  // Gallery image list (at least 2 images for swipe demo if product has only 1)
-  const productImages =
+  // Gallery image list with dynamic LAN / static media normalization
+  const rawImages =
     product.images && product.images.length > 0
       ? product.images
       : ['https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=800&q=80'];
 
+  const productImages = rawImages.map((img) => normalizeMobileImageUrl(img));
   const mainImage = productImages[0];
 
   const handleCardPress = () => {
@@ -418,6 +420,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     </>
   );
 };
+
+export const ProductCard = React.memo<ProductCardProps>(ProductCardComponent, (prev, next) => {
+  return (
+    prev.product.id === next.product.id &&
+    prev.product.price === next.product.price &&
+    prev.product.name === next.product.name &&
+    prev.product.images?.[0] === next.product.images?.[0] &&
+    prev.horizontal === next.horizontal &&
+    prev.style === next.style
+  );
+});
 
 
 const styles = StyleSheet.create({

@@ -12,6 +12,7 @@ import { useAuthStore } from '../../stores/auth.store';
 import { formatXAF } from '@wunabuy/utils';
 import { ProductsService } from '../../services/api';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { uploadLocalImagesIfNecessary } from '../../utils/imageUtils';
 
 export const AddEditProductScreen = ({ navigation, route }: any) => {
   const existingProduct: Product | undefined = route.params?.product;
@@ -149,6 +150,9 @@ export const AddEditProductScreen = ({ navigation, route }: any) => {
     setError('');
 
     try {
+      // 1. Convert any local device images (file:// or content://) to server URLs
+      const finalImages = await uploadLocalImagesIfNecessary(images, 'products');
+
       if (isEditing && existingProduct) {
         // UPDATE Product in backend & local store
         try {
@@ -159,7 +163,7 @@ export const AddEditProductScreen = ({ navigation, route }: any) => {
             price: Number(price),
             quantity: Number(quantity),
             quality_tier: qualityTier,
-            images,
+            images: finalImages,
           });
           if (updated) {
             updateProduct(existingProduct.id, updated);
@@ -174,7 +178,7 @@ export const AddEditProductScreen = ({ navigation, route }: any) => {
             price: Number(price),
             quantity: Number(quantity),
             quality_tier: qualityTier,
-            images,
+            images: finalImages,
           });
         }
       } else {
@@ -189,7 +193,7 @@ export const AddEditProductScreen = ({ navigation, route }: any) => {
             currency: 'XAF',
             quantity: Number(quantity),
             quality_tier: qualityTier,
-            images,
+            images: finalImages,
             is_active: true,
           });
 
@@ -209,7 +213,7 @@ export const AddEditProductScreen = ({ navigation, route }: any) => {
             currency: 'XAF',
             quantity: Number(quantity),
             quality_tier: qualityTier,
-            images,
+            images: finalImages,
             is_active: true,
             rating_avg: 5.0,
             total_reviews: 0,

@@ -14,37 +14,8 @@ export interface AvatarProps {
   showBorder?: boolean;
 }
 
-/**
- * Normalizes an avatar/image URL for mobile devices.
- * Replaces localhost:8000/127.0.0.1:8000 or relative paths with the reachable API base server.
- */
-export function normalizeMobileImageUrl(url?: string | null): string | null {
-  if (!url || typeof url !== 'string' || url.trim().length === 0) return null;
-  const trimmed = url.trim();
-  if (trimmed.startsWith('data:')) return trimmed;
-  if (trimmed.startsWith('file://') || trimmed.startsWith('content://')) return trimmed;
-
-  const serverBase = API_BASE_URL.replace(/\/api(\/v1)?\/?$/, '');
-
-  // If it's a relative path starting with /uploads or uploads/
-  if (trimmed.startsWith('/uploads') || trimmed.startsWith('uploads/')) {
-    const cleanPath = trimmed.startsWith('/') ? trimmed : '/' + trimmed;
-    return `${serverBase}${cleanPath}`;
-  }
-  if (trimmed.startsWith('/storage') || trimmed.startsWith('storage/')) {
-    const cleanPath = trimmed.startsWith('/') ? trimmed : '/' + trimmed;
-    return `${serverBase}${cleanPath}`;
-  }
-
-  // If pointing to localhost:8000 or 127.0.0.1:8000, substitute with serverBase host
-  if (trimmed.includes('localhost:8000') || trimmed.includes('127.0.0.1:8000')) {
-    return trimmed
-      .replace('http://localhost:8000', serverBase)
-      .replace('http://127.0.0.1:8000', serverBase);
-  }
-
-  return trimmed;
-}
+import { normalizeMobileImageUrl } from '../../utils/imageUtils';
+export { normalizeMobileImageUrl };
 
 export const Avatar: React.FC<AvatarProps> = ({
   url,

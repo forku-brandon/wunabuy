@@ -1,9 +1,9 @@
 # Wunabuy — Backend Technical Specification & API Contracts
 
-**Document Version:** 3.2 (PostgreSQL 18 Production Implementation & Full-Stack Wiring Baseline)  
-**Date:** September 8, 2026  
+**Document Version:** 3.7 (Universal Media Normalization, High-Performance Indexing & Database Scale Architecture)  
+**Date:** September 15, 2026  
 **Status:** Approved / In Production Use  
-**Companion Documents:** Wunabuy SRS v3.2, Wunabuy PRD v3.2, Wunabuy Frontend Tech Spec v3.2  
+**Companion Documents:** Wunabuy SRS v3.7, Wunabuy PRD v3.7, Wunabuy Frontend Tech Spec v3.7  
 **Framework:** Laravel 13 (PHP 8.3+)  
 **Frontend Monorepo Targets:** `wunabuy-mobile` (Expo SDK 51+), `staff-portal` (Vite + React TS), `@wunabuy/api-client`, `@wunabuy/types`, `@wunabuy/utils`
 
@@ -27,6 +27,9 @@
 14. [Staff Operations Portal & System Notifications API Specifications](#14-staff-operations-portal--system-notifications-api-specifications)
 15. [OWASP Top 10:2025 Enterprise Security Hardening & API Contracts](#15-owasp-top-102025-enterprise-security-hardening--api-contracts)
 16. [Production Deployment & Environment Configuration Guide](#16-production-deployment--environment-configuration-guide)
+17. [Media Storage, Avatar Upload & Dynamic Image Normalization Architecture](#17-media-storage-avatar-upload--dynamic-image-normalization-architecture)
+18. [High-Performance Database Indexing for 1 Million Users Scale](#18-high-performance-database-indexing-for-1-million-users-scale)
+19. [Marketing Adverts & Commercial Partnerships Engine](#19-marketing-adverts--commercial-partnerships-engine)
 
 ---
 
@@ -1478,12 +1481,70 @@ The Mobile client (`mobile/src/config/env.ts`) evaluates the environment in real
 php artisan migrate --force
 php artisan db:seed --force
 
-# Verify all 123 registered routes
+# Verify all 127 registered routes
 php artisan route:list
 
 # Health Check
 curl -X GET https://api.wunabuy.com/api/health
 ```
+
+---
+
+## 17. Media Storage, Avatar Upload & Dynamic Image Normalization Architecture
+
+### 17.1 Problem Statement & Cross-Origin Challenges
+In multi-device topologies (physical Android/iOS phones over Wi-Fi, Android Emulators on `10.0.2.2`, web browsers, and LAN-hosted backend servers), hardcoded `localhost:8000` URLs or relative paths like `/uploads/avatars/img.jpg` fail on mobile devices and cause cross-origin/mixed-content blocks.
+
+### 17.2 Backend Normalization Trait (`HasNormalizedImages.php`)
+The `HasNormalizedImages` trait is integrated across `Product`, `Store`, `User`, and `Advert` models:
+- Intercepts attribute getters (`avatar_url`, `logo_url`, `banner_url`, `image_url`, `images`).
+- Intelligently converts relative paths (`/uploads/...`, `uploads/...`, `/storage/...`) into fully qualified absolute URLs using `$request->getSchemeAndHttpHost()`.
+- Dynamically rewrites internal development hosts (`http://localhost:8000`, `http://127.0.0.1:8000`) to the active incoming HTTP host (e.g. `http://192.168.100.1:8000`), ensuring that physical mobile phones querying over LAN Wi-Fi receive image URLs pointing to the reachable server IP.
+- Preserves external CDN URLs (e.g. Unsplash, AWS S3) and base64 data URIs intact.
+
+### 17.3 Media Upload Endpoints
+- `POST /api/v1/user/avatar`: Multi-part or base64 avatar upload; moves files to `public/uploads/avatars/` with cryptographically random naming; saves to user record; returns both `avatar_url` (absolute) and `relative_url`.
+- `POST /api/v1/upload/image`: General multipart image upload (store logos, product pictures, dispute evidence) moving to `public/uploads/{folder}/`.
+- `POST /api/v1/staff/profile/avatar`: Dedicated endpoint for staff personnel profile photos with audit logging.
+
+### 17.4 Vite Dev Reverse Proxy Configuration
+In `staff-portal/vite.config.ts`, reverse proxy paths for `/uploads` and `/storage` forward traffic directly to `http://127.0.0.1:8000`, providing zero-CORS same-origin image retrieval for browser sessions.
+
+---
+
+## 18. High-Performance Database Indexing for 1 Million Users Scale
+
+### 18.1 Optimization Migration (`2026_09_14_050000_optimize_database_architecture_for_scale.php`)
+Engineered to maintain sub-10ms query execution across high-concurrency e-commerce and logistics operations:
+1. **Orders Table Optimization**:
+   - `idx_orders_customer_status_created`: Composite index `(customer_id, status, created_at)` for instant Buyer order history filtering.
+   - `idx_orders_store_status_created`: Composite index `(store_id, status, created_at)` for Merchant fulfillment queue queries.
+   - `idx_orders_transporter_status_created`: Composite index `(transporter_id, status, created_at)` for Driver trip history.
+   - `idx_orders_dispatch_queue`: Partial PostgreSQL index on `(created_at DESC) WHERE transporter_id IS NULL AND status IN ('ready_for_pickup', 'pending', 'preparing')` — enables lightning-fast live dispatch job queries without scanning historical completed orders.
+2. **Products & Trigram Full-Text Search**:
+   - `idx_products_cat_active_created`: Composite index `(is_active, category, created_at)`.
+   - `idx_products_name_trgm`: PostgreSQL GIN trigram index via `pg_trgm` extension for fuzzy product search (`name gin_trgm_ops`), with B-Tree index fallback.
+3. **Financial Ledger & Wallets**:
+   - `idx_wallet_tx_wallet_created`: Composite index `(wallet_id, created_at)` for instantaneous wallet statement rendering.
+   - `idx_wallet_tx_status_type_created`: Composite index `(status, type, created_at)` for administrative financial reconciliation.
+4. **Compliance & Staff Audit Indexes**:
+   - Indexes on `(status, created_at)` across `seller_kyc_submissions`, `transporter_kyc_submissions`, and `disputes`.
+
+---
+
+## 19. Marketing Adverts & Commercial Partnerships Engine
+
+### 19.1 Data Model & Synchronization
+The `adverts` table powers dynamic marketing campaigns across mobile and web:
+- Fields: `title`, `subtitle`, `badge`, `badge_color`, `image_url`, `icon_name`, `icon_color`, `cta_text`, `discount_percent`, `target_url`, `category`, `audience` (`buyer`, `seller`, `all`), `type` (`banner`, `tip`, `partner`, `special_offer`), `sort_order`, `is_active`.
+- Model uses `HasNormalizedImages` to ensure advert banners and partner logos resolve correctly across all client networks.
+
+### 19.2 Staff Portal Management Endpoints (`/api/v1/staff/adverts`)
+- `GET /api/v1/staff/adverts`: List and filter marketing adverts.
+- `POST /api/v1/staff/adverts`: Create new campaign with audit logging.
+- `GET /api/v1/staff/adverts/{id}`: Single advert details.
+- `PUT /api/v1/staff/adverts/{id}`: Update fields or toggle active visibility.
+- `DELETE /api/v1/staff/adverts/{id}`: Remove advert with security telemetry.
 
 ---
 
@@ -1494,4 +1555,4 @@ curl -X GET https://api.wunabuy.com/api/health
 **Product Manager:** _Agemo Technologies Product Lead_  
 
 ---
-**[End of Backend Technical Specification & API Contracts v3.2]**
+**[End of Backend Technical Specification & API Contracts v3.7]**

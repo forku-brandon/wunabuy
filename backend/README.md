@@ -4,7 +4,11 @@ Production-grade enterprise backend service for Wunabuy engineered with **Larave
 
 ## Architecture & Domain Services
 - **Framework:** Laravel 13 (PHP 8.3+) with Sanctum stateful token middleware and Spatie RBAC.
-- **Database:** PostgreSQL 18 with 23 tables across 15 migrations (`wallets`, `orders`, `transporters`, `disputes`, `audit_logs`, etc.) and pure Haversine geodesic routing.
+- **Database:** PostgreSQL 18 with 23 tables across 16 migrations (`wallets`, `orders`, `transporters`, `disputes`, `adverts`, `audit_logs`, etc.) and pure Haversine geodesic routing.
+- **High-Performance Scale Indexing (v3.7):** 19 composite and partial indexes (`2026_09_14_050000_optimize_database_architecture_for_scale.php`) on orders, wallet ledger, products, dispatch queues, and KYC tables for 1M scale.
+- **Dynamic Media Normalization (`HasNormalizedImages.php`):** Model trait automatically resolving relative `/uploads/...` paths to client-reachable absolute URLs via `$request->getSchemeAndHttpHost()`, eliminating cross-origin and LAN connectivity issues.
+- **Universal Media & Avatar Uploads:** Dedicated endpoints for mobile user avatars (`POST /api/v1/user/avatar`), general store/product media (`POST /api/v1/upload/image`), and corporate staff avatars (`POST /api/v1/staff/profile/avatar`).
+- **Marketing Adverts & Partnerships Engine:** Full CRUD API (`/api/v1/staff/adverts` and `GET /api/v1/adverts`) synchronizing promotional campaigns and partner badges with the mobile app.
 - **Escrow Engine (`EscrowService.php`):** Dual-entry escrow locking, automated release with 3.5% platform commission deduction, dispute freezing, and binding arbitration rulings (`BUYER_REFUND`, `SELLER_RELEASE`, `SPLIT_50_50`).
 - **Logistics & Parcel Chain of Custody (`LogisticsService.php`):** Haversine distance calculations, dynamic delivery fees by vehicle category (`BIKE`, `CAR`, `VAN`), HMAC-SHA256 signed parcel custody QR tags (`WB-PARCEL:...`), and background driver GPS breadcrumbs.
 - **Fintech & Mobile Money (`PaymentService.php`):** High-fidelity USSD push simulation (`*126#` for MTN MoMo, `#150*50#` for Orange Money), instant wallet funding, and dual-control PIN verification for fraud thresholds ($\ge 500,000$ XAF).

@@ -35,6 +35,7 @@ import { useFavoritesStore } from '../../stores/favorites.store';
 import { useFootprintStore } from '../../stores/footprint.store';
 import { ProductImageGalleryModal } from '../../components/product/ProductImageGalleryModal';
 import { ProductCard } from '../../components/product/ProductCard';
+import { normalizeMobileImageUrl } from '../../utils/imageUtils';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -244,7 +245,7 @@ export const ProductDetailScreen = ({ route, navigation }: any) => {
               style={styles.heroImageClickable}
             >
               <Image
-                source={{ uri: product.images[activeImageIndex] || product.images[0] }}
+                source={{ uri: normalizeMobileImageUrl(product.images[activeImageIndex] || product.images[0]) }}
                 style={styles.heroImage}
                 resizeMode="cover"
               />
@@ -256,6 +257,14 @@ export const ProductDetailScreen = ({ route, navigation }: any) => {
                 <Ionicons name="shield-checkmark" size={13} color={colors.semantic.success[500]} />
                 <Text variant="caption" bold color={colors.neutral[0]} style={styles.qualityPillText}>
                   {product.quality_tier?.toUpperCase() ?? 'NEW'} • 100% VERIFIED
+                </Text>
+              </View>
+
+              {/* Verified Return Escrow Badge */}
+              <View style={[styles.escrowPill, { backgroundColor: 'rgba(15,23,42,0.75)' }]}>
+                <Ionicons name="lock-closed" size={11} color={colors.primary[400]} />
+                <Text variant="caption" bold color={colors.primary[400]} style={{ marginLeft: 3, fontSize: 11 }}>
+                  48H ESCROW
                 </Text>
               </View>
             </View>
@@ -279,7 +288,7 @@ export const ProductDetailScreen = ({ route, navigation }: any) => {
                         },
                       ]}
                     >
-                      <Image source={{ uri: imgUri }} style={styles.thumbImage} resizeMode="cover" />
+                      <Image source={{ uri: normalizeMobileImageUrl(imgUri) }} style={styles.thumbImage} resizeMode="cover" />
                     </TouchableOpacity>
                   );
                 })}
@@ -721,6 +730,14 @@ const styles = StyleSheet.create({
   qualityPillText: {
     fontSize: 10,
     letterSpacing: 0.5,
+  },
+  escrowPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.sm + 2,
+    paddingVertical: 5,
+    borderRadius: borderRadius.full,
+    gap: 4,
   },
   favoriteBtn: {
     width: 38,

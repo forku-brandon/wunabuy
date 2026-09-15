@@ -9,10 +9,11 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Support\Facades\DB;
+use App\Traits\HasNormalizedImages;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, HasUuids, HasRoles;
+    use HasApiTokens, HasFactory, Notifiable, HasUuids, HasRoles, HasNormalizedImages;
 
     protected $fillable = [
         'phone',
@@ -41,6 +42,16 @@ class User extends Authenticatable
         'available_roles' => 'array',
         'otp_expires_at' => 'datetime',
     ];
+
+    public function getAvatarUrlAttribute($value): ?string
+    {
+        return self::normalizeImageUrl($value);
+    }
+
+    public function setAvatarUrlAttribute($value): void
+    {
+        $this->attributes['avatar_url'] = self::cleanImageForStorage($value);
+    }
 
     public function store()
     {

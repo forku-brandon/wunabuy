@@ -25,11 +25,17 @@ class EscrowService
     public function lockEscrow(Order $order, float $amount, ?string $reference = null): Order
     {
         return DB::transaction(function () use ($order, $amount, $reference) {
-            $buyer = User::with('wallet')->findOrFail($order->customer_id);
-            $wallet = $buyer->wallet ?? Wallet::firstOrCreate(
-                ['user_id' => $buyer->id],
-                ['currency' => 'XAF', 'balance_available' => 0, 'balance_escrow_locked' => 0]
-            );
+            $buyer = User::findOrFail($order->customer_id);
+            $wallet = Wallet::where('user_id', $buyer->id)->lockForUpdate()->first();
+            if (!$wallet) {
+                $wallet = Wallet::create([
+                    'user_id' => $buyer->id,
+                    'currency' => 'XAF',
+                    'balance_available' => 0,
+                    'balance_escrow_locked' => 0,
+                ]);
+                $wallet = Wallet::where('id', $wallet->id)->lockForUpdate()->first();
+            }
 
             if ((float) $wallet->balance_available < $amount) {
                 // If insufficient balance in local wallet, simulate instantaneous escrow funding via payment gateway
@@ -87,10 +93,9 @@ class EscrowService
                 return ['success' => true, 'message' => 'Escrow already released'];
             }
 
-            // Find or create buyer wallet
-            $buyer = User::find($order->customer_id);
-            if ($buyer && $buyer->wallet) {
-                $buyerWallet = $buyer->wallet;
+            // Acquire lock on buyer wallet and release escrow lock
+            $buyerWallet = Wallet::where('user_id', $order->customer_id)->lockForUpdate()->first();
+            if ($buyerWallet) {
                 $locked = (float) $buyerWallet->balance_escrow_locked;
                 $deduct = min($locked, (float) $order->total_amount);
                 $buyerWallet->balance_escrow_locked = max(0, $locked - $deduct);
@@ -103,15 +108,21 @@ class EscrowService
             $sellerNet = max(0, $subtotal - $commission);
             $deliveryFee = (float) $order->delivery_fee;
 
-            // Credit Seller Wallet
+            // Credit Seller Wallet with row lock
             $store = $order->store;
             if ($store && $store->user_id) {
                 $sellerUser = User::find($store->user_id);
                 if ($sellerUser) {
-                    $sellerWallet = $sellerUser->wallet ?? Wallet::firstOrCreate(
-                        ['user_id' => $sellerUser->id],
-                        ['currency' => 'XAF', 'balance_available' => 0, 'balance_escrow_locked' => 0]
-                    );
+                    $sellerWallet = Wallet::where('user_id', $sellerUser->id)->lockForUpdate()->first();
+                    if (!$sellerWallet) {
+                        $sellerWallet = Wallet::create([
+                            'user_id' => $sellerUser->id,
+                            'currency' => 'XAF',
+                            'balance_available' => 0,
+                            'balance_escrow_locked' => 0,
+                        ]);
+                        $sellerWallet = Wallet::where('id', $sellerWallet->id)->lockForUpdate()->first();
+                    }
 
                     $sellerWallet->balance_available = (float) $sellerWallet->balance_available + $sellerNet;
                     $sellerWallet->save();
@@ -129,16 +140,22 @@ class EscrowService
                 }
             }
 
-            // Credit Transporter Wallet if applicable
+            // Credit Transporter Wallet with row lock if applicable
             if ($order->transporter_id && $deliveryFee > 0) {
                 $transporter = $order->transporter;
                 if ($transporter && $transporter->user_id) {
                     $transporterUser = User::find($transporter->user_id);
                     if ($transporterUser) {
-                        $transporterWallet = $transporterUser->wallet ?? Wallet::firstOrCreate(
-                            ['user_id' => $transporterUser->id],
-                            ['currency' => 'XAF', 'balance_available' => 0, 'balance_escrow_locked' => 0]
-                        );
+                        $transporterWallet = Wallet::where('user_id', $transporterUser->id)->lockForUpdate()->first();
+                        if (!$transporterWallet) {
+                            $transporterWallet = Wallet::create([
+                                'user_id' => $transporterUser->id,
+                                'currency' => 'XAF',
+                                'balance_available' => 0,
+                                'balance_escrow_locked' => 0,
+                            ]);
+                            $transporterWallet = Wallet::where('id', $transporterWallet->id)->lockForUpdate()->first();
+                        }
 
                         $transporterWallet->balance_available = (float) $transporterWallet->balance_available + $deliveryFee;
                         $transporterWallet->save();
@@ -243,8 +260,7 @@ class EscrowService
             }
             $order = $dispute->order;
 
-            $buyer = User::find($order->customer_id);
-            $buyerWallet = $buyer ? ($buyer->wallet ?? Wallet::firstOrCreate(['user_id' => $buyer->id])) : null;
+            $buyerWallet = Wallet::where('user_id', $order->customer_id)->lockForUpdate()->first();
 
             $totalAmount = (float) $order->total_amount;
             $subtotal = (float) $order->subtotal;
@@ -287,7 +303,16 @@ class EscrowService
                 if ($store && $store->user_id) {
                     $sellerUser = User::find($store->user_id);
                     if ($sellerUser) {
-                        $sellerWallet = $sellerUser->wallet ?? Wallet::firstOrCreate(['user_id' => $sellerUser->id]);
+                        $sellerWallet = Wallet::where('user_id', $sellerUser->id)->lockForUpdate()->first();
+                        if (!$sellerWallet) {
+                            $sellerWallet = Wallet::create([
+                                'user_id' => $sellerUser->id,
+                                'currency' => 'XAF',
+                                'balance_available' => 0,
+                                'balance_escrow_locked' => 0,
+                            ]);
+                            $sellerWallet = Wallet::where('id', $sellerWallet->id)->lockForUpdate()->first();
+                        }
                         $sellerWallet->balance_available = (float) $sellerWallet->balance_available + $half;
                         $sellerWallet->save();
                     }

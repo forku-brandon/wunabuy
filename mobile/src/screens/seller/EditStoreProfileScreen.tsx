@@ -18,6 +18,7 @@ import { useSellerStore } from '../../stores/seller.store';
 import { useAuthStore } from '../../stores/auth.store';
 import { ProductCategory } from '@wunabuy/types';
 import { SellerService, AuthService } from '../../services/api';
+import { normalizeMobileImageUrl } from '../../utils/imageUtils';
 
 const CATEGORIES = [
   ProductCategory.ELECTRONICS,
@@ -94,7 +95,7 @@ export const EditStoreProfileScreen = ({ navigation }: any) => {
     }
   };
 
-  const handleSaveProfile = () => {
+  const handleSaveProfile = async () => {
     if (!storeName.trim()) {
       Alert.alert('Missing Field', 'Please enter your Store Name.');
       return;
@@ -105,6 +106,22 @@ export const EditStoreProfileScreen = ({ navigation }: any) => {
     }
 
     setSaving(true);
+
+    let finalLogo = logoUrl;
+    if (finalLogo && finalLogo.startsWith('file://')) {
+      try {
+        const up = await AuthService.uploadImage(finalLogo, 'store_logos');
+        if (up && !up.startsWith('file://')) finalLogo = up;
+      } catch {}
+    }
+
+    let finalCover = coverPhotoUrl;
+    if (finalCover && finalCover.startsWith('file://')) {
+      try {
+        const up = await AuthService.uploadImage(finalCover, 'store_covers');
+        if (up && !up.startsWith('file://')) finalCover = up;
+      } catch {}
+    }
 
     const payload = {
       store_name: storeName.trim(),
@@ -119,8 +136,8 @@ export const EditStoreProfileScreen = ({ navigation }: any) => {
       rider_pickup_instructions: riderPickupInstructions.trim(),
       latitude: parseFloat(latitude) || 4.0510,
       longitude: parseFloat(longitude) || 9.7679,
-      logo_url: logoUrl,
-      cover_photo_url: coverPhotoUrl,
+      logo_url: finalLogo,
+      cover_photo_url: finalCover,
     };
 
     sellerStore.updateStoreProfile({
@@ -137,8 +154,8 @@ export const EditStoreProfileScreen = ({ navigation }: any) => {
       riderPickupInstructions: riderPickupInstructions.trim(),
       latitude: parseFloat(latitude) || 4.0510,
       longitude: parseFloat(longitude) || 9.7679,
-      logoUrl,
-      coverPhotoUrl,
+      logoUrl: finalLogo,
+      coverPhotoUrl: finalCover,
     });
 
     SellerService.updateStoreProfile(payload)
@@ -242,7 +259,7 @@ export const EditStoreProfileScreen = ({ navigation }: any) => {
             style={styles.coverBannerBox}
           >
             {coverPhotoUrl ? (
-              <Image source={{ uri: coverPhotoUrl }} style={styles.coverImage} resizeMode="cover" />
+              <Image source={{ uri: normalizeMobileImageUrl(coverPhotoUrl) }} style={styles.coverImage} resizeMode="cover" />
             ) : (
               <View style={[styles.coverImage, { backgroundColor: isDark ? colors.neutral[800] : colors.neutral[200], justifyContent: 'center', alignItems: 'center' }]}>
                 <Ionicons name="image-outline" size={32} color={theme.placeholder} />
@@ -268,7 +285,7 @@ export const EditStoreProfileScreen = ({ navigation }: any) => {
               style={styles.logoImageWrapper}
             >
               {logoUrl ? (
-                <Image source={{ uri: logoUrl }} style={styles.logoImage} />
+                <Image source={{ uri: normalizeMobileImageUrl(logoUrl) }} style={styles.logoImage} />
               ) : (
                 <View style={[styles.logoImage, { backgroundColor: colors.primary[50], justifyContent: 'center', alignItems: 'center' }]}>
                   <Ionicons name="storefront-outline" size={28} color={colors.primary[500]} />

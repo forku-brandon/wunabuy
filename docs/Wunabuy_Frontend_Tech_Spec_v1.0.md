@@ -1,5 +1,12 @@
 # Wunabuy — Frontend Technical Specification
-### Version 3.3 | September 9, 2026
+### Version 3.7 | September 15, 2026
+
+> **Resolved Decisions (September 15, 2026 - v3.7):**
+> - **Unified Media Normalization & Zero Broken Images (`imageUtils.ts`)**: Built centralized mobile image resolution utility handling full URL formatting, relative paths (`/uploads/...`, `/storage/...`), and dynamic host substitution for `localhost:8000` / `127.0.0.1:8000` across `ProductCard.tsx`, `ProductDetailScreen.tsx`, `HomeScreen.tsx`, `AddEditProductScreen.tsx`, `EditStoreProfileScreen.tsx`, and `Avatar.tsx`.
+> - **Universal Avatar & Profile Picture Architecture**: Web Staff Portal features 0ms optimistic local preview using HTML5 `FileReader` (`readAsDataURL`), active upload spinners, automatic server sync to `POST /api/v1/staff/profile/avatar`, and Unsplash fallback error protection. Mobile app integrates native device photo picking and multi-part upload to `POST /api/v1/user/avatar` across Buyer, Seller Store, and Transporter profiles.
+> - **Vite Reverse Proxy Static Asset Routing (`vite.config.ts`)**: Configured dev server reverse proxies for `/uploads` and `/storage` pointing to `http://127.0.0.1:8000`, ensuring zero-CORS same-origin image serving across all local LAN Wi-Fi IP addresses without browser security blocks.
+> - **Staff Portal Layout Overhaul & Marketing Adverts Management**: Modernized enterprise typography, unified slate palettes, decluttered inactive legacy modules, and introduced live Marketing Adverts and Commercial Partnerships CRUD (`MarketingAdvertsPage.tsx`, `/api/v1/staff/adverts`) with real-time mobile sync.
+> - **Real-Time Order Lifecycle & Escrow Settlement Synchronization**: Synchronized 5-phase order lifecycle across Buyer, Seller, and Transporter workspaces with strict `status === 'completed'` order tab filtering, FlatList duplicate key fixes, and live escrow settlement triggers.
 
 > **Resolved Decisions (September 9, 2026 - v3.3):**
 > - **100% Dynamic Database Integration & Zero-Mock Architecture**: Purged all static/mock financial metrics, dummy addresses, driver jobs, and fake store analytics across `walletService.ts`, `sellerService.ts`, `transporterService.ts`, `disputesService.ts`, and screens (`RefundsScreen.tsx`, `BuyerCartScreen.tsx`, etc.). All data is populated live from PostgreSQL 18.

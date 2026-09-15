@@ -5,10 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\HasNormalizedImages;
 
 class Advert extends Model
 {
-    use HasFactory, HasUuids;
+    use HasFactory, HasUuids, HasNormalizedImages;
 
     protected $fillable = [
         'target_audience',
@@ -35,5 +36,15 @@ class Advert extends Model
         'sort_order' => 'integer',
         'is_active' => 'boolean',
     ];
+
+    public function getImageUrlAttribute($value): ?string
+    {
+        return self::normalizeImageUrl($value);
+    }
+
+    public function setImageUrlAttribute($value): void
+    {
+        $this->attributes['image_url'] = self::cleanImageForStorage($value);
+    }
 }
 

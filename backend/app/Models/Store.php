@@ -5,10 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\HasNormalizedImages;
 
 class Store extends Model
 {
-    use HasFactory, HasUuids;
+    use HasFactory, HasUuids, HasNormalizedImages;
 
     protected $fillable = [
         'user_id',
@@ -41,6 +42,26 @@ class Store extends Model
         'is_verified' => 'boolean',
         'is_active' => 'boolean',
     ];
+
+    public function getLogoUrlAttribute($value): ?string
+    {
+        return self::normalizeImageUrl($value);
+    }
+
+    public function setLogoUrlAttribute($value): void
+    {
+        $this->attributes['logo_url'] = self::cleanImageForStorage($value);
+    }
+
+    public function getBannerUrlAttribute($value): ?string
+    {
+        return self::normalizeImageUrl($value);
+    }
+
+    public function setBannerUrlAttribute($value): void
+    {
+        $this->attributes['banner_url'] = self::cleanImageForStorage($value);
+    }
 
     public function owner()
     {

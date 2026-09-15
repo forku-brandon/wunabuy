@@ -40,21 +40,29 @@ class SellerController extends Controller
         $store = $sellerUser->store ?? Store::where('user_id', $sellerUser->id)->first();
         $wallet = $sellerUser ? $sellerUser->wallet : null;
 
-        $query = Order::query();
         if ($store) {
-            $query->where('store_id', $store->id);
-        } else if ($sellerUser && $sellerUser->role === 'seller') {
-            $query->whereRaw('1 = 0');
+            $stats = DB::table('orders')
+                ->where('store_id', $store->id)
+                ->selectRaw("
+                    COUNT(*) FILTER (WHERE status IN ('pending', 'paid_escrow', 'pending_acceptance', 'pending_payment')) as pending_count,
+                    COUNT(*) FILTER (WHERE status = 'preparing') as preparing_count,
+                    COUNT(*) FILTER (WHERE status = 'ready_for_pickup') as ready_count,
+                    COALESCE(SUM(total) FILTER (WHERE status IN ('delivered', 'completed', 'received')), 0) as total_revenue
+                ")
+                ->first();
+
+            $pendingCount = (int) ($stats->pending_count ?? 0);
+            $preparingCount = (int) ($stats->preparing_count ?? 0);
+            $readyCount = (int) ($stats->ready_count ?? 0);
+            $totalRevenue = (float) ($stats->total_revenue ?? 0);
+        } else {
+            $pendingCount = 0;
+            $preparingCount = 0;
+            $readyCount = 0;
+            $totalRevenue = 0;
         }
 
-        $orders = $query->get();
-        $pendingCount = $orders->whereIn('status', ['pending', 'paid_escrow', 'pending_acceptance', 'pending_payment'])->count();
-        $preparingCount = $orders->where('status', 'preparing')->count();
-        $readyCount = $orders->where('status', 'ready_for_pickup')->count();
-        $deliveredOrders = $orders->whereIn('status', ['delivered', 'completed', 'received']);
-
-        // Dynamic revenue from delivered orders or wallet credits
-        $totalRevenue = (float) $deliveredOrders->sum('total');
+        // Dynamic revenue fallback from wallet credits if orders total is zero
         if ($totalRevenue <= 0 && $wallet) {
             $totalRevenue = (float) WalletTransaction::where('wallet_id', $wallet->id)
                 ->where('type', 'escrow_release')

@@ -6,9 +6,11 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+use App\Traits\HasNormalizedImages;
+
 class Product extends Model
 {
-    use HasFactory, HasUuids;
+    use HasFactory, HasUuids, HasNormalizedImages;
 
     protected $fillable = [
         'store_id',
@@ -33,6 +35,19 @@ class Product extends Model
         'rating_avg' => 'float',
         'total_reviews' => 'integer',
     ];
+
+    public function getImagesAttribute($value): array
+    {
+        $decoded = is_string($value) ? json_decode($value, true) : (is_array($value) ? $value : []);
+        return self::normalizeImageArray($decoded);
+    }
+
+    public function setImagesAttribute($value): void
+    {
+        $array = is_string($value) ? json_decode($value, true) : (is_array($value) ? $value : []);
+        $cleaned = self::cleanImageArrayForStorage($array);
+        $this->attributes['images'] = json_encode($cleaned);
+    }
 
     public function store()
     {
