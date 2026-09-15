@@ -11,3 +11,4 @@ export * from './Toast';
 export * from './BottomSheet';
 
 export * from './QuantityInputModal';
+export * from './OptimizedImage';

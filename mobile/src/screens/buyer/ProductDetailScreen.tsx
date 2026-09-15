@@ -23,7 +23,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ScreenContainer, Text, Badge, Button, Card, Toast, QuantityInputModal } from '../../components/ui';
+import { ScreenContainer, Text, Badge, Button, Card, Toast, QuantityInputModal, OptimizedImage } from '../../components/ui';
 import { ActivityIndicator } from 'react-native';
 import { ProductsService } from '../../services/api';
 import { useCartStore } from '../../stores/cart.store';
@@ -244,10 +244,11 @@ export const ProductDetailScreen = ({ route, navigation }: any) => {
               onPress={() => setIsGalleryModalVisible(true)}
               style={styles.heroImageClickable}
             >
-              <Image
-                source={{ uri: normalizeMobileImageUrl(product.images[activeImageIndex] || product.images[0]) }}
+              <OptimizedImage
+                uri={product.images[activeImageIndex] || product.images[0]}
                 style={styles.heroImage}
-                resizeMode="cover"
+                contentFit="cover"
+                priority="high"
               />
             </TouchableOpacity>
 
@@ -288,7 +289,7 @@ export const ProductDetailScreen = ({ route, navigation }: any) => {
                         },
                       ]}
                     >
-                      <Image source={{ uri: normalizeMobileImageUrl(imgUri) }} style={styles.thumbImage} resizeMode="cover" />
+                      <OptimizedImage uri={imgUri} style={styles.thumbImage} contentFit="cover" />
                     </TouchableOpacity>
                   );
                 })}

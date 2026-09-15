@@ -24,7 +24,8 @@ import { useFavoritesStore } from '../../stores/favorites.store';
 import { useFootprintStore } from '../../stores/footprint.store';
 
 import { ProductImageGalleryModal } from './ProductImageGalleryModal';
-import { normalizeMobileImageUrl } from '../../utils/imageUtils';
+import { resolveProductImage, resolveProductImages } from '../../utils/imageUtils';
+import { OptimizedImage } from '../ui/OptimizedImage';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const PLACEHOLDER = require('../../../assets/placeholder_product.png');
@@ -58,14 +59,9 @@ const ProductCardComponent: React.FC<ProductCardProps> = ({
 
   const isFavorited = checkFavorite(product.id);
 
-  // Gallery image list with dynamic LAN / static media normalization
-  const rawImages =
-    product.images && product.images.length > 0
-      ? product.images
-      : ['https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=800&q=80'];
-
-  const productImages = rawImages.map((img) => normalizeMobileImageUrl(img));
-  const mainImage = productImages[0];
+  // Product images with automatic resolution and zero-broken-image guarantees
+  const productImages = resolveProductImages(product);
+  const mainImage = resolveProductImage(product);
 
   const handleCardPress = () => {
     recordFootprint(product);
@@ -122,11 +118,11 @@ const ProductCardComponent: React.FC<ProductCardProps> = ({
       >
         {/* Product Image Stage */}
         <View style={[styles.imageContainer, { backgroundColor: isDark ? colors.neutral[800] : colors.primary[50] }]}>
-          <Image
-            source={imageError || !mainImage ? PLACEHOLDER : { uri: mainImage }}
+          <OptimizedImage
+            uri={mainImage}
             style={styles.image}
-            resizeMode={imageError || !mainImage ? 'contain' : 'cover'}
-            onError={() => setImageError(true)}
+            contentFit="cover"
+            priority="high"
           />
 
           {/* Top-Right Favorite Heart Button */}
@@ -255,10 +251,10 @@ const ProductCardComponent: React.FC<ProductCardProps> = ({
                     onPress={() => setIsGalleryModalVisible(true)}
                     style={[styles.galleryImageWrapper, { width: galleryCardWidth }]}
                   >
-                    <Image
-                      source={{ uri: item }}
+                    <OptimizedImage
+                      uri={item}
                       style={styles.galleryImage}
-                      resizeMode="cover"
+                      contentFit="cover"
                     />
                   </TouchableOpacity>
                 )}

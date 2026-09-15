@@ -37,7 +37,7 @@ const AppContent: React.FC = () => {
   useEffect(() => {
     if (Platform.OS === 'android') {
       try {
-        NavigationBar.setButtonStyleAsync(isDark ? 'light' : 'dark').catch(() => {});
+        (NavigationBar as any).setButtonStyleAsync?.(isDark ? 'light' : 'dark')?.catch?.(() => {});
       } catch (e) {
         // Silently ignore if on unsupported environment
       }

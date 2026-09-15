@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Image, StyleSheet, ImageSourcePropType } from 'react-native';
+import { View, StyleSheet, ImageSourcePropType } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
@@ -37,7 +38,7 @@ export const Avatar: React.FC<AvatarProps> = ({
   };
 
   const normalizedUrl = normalizeMobileImageUrl(url);
-  const imageSource: ImageSourcePropType =
+  const imageSource =
     !imageError && normalizedUrl ? { uri: normalizedUrl } : DEFAULT_3D_AVATAR;
 
   return (
@@ -53,8 +54,11 @@ export const Avatar: React.FC<AvatarProps> = ({
     >
       <Image
         source={imageSource}
+        placeholder={DEFAULT_3D_AVATAR}
         style={[containerStyle, styles.image]}
-        resizeMode="cover"
+        contentFit="cover"
+        transition={150}
+        cachePolicy="memory-disk"
         onError={() => setImageError(true)}
       />
     </View>

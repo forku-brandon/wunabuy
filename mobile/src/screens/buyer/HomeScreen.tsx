@@ -11,7 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
-import { Text } from '../../components/ui';
+import { Text, OptimizedImage } from '../../components/ui';
 import { CategoryChip } from '../../components/product/CategoryChip';
 import { ProductCard } from '../../components/product/ProductCard';
 import { HeroCarousel } from '../../components/home/HeroCarousel';
@@ -269,14 +269,11 @@ export const HomeScreen = ({ navigation }: any) => {
 
             {/* Right Product Graphic Composition with Circular Discount Badge */}
             <View style={styles.offerGraphicCol}>
-              <Image
-                source={{
-                  uri:
-                    feedData.special_offer.image_url ||
-                    'https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=800&q=80',
-                }}
+              <OptimizedImage
+                uri={feedData.special_offer.image_url}
                 style={styles.offerImage}
-                resizeMode="cover"
+                contentFit="cover"
+                priority="high"
               />
               {!!feedData.special_offer.discount_percent && (
                 <View style={styles.discountBadgeCircle}>

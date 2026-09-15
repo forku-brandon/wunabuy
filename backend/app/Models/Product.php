@@ -36,6 +36,16 @@ class Product extends Model
         'total_reviews' => 'integer',
     ];
 
+    protected $appends = [
+        'image_url',
+    ];
+
+    public function getImageUrlAttribute(): ?string
+    {
+        $images = $this->images;
+        return !empty($images) && isset($images[0]) ? $images[0] : null;
+    }
+
     public function getImagesAttribute($value): array
     {
         $decoded = is_string($value) ? json_decode($value, true) : (is_array($value) ? $value : []);

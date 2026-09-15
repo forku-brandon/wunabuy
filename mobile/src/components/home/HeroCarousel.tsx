@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Text } from '../ui/Text';
+import { OptimizedImage } from '../ui/OptimizedImage';
 import { colors, spacing, borderRadius } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
 
@@ -34,7 +35,7 @@ const HERO_SLIDES: HeroSlide[] = [
     title: 'Shop Safely, ✨\nBuy Confidently',
     subtitle: 'Your money stays 100% safe in 48-hour escrow protection until delivery is signed.',
     ctaText: 'Explore Escrow',
-    imageUrl: 'https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?auto=format&fit=crop&w=800&q=80',
+    imageUrl: '/uploads/products/prod_030d5e57_0.webp',
   },
   {
     id: 'slide_2',
@@ -43,7 +44,7 @@ const HERO_SLIDES: HeroSlide[] = [
     title: 'Glow Naturally, ✨\nShine Beautifully',
     subtitle: 'Explore our premium beauty, electronics & verified collection from local store owners.',
     ctaText: 'Shop Now',
-    imageUrl: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=800&q=80',
+    imageUrl: '/uploads/products/prod_55443322_0.webp',
   },
   {
     id: 'slide_3',
@@ -52,7 +53,7 @@ const HERO_SLIDES: HeroSlide[] = [
     title: 'Fast Doorstep ✨\nGPS Delivery',
     subtitle: 'Track your transport provider live with 10-second GPS breadcrumb updates.',
     ctaText: 'Track Live',
-    imageUrl: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=800&q=80',
+    imageUrl: '/uploads/products/prod_aa998877_0.webp',
   },
 ];
 
@@ -138,10 +139,11 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({ onPressBanner, slide
             </View>
 
             {/* Right Product Image */}
-            <Image
-              source={{ uri: item.imageUrl }}
+            <OptimizedImage
+              uri={item.imageUrl}
               style={styles.heroImage}
-              resizeMode="cover"
+              contentFit="cover"
+              priority="high"
             />
           </View>
         )}
