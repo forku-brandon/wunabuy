@@ -152,14 +152,31 @@ const ProductCardComponent: React.FC<ProductCardProps> = ({
             {product.category || 'Verified Product'}
           </Text>
 
-          {/* 5-Star Rating Row */}
+          {/* Real Customer Rating Row */}
           <View style={styles.ratingRow}>
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Ionicons key={i} name="star" size={11} color="#F59E0B" style={{ marginRight: 1 }} />
-            ))}
-            <Text variant="caption" secondary style={styles.reviewsCount}>
-              ({product.total_reviews ?? 126})
-            </Text>
+            {(product.total_reviews ?? 0) > 0 ? (
+              <>
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Ionicons
+                    key={i}
+                    name={i < Math.round(product.rating_avg ?? 0) ? 'star' : 'star-outline'}
+                    size={11}
+                    color="#F59E0B"
+                    style={{ marginRight: 1 }}
+                  />
+                ))}
+                <Text variant="caption" secondary style={styles.reviewsCount}>
+                  {(product.rating_avg ?? 0).toFixed(1)} ({product.total_reviews})
+                </Text>
+              </>
+            ) : (
+              <>
+                <Ionicons name="sparkles-outline" size={11} color={colors.primary[500]} style={{ marginRight: 3 }} />
+                <Text variant="caption" secondary style={styles.reviewsCount}>
+                  New (0 reviews)
+                </Text>
+              </>
+            )}
           </View>
 
           {/* Price & Primary Teal Circular Expand Plus Button */}
@@ -303,17 +320,34 @@ const ProductCardComponent: React.FC<ProductCardProps> = ({
                 </Text>
               </View>
 
-              {/* 5-Star Rating Row */}
+              {/* Real Customer Rating Row */}
               <View style={styles.expandRatingRow}>
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Ionicons key={i} name="star" size={13} color="#F59E0B" style={{ marginRight: 2 }} />
-                ))}
-                <Text variant="caption" bold style={{ marginLeft: 4 }}>
-                  {product.rating_avg ?? 4.9}
-                </Text>
-                <Text variant="caption" secondary style={{ marginLeft: 3 }}>
-                  ({product.total_reviews ?? 126} reviews)
-                </Text>
+                {(product.total_reviews ?? 0) > 0 ? (
+                  <>
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Ionicons
+                        key={i}
+                        name={i < Math.round(product.rating_avg ?? 0) ? 'star' : 'star-outline'}
+                        size={13}
+                        color="#F59E0B"
+                        style={{ marginRight: 2 }}
+                      />
+                    ))}
+                    <Text variant="caption" bold style={{ marginLeft: 4 }}>
+                      {(product.rating_avg ?? 0).toFixed(1)}
+                    </Text>
+                    <Text variant="caption" secondary style={{ marginLeft: 3 }}>
+                      ({product.total_reviews} {product.total_reviews === 1 ? 'review' : 'reviews'})
+                    </Text>
+                  </>
+                ) : (
+                  <>
+                    <Ionicons name="sparkles-outline" size={13} color={colors.primary[500]} style={{ marginRight: 4 }} />
+                    <Text variant="caption" secondary>
+                      New • No customer reviews yet
+                    </Text>
+                  </>
+                )}
               </View>
 
               {/* Product Description */}

@@ -190,20 +190,29 @@ class CommerceController extends Controller
             $product->distance_km = $this->logisticsService->calculateHaversineDistance((float) $buyerLat, (float) $buyerLng, $sLat, $sLng);
         }
 
-        $reviews = Review::where('target_type', 'product')
+        $reviews = Review::with('user:id,full_name,avatar_url')
+            ->where('target_type', 'product')
             ->where('target_id', $product->id)
             ->latest()
-            ->take(5)
+            ->take(20)
             ->get();
 
+        // Dynamically compute real mathematical rating from customer reviews
+        $reviewStats = Review::where('target_type', 'product')
+            ->where('target_id', $product->id)
+            ->selectRaw('COUNT(*) as total_count, COALESCE(AVG(rating), 0) as avg_rating')
+            ->first();
+
+        $totalCount = (int) ($reviewStats->total_count ?? 0);
+        $avgRating = $totalCount > 0 ? (float) round($reviewStats->avg_rating ?? 0, 1) : 0.0;
+
+        $product->total_reviews = $totalCount;
+        $product->rating_avg = $avgRating;
         $product->reviews = $reviews;
 
         return $this->respondSuccess($product);
     }
 
-    /**
-     * Create product listing (Seller).
-     */
     /**
      * Create product listing (Seller).
      */
@@ -251,7 +260,7 @@ class CommerceController extends Controller
             'quality_tier' => $request->input('quality_tier', 'new'),
             'images' => $images,
             'is_active' => true,
-            'rating_avg' => 5.0,
+            'rating_avg' => 0.0,
             'total_reviews' => 0,
         ]);
 
@@ -395,17 +404,56 @@ class CommerceController extends Controller
      */
     public function createReview(Request $request): JsonResponse
     {
+        $user = $this->resolveUser($request);
+        if (!$user) {
+            return $this->respondError('UNAUTHORIZED', 'Authentication required to post a review', null, 401);
+        }
+
+        $targetType = strtolower((string) $request->input('target_type', 'product'));
+        $targetId = (string) ($request->input('target_id') ?? $request->input('product_id') ?? '');
+        $rating = max(1, min(5, (int) $request->input('rating', 5)));
+        $comment = trim((string) ($request->input('comment') ?? $request->input('review_text') ?? ''));
+
+        if (empty($targetId)) {
+            return $this->respondError('VALIDATION_ERROR', 'Target ID is required', null, 422);
+        }
+
         $review = Review::create([
             'id' => (string) Str::uuid(),
-            'user_id' => (string) Str::uuid(),
-            'target_type' => $request->input('target_type', 'product'),
-            'target_id' => $request->input('target_id', 'p_1'),
-            'rating' => (int) $request->input('rating', 5),
-            'comment' => $request->input('comment', 'Excellent quality and verified seller!'),
+            'user_id' => $user->id,
+            'target_type' => $targetType,
+            'target_id' => $targetId,
+            'rating' => $rating,
+            'comment' => $comment,
             'images' => $request->input('images', []),
         ]);
 
-        return $this->respondSuccess($review, [], 201);
+        // Recompute real-time rating and total reviews for target in PostgreSQL
+        if ($targetType === 'product') {
+            $product = Product::find($targetId);
+            if ($product) {
+                $stats = Review::where('target_type', 'product')
+                    ->where('target_id', $product->id)
+                    ->selectRaw('COUNT(*) as total, COALESCE(AVG(rating), 0) as avg')
+                    ->first();
+                $product->total_reviews = (int) ($stats->total ?? 0);
+                $product->rating_avg = (float) round($stats->avg ?? 0, 1);
+                $product->save();
+            }
+        } elseif ($targetType === 'store') {
+            $store = Store::find($targetId);
+            if ($store) {
+                $stats = Review::where('target_type', 'store')
+                    ->where('target_id', $store->id)
+                    ->selectRaw('COUNT(*) as total, COALESCE(AVG(rating), 0) as avg')
+                    ->first();
+                $store->total_reviews = (int) ($stats->total ?? 0);
+                $store->rating_avg = (float) round($stats->avg ?? 0, 1);
+                $store->save();
+            }
+        }
+
+        return $this->respondSuccess($review->load('user:id,full_name,avatar_url'), [], 201);
     }
 
     /**
@@ -413,13 +461,14 @@ class CommerceController extends Controller
      */
     public function getReviews(string $type, string $id): JsonResponse
     {
-        $reviews = Review::where('target_type', strtolower($type))
+        $reviews = Review::with('user:id,full_name,avatar_url')
+            ->where('target_type', strtolower($type))
             ->where('target_id', $id)
             ->latest()
-            ->take(15)
+            ->take(30)
             ->get();
 
-        return $this->respondPaginated($reviews, false, null, 15);
+        return $this->respondPaginated($reviews, false, null, count($reviews));
     }
 
     /**

@@ -328,13 +328,13 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
             <View style={styles.telemetryGrid}>
               <View style={[styles.telemetryBox, { backgroundColor: isDark ? colors.neutral[800] : colors.neutral[100] }]}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                  <Ionicons name="star" size={14} color={colors.accent[500]} />
+                  <Ionicons name={storeInfo.rating_avg > 0 ? 'star' : 'star-outline'} size={14} color={colors.accent[500]} />
                   <Text variant="bodyMedium" bold>
-                    {storeInfo.rating_avg > 0 ? storeInfo.rating_avg.toFixed(1) : '5.0'}
+                    {storeInfo.rating_avg > 0 ? storeInfo.rating_avg.toFixed(1) : 'New'}
                   </Text>
                 </View>
                 <Text variant="caption" secondary style={{ fontSize: 11, marginTop: 2 }}>
-                  {storeInfo.total_reviews} Reviews
+                  {storeInfo.total_reviews} {storeInfo.total_reviews === 1 ? 'Review' : 'Reviews'}
                 </Text>
               </View>
 
@@ -511,9 +511,9 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
 
                       <View style={styles.productFooterRow}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-                          <Ionicons name="star" size={12} color={colors.accent[500]} />
+                          <Ionicons name={(prod.rating_avg ?? 0) > 0 ? 'star' : 'star-outline'} size={12} color={colors.accent[500]} />
                           <Text variant="caption" bold>
-                            {prod.rating_avg}
+                            {(prod.rating_avg ?? 0) > 0 ? Number(prod.rating_avg).toFixed(1) : 'New'}
                           </Text>
                         </View>
                         <TouchableOpacity
@@ -599,9 +599,9 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
 
                       <View style={styles.productFooterRow}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-                          <Ionicons name="star" size={12} color={colors.accent[500]} />
+                          <Ionicons name={(prod.rating_avg ?? 0) > 0 ? 'star' : 'star-outline'} size={12} color={colors.accent[500]} />
                           <Text variant="caption" bold>
-                            {prod.rating_avg}
+                            {(prod.rating_avg ?? 0) > 0 ? Number(prod.rating_avg).toFixed(1) : 'New'}
                           </Text>
                         </View>
                         <TouchableOpacity
@@ -639,20 +639,20 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
                 <Card style={styles.ratingSummaryCard}>
                   <View style={styles.ratingLeftCol}>
                     <Text style={styles.bigRatingText}>
-                      {storeInfo.rating_avg ? storeInfo.rating_avg.toFixed(1) : '5.0'}
+                      {storeInfo.rating_avg > 0 ? storeInfo.rating_avg.toFixed(1) : 'New'}
                     </Text>
                     <View style={{ flexDirection: 'row', gap: 2, marginVertical: 4 }}>
                       {[1, 2, 3, 4, 5].map((star) => (
                         <Ionicons
                           key={star}
-                          name={star <= Math.round(storeInfo.rating_avg || 5) ? 'star' : 'star-outline'}
+                          name={storeInfo.rating_avg > 0 && star <= Math.round(storeInfo.rating_avg) ? 'star' : 'star-outline'}
                           size={16}
                           color={colors.accent[500]}
                         />
                       ))}
                     </View>
                     <Text variant="caption" secondary>
-                      {storeReviews.length} Verified Reviews
+                      {storeReviews.length} Verified {storeReviews.length === 1 ? 'Review' : 'Reviews'}
                     </Text>
                   </View>
                 </Card>
@@ -661,22 +661,31 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
                   {storeReviews.map((rev, idx) => (
                     <Card key={rev.id || idx} style={styles.reviewCard}>
                       <View style={styles.reviewHeader}>
-                        <View style={[styles.reviewerAvatar, { backgroundColor: colors.primary[500], justifyContent: 'center', alignItems: 'center' }]}>
-                          <Text variant="caption" bold color="#FFFFFF">
-                            {(rev.author_name || rev.user_name || 'B').charAt(0).toUpperCase()}
-                          </Text>
+                        <View style={[styles.reviewerAvatar, { backgroundColor: colors.primary[500], justifyContent: 'center', alignItems: 'center', overflow: 'hidden' }]}>
+                          {rev.user?.avatar_url ? (
+                            <Image source={{ uri: rev.user.avatar_url }} style={{ width: '100%', height: '100%' }} />
+                          ) : (
+                            <Text variant="caption" bold color="#FFFFFF">
+                              {(rev.user?.full_name || rev.author_name || rev.user_name || 'B').charAt(0).toUpperCase()}
+                            </Text>
+                          )}
                         </View>
                         <View style={{ flex: 1, marginLeft: spacing.sm }}>
                           <Text variant="bodyMedium" bold>
-                            {rev.author_name || rev.user_name || 'Verified Buyer'}
+                            {rev.user?.full_name || rev.author_name || rev.user_name || 'Verified Customer'}
                           </Text>
                           <Text variant="caption" secondary>
                             {rev.created_at ? new Date(rev.created_at).toLocaleDateString() : 'Recent'} • Verified Escrow Purchase
                           </Text>
                         </View>
                         <View style={{ flexDirection: 'row', gap: 2 }}>
-                          {[...Array(Math.min(5, rev.rating || 5))].map((_, i) => (
-                            <Ionicons key={i} name="star" size={14} color={colors.accent[500]} />
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Ionicons
+                              key={star}
+                              name={star <= (rev.rating || 5) ? 'star' : 'star-outline'}
+                              size={14}
+                              color={colors.accent[500]}
+                            />
                           ))}
                         </View>
                       </View>
