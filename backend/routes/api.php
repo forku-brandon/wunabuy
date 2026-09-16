@@ -125,13 +125,20 @@ Route::prefix('v1')->group(function () {
 
     // ─── WALLET & PAYMENTS GATEWAY ───
     Route::get('/wallet', [WalletController::class, 'getWallet']);
+    Route::get('/wallet/balance', [WalletController::class, 'getBalance']);          // lightweight poll
     Route::post('/wallet/fund', [WalletController::class, 'fund']);
     Route::post('/wallet/withdraw', [WalletController::class, 'withdraw']);
     Route::get('/wallet/transactions', [WalletController::class, 'getTransactions']);
     Route::get('/wallet/transactions/{id}/status', [WalletController::class, 'checkTransactionStatus']);
-    Route::post('/payments/charge', [WalletController::class, 'chargePayment']);
-    Route::post('/checkout/pay', [WalletController::class, 'chargePayment']);
-    Route::get('/payments/verify/{ref}', [WalletController::class, 'verifyPayment']);
+    Route::post('/payments/charge', [WalletController::class, 'fund']);              // alias
+    Route::post('/checkout/pay', [WalletController::class, 'fund']);                 // alias
+    Route::get('/payments/verify/{ref}', [WalletController::class, 'checkTransactionStatus']);
+
+    // ─── PAYMENT GATEWAY WEBHOOKS ───
+    // MTN MoMo async callback — configured in MTN Developer Portal as callback URL
+    Route::post('/wallet/webhook/mtn', [WalletController::class, 'webhookMtn']);
+    // Orange Money async callback — configured as notif_url in payment initiation
+    Route::post('/wallet/webhook/orange', [WalletController::class, 'webhookOrange']);
 
     // ─── STAFF PORTAL (7 DEPARTMENTS) ───
     Route::post('/staff/auth/request-otp', [StaffPortalController::class, 'requestOTP']);

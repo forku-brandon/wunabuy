@@ -1,7 +1,14 @@
 # Wunabuy — Frontend Technical Specification
-### Version 3.7 | September 15, 2026
+### Version 3.9 | September 16, 2026
 
-> **Resolved Decisions (September 15, 2026 - v3.7):**
+> **Resolved Decisions (September 16, 2026 - v3.9):**
+> - **Live Financial Transactions Engine**: `walletService.ts` fully rebuilt — `getBalance()` lightweight poll endpoint, `pollTransactionStatus()` async gateway poller, `calculateOrderBreakdown()` / `calculateWithdrawalFee()` / `calculateSellerNet()` fee helpers that mirror backend `config/payment.php` exactly. No hardcoded rates.
+> - **CheckoutPaymentScreen Real Math Breakdown**: Added `PAYMENT BREAKDOWN` card showing Products Subtotal, Delivery Fee, Total Payable, and escrow protection note with seller net payout (after 3.5% commission) — visible before buyer confirms payment.
+> - **INSUFFICIENT_FUNDS Error Surfacing**: Backend now returns structured error message when buyer wallet has insufficient balance. Frontend catches this, displays exact shortfall amount, and auto-navigates to WalletScreen after 2.5s.
+> - **Lightweight Balance API**: `GET /wallet/balance` added for fast real-time polls in checkout. Uses this instead of the heavier `GET /wallet` endpoint.
+> - **Payment Gateway Stub Architecture**: `MtnMomoGateway`, `OrangeMoneyGateway`, and `InternalEscrowGateway` created on backend. All stubs behind `stub_mode=true` flag — no mock data in frontend; all wallet math is 100% real DB operations.
+
+> **Resolved Decisions (September 15, 2026 - v3.7):****
 > - **Unified Media Normalization & Zero Broken Images (`imageUtils.ts`)**: Built centralized mobile image resolution utility handling full URL formatting, relative paths (`/uploads/...`, `/storage/...`), and dynamic host substitution for `localhost:8000` / `127.0.0.1:8000` across `ProductCard.tsx`, `ProductDetailScreen.tsx`, `HomeScreen.tsx`, `AddEditProductScreen.tsx`, `EditStoreProfileScreen.tsx`, and `Avatar.tsx`.
 > - **Universal Avatar & Profile Picture Architecture**: Web Staff Portal features 0ms optimistic local preview using HTML5 `FileReader` (`readAsDataURL`), active upload spinners, automatic server sync to `POST /api/v1/staff/profile/avatar`, and Unsplash fallback error protection. Mobile app integrates native device photo picking and multi-part upload to `POST /api/v1/user/avatar` across Buyer, Seller Store, and Transporter profiles.
 > - **Vite Reverse Proxy Static Asset Routing (`vite.config.ts`)**: Configured dev server reverse proxies for `/uploads` and `/storage` pointing to `http://127.0.0.1:8000`, ensuring zero-CORS same-origin image serving across all local LAN Wi-Fi IP addresses without browser security blocks.
@@ -1456,4 +1463,75 @@ Production deployment must be blocked if any critical quality gate fails.
 This version of the Wunabuy Frontend Technical Specification represents a production-ready engineering baseline for the company (v1.9). It establishes the design principles, technical architecture, operational expectations, security posture, quality gates, and governance needed for deployment and launch readiness.
 
 ---
-**End of Document (v1.9)**
+
+## Financial Transactions Engine — Frontend Architecture (v3.9)
+
+### WalletService API Reference
+
+#### `WalletService.getWallet()` — Full wallet with fee info
+Returns `WalletMetrics` including `fee_info` (rates, caps, minimums from backend config).
+
+#### `WalletService.getBalance()` — Lightweight balance poll
+Fast endpoint for real-time balance checks. Returns `WalletBalance` only.
+**Use in:** `CheckoutPaymentScreen`, post-transaction refresh, quick polling.
+
+#### `WalletService.fundWallet(payload)` — MoMo top-up
+Payload: `{ amount, provider: 'mtn'|'orange', phone }`
+Returns `FundResponse` with `status: 'pending'|'completed'` and `dial_code`.
+
+#### `WalletService.withdraw(payload)` — Withdrawal payout
+Payload: `{ amount, provider, phone }`
+Returns `WithdrawResponse` with `fee`, `net_amount`, `new_balance`.
+
+#### `WalletService.pollTransactionStatus(reference, maxAttempts?, intervalMs?)` — Async polling
+Polls `/wallet/transactions/{ref}/status` until `completed|failed|pending_approval`.
+Default: 12 attempts at 5-second intervals (60-second total timeout).
+
+### Fee Helper Functions (mirrors backend config/payment.php exactly)
+
+```typescript
+import {
+  calculateOrderBreakdown,    // returns { subtotal, deliveryFee, commission, sellerNet, total }
+  calculateWithdrawalFee,     // min(500, amount × 0.015)
+  calculateNetWithdrawal,     // amount − fee
+  calculatePlatformCommission,// subtotal × 0.035
+  calculateSellerNet,         // subtotal − commission
+} from '../../services/api/walletService';
+```
+
+### CheckoutPaymentScreen — Financial Breakdown Card
+
+The new `PAYMENT BREAKDOWN` card is displayed above the total amount card and shows:
+
+```
+┌─────────────────────────────────────────────────────┐
+│  PAYMENT BREAKDOWN                                  │
+│  Products Subtotal       185,000 XAF               │
+│  Delivery Fee              1,500 XAF               │
+│  ─────────────────────────────────────────────      │
+│  Total Payable           186,500 XAF               │
+│                                                     │
+│  🛡 Funds held in escrow. Seller receives           │
+│     178,525 XAF after 3.5% platform fee.           │
+└─────────────────────────────────────────────────────┘
+```
+
+### INSUFFICIENT_FUNDS Error Flow
+
+1. Buyer taps "Pay from Wallet"
+2. Frontend pre-flight check: `walletBalance < totalAmount` → shows shortfall message
+3. If frontend check passes but backend rejects: error message surfaced from API response
+4. Auto-navigate to `BuyerWallet` screen after 2.5 seconds if error contains "Insufficient wallet balance"
+
+### Security Patterns (Frontend)
+
+| Pattern | Implementation |
+|---|---|
+| Pre-flight check | Client-side `walletBalance >= totalAmount` before order creation |
+| Backend error surfacing | `err?.response?.data?.message` displayed verbatim to user |
+| Balance refresh | `getBalance()` called after every fund/withdraw/order |
+| Async MoMo wait | `pollTransactionStatus()` instead of fixed `setTimeout` |
+| Checkout math | `calculateOrderBreakdown()` from walletService — no inline arithmetic |
+
+---
+**End of Document (v3.9)**

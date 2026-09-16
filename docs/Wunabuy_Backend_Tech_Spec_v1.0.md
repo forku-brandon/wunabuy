@@ -1,9 +1,9 @@
 # Wunabuy — Backend Technical Specification & API Contracts
 
-**Document Version:** 3.7 (Universal Media Normalization, High-Performance Indexing & Database Scale Architecture)  
-**Date:** September 15, 2026  
+**Document Version:** 3.9 (Live Financial Transactions Engine — Payment Gateway Architecture, MTN MoMo & Orange Money Integration, Escrow Security Hardening)  
+**Date:** September 16, 2026  
 **Status:** Approved / In Production Use  
-**Companion Documents:** Wunabuy SRS v3.7, Wunabuy PRD v3.7, Wunabuy Frontend Tech Spec v3.7  
+**Companion Documents:** Wunabuy SRS v3.9, Wunabuy PRD v3.9, Wunabuy Frontend Tech Spec v3.9, Wunabuy API Contract v3.9  
 **Framework:** Laravel 13 (PHP 8.3+)  
 **Frontend Monorepo Targets:** `wunabuy-mobile` (Expo SDK 51+), `staff-portal` (Vite + React TS), `@wunabuy/api-client`, `@wunabuy/types`, `@wunabuy/utils`
 
@@ -1555,4 +1555,84 @@ The `adverts` table powers dynamic marketing campaigns across mobile and web:
 **Product Manager:** _Agemo Technologies Product Lead_  
 
 ---
-**[End of Backend Technical Specification & API Contracts v3.7]**
+
+## 20. Payment Gateway Architecture & Live Financial Transactions Engine (v3.9)
+
+> **Added:** September 16, 2026
+
+### 20.1 Service Architecture
+
+```
+App\Contracts\PaymentGatewayInterface   (Contract)
+        │
+        ├── App\Contracts\GatewayResponse    (Immutable value object — all provider responses)
+        │
+        ├── App\Services\Gateways\MtnMomoGateway        (stub_mode=true by default)
+        ├── App\Services\Gateways\OrangeMoneyGateway     (stub_mode=true by default)
+        └── App\Services\Gateways\InternalEscrowGateway (ALWAYS LIVE — DB only)
+
+App\Services\PaymentService   (Orchestrator — routes to correct gateway)
+App\Services\EscrowService    (Escrow lifecycle — lock/release/freeze/adjudicate)
+App\Http\Controllers\Api\WalletController  (HTTP layer — all wallet endpoints)
+```
+
+### 20.2 Canonical Fee Formulas
+
+All fee rates are configured in `config/payment.php` driven by `.env`. Zero hardcodes.
+
+```
+Platform Commission = subtotal × ESCROW_COMMISSION_RATE    (default 3.5%)
+Seller Payout       = subtotal − commission                (default 96.5%)
+Transporter Payout  = delivery_fee × 100%                 (no deduction)
+Withdrawal Fee      = min(PAYOUT_FEE_CAP, amount × PAYOUT_FEE_RATE)  (default min(500, 1.5%))
+Net Withdrawal      = amount − withdrawal_fee
+```
+
+### 20.3 EscrowService.lockEscrow() — Security Fix
+
+Previous behaviour (removed): Automatically topped up buyer wallet when balance was insufficient.
+
+Current behaviour: Throws `RuntimeException` with `INSUFFICIENT_FUNDS` code. Buyer must top up manually.
+
+```php
+// REMOVED (security risk):
+if ($wallet->balance_available < $amount) {
+    $wallet->balance_available += $amount; // NEVER DO THIS
+}
+
+// CURRENT (strict enforcement):
+if ($available < $amount) {
+    throw new RuntimeException("Insufficient wallet balance...");
+}
+```
+
+### 20.4 New Routes (v3.9)
+
+| Method | Route | Handler | Description |
+|---|---|---|---|
+| `GET` | `/api/v1/wallet/balance` | `WalletController@getBalance` | Lightweight balance poll |
+| `POST` | `/api/v1/wallet/webhook/mtn` | `WalletController@webhookMtn` | MTN MoMo async callback |
+| `POST` | `/api/v1/wallet/webhook/orange` | `WalletController@webhookOrange` | Orange Money async callback |
+
+### 20.5 Gateway Activation Checklist
+
+When payment licences are obtained, activate each gateway by:
+1. Filling credentials in `.env` (`MTN_MOMO_API_KEY`, `MTN_MOMO_API_SECRET`, etc.)
+2. Setting `MTN_MOMO_STUB_MODE=false` in `.env`
+3. Uncommenting `// TODO:` blocks in `MtnMomoGateway.php` / `OrangeMoneyGateway.php`
+4. Configuring webhook URLs in the respective developer portals
+
+No business logic changes required — gateway interface contract guarantees compatibility.
+
+### 20.6 Security Hardening Applied
+
+- Row-level `lockForUpdate()` on ALL wallet mutations
+- `DB::transaction()` wrapping all financial operations
+- Unique `reference` constraint prevents double-processing
+- HMAC signature validation on webhook endpoints (ready for live keys)
+- Registration bonus enforced as non-withdrawable at service layer
+- Large payouts (`>= 100,000 XAF`) flagged as `pending_approval` for staff review
+- All audit entries written to `audit_logs` with actor, IP, and financial details
+
+---
+**[End of Backend Technical Specification & API Contracts v3.9]**

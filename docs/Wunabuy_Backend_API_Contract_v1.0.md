@@ -1,12 +1,12 @@
 # Wunabuy Backend API Specification & Integration Contract v1.0
 
-**Document Version:** 3.8 (KYC Document Inspection Suite, Dispute Photographic Evidence Arbitration, Permanent Media Localization Engine)  
-**Date:** September 15, 2026  
+**Document Version:** 3.9 (Live Financial Transactions Engine — Payment Gateway Architecture, New Wallet Routes, Escrow Security Hardening, MTN MoMo & Orange Money Integration)  
+**Date:** September 16, 2026  
 **Target Audience:** Backend Engineering Team (Laravel 13 / PostgreSQL / Redis / Sanctum)  
 **Standard:** RESTful JSON API + WebSocket Real-Time Telemetry  
 **Currency Standard:** Central African CFA Franc (`XAF` / `FCFA`)  
 **Locale Default:** French / English Cameroon (`+237` E.164 phone numbers)  
-**Document Status:** 🟢 **APPROVED & SYNCHRONIZED WITH MOBILE APP & STAFF PORTAL v3.8**
+**Document Status:** 🟢 **APPROVED & SYNCHRONIZED WITH MOBILE APP & STAFF PORTAL v3.9**
 
 ---
 
@@ -1784,3 +1784,183 @@ CREATE TABLE wallets (
 }
 ```
 
+---
+
+## 20. Payment Gateway Architecture & Live Financial Transactions (v3.9)
+
+> **Added:** September 16, 2026 — Live Financial Transactions Engine
+
+### 20.1 Architecture Overview
+
+Wunabuy's payment layer is built on a **clean gateway abstraction pattern**. All payment providers implement a common `PaymentGatewayInterface`, ensuring zero business-logic changes when switching or activating gateways.
+
+```
+[Buyer Checkout / Wallet Top-Up]
+          │
+          ▼
+  PaymentService.gateway($provider)
+          │
+          ├── 'mtn'    → MtnMomoGateway    (stub_mode=true until licensed)
+          ├── 'orange' → OrangeMoneyGateway (stub_mode=true until licensed)
+          └── 'escrow' → InternalEscrowGateway (ALWAYS LIVE — no external API)
+
+[Internal Escrow Flow]
+  EscrowService.lockEscrow()    → buyer.balance_available   ↓   buyer.balance_escrow_locked ↑
+  EscrowService.releaseEscrow() → buyer.balance_escrow_locked ↓  seller.balance_available ↑  transporter.balance_available ↑
+```
+
+### 20.2 Financial Fee Formula (Canonical)
+
+All fee calculations across backend, mobile, and staff portal MUST use these exact formulas:
+
+| Metric | Formula | Default |
+|---|---|---|
+| Platform Commission | `subtotal × ESCROW_COMMISSION_RATE` | 3.5% of subtotal |
+| Seller Payout | `subtotal − commission` | 96.5% of subtotal |
+| Transporter Payout | `delivery_fee` (100%) | Full delivery fee |
+| Withdrawal Fee | `min(PAYOUT_FEE_CAP, amount × PAYOUT_FEE_RATE)` | min(500 XAF, 1.5%) |
+| Net Withdrawal | `amount − withdrawal_fee` | Amount minus fee |
+
+> ⚠️ All rates are driven by `config/payment.php` → `.env`. Never hardcode in business logic.
+
+### 20.3 New API Endpoints (v3.9)
+
+#### `GET /wallet/balance` — Lightweight Balance Poll
+Returns only balance fields for fast real-time refresh. Use instead of `GET /wallet` in checkout screens.
+
+**Response `200 OK`:**
+```json
+{
+  "success": true,
+  "data": {
+    "balance_available": 45000,
+    "balance_escrow_locked": 18500,
+    "balance_withdrawable": 44900,
+    "currency": "XAF",
+    "timestamp": "2026-09-16T06:30:00Z"
+  }
+}
+```
+
+#### `POST /wallet/webhook/mtn` — MTN MoMo Async Callback
+Receives payment confirmation from MTN MoMo after async USSD authorization.
+- **Header:** `X-MTN-Signature: <hmac-sha256-of-body>`
+- **Body:** MTN MoMo webhook payload (see MTN Developer Portal docs)
+- **Response:** Always `200 OK` with `{"received": true}`
+
+#### `POST /wallet/webhook/orange` — Orange Money Async Callback
+Receives payment confirmation from Orange Money after checkout authorization.
+- **Header:** `X-Orange-Signature` or `merchant_key` in body
+- **Body:** Orange Money webhook payload
+- **Response:** Always `200 OK` with `{"received": true}`
+
+#### Updated `GET /wallet` — Fee Info Added
+Response now includes `fee_info` object:
+```json
+{
+  "success": true,
+  "data": {
+    "wallet_id": "uuid",
+    "currency": "XAF",
+    "balance_available": 45000,
+    "balance_escrow_locked": 18500,
+    "balance_total": 63500,
+    "registration_bonus": 100,
+    "balance_withdrawable": 44900,
+    "is_active": true,
+    "last_updated_at": "2026-09-16T06:30:00Z",
+    "fee_info": {
+      "payout_fee_rate": 0.015,
+      "payout_fee_cap_xaf": 500,
+      "platform_commission": 0.035,
+      "min_withdrawal_xaf": 100,
+      "min_deposit_xaf": 100
+    }
+  }
+}
+```
+
+### 20.4 New Error Codes (v3.9)
+
+| Error Code | HTTP | Trigger |
+|---|---|---|
+| `INSUFFICIENT_FUNDS` | `422` | Buyer wallet balance < order total when attempting escrow lock. Never auto-credits. |
+| `WITHDRAWAL_ERROR` | `422` | Withdrawal failed — insufficient withdrawable balance, below minimum, or gateway error. |
+| `PAYMENT_ERROR` | `422` | Generic gateway failure (network error, provider rejection). |
+
+**`INSUFFICIENT_FUNDS` Example Response:**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "WITHDRAWAL_ERROR",
+    "message": "Insufficient wallet balance. Required: 18,500 XAF. Available: 12,000 XAF. Shortfall: 6,500 XAF. Please top up your wallet before placing this order.",
+    "details": null
+  }
+}
+```
+
+### 20.5 Escrow Lifecycle State Machine
+
+```
+[Order Created]
+      │
+      ▼
+payment_status: 'pending'
+      │  lockEscrow() — buyer balance deducted, escrow_locked incremented
+      ▼
+payment_status: 'escrow_locked'
+      │
+      ├── [Buyer confirms receipt] → releaseEscrow() → payment_status: 'released'
+      │       seller credited (subtotal − 3.5%)
+      │       transporter credited (delivery_fee, 100%)
+      │
+      ├── [Dispute raised]        → freezeEscrow()  → payment_status: 'frozen'
+      │       staff adjudicates  → BUYER_REFUND | SELLER_RELEASE | SPLIT_50_50
+      │
+      └── [Order cancelled]       → refundEscrow()  → payment_status: 'refunded'
+              buyer balance_available restored
+```
+
+### 20.6 Payment Gateway Activation Guide
+
+When MTN or Orange Money licences are obtained:
+
+**Step 1:** Add credentials to `backend/.env`:
+```env
+MTN_MOMO_API_KEY=<from-mtn-developer-portal>
+MTN_MOMO_API_SECRET=<from-mtn-developer-portal>
+MTN_MOMO_SUBSCRIPTION_KEY=<from-mtn-developer-portal>
+MTN_MOMO_TARGET_ENV=production
+MTN_MOMO_STUB_MODE=false
+```
+
+**Step 2:** In `MtnMomoGateway.php`, uncomment the `// TODO:` blocks for `initiatePush()`, `initiatePull()`, and `getAccessToken()`.
+
+**Step 3:** Configure the webhook URL in MTN Developer Portal:
+```
+Callback URL: https://api.wunabuy.com/api/v1/wallet/webhook/mtn
+```
+
+**Step 4:** Same process for Orange Money (`OrangeMoneyGateway.php` + `webhookOrange` route).
+
+> ✅ No business logic changes needed. The gateway interface ensures full backward compatibility.
+
+### 20.7 Security Measures
+
+| Layer | Measure |
+|---|---|
+| **Database** | `lockForUpdate()` row-level lock on all wallet mutations |
+| **Database** | All wallet mutations wrapped in `DB::transaction()` |
+| **Database** | Unique `reference` index prevents duplicate processing |
+| **API** | Balance preflight check before escrow lock — never auto-credits |
+| **API** | Withdrawal: non-withdrawable registration bonus enforced |
+| **API** | Webhook HMAC-SHA256 signature validation (activated with live gateway) |
+| **Audit** | Every financial operation writes to `audit_logs` table |
+| **Config** | All API keys in `.env` only — zero hardcodes in source code |
+| **Code** | All fee rates as named config constants — single source of truth |
+
+---
+
+*Document Version bumped to **3.9** — Payment Gateway Architecture & Live Financial Transactions Engine*
+*Updated: September 16, 2026*

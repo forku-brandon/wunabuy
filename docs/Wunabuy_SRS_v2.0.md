@@ -1,10 +1,43 @@
 # Software Requirements Specification (SRS)
 # Wunabuy — Multi-Sided E-Commerce & Web Staff Operations Platform
 
-**Document Version:** 3.8 (KYC Document Inspection Suite, Dispute Photographic Evidence Arbitration, Permanent Media Localization Engine)  
-**Date:** September 15, 2026  
+**Document Version:** 3.9 (Live Financial Transactions Engine, Escrow Safety, Modular Payment Gateways MTN MoMo & Orange Money, Real-Time Ledger Arithmetic)  
+**Date:** September 16, 2026  
 **Status:** Approved / In Production Use  
-**Companion Documents:** Wunabuy PRD v3.8, Wunabuy Frontend Tech Spec v3.8, Wunabuy Backend Tech Spec v3.8, Wunabuy Backend API Contract v3.8  
+**Companion Documents:** Wunabuy PRD v3.9, Wunabuy Frontend Tech Spec v3.9, Wunabuy Backend Tech Spec v3.9, Wunabuy Backend API Contract v3.9  
+
+---
+
+## 💳 Live Financial Transactions Engine, Escrow Safety & Modular Gateways (September 16, 2026 - v3.9)
+
+- **Real-Time Financial Transactions & Mathematical Integrity**:
+  - **Atomic Dual-Entry Ledger**: All wallet mutations (deposits, purchases, escrow locks, deliveries, withdrawals, and dispute adjudications) execute within serialized PostgreSQL database transactions with row-level locks (`lockForUpdate()`), preventing race conditions, balance inconsistencies, and double debits.
+  - **Real-Time Balance Recalculation**:
+    - **Buyer Checkout**: Immediate buyer wallet deduction with balance floor check (`balance >= total_amount`); simultaneously locks equivalent total in escrow ledger (`escrows.amount`).
+    - **Transporter Verification & Delivery**: Upon verified delivery completion, escrow funds are unlocked and mathematically apportioned in real-time:
+      - Platform Commission: Exactly 3.5% of product subtotal credited to platform revenue account.
+      - Transporter Delivery Fee: 100% of delivery fee credited to transporter wallet.
+      - Seller Net Payout: `Subtotal - 3.5% Commission` credited to seller store wallet.
+    - **Deposits & Top-Ups**: Wallet balance incremented immediately upon gateway payment confirmation with fee accounting.
+    - **Withdrawals / Payouts**: Real-time balance debit with telecom operator fee calculations (1.5% fee capped at 5,000 XAF with 25 XAF minimum).
+
+- **Modular Payment Gateway Architecture & Production Pluggability**:
+  - **Standardized Gateway Contract (`PaymentGatewayInterface`)**:
+    - Defines unified methods: `collect(array $payload)`, `disburse(array $payload)`, `verify(string $reference)`, `parseWebhook(Request $request)`.
+  - **Modular Gateway Providers (`app/Services/Gateways/`)**:
+    - `MtnMomoGateway`: Integrates MTN MoMo API v1.0 specifications (`POST /collection/v1_0/requesttopay`, `POST /disbursement/v1_0/transfer`) with OAuth Bearer token caching and X-Reference-Id idempotency headers.
+    - `OrangeMoneyGateway`: Implements Orange Money WebPay and MP-Payment REST APIs with OAuth2 basic client authorization.
+    - `DirectEscrowGateway`: In-memory and internal ledger gateway for direct wallet-to-escrow operations.
+    - `PaymentGatewayFactory`: Dynamic resolution of active gateway based on provider string (`mtn_momo`, `orange_money`, `direct_escrow`), reading settings from `config/payment.php`.
+  - **Plug-and-Play Production Slots**:
+    - Explicit environment variable slots defined in `.env.example` and `config/payment.php` (`MTN_MOMO_USER_ID`, `MTN_MOMO_API_KEY`, `MTN_MOMO_SUBSCRIPTION_KEY`, `ORANGE_MONEY_CLIENT_ID`, `ORANGE_MONEY_CLIENT_SECRET`, `ORANGE_MONEY_MERCHANT_KEY`).
+    - Gateway drivers automatically operate in robust **Sandbox Simulation Mode** until production API licenses and credentials are provided, permitting full end-to-end testing without external API rejections.
+  - **Phone Number Operator Resolution**:
+    - Automatic operator prefix resolution for Cameroon telecoms: MTN Cameroon (`+237 67X`, `68X`, `650`-`654`) and Orange Cameroon (`+237 69X`, `655`-`659`).
+
+- **Frontend & Mobile Real-Time Harmony (`walletService.ts`, `CheckoutPaymentScreen.tsx`)**:
+  - **Dedicated Wallet Operations**: Full typed API client for wallet metrics (`getWallet()`), real-time fee calculation (`calculateFees(amount, provider)`), deposit initiation (`deposit(amount, provider, phone)`), withdrawal requests (`withdraw(amount, provider, phone)`), and direct escrow checkout (`payWithEscrow(orderId)`).
+  - **Instant UI Response**: Dynamic fee preview display, balance warnings, and zero-latency transaction updates upon successful payment processing.
 
 ---
 

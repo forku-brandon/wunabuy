@@ -9,74 +9,104 @@ use App\Models\User;
 use App\Models\Wallet;
 use App\Models\WalletTransaction;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use RuntimeException;
 
 class EscrowService
 {
     /**
-     * Commission rate taken by Wunabuy platform on successful escrow completion (3.5%).
+     * Commission rate — sourced from config so it can be changed without code deployment.
+     * @see config/payment.php
      */
-    public const COMMISSION_RATE = 0.035;
+    public static function commissionRate(): float
+    {
+        return (float) config('payment.escrow.commission_rate', 0.035);
+    }
 
     /**
      * Lock funds from buyer available balance into escrow locked balance.
+     *
+     * SECURITY: If the buyer has insufficient funds this throws RuntimeException
+     * with INSUFFICIENT_FUNDS — it NEVER silently credits the wallet.
+     * The buyer must top up their wallet first via the payment gateway.
+     *
+     * @throws RuntimeException if buyer wallet balance is insufficient
      */
     public function lockEscrow(Order $order, float $amount, ?string $reference = null): Order
     {
         return DB::transaction(function () use ($order, $amount, $reference) {
-            $buyer = User::findOrFail($order->customer_id);
+            $buyer  = User::findOrFail($order->customer_id);
             $wallet = Wallet::where('user_id', $buyer->id)->lockForUpdate()->first();
+
             if (!$wallet) {
+                // Auto-create wallet with zero balance — do NOT pre-credit it
                 $wallet = Wallet::create([
-                    'user_id' => $buyer->id,
-                    'currency' => 'XAF',
-                    'balance_available' => 0,
-                    'balance_escrow_locked' => 0,
+                    'user_id'              => $buyer->id,
+                    'currency'             => 'XAF',
+                    'balance_available'    => 0,
+                    'balance_escrow_locked'=> 0,
+                    'registration_bonus'   => (int) config('payment.escrow.registration_bonus', 100),
                 ]);
                 $wallet = Wallet::where('id', $wallet->id)->lockForUpdate()->first();
             }
 
-            if ((float) $wallet->balance_available < $amount) {
-                // If insufficient balance in local wallet, simulate instantaneous escrow funding via payment gateway
-                $wallet->balance_available = (float) $wallet->balance_available + $amount;
-                $wallet->save();
-
-                WalletTransaction::create([
-                    'wallet_id' => $wallet->id,
-                    'type' => 'credit',
-                    'amount' => $amount,
-                    'currency' => 'XAF',
-                    'provider' => 'mtn',
-                    'status' => 'completed',
-                    'reference' => $reference ?? ('MOMO-ESCROW-' . Str::upper(Str::random(8))),
-                    'description' => "Instant Escrow Funding for Order #{$order->order_code}",
+            // ── STRICT BALANCE ENFORCEMENT ──────────────────────────────────
+            // Never silently top up. Buyer MUST have sufficient balance.
+            $available = (float) $wallet->balance_available;
+            if ($available < $amount) {
+                $shortfall = round($amount - $available, 2);
+                Log::warning('[EscrowService] Escrow lock rejected — insufficient funds', [
+                    'order_id'   => $order->id,
+                    'required'   => $amount,
+                    'available'  => $available,
+                    'shortfall'  => $shortfall,
+                    'buyer_id'   => $buyer->id,
                 ]);
+                throw new RuntimeException(
+                    "Insufficient wallet balance. " .
+                    "Required: " . number_format($amount) . " XAF. " .
+                    "Available: " . number_format($available) . " XAF. " .
+                    "Shortfall: " . number_format($shortfall) . " XAF. " .
+                    "Please top up your wallet before placing this order."
+                );
             }
+            // ────────────────────────────────────────────────────────────────
 
-            // Transfer from available to escrow locked, consuming registration bonus if applicable
+            // Consume registration bonus if applicable (non-withdrawable spend)
             $bonus = (float) ($wallet->registration_bonus ?? 0);
             if ($bonus > 0) {
                 $bonusSpent = min($bonus, $amount);
                 $wallet->registration_bonus = max(0, $bonus - $bonusSpent);
             }
-            $wallet->balance_available = (float) $wallet->balance_available - $amount;
+
+            // Atomic: deduct available, add to escrow locked
+            $wallet->balance_available     = $available - $amount;
             $wallet->balance_escrow_locked = (float) $wallet->balance_escrow_locked + $amount;
             $wallet->save();
 
+            $escrowRef = $reference ?? ('ESC-LOCK-' . $order->order_code);
+
             WalletTransaction::create([
-                'wallet_id' => $wallet->id,
-                'type' => 'escrow_lock',
-                'amount' => -$amount,
-                'currency' => 'XAF',
-                'provider' => 'escrow',
-                'status' => 'completed',
-                'reference' => 'ESC-LOCK-' . $order->order_code,
-                'description' => "Escrow Locked for Order #{$order->order_code}",
+                'wallet_id'   => $wallet->id,
+                'type'        => 'escrow_lock',
+                'amount'      => -$amount,
+                'currency'    => 'XAF',
+                'provider'    => 'escrow',
+                'status'      => 'completed',
+                'reference'   => $escrowRef,
+                'description' => "Escrow Locked for Order #{$order->order_code} — held until delivery confirmed",
             ]);
 
             $order->payment_status = 'escrow_locked';
             $order->save();
+
+            Log::info('[EscrowService] Escrow lock successful', [
+                'order_id'  => $order->id,
+                'amount'    => $amount,
+                'buyer_id'  => $buyer->id,
+                'reference' => $escrowRef,
+            ]);
 
             return $order;
         });
@@ -89,8 +119,17 @@ class EscrowService
     public function releaseEscrow(Order $order, ?string $releasedBy = null): array
     {
         return DB::transaction(function () use ($order, $releasedBy) {
+            // Idempotent — safe to call multiple times
             if ($order->payment_status === 'released') {
                 return ['success' => true, 'message' => 'Escrow already released'];
+            }
+
+            // Verify order is in a releasable state
+            $releasableStatuses = ['delivered', 'in_transit', 'completed', 'disputed'];
+            if (!in_array($order->status, $releasableStatuses) && $releasedBy !== 'System Automation / Buyer Confirmation') {
+                throw new RuntimeException(
+                    "Order #{$order->order_code} is not in a releasable state (current: {$order->status})."
+                );
             }
 
             // Acquire lock on buyer wallet and release escrow lock
@@ -102,11 +141,16 @@ class EscrowService
                 $buyerWallet->save();
             }
 
-            // Calculate fees and splits (integer rounding for XAF currency)
-            $subtotal = (float) $order->subtotal;
-            $commission = (float) round($subtotal * self::COMMISSION_RATE);
-            $sellerNet = max(0, $subtotal - $commission);
-            $deliveryFee = (float) $order->delivery_fee;
+            // ── Fee calculation — all rates sourced from config ────────────
+            // Formula:
+            //   commission  = subtotal × COMMISSION_RATE (default 3.5%)
+            //   seller_net  = subtotal − commission
+            //   transporter = delivery_fee (100%, no commission deducted)
+            // ─────────────────────────────────────────────────────────────────
+            $subtotal    = (float) $order->subtotal;
+            $commission  = (float) round($subtotal * self::commissionRate());
+            $sellerNet   = max(0, $subtotal - $commission);
+            $deliveryFee = (float) ($order->delivery_fee ?? config('payment.escrow.default_delivery_fee', 1500));
 
             // Credit Seller Wallet with row lock
             $store = $order->store;

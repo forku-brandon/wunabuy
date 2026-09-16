@@ -10,7 +10,7 @@ import { useAuthStore } from '../../stores/auth.store';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
 import { OrdersService } from '../../services/api';
-import { WalletService } from '../../services/api/walletService';
+import { WalletService, calculateOrderBreakdown } from '../../services/api/walletService';
 
 export const CheckoutPaymentScreen = ({ route, navigation }: any) => {
   const {
@@ -26,24 +26,26 @@ export const CheckoutPaymentScreen = ({ route, navigation }: any) => {
   const cartItems = useCartStore((state) => state.items);
   const cartStoreId = useCartStore((state) => state.storeId);
 
-  const totalAmount = subtotal + deliveryFee;
+  // ── Financial breakdown (mirrors backend EscrowService math exactly) ──────
+  const breakdown = calculateOrderBreakdown(subtotal, deliveryFee);
+  const totalAmount = breakdown.total;
 
-  // Live dynamic available wallet balance
+  // Live dynamic available wallet balance (lightweight poll)
   const [walletBalance, setWalletBalance] = useState(0);
+  const [walletEscrow, setWalletEscrow] = useState(0);
   const isWalletSufficient = walletBalance >= totalAmount;
 
   React.useEffect(() => {
     let isMounted = true;
-    WalletService.getWallet()
-      .then((w) => {
-        if (isMounted && w && typeof w.balance_available === 'number') {
-          setWalletBalance(w.balance_available);
+    WalletService.getBalance()
+      .then((b) => {
+        if (isMounted) {
+          setWalletBalance(b.balance_available ?? 0);
+          setWalletEscrow(b.balance_escrow_locked ?? 0);
         }
       })
       .catch(() => {});
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, []);
 
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>(PaymentMethod.MOMO);
@@ -63,6 +65,17 @@ export const CheckoutPaymentScreen = ({ route, navigation }: any) => {
 
       if (!cartItems || cartItems.length === 0) {
         setError('Your cart is empty. Please add items before checkout.');
+        setIsProcessing(false);
+        return;
+      }
+
+      // Pre-flight balance check for wallet payments
+      if (selectedMethod === PaymentMethod.WALLET && !isWalletSufficient) {
+        const shortfall = totalAmount - walletBalance;
+        setError(
+          `Insufficient wallet balance. You need ${formatXAF(shortfall)} more. ` +
+          `Please top up your wallet first.`
+        );
         setIsProcessing(false);
         return;
       }
@@ -98,7 +111,7 @@ export const CheckoutPaymentScreen = ({ route, navigation }: any) => {
           `USSD Push sent to ${formatPhone(accountPhone)}. Please dial ${ussdCode} or enter PIN to authorize ${formatXAF(totalAmount)}.`
         );
 
-        const result = await OrdersService.payCheckout({
+        await OrdersService.payCheckout({
           order_id: createdOrderId,
           method: 'momo',
           provider: provider === 'MTN' ? 'mtn' : 'orange',
@@ -110,7 +123,7 @@ export const CheckoutPaymentScreen = ({ route, navigation }: any) => {
           clearCart();
           setIsProcessing(false);
           navigation.navigate('OrderSuccess', {
-            orderCode: orderCode || result.payment_ref,
+            orderCode,
             totalAmount,
             provider,
             phone: accountPhone,
@@ -121,23 +134,20 @@ export const CheckoutPaymentScreen = ({ route, navigation }: any) => {
           });
         }, 3000);
       } else if (selectedMethod === PaymentMethod.WALLET) {
-        if (!isWalletSufficient) {
-          setError(`Insufficient wallet balance. Please top up your wallet.`);
-          setIsProcessing(false);
-          return;
-        }
-
-        const result = await OrdersService.payCheckout({
+        await OrdersService.payCheckout({
           order_id: createdOrderId,
           method: 'wallet',
           amount: totalAmount,
         });
 
+        // Refresh balance after escrow lock
+        WalletService.getBalance().then(b => setWalletBalance(b.balance_available)).catch(() => {});
+
         setTimeout(() => {
           clearCart();
           setIsProcessing(false);
           navigation.navigate('OrderSuccess', {
-            orderCode: orderCode || result.payment_ref,
+            orderCode,
             totalAmount,
             provider: 'Wunabuy Wallet',
             phone: user?.phone ?? accountPhone,
@@ -150,7 +160,13 @@ export const CheckoutPaymentScreen = ({ route, navigation }: any) => {
       }
     } catch (err: any) {
       setIsProcessing(false);
-      setError(err?.message || 'Payment processing failed. Please try again.');
+      // Surface backend error messages (INSUFFICIENT_FUNDS, etc.) directly
+      const msg = err?.response?.data?.message || err?.message || 'Payment processing failed. Please try again.';
+      setError(msg);
+      // If escrow lock failed due to insufficient funds, navigate user to wallet
+      if (msg.includes('Insufficient wallet balance') || msg.includes('Shortfall')) {
+        setTimeout(() => navigation.navigate('BuyerWallet'), 2500);
+      }
     }
   };
 
@@ -173,6 +189,32 @@ export const CheckoutPaymentScreen = ({ route, navigation }: any) => {
           Escrow Payment
         </Text>
       </View>
+
+      {/* Financial Breakdown Card */}
+      <Card style={[styles.breakdownCard, { backgroundColor: isDark ? '#1E293B' : '#F8FAFC', borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#E2E8F0' }]}>
+        <Text variant="caption" bold color={theme.textSecondary} style={{ marginBottom: spacing.xs, letterSpacing: 0.5 }}>
+          PAYMENT BREAKDOWN
+        </Text>
+        <View style={styles.breakdownRow}>
+          <Text variant="bodyMedium" color={theme.textSecondary}>Products Subtotal</Text>
+          <Text variant="bodyMedium" bold>{formatXAF(breakdown.subtotal)}</Text>
+        </View>
+        <View style={styles.breakdownRow}>
+          <Text variant="bodyMedium" color={theme.textSecondary}>Delivery Fee</Text>
+          <Text variant="bodyMedium" bold>{formatXAF(breakdown.deliveryFee)}</Text>
+        </View>
+        <View style={[styles.breakdownDivider, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#E2E8F0' }]} />
+        <View style={styles.breakdownRow}>
+          <Text variant="bodyLarge" bold>Total Payable</Text>
+          <Text variant="bodyLarge" bold color={colors.primary[600]}>{formatXAF(breakdown.total)}</Text>
+        </View>
+        <View style={[styles.escrowInfoRow, { backgroundColor: isDark ? 'rgba(16,185,129,0.1)' : '#ECFDF5', borderColor: '#10B981' }]}>
+          <Ionicons name="shield-checkmark" size={13} color="#10B981" style={{ marginRight: 5 }} />
+          <Text variant="caption" color="#059669" style={{ flex: 1, lineHeight: 16 }}>
+            Full amount held in escrow until you confirm delivery. Seller receives {formatXAF(breakdown.sellerNet)} after 3.5% platform fee.
+          </Text>
+        </View>
+      </Card>
 
       {/* Payable Amount Summary */}
       <Card style={styles.amountCard}>
@@ -584,5 +626,29 @@ const styles = StyleSheet.create({
   payBtn: {
     marginTop: spacing.xs,
     marginBottom: spacing.xl,
+  },
+  breakdownCard: {
+    borderRadius: borderRadius.xl,
+    borderWidth: 1,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+  },
+  breakdownRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
+  },
+  breakdownDivider: {
+    height: 1,
+    marginVertical: spacing.xs,
+  },
+  escrowInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    padding: spacing.xs,
+    marginTop: spacing.xs,
   },
 });
