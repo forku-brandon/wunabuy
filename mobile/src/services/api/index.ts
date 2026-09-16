@@ -9,4 +9,5 @@ export * from './buyerService';
 export * from './disputesService';
 export * from './sellerService';
 export * from './transporterService';
+export * from './notificationService';
 

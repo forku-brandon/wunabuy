@@ -9,6 +9,9 @@ import { useThemeStore } from './src/stores/theme.store';
 import { useAuthStore } from './src/stores/auth.store';
 import { AuthService } from './src/services/api/authService';
 import './src/i18n'; // Initialize i18next
+import { NotificationManager } from './src/services/notifications/notificationManager';
+import { PermissionPromptModal } from './src/components/notifications/PermissionPromptModal';
+import { useNotificationStore } from './src/stores/notification.store';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -27,12 +30,42 @@ const queryClient = new QueryClient({
 const AppContent: React.FC = () => {
   const { isDark } = useThemeStore();
   const { isAuthenticated } = useAuthStore();
+  const [showPermissionModal, setShowPermissionModal] = React.useState(false);
+
+  useEffect(() => {
+    // Check if notification permission prompt has been displayed to user
+    const checkNotificationPrompt = async () => {
+      const prompted = await NotificationManager.hasPromptedPermission();
+      if (!prompted) {
+        // Small delay for smooth transition after initial render
+        setTimeout(() => {
+          setShowPermissionModal(true);
+        }, 1200);
+      }
+    };
+    checkNotificationPrompt();
+  }, []);
 
   useEffect(() => {
     if (isAuthenticated) {
       AuthService.getCurrentUser().catch(() => {});
+      // Sync push token with backend and fetch initial unread count
+      NotificationManager.registerDeviceToken().catch(() => {});
+      useNotificationStore.getState().fetchUnreadCount().catch(() => {});
     }
   }, [isAuthenticated]);
+
+  useEffect(() => {
+    // Listen for incoming notifications in foreground
+    const sub = NotificationManager.addNotificationReceivedListener(() => {
+      useNotificationStore.getState().incrementUnread();
+      useNotificationStore.getState().fetchNotifications();
+    });
+
+    return () => {
+      sub.remove();
+    };
+  }, []);
 
   useEffect(() => {
     if (Platform.OS === 'android') {
@@ -44,7 +77,15 @@ const AppContent: React.FC = () => {
     }
   }, [isDark]);
 
-  return <RootNavigator />;
+  return (
+    <>
+      <RootNavigator />
+      <PermissionPromptModal
+        visible={showPermissionModal}
+        onDismiss={() => setShowPermissionModal(false)}
+      />
+    </>
+  );
 };
 
 export default function App() {

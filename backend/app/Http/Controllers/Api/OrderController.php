@@ -207,6 +207,27 @@ class OrderController extends Controller
             // Lock Escrow via Service
             $this->escrowService->lockEscrow($order, (float) $order->total);
 
+            // Real-Time Notification: Notify Buyer
+            \App\Services\NotificationService::sendToUser(
+                $order->customer_id,
+                'Order Placed! 🛍️',
+                "Your order #{$order->order_code} for " . number_format($order->total, 0, ',', ' ') . " XAF is secured in escrow and awaiting store confirmation.",
+                'order_status',
+                ['order_id' => $order->id, 'order_code' => $order->order_code, 'screen' => 'OrderTracking']
+            );
+
+            // Real-Time Notification: Notify Seller
+            $store = \App\Models\Store::find($order->store_id);
+            if ($store && $store->user_id) {
+                \App\Services\NotificationService::sendToUser(
+                    $store->user_id,
+                    'New Customer Order! 🔔',
+                    "New order #{$order->order_code} received (" . count($validatedItems) . " items, " . number_format($order->total, 0, ',', ' ') . " XAF). Please prepare the parcel.",
+                    'order_status',
+                    ['order_id' => $order->id, 'order_code' => $order->order_code, 'screen' => 'SellerOrders']
+                );
+            }
+
             return $this->respondSuccess($order->load(['items', 'store']), [], 201);
         });
     }

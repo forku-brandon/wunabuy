@@ -35,6 +35,7 @@ import { TransactionHistoryScreen } from '../screens/common/TransactionHistorySc
 import { StoreAnalyticsScreen } from '../screens/seller/StoreAnalyticsScreen';
 import { StoreDetailScreen } from '../screens/buyer/StoreDetailScreen';
 import { EditStoreProfileScreen } from '../screens/seller/EditStoreProfileScreen';
+import { NotificationsScreen } from '../screens/common/NotificationsScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -107,6 +108,7 @@ export const RootNavigator = () => {
             <Stack.Screen name="StoreAnalytics" component={StoreAnalyticsScreen} />
             <Stack.Screen name="StoreDetail" component={StoreDetailScreen} />
             <Stack.Screen name="EditStoreProfile" component={EditStoreProfileScreen} />
+            <Stack.Screen name="Notifications" component={NotificationsScreen} />
           </>
         ) : activeRole === UserRole.TRANSPORTER ? (
           <>
@@ -127,6 +129,7 @@ export const RootNavigator = () => {
             <Stack.Screen name="StoreAnalytics" component={StoreAnalyticsScreen} />
             <Stack.Screen name="StoreDetail" component={StoreDetailScreen} />
             <Stack.Screen name="EditStoreProfile" component={EditStoreProfileScreen} />
+            <Stack.Screen name="Notifications" component={NotificationsScreen} />
           </>
         ) : (
           <>
@@ -153,6 +156,7 @@ export const RootNavigator = () => {
             <Stack.Screen name="StoreAnalytics" component={StoreAnalyticsScreen} />
             <Stack.Screen name="StoreDetail" component={StoreDetailScreen} />
             <Stack.Screen name="EditStoreProfile" component={EditStoreProfileScreen} />
+            <Stack.Screen name="Notifications" component={NotificationsScreen} />
           </>
         )}
 

@@ -58,6 +58,7 @@ export type RootStackParamList = {
   StoreAnalytics: undefined;
   StoreDetail: { storeId?: string; storeName?: string; store?: any } | undefined;
   EditStoreProfile: undefined;
+  Notifications: { filter?: string } | undefined;
 };
 
 

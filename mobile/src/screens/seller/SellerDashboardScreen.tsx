@@ -25,6 +25,7 @@ import { useThemeStore } from '../../stores/theme.store';
 import { useSellerStore } from '../../stores/seller.store';
 import { useAuthStore } from '../../stores/auth.store';
 import { SellerService, KYCService, AuthService } from '../../services/api';
+import { useNotificationStore } from '../../stores/notification.store';
 
 export const SellerDashboardScreen = ({ navigation }: any) => {
   const { theme, isDark } = useThemeStore();
@@ -39,6 +40,7 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
     setProducts,
     setOrders,
   } = useSellerStore();
+  const unreadCount = useNotificationStore((state) => state.unreadCount);
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   // Hidden by default (null); only displays when staff explicitly approves verification
@@ -106,6 +108,7 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
   useFocusEffect(
     useCallback(() => {
       loadDashboardData();
+      useNotificationStore.getState().fetchUnreadCount();
     }, [loadDashboardData])
   );
 
@@ -159,14 +162,14 @@ export const SellerDashboardScreen = ({ navigation }: any) => {
           <TouchableOpacity
             activeOpacity={0.7}
             style={[styles.iconButton, { backgroundColor: isDark ? colors.neutral[800] : colors.neutral[100] }]}
-            onPress={() => navigation.navigate('SellerOrders')}
+            onPress={() => navigation.navigate('Notifications')}
           >
             <Ionicons
               name="notifications-outline"
               size={20}
               color={theme.text}
             />
-            {pendingAcceptanceCount > 0 && (
+            {(unreadCount > 0 || pendingAcceptanceCount > 0) && (
               <View style={styles.notificationDot} />
             )}
           </TouchableOpacity>

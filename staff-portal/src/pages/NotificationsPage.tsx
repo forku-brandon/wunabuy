@@ -27,6 +27,7 @@ import {
   Clock,
   Radio,
 } from 'lucide-react';
+import { ComposeBroadcastModal } from '../components/notifications/ComposeBroadcastModal';
 
 export const NotificationsPage: React.FC = () => {
   const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification, clearRead } = useNotifications();
@@ -35,6 +36,7 @@ export const NotificationsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'all' | 'unread' | 'CRITICAL' | 'PAYOUT' | 'KYC_DISPUTE'>('all');
   const [selectedPriority, setSelectedPriority] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isComposeOpen, setIsComposeOpen] = useState(false);
 
   // Filtered notifications
   const filteredNotifications = useMemo(() => {
@@ -121,8 +123,12 @@ export const NotificationsPage: React.FC = () => {
       subtitle="Centralized operational stream of security alerts, escrow payout authorizations, and compliance verifications"
       action={
         <div className="flex items-center space-x-2">
+          <Button variant="primary" size="sm" onClick={() => setIsComposeOpen(true)}>
+            <Radio className="w-3.5 h-3.5 mr-1" />
+            <span>Compose Broadcast</span>
+          </Button>
           {unreadCount > 0 && (
-            <Button variant="primary" size="sm" onClick={markAllAsRead}>
+            <Button variant="outline" size="sm" onClick={markAllAsRead}>
               <CheckCheck className="w-3.5 h-3.5 mr-1" />
               <span>Mark All Read</span>
             </Button>
@@ -376,6 +382,11 @@ export const NotificationsPage: React.FC = () => {
           })
         )}
       </div>
+
+      <ComposeBroadcastModal
+        isOpen={isComposeOpen}
+        onClose={() => setIsComposeOpen(false)}
+      />
     </PageContainer>
   );
 };

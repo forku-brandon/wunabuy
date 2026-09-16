@@ -78,6 +78,11 @@ class User extends Authenticatable
         return $this->hasMany(Notification::class);
     }
 
+    public function deviceTokens()
+    {
+        return $this->hasMany(UserDeviceToken::class);
+    }
+
     public function addresses()
     {
         return $this->hasMany(Address::class);

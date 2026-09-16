@@ -242,6 +242,37 @@ class EscrowService
                 ],
             ]);
 
+            // Real-Time Notification: Notify Buyer
+            NotificationService::sendToUser(
+                $order->customer_id,
+                'Order Completed! 🎉',
+                "Your order #{$order->order_code} has been completed and verified. Thank you for using Wunabuy Escrow!",
+                'order_status',
+                ['order_id' => $order->id, 'order_code' => $order->order_code, 'screen' => 'BuyerOrders']
+            );
+
+            // Real-Time Notification: Notify Seller
+            if ($sellerWallet && $sellerWallet->user_id) {
+                NotificationService::sendToUser(
+                    $sellerWallet->user_id,
+                    'Escrow Funds Released! 💰',
+                    number_format($sellerNet, 0, ',', ' ') . " XAF has been credited to your store wallet for order #{$order->order_code}.",
+                    'escrow',
+                    ['order_id' => $order->id, 'order_code' => $order->order_code, 'screen' => 'SellerWallet']
+                );
+            }
+
+            // Real-Time Notification: Notify Transporter
+            if (isset($transporterUser) && $transporterUser) {
+                NotificationService::sendToUser(
+                    $transporterUser->id,
+                    'Delivery Fee Credited! 💵',
+                    number_format($deliveryFee, 0, ',', ' ') . " XAF delivery fee for order #{$order->order_code} has been credited to your driver wallet.",
+                    'escrow',
+                    ['order_id' => $order->id, 'order_code' => $order->order_code, 'screen' => 'TransporterEarnings']
+                );
+            }
+
             return [
                 'success' => true,
                 'order' => $order,
@@ -445,6 +476,15 @@ class EscrowService
                     'reason' => $reason,
                 ],
             ]);
+
+            // Real-Time Notification: Notify Buyer
+            NotificationService::sendToUser(
+                $order->customer_id,
+                'Escrow Refund Processed 🔄',
+                number_format($refundAmount, 0, ',', ' ') . " XAF for order #{$order->order_code} has been refunded to your wallet.",
+                'escrow',
+                ['order_id' => $order->id, 'order_code' => $order->order_code, 'screen' => 'BuyerWallet']
+            );
 
             return [
                 'success' => true,

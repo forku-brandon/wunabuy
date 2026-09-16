@@ -14,10 +14,12 @@ import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
 import { useAuthStore } from '../../stores/auth.store';
 import { AuthService, TransporterService } from '../../services/api';
+import { useNotificationStore } from '../../stores/notification.store';
 
 export const TransporterJobsScreen = ({ navigation }: any) => {
   const { theme, isDark } = useThemeStore();
   const insets = useSafeAreaInsets();
+  const unreadCount = useNotificationStore((state) => state.unreadCount);
   const [jobs, setJobs] = useState<DeliveryJob[]>([]);
   const [activeFilter, setActiveFilter] = useState('all');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -50,7 +52,7 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
-    await loadJobs();
+    await Promise.all([loadJobs(), useNotificationStore.getState().fetchUnreadCount()]);
     setRefreshing(false);
   }, [loadJobs]);
 
@@ -167,10 +169,11 @@ export const TransporterJobsScreen = ({ navigation }: any) => {
 
             <TouchableOpacity
               activeOpacity={0.8}
-              onPress={() => navigation.navigate('NotificationSettings')}
+              onPress={() => navigation.navigate('Notifications')}
               style={[styles.iconButton, { backgroundColor: isDark ? colors.neutral[800] : colors.neutral[100] }]}
             >
               <Ionicons name="notifications-outline" size={20} color={theme.text} />
+              {unreadCount > 0 && <View style={styles.notificationDot} />}
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -766,6 +769,15 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  notificationDot: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#EF4444',
   },
   subtitleStack: {
     marginBottom: spacing.xs + 2,

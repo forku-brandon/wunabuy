@@ -145,6 +145,27 @@ class TransporterController extends Controller
         }
         $order->save();
 
+        // Real-Time Notification: Notify Buyer
+        \App\Services\NotificationService::sendToUser(
+            $order->customer_id,
+            'Transporter Assigned! 🛵',
+            "Rider {$user->full_name} has claimed your delivery for order #{$order->order_code} and is heading to the store.",
+            'delivery',
+            ['order_id' => $order->id, 'order_code' => $order->order_code, 'screen' => 'OrderTracking']
+        );
+
+        // Real-Time Notification: Notify Seller
+        $store = \App\Models\Store::find($order->store_id);
+        if ($store && $store->user_id) {
+            \App\Services\NotificationService::sendToUser(
+                $store->user_id,
+                'Rider En Route for Pickup 🛵',
+                "Transporter {$user->full_name} is heading to your store to pick up order #{$order->order_code}.",
+                'delivery',
+                ['order_id' => $order->id, 'order_code' => $order->order_code, 'screen' => 'SellerOrders']
+            );
+        }
+
         return $this->respondSuccess([
             'accepted' => true,
             'job_id' => $id,
@@ -386,6 +407,27 @@ class TransporterController extends Controller
         $order->status = 'delivered';
         $order->delivered_at = $order->delivered_at ?? now();
         $order->save();
+
+        // Real-Time Notification: Notify Buyer
+        \App\Services\NotificationService::sendToUser(
+            $order->customer_id,
+            'Package Delivered! 🎁',
+            "Your package for order #{$order->order_code} has arrived. Please confirm receipt in the app to complete the transaction.",
+            'delivery',
+            ['order_id' => $order->id, 'order_code' => $order->order_code, 'screen' => 'BuyerOrders']
+        );
+
+        // Real-Time Notification: Notify Seller
+        $store = \App\Models\Store::find($order->store_id);
+        if ($store && $store->user_id) {
+            \App\Services\NotificationService::sendToUser(
+                $store->user_id,
+                'Order Delivered to Customer 📦',
+                "Order #{$order->order_code} has been delivered by transporter {$user->full_name}.",
+                'delivery',
+                ['order_id' => $order->id, 'order_code' => $order->order_code, 'screen' => 'SellerOrders']
+            );
+        }
 
         return $this->respondSuccess([
             'delivery_id' => $id,

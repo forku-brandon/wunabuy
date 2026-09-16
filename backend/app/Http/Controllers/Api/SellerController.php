@@ -263,6 +263,15 @@ class SellerController extends Controller
         $order->status = 'preparing';
         $order->save();
 
+        // Real-Time Notification: Notify Buyer that seller is preparing order
+        \App\Services\NotificationService::sendToUser(
+            $order->customer_id,
+            'Order Confirmed & Preparing 📦',
+            "The store has accepted your order #{$order->order_code} and is preparing items.",
+            'order_status',
+            ['order_id' => $order->id, 'order_code' => $order->order_code, 'screen' => 'OrderTracking']
+        );
+
         return $this->respondSuccess(['accepted' => true, 'order_id' => $id, 'status' => 'preparing']);
     }
 
@@ -303,6 +312,15 @@ class SellerController extends Controller
             $this->escrowService->refundEscrow($order, 'Seller Declined: ' . $request->input('reason', 'Out of stock'));
         }
 
+        // Real-Time Notification: Notify Buyer of cancellation & refund
+        \App\Services\NotificationService::sendToUser(
+            $order->customer_id,
+            'Order Declined & Refunded ⚠️',
+            "Order #{$order->order_code} could not be fulfilled by the merchant. Funds have been returned to your wallet.",
+            'order_status',
+            ['order_id' => $order->id, 'order_code' => $order->order_code, 'screen' => 'BuyerOrders']
+        );
+
         return $this->respondSuccess(['declined' => true, 'order_id' => $id, 'status' => 'cancelled']);
     }
 
@@ -331,6 +349,24 @@ class SellerController extends Controller
         $order->save();
 
         $qrData = $this->logisticsService->generateParcelQR($order);
+
+        // Real-Time Notification: Notify Buyer
+        \App\Services\NotificationService::sendToUser(
+            $order->customer_id,
+            'Package Ready for Pickup 🚚',
+            "Your package for order #{$order->order_code} is ready. A delivery transporter is being matched.",
+            'order_status',
+            ['order_id' => $order->id, 'order_code' => $order->order_code, 'screen' => 'OrderTracking']
+        );
+
+        // Real-Time Notification: Broadcast to active Transporters
+        \App\Services\NotificationService::broadcast(
+            'transporter',
+            'New Delivery Dispatch! 🛵',
+            "Pickup job at {$store->name} (" . number_format($order->delivery_fee, 0, ',', ' ') . " XAF). Tap to accept.",
+            'delivery',
+            ['order_id' => $order->id, 'order_code' => $order->order_code, 'screen' => 'TransporterJobs']
+        );
 
         return $this->respondSuccess([
             'ready' => true,
@@ -376,6 +412,15 @@ class SellerController extends Controller
 
         $order->status = 'in_transit';
         $order->save();
+
+        // Real-Time Notification: Notify Buyer that order is in transit
+        \App\Services\NotificationService::sendToUser(
+            $order->customer_id,
+            'Order In Transit 🚚',
+            "Your package for order #{$order->order_code} was picked up and is on the way to your delivery address.",
+            'delivery',
+            ['order_id' => $order->id, 'order_code' => $order->order_code, 'screen' => 'OrderTracking']
+        );
 
         return $this->respondSuccess([
             'handed_over' => true,

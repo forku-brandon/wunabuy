@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Models\WalletTransaction;
 use App\Services\EscrowService;
 use App\Services\KYCService;
+use App\Services\NotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -1298,5 +1299,120 @@ class StaffPortalController extends Controller
             'avatar_url' => $savedUrl,
             'relative_url' => $savedFileName ? '/uploads/avatars/' . $savedFileName : null,
         ], ['message' => 'Staff profile avatar updated successfully']);
+    }
+
+    /**
+     * Broadcast notification to mobile app users from Staff Portal.
+     */
+    public function broadcastNotification(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'message' => 'required|string|max:1000',
+            'target_audience' => 'required|string|in:all,buyer,seller,transporter,buyers,sellers,transporters',
+            'type' => 'nullable|string|in:marketing,promo,system,alert,general',
+            'deep_link' => 'nullable|string|max:255',
+        ]);
+
+        $audience = $validated['target_audience'];
+        $roleMap = [
+            'buyers' => 'buyer',
+            'sellers' => 'seller',
+            'transporters' => 'transporter',
+        ];
+        $role = $roleMap[$audience] ?? $audience;
+
+        $count = NotificationService::broadcast(
+            $role,
+            $validated['title'],
+            $validated['message'],
+            $validated['type'] ?? 'marketing',
+            [
+                'deep_link' => $validated['deep_link'] ?? null,
+                'broadcast_by' => 'Staff Operations',
+            ]
+        );
+
+        AuditLog::create([
+            'id' => (string) Str::uuid(),
+            'action' => 'NOTIFICATION_BROADCAST_SENT',
+            'staff_id' => 'stf_001',
+            'staff_name' => 'Marketing & Operations Staff',
+            'staff_role' => 'STAFF',
+            'department' => 'MARKETING',
+            'target_resource' => 'BROADCAST:' . strtoupper($audience),
+            'status' => 'SUCCESS',
+            'details' => [
+                'audience' => $audience,
+                'title' => $validated['title'],
+                'recipient_count' => $count,
+                'type' => $validated['type'] ?? 'marketing',
+            ],
+        ]);
+
+        return $this->respondSuccess([
+            'broadcast' => true,
+            'recipients_count' => $count,
+            'message' => "Push notification successfully broadcast to {$count} users.",
+        ]);
+    }
+
+    /**
+     * Send direct targeted notification to a single mobile user from Staff Portal.
+     */
+    public function sendDirectNotification(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'user_id' => 'nullable|string',
+            'phone' => 'nullable|string',
+            'title' => 'required|string|max:255',
+            'message' => 'required|string|max:1000',
+            'type' => 'nullable|string',
+            'deep_link' => 'nullable|string|max:255',
+        ]);
+
+        $user = null;
+        if (!empty($validated['user_id'])) {
+            $user = User::find($validated['user_id']);
+        } elseif (!empty($validated['phone'])) {
+            $user = User::where('phone', $validated['phone'])->first();
+        }
+
+        if (!$user) {
+            return $this->respondError('NOT_FOUND', 'Target user not found by ID or phone number', null, 404);
+        }
+
+        $notification = NotificationService::sendToUser(
+            $user->id,
+            $validated['title'],
+            $validated['message'],
+            $validated['type'] ?? 'info',
+            [
+                'deep_link' => $validated['deep_link'] ?? null,
+                'direct_from' => 'Staff Operations',
+            ]
+        );
+
+        AuditLog::create([
+            'id' => (string) Str::uuid(),
+            'action' => 'NOTIFICATION_DIRECT_SENT',
+            'staff_id' => 'stf_001',
+            'staff_name' => 'Support Staff',
+            'staff_role' => 'STAFF',
+            'department' => 'SUPPORT',
+            'target_resource' => 'USER:' . $user->id,
+            'status' => 'SUCCESS',
+            'details' => [
+                'user_id' => $user->id,
+                'user_name' => $user->full_name,
+                'title' => $validated['title'],
+            ],
+        ]);
+
+        return $this->respondSuccess([
+            'sent' => true,
+            'notification' => $notification,
+            'message' => "Notification successfully sent to {$user->full_name}.",
+        ]);
     }
 }

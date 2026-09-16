@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CommerceController;
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\SellerController;
 use App\Http\Controllers\Api\StaffPortalController;
@@ -189,5 +190,17 @@ Route::prefix('v1')->group(function () {
     Route::put('/staff/adverts/{id}', [StaffPortalController::class, 'updateAdvert']);
     Route::delete('/staff/adverts/{id}', [StaffPortalController::class, 'deleteAdvert']);
     Route::post('/staff/profile/avatar', [StaffPortalController::class, 'uploadAvatar']);
+    Route::post('/staff/notifications/broadcast', [StaffPortalController::class, 'broadcastNotification']);
+    Route::post('/staff/notifications/send-direct', [StaffPortalController::class, 'sendDirectNotification']);
+
+    // ─── REAL-TIME NOTIFICATIONS (MOBILE & DESKTOP) ───
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::get('/notifications/unread-count', [NotificationController::class, 'getUnreadCount']);
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+    Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead']);
+    Route::delete('/notifications/{id}', [NotificationController::class, 'destroy']);
+    Route::delete('/notifications/clear-all', [NotificationController::class, 'clearAll']);
+    Route::post('/notifications/device-token', [NotificationController::class, 'registerDeviceToken']);
+    Route::delete('/notifications/device-token', [NotificationController::class, 'removeDeviceToken']);
 
 });

@@ -24,12 +24,14 @@ import { useCartStore } from '../../stores/cart.store';
 import { useAuthStore } from '../../stores/auth.store';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
+import { useNotificationStore } from '../../stores/notification.store';
 
 export const HomeScreen = ({ navigation }: any) => {
   const { theme, isDark } = useThemeStore();
   const insets = useSafeAreaInsets();
   const { user } = useAuthStore();
   const itemCount = useCartStore((state) => state.getItemCount());
+  const unreadCount = useNotificationStore((state) => state.unreadCount);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [products, setProducts] = useState<Product[]>([]);
   const [feedData, setFeedData] = useState<HomeFeedData | null>(null);
@@ -71,6 +73,7 @@ export const HomeScreen = ({ navigation }: any) => {
   useFocusEffect(
     useCallback(() => {
       loadHomeFeed();
+      useNotificationStore.getState().fetchUnreadCount();
     }, [loadHomeFeed])
   );
 
@@ -129,14 +132,16 @@ export const HomeScreen = ({ navigation }: any) => {
           <TouchableOpacity
             activeOpacity={0.8}
             style={[styles.iconActionBtn, { backgroundColor: theme.card }]}
-            onPress={() => navigation.navigate('NotificationSettings')}
+            onPress={() => navigation.navigate('Notifications')}
           >
             <Ionicons name="notifications-outline" size={20} color={theme.text} />
-            <View style={styles.notifBadge}>
-              <Text variant="caption" bold color={colors.neutral[0]} style={styles.notifBadgeText}>
-                3
-              </Text>
-            </View>
+            {unreadCount > 0 && (
+              <View style={styles.notifBadge}>
+                <Text variant="caption" bold color={colors.neutral[0]} style={styles.notifBadgeText}>
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </Text>
+              </View>
+            )}
           </TouchableOpacity>
 
           {/* Shopping Bag Action */}
