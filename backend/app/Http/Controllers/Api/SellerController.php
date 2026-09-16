@@ -231,7 +231,7 @@ class SellerController extends Controller
                 'status' => $mappedStatus,
                 'created_at' => $order->created_at?->toIso8601String() ?? now()->toIso8601String(),
                 'acceptance_expires_at' => $order->created_at ? $order->created_at->addHours(2)->toIso8601String() : now()->addHours(2)->toIso8601String(),
-                'pickup_pin' => $order->pickup_pin ?? '84920',
+                'pickup_pin' => $order->pickup_pin ?? str_pad((string) rand(1000, 9999), 4, '0', STR_PAD_LEFT),
                 'delivery_method' => 'wunabuy_transporter',
             ];
         });
@@ -290,6 +290,18 @@ class SellerController extends Controller
         $order->status = 'cancelled';
         $order->notes = ($order->notes ?? '') . ' [Seller Declined: ' . $request->input('reason', 'Out of stock') . ']';
         $order->save();
+
+        // Harmonize inventory in real time: Restore stock for all order items
+        foreach ($order->items as $item) {
+            if ($item->product_id) {
+                Product::where('id', $item->product_id)->increment('quantity', $item->quantity);
+            }
+        }
+
+        // Refund escrow back to buyer's available balance
+        if ($order->payment_status === 'escrow_locked') {
+            $this->escrowService->refundEscrow($order, 'Seller Declined: ' . $request->input('reason', 'Out of stock'));
+        }
 
         return $this->respondSuccess(['declined' => true, 'order_id' => $id, 'status' => 'cancelled']);
     }
@@ -462,7 +474,7 @@ class SellerController extends Controller
             return $this->respondError('FORBIDDEN', 'Unauthorized: Product belongs to another store', null, 403);
         }
 
-        $newQuantity = max(0, (int) $request->input('quantity', 10));
+        $newQuantity = max(0, (int) ($request->input('quantity') ?? $request->input('stock_quantity', 10)));
         $product->quantity = $newQuantity;
         $product->save();
 
@@ -527,7 +539,7 @@ class SellerController extends Controller
         if (!$sellerUser) {
             return $this->respondError('UNAUTHORIZED', 'Authentication required', null, 401);
         }
-        $store = ($sellerUser && $sellerUser->store) ? $sellerUser->store : null;
+        $store = $this->resolveSellerStore($request, $sellerUser);
         $wallet = $sellerUser->wallet ?? null;
         $timeRange = $request->query('time_range', '7d');
 

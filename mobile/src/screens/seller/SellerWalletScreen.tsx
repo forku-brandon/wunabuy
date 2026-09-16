@@ -294,7 +294,7 @@ export const SellerWalletScreen = ({ navigation }: any) => {
             date: formatDate(t.created_at),
             amount: t.type === 'payout' || t.type === 'commission_deduction' ? -t.amount : t.amount,
             type: t.type === 'escrow_release' ? 'credit' : 'debit',
-            status: t.status,
+            status: t.status === 'pending_approval' ? 'pending' : t.status,
             reference: t.reference,
           }))}
           onViewAll={() => navigation.navigate('TransactionHistory')}

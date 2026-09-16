@@ -53,7 +53,7 @@ export interface SellerTransaction {
   id: string;
   type: 'escrow_release' | 'payout' | 'commission_deduction';
   amount: number;
-  status: 'completed' | 'pending' | 'failed';
+  status: 'completed' | 'pending' | 'failed' | 'pending_approval';
   reference: string;
   description: string;
   created_at: string;

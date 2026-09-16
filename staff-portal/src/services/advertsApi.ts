@@ -80,5 +80,28 @@ export const advertsApi = {
       method: 'DELETE',
     });
   },
+
+  /**
+   * Upload an advert visual asset directly to the backend
+   */
+  async uploadAdvertImage(fileOrBase64: File | string): Promise<{ url: string; relative_url?: string }> {
+    if (typeof fileOrBase64 === 'string') {
+      const res = await apiRequest<{ url: string; relative_url?: string }>('/upload/image', {
+        method: 'POST',
+        body: JSON.stringify({ image_base64: fileOrBase64, folder: 'adverts' }),
+      });
+      return res.data;
+    }
+
+    const formData = new FormData();
+    formData.append('image', fileOrBase64);
+    formData.append('folder', 'adverts');
+
+    const res = await apiRequest<{ url: string; relative_url?: string }>('/upload/image', {
+      method: 'POST',
+      body: formData,
+    });
+    return res.data;
+  },
 };
 

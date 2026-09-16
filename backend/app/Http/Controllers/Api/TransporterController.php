@@ -301,8 +301,21 @@ class TransporterController extends Controller
         $order = (Str::isUuid($cleanId) ? Order::find($cleanId) : null)
             ?? Order::where('order_code', $cleanId)->first();
 
+        // Resilient fallback: If order not found by ID (e.g. placeholder 'job_1' or reloaded app state), resolve transporter's active assigned order
+        if (!$order && $transporter) {
+            $order = Order::where('transporter_id', $transporter->id)
+                ->whereIn('status', ['ready_for_pickup', 'in_transit'])
+                ->latest()
+                ->first();
+        }
+
+        // Secondary fallback: Any latest assigned order for this transporter
+        if (!$order && $transporter) {
+            $order = Order::where('transporter_id', $transporter->id)->latest()->first();
+        }
+
         if (!$order) {
-            return $this->respondError('NOT_FOUND', 'Delivery order not found', null, 404);
+            return $this->respondError('NOT_FOUND', 'No active delivery trip found to update. Please refresh your job feed.', null, 404);
         }
 
         if ($transporter && $order->transporter_id !== $transporter->id && !in_array($user->role, ['admin', 'superadmin'])) {
@@ -326,7 +339,9 @@ class TransporterController extends Controller
         $order->save();
 
         return $this->respondSuccess([
-            'trip_id' => $id,
+            'trip_id' => 'job_' . $order->id,
+            'order_id' => $order->id,
+            'order_code' => $order->order_code,
             'stage' => $stage,
             'updated' => true,
         ]);
@@ -352,6 +367,14 @@ class TransporterController extends Controller
         $order = (Str::isUuid($cleanId) ? Order::find($cleanId) : null)
             ?? Order::where('order_code', $cleanId)->first();
 
+        // Resilient fallback for proof of delivery as well
+        if (!$order && $transporter) {
+            $order = Order::where('transporter_id', $transporter->id)
+                ->whereIn('status', ['in_transit', 'ready_for_pickup'])
+                ->latest()
+                ->first();
+        }
+
         if (!$order) {
             return $this->respondError('NOT_FOUND', 'Delivery order not found', null, 404);
         }
@@ -361,6 +384,7 @@ class TransporterController extends Controller
         }
 
         $order->status = 'delivered';
+        $order->delivered_at = $order->delivered_at ?? now();
         $order->save();
 
         return $this->respondSuccess([

@@ -58,13 +58,21 @@ export const TransporterActiveTripScreen = ({ route, navigation }: any) => {
   });
 
   useEffect(() => {
+    let isMounted = true;
     async function fetchTrip() {
-      const data = await TransporterService.getActiveTrip(jobId);
-      if (data) {
+      const targetId = jobId && jobId !== 'job_1' ? jobId : undefined;
+      const data = await TransporterService.getActiveTrip(targetId);
+      if (data && isMounted) {
         setTripData(data);
+        if (data.current_stage && data.current_stage >= 1 && data.current_stage <= 4) {
+          setCurrentStage(data.current_stage);
+        }
       }
     }
     fetchTrip();
+    return () => {
+      isMounted = false;
+    };
   }, [jobId]);
 
   const orderCode = tripData.order_code;
@@ -84,9 +92,12 @@ export const TransporterActiveTripScreen = ({ route, navigation }: any) => {
   const deliveryFee = tripData.delivery_fee;
   const verificationCode = tripData.verification_code;
 
+  // Resilient active job identifier (always uses real server trip ID or order code)
+  const effectiveJobId = tripData.job_id || tripData.order_code || jobId;
+
   const handleNextStage = async () => {
     if (currentStage === 1) {
-      const res = await TransporterService.updateTripStage(jobId, 2);
+      const res = await TransporterService.updateTripStage(effectiveJobId, 2);
       if (res.success) {
         setCurrentStage(2);
         setToastMessage('Arrived at store! Present your 4-digit PIN to the merchant.');
@@ -96,7 +107,7 @@ export const TransporterActiveTripScreen = ({ route, navigation }: any) => {
     } else if (currentStage === 2) {
       // Trying to advance to Stage 3 (En Route to Buyer).
       // STRICT HANDSHAKE: Backend enforces that the merchant must have confirmed the PIN first.
-      const res = await TransporterService.updateTripStage(jobId, 3);
+      const res = await TransporterService.updateTripStage(effectiveJobId, 3);
       if (res.success) {
         setCurrentStage(3);
         setToastMessage('✅ Handover confirmed! En route to buyer destination 🏠');
@@ -107,16 +118,20 @@ export const TransporterActiveTripScreen = ({ route, navigation }: any) => {
         );
       }
     } else if (currentStage === 3) {
-      const res = await TransporterService.updateTripStage(jobId, 4);
-      setCurrentStage(4);
-      setIsSignModalOpen(true);
+      const res = await TransporterService.updateTripStage(effectiveJobId, 4);
+      if (res.success) {
+        setCurrentStage(4);
+        setIsSignModalOpen(true);
+      } else {
+        Alert.alert('Stage Update Error', res.message || 'Could not advance to customer signature.');
+      }
     }
   };
 
   const handleCompleteDelivery = async (signatureData: string) => {
     setIsSignModalOpen(false);
     setToastMessage(`Delivery completed! Signature verified & ${formatXAF(deliveryFee)} credited to wallet. 💰`);
-    await TransporterService.submitProofOfDelivery(jobId, signatureData);
+    await TransporterService.submitProofOfDelivery(effectiveJobId, signatureData);
     setTimeout(() => {
       navigation.navigate('TransporterJobs');
     }, 1200);

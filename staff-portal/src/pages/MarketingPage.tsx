@@ -19,6 +19,8 @@ import {
   Trash2,
   RefreshCw,
   Pencil,
+  Upload,
+  Image as ImageIcon,
 } from 'lucide-react';
 
 interface PromoCampaignItem {
@@ -81,6 +83,66 @@ export const MarketingPage: React.FC = () => {
     sort_order: '1',
     is_active: true,
   });
+
+  // Image Upload States & Refs
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isEditingUploadingImage, setIsEditingUploadingImage] = useState(false);
+  const newFileInputRef = React.useRef<HTMLInputElement>(null);
+  const editFileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleUploadNewImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Instant local preview (0ms)
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setAdvImageUrl(reader.result);
+      }
+    };
+    reader.readAsDataURL(file);
+
+    setIsUploadingImage(true);
+    try {
+      const res = await advertsApi.uploadAdvertImage(file);
+      if (res?.url) {
+        setAdvImageUrl(res.url);
+      }
+    } catch (err) {
+      console.error('Failed to upload advert image:', err);
+    } finally {
+      setIsUploadingImage(false);
+      if (newFileInputRef.current) newFileInputRef.current.value = '';
+    }
+  };
+
+  const handleUploadEditImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Instant local preview (0ms)
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setEditForm((prev) => ({ ...prev, image_url: reader.result as string }));
+      }
+    };
+    reader.readAsDataURL(file);
+
+    setIsEditingUploadingImage(true);
+    try {
+      const res = await advertsApi.uploadAdvertImage(file);
+      if (res?.url) {
+        setEditForm((prev) => ({ ...prev, image_url: res.url }));
+      }
+    } catch (err) {
+      console.error('Failed to upload edit advert image:', err);
+    } finally {
+      setIsEditingUploadingImage(false);
+      if (editFileInputRef.current) editFileInputRef.current.value = '';
+    }
+  };
 
   // ─── VOUCHERS STATE ───
   const [campaigns, setCampaigns] = useState<PromoCampaignItem[]>(() => {
@@ -548,12 +610,12 @@ export const MarketingPage: React.FC = () => {
             activeTab === 'adverts' ? (
               <Button variant="primary" size="sm" onClick={() => setCreateAdvertModalOpen(true)}>
                 <Plus className="w-4 h-4 mr-1.5" />
-                New Advert / Partner
+                New Campaign / Advert
               </Button>
             ) : (
               <Button variant="primary" size="sm" onClick={() => setCreateVoucherModalOpen(true)}>
                 <Plus className="w-4 h-4 mr-1.5" />
-                Create Promo Voucher
+                Create Promo Campaign
               </Button>
             )
           )}
@@ -633,27 +695,41 @@ export const MarketingPage: React.FC = () => {
       {/* TAB 1: ADVERTS & PARTNERS */}
       {activeTab === 'adverts' && (
         <div className="space-y-4">
-          {/* Sub-Filters */}
-          <div className="flex items-center space-x-2 overflow-x-auto pb-1">
-            {[
-              { id: 'all', label: 'All Campaigns' },
-              { id: 'banner', label: 'Buyer Banners' },
-              { id: 'tip', label: 'Seller Growth Tips' },
-              { id: 'partner', label: 'Official Partners' },
-              { id: 'special_offer', label: 'Special Offers' },
-            ].map((f) => (
-              <button
-                key={f.id}
-                onClick={() => setAdvertTypeFilter(f.id as any)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  advertTypeFilter === f.id
-                    ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
-                }`}
+          {/* Sub-Filters & Add Campaign Action */}
+          <div className="flex flex-wrap items-center justify-between gap-3 pb-1">
+            <div className="flex items-center space-x-2 overflow-x-auto">
+              {[
+                { id: 'all', label: 'All Campaigns' },
+                { id: 'banner', label: 'Buyer Banners' },
+                { id: 'tip', label: 'Seller Growth Tips' },
+                { id: 'partner', label: 'Official Partners' },
+                { id: 'special_offer', label: 'Special Offers' },
+              ].map((f) => (
+                <button
+                  key={f.id}
+                  onClick={() => setAdvertTypeFilter(f.id as any)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    advertTypeFilter === f.id
+                      ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+
+            {canManageMarketing && (
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => setCreateAdvertModalOpen(true)}
+                className="flex items-center space-x-1.5 shadow-sm"
               >
-                {f.label}
-              </button>
-            ))}
+                <Plus className="w-4 h-4 mr-1" />
+                <span>Add New Campaign</span>
+              </Button>
+            )}
           </div>
 
           <DataTable
@@ -785,14 +861,67 @@ export const MarketingPage: React.FC = () => {
           </div>
 
           <div>
-            <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Image URL (Unsplash or CDN)</label>
+            <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+              Campaign Visual Image (Upload File) *
+            </label>
             <input
-              type="text"
-              placeholder="https://images.unsplash.com/..."
-              value={advImageUrl}
-              onChange={(e) => setAdvImageUrl(e.target.value)}
-              className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100"
+              type="file"
+              ref={newFileInputRef}
+              accept="image/*"
+              onChange={handleUploadNewImage}
+              className="hidden"
             />
+            {advImageUrl ? (
+              <div className="flex items-center space-x-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                <div className="w-16 h-16 rounded-lg overflow-hidden bg-slate-200 dark:bg-slate-700 flex-shrink-0 border border-slate-300 dark:border-slate-600">
+                  <img src={advImageUrl} alt="Preview" className="w-full h-full object-cover" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block truncate">
+                    Image Uploaded Successfully
+                  </span>
+                  <span className="text-[11px] text-teal-600 dark:text-teal-400 block truncate">
+                    {advImageUrl.startsWith('data:') ? 'Local preview ready' : advImageUrl}
+                  </span>
+                  <div className="flex items-center space-x-2 mt-2">
+                    <button
+                      type="button"
+                      onClick={() => newFileInputRef.current?.click()}
+                      className="text-xs font-semibold text-teal-600 hover:text-teal-700 underline"
+                      disabled={isUploadingImage}
+                    >
+                      Change Photo
+                    </button>
+                    <span className="text-slate-300">|</span>
+                    <button
+                      type="button"
+                      onClick={() => setAdvImageUrl('')}
+                      className="text-xs font-semibold text-rose-500 hover:text-rose-600"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div
+                onClick={() => newFileInputRef.current?.click()}
+                className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-teal-500 dark:hover:border-teal-400 rounded-xl bg-slate-50/50 dark:bg-slate-800/50 cursor-pointer transition-all"
+              >
+                {isUploadingImage ? (
+                  <div className="flex flex-col items-center">
+                    <RefreshCw className="w-6 h-6 text-teal-600 animate-spin mb-2" />
+                    <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">Uploading visual to server...</span>
+                  </div>
+                ) : (
+                  <>
+                    <Upload className="w-6 h-6 text-slate-400 mb-2" />
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Click to upload campaign image</span>
+                    <span className="text-[10px] text-slate-500">Supports PNG, JPG, WebP (Retina / Mobile optimized)</span>
+                  </>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -1002,14 +1131,67 @@ export const MarketingPage: React.FC = () => {
           </div>
 
           <div>
-            <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Image URL (Unsplash or CDN)</label>
+            <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+              Campaign Visual Image (Upload File)
+            </label>
             <input
-              type="text"
-              placeholder="https://images.unsplash.com/..."
-              value={editForm.image_url}
-              onChange={(e) => setEditForm((prev) => ({ ...prev, image_url: e.target.value }))}
-              className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100"
+              type="file"
+              ref={editFileInputRef}
+              accept="image/*"
+              onChange={handleUploadEditImage}
+              className="hidden"
             />
+            {editForm.image_url ? (
+              <div className="flex items-center space-x-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                <div className="w-16 h-16 rounded-lg overflow-hidden bg-slate-200 dark:bg-slate-700 flex-shrink-0 border border-slate-300 dark:border-slate-600">
+                  <img src={editForm.image_url} alt="Preview" className="w-full h-full object-cover" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block truncate">
+                    Campaign Image Attached
+                  </span>
+                  <span className="text-[11px] text-teal-600 dark:text-teal-400 block truncate">
+                    {editForm.image_url.startsWith('data:') ? 'Local preview ready' : editForm.image_url}
+                  </span>
+                  <div className="flex items-center space-x-2 mt-2">
+                    <button
+                      type="button"
+                      onClick={() => editFileInputRef.current?.click()}
+                      className="text-xs font-semibold text-teal-600 hover:text-teal-700 underline"
+                      disabled={isEditingUploadingImage}
+                    >
+                      Change Photo
+                    </button>
+                    <span className="text-slate-300">|</span>
+                    <button
+                      type="button"
+                      onClick={() => setEditForm((prev) => ({ ...prev, image_url: '' }))}
+                      className="text-xs font-semibold text-rose-500 hover:text-rose-600"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div
+                onClick={() => editFileInputRef.current?.click()}
+                className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-teal-500 dark:hover:border-teal-400 rounded-xl bg-slate-50/50 dark:bg-slate-800/50 cursor-pointer transition-all"
+              >
+                {isEditingUploadingImage ? (
+                  <div className="flex flex-col items-center">
+                    <RefreshCw className="w-6 h-6 text-teal-600 animate-spin mb-2" />
+                    <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">Uploading visual to server...</span>
+                  </div>
+                ) : (
+                  <>
+                    <Upload className="w-6 h-6 text-slate-400 mb-2" />
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Click to upload or replace campaign image</span>
+                    <span className="text-[10px] text-slate-500">Supports PNG, JPG, WebP (Retina / Mobile optimized)</span>
+                  </>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-3">

@@ -393,4 +393,63 @@ class EscrowService
             return $dispute;
         });
     }
+
+    /**
+     * Refund locked escrow funds back to buyer (e.g. order cancelled, declined, or unfulfilled).
+     */
+    public function refundEscrow(Order $order, ?string $reason = null): array
+    {
+        return DB::transaction(function () use ($order, $reason) {
+            if ($order->payment_status === 'refunded') {
+                return ['success' => true, 'message' => 'Escrow already refunded'];
+            }
+
+            $buyerWallet = Wallet::where('user_id', $order->customer_id)->lockForUpdate()->first();
+            $refundAmount = (float) $order->total_amount;
+
+            if ($buyerWallet && $refundAmount > 0) {
+                // Return from escrow_locked back to available balance
+                $locked = (float) $buyerWallet->balance_escrow_locked;
+                $deduct = min($locked, $refundAmount);
+                $buyerWallet->balance_escrow_locked = max(0, $locked - $deduct);
+                $buyerWallet->balance_available = (float) $buyerWallet->balance_available + $refundAmount;
+                $buyerWallet->save();
+
+                WalletTransaction::create([
+                    'wallet_id'   => $buyerWallet->id,
+                    'type'        => 'credit',
+                    'amount'      => $refundAmount,
+                    'currency'    => 'XAF',
+                    'provider'    => 'escrow',
+                    'status'      => 'completed',
+                    'reference'   => 'ESC-REF-' . $order->order_code,
+                    'description' => "Escrow Refund for Order #{$order->order_code} (" . ($reason ?? 'Order Cancelled') . ")",
+                ]);
+            }
+
+            $order->payment_status = 'refunded';
+            $order->save();
+
+            AuditLog::create([
+                'action' => 'ESCROW_REFUNDED',
+                'staff_name' => 'System / Escrow Refund',
+                'staff_role' => 'SYSTEM',
+                'department' => 'FINANCE',
+                'ip_address' => request()->ip() ?? '127.0.0.1',
+                'target_resource' => 'ORDER:' . $order->order_code,
+                'status' => 'SUCCESS',
+                'details' => [
+                    'order_id' => $order->id,
+                    'order_code' => $order->order_code,
+                    'refund_amount' => $refundAmount,
+                    'reason' => $reason,
+                ],
+            ]);
+
+            return [
+                'success' => true,
+                'refund_amount' => $refundAmount,
+            ];
+        });
+    }
 }

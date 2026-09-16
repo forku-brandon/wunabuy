@@ -223,12 +223,12 @@ class CommerceController extends Controller
             return $this->respondError('UNAUTHORIZED', 'Authentication required to create a product listing', null, 401);
         }
 
-        $store = $sellerUser->store;
+        $store = $sellerUser->store ?? Store::where('user_id', $sellerUser->id)->first();
         if (!$store) {
             $storeId = $request->input('store_id');
             if ($storeId && Str::isUuid($storeId)) {
                 $candidate = Store::find($storeId);
-                if ($candidate && $candidate->user_id === $sellerUser->id) {
+                if ($candidate && ($candidate->user_id === $sellerUser->id || in_array($sellerUser->role, ['admin', 'superadmin']))) {
                     $store = $candidate;
                 }
             }
@@ -282,14 +282,21 @@ class CommerceController extends Controller
             return $this->respondError('NOT_FOUND', 'Product not found', null, 404);
         }
 
-        $store = $sellerUser->store;
-        if ((!$store || $product->store_id !== $store->id) && !in_array($sellerUser->role, ['admin', 'superadmin'])) {
+        $store = $sellerUser->store ?? Store::where('user_id', $sellerUser->id)->first();
+        $isOwner = ($store && $product->store_id === $store->id)
+            || ($product->store && $product->store->user_id === $sellerUser->id)
+            || in_array($sellerUser->role, ['admin', 'superadmin']);
+
+        if (!$isOwner) {
             return $this->respondError('FORBIDDEN', 'Unauthorized: product belongs to another store', null, 403);
         }
 
         $data = $request->all();
         if (isset($data['stock_quantity']) && !isset($data['quantity'])) {
             $data['quantity'] = (int) $data['stock_quantity'];
+        }
+        if (isset($data['quantity'])) {
+            $data['quantity'] = max(0, (int) $data['quantity']);
         }
 
         $product->fill($data);
@@ -313,8 +320,12 @@ class CommerceController extends Controller
             return $this->respondError('NOT_FOUND', 'Product not found', null, 404);
         }
 
-        $store = $sellerUser->store;
-        if ((!$store || $product->store_id !== $store->id) && !in_array($sellerUser->role, ['admin', 'superadmin'])) {
+        $store = $sellerUser->store ?? Store::where('user_id', $sellerUser->id)->first();
+        $isOwner = ($store && $product->store_id === $store->id)
+            || ($product->store && $product->store->user_id === $sellerUser->id)
+            || in_array($sellerUser->role, ['admin', 'superadmin']);
+
+        if (!$isOwner) {
             return $this->respondError('FORBIDDEN', 'Unauthorized: product belongs to another store', null, 403);
         }
 

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Dimensions, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScreenContainer, Text, Card, Badge, Toast } from '../../components/ui';
@@ -37,23 +37,33 @@ export const StoreAnalyticsScreen = ({ navigation }: any) => {
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '1y'>('7d');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  React.useEffect(() => {
-    let isMounted = true;
-    const fetchAnalytics = async () => {
+  const fetchAnalytics = useCallback(async (isPullToRefresh = false) => {
+    if (isPullToRefresh) {
+      setRefreshing(true);
+    } else {
       setIsLoading(true);
+    }
+    try {
       const data = await SellerService.getStoreAnalytics(timeRange);
-      if (isMounted) {
-        setAnalyticsData(data);
-        setIsLoading(false);
-      }
-    };
-    fetchAnalytics();
-    return () => {
-      isMounted = false;
-    };
+      setAnalyticsData(data);
+    } catch (err) {
+      console.warn('Failed to load store analytics:', err);
+    } finally {
+      setIsLoading(false);
+      setRefreshing(false);
+    }
   }, [timeRange]);
+
+  React.useEffect(() => {
+    fetchAnalytics();
+  }, [fetchAnalytics]);
+
+  const onRefresh = useCallback(() => {
+    fetchAnalytics(true);
+  }, [fetchAnalytics]);
 
   const salesGraphData: ChartBarData[] = analyticsData?.weekly_sales && analyticsData.weekly_sales.length > 0
     ? analyticsData.weekly_sales
@@ -62,6 +72,8 @@ export const StoreAnalyticsScreen = ({ navigation }: any) => {
   const kpiData = analyticsData?.kpis;
   const totalRevenue = analyticsData?.total_revenue ?? 0;
   const growthPercentage = analyticsData?.revenue_growth_percentage ?? 0;
+  const currentAvailableBalance = analyticsData?.available_balance ?? availableBalance;
+  const currentEscrowLockedBalance = analyticsData?.escrow_locked_balance ?? escrowLockedBalance;
 
   const handleExportReport = () => {
     setToastMessage('📊 Store Analytics PDF statement downloaded!');
@@ -111,6 +123,14 @@ export const StoreAnalyticsScreen = ({ navigation }: any) => {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[colors.primary[500]]}
+            tintColor={colors.primary[500]}
+          />
+        }
         contentContainerStyle={[
           styles.scrollContent,
           { paddingBottom: Math.max(insets.bottom + spacing.xl, spacing['3xl']) },
@@ -215,7 +235,7 @@ export const StoreAnalyticsScreen = ({ navigation }: any) => {
                 Available Wallet
               </Text>
               <Text variant="bodyLarge" bold color="#FFFFFF">
-                {formatXAF(availableBalance)}
+                {formatXAF(currentAvailableBalance)}
               </Text>
             </View>
 
@@ -226,7 +246,7 @@ export const StoreAnalyticsScreen = ({ navigation }: any) => {
                 Escrow Locked (48H)
               </Text>
               <Text variant="bodyLarge" bold color="#FFFFFF">
-                {formatXAF(escrowLockedBalance)}
+                {formatXAF(currentEscrowLockedBalance)}
               </Text>
             </View>
           </View>

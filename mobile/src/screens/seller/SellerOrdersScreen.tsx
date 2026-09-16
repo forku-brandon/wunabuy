@@ -66,8 +66,8 @@ export const SellerOrdersScreen = ({ navigation }: any) => {
       customer_phone: order.customer_phone,
       items_summary: order.items ? order.items.map((i: any) => `${i.name} x${i.quantity}`).join(', ') : 'Order Package',
       total_amount: order.total,
-      pickup_pin: order.pickup_pin || '84920',
-      transporter_name: order.transporter_name || 'Wunabuy Express Rider #402',
+      pickup_pin: order.pickup_pin || '',
+      transporter_name: order.transporter_name || 'Wunabuy Express Rider',
     });
     setIsPrintQRModalVisible(true);
   };
@@ -229,7 +229,23 @@ export const SellerOrdersScreen = ({ navigation }: any) => {
             Store Orders 📦
           </Text>
         </View>
-        <Badge label={`${orders.length} Total`} variant="primary" size="small" />
+        <Badge
+          label={
+            activeTab === 'all'
+              ? `${orders.length} Total`
+              : activeTab === 'pending_acceptance'
+              ? `${pendingCount} New`
+              : activeTab === 'preparing'
+              ? `${preparingCount} Preparing`
+              : activeTab === 'ready_for_pickup'
+              ? `${readyCount} Ready`
+              : activeTab === 'in_transit'
+              ? `${inTransitCount} In Transit`
+              : `${completedCount} Completed`
+          }
+          variant="primary"
+          size="small"
+        />
       </View>
 
       {/* Horizontal Filter Tabs */}
@@ -792,22 +808,6 @@ export const SellerOrdersScreen = ({ navigation }: any) => {
                   },
                 ]}
               />
-
-              {selectedOrderForHandover?.pickup_pin && (
-                <TouchableOpacity
-                  activeOpacity={0.7}
-                  onPress={() => {
-                    setEnteredPin(selectedOrderForHandover.pickup_pin || '');
-                    setPinError('');
-                  }}
-                  style={styles.demoPinFillBtn}
-                >
-                  <Ionicons name="sparkles" size={14} color={colors.primary[600]} />
-                  <Text variant="caption" bold color={colors.primary[600]}>
-                    Auto-fill Rider's Code for Testing: #{selectedOrderForHandover.pickup_pin}
-                  </Text>
-                </TouchableOpacity>
-              )}
             </View>
 
             {pinError !== '' && (
@@ -1064,14 +1064,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     letterSpacing: 8,
-  },
-  demoPinFillBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    marginTop: spacing.xs,
-    paddingVertical: 4,
   },
   pinErrorBox: {
     flexDirection: 'row',

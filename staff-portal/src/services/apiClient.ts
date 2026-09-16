@@ -37,10 +37,13 @@ export async function apiRequest<T>(
   const token = localStorage.getItem('wunabuy_staff_token');
 
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
     Accept: 'application/json',
     ...(options.headers as Record<string, string>),
   };
+
+  if (!(options.body instanceof FormData)) {
+    headers['Content-Type'] = 'application/json';
+  }
 
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;

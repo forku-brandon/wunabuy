@@ -146,6 +146,8 @@ class OrderController extends Controller
                 'notes' => ($request->input('notes') ?? '') . ($idempotencyKey ? " [IDEMPOTENCY:{$idempotencyKey}]" : ''),
             ]);
 
+            // Validate all products and stock availability upfront
+            $validatedItems = [];
             foreach ($itemsData as $item) {
                 $productId = $item['product_id'] ?? null;
                 $product = Str::isUuid($productId) ? Product::find($productId) : null;
@@ -153,13 +155,36 @@ class OrderController extends Controller
                     continue; // skip invalid item — no fake product fallback
                 }
 
-                $price = (float) $product->price;
-                $qty = (int) ($item['quantity'] ?? 1);
+                $qty = max(1, (int) ($item['quantity'] ?? 1));
+                if ($product->quantity < $qty) {
+                    return $this->respondError(
+                        'INSUFFICIENT_STOCK',
+                        "Product '{$product->name}' only has {$product->quantity} unit(s) available in stock.",
+                        ['product_id' => $product->id, 'available_stock' => $product->quantity, 'requested_quantity' => $qty],
+                        422
+                    );
+                }
+
+                $validatedItems[] = [
+                    'product' => $product,
+                    'quantity' => $qty,
+                    'price' => (float) $product->price,
+                ];
+            }
+
+            if (empty($validatedItems)) {
+                return $this->respondError('NO_ITEMS', 'No valid product items provided for this order', null, 422);
+            }
+
+            foreach ($validatedItems as $vItem) {
+                $product = $vItem['product'];
+                $qty = $vItem['quantity'];
+                $price = $vItem['price'];
                 $lineTotal = $price * $qty;
                 $subtotal += $lineTotal;
 
-                // Decrement stock quantity
-                $product->decrement('quantity', min($qty, $product->quantity));
+                // Decrement stock quantity in real time
+                $product->decrement('quantity', $qty);
 
                 OrderItem::create([
                     'id' => (string) Str::uuid(),
@@ -170,12 +195,6 @@ class OrderController extends Controller
                     'quantity' => $qty,
                     'image_url' => is_array($product->images) ? ($product->images[0] ?? null) : null,
                 ]);
-            }
-
-            if ($subtotal === 0) {
-                // No valid items provided — rollback
-                $order->delete();
-                return $this->respondError('NO_ITEMS', 'No valid product items provided for this order', null, 422);
             }
 
             $deliveryFee = (float) $order->delivery_fee;
@@ -365,15 +384,27 @@ class OrderController extends Controller
             return $this->respondError('FORBIDDEN', 'Unauthorized: you are not authorized to cancel this order', null, 403);
         }
 
-        if (in_array($order->status, ['in_transit', 'delivered', 'completed'])) {
-            return $this->respondError('INVALID_ORDER_STATE', 'Cannot cancel an order currently in transit or delivered.', null, 422);
+        if (in_array($order->status, ['in_transit', 'delivered', 'completed', 'cancelled'])) {
+            return $this->respondError('INVALID_ORDER_STATE', 'Cannot cancel an order currently in transit, delivered, or already cancelled.', null, 422);
         }
 
         $order->status = 'cancelled';
         $order->notes = ($order->notes ?? '') . ' Reason: ' . $request->input('reason', 'Cancelled by user');
         $order->save();
 
-        return $this->respondSuccess($order);
+        // Restore stock quantity for each product item
+        foreach ($order->items as $item) {
+            if ($item->product_id) {
+                Product::where('id', $item->product_id)->increment('quantity', $item->quantity);
+            }
+        }
+
+        // Refund escrow back to buyer's available balance if locked
+        if ($order->payment_status === 'escrow_locked') {
+            $this->escrowService->refundEscrow($order, 'Order cancelled by ' . ($isCustomer ? 'buyer' : 'seller'));
+        }
+
+        return $this->respondSuccess($order->fresh()->load(['items', 'store']));
     }
 
     /**
