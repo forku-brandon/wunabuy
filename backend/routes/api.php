@@ -51,6 +51,8 @@ Route::prefix('v1')->group(function () {
 
     Route::get('/users/me', [AuthController::class, 'getMe']);
     Route::put('/users/me', [AuthController::class, 'updateMe']);
+    Route::delete('/users/me', [AuthController::class, 'deleteAccount']);
+    Route::delete('/user/account', [AuthController::class, 'deleteAccount']);
     Route::get('/users/addresses', [AuthController::class, 'getAddresses']);
     Route::post('/users/addresses', [AuthController::class, 'addAddress']);
     Route::put('/user/preferences', [AuthController::class, 'updatePreferences']);
@@ -72,6 +74,7 @@ Route::prefix('v1')->group(function () {
     Route::get('/adverts', [CommerceController::class, 'getAdverts']);
     Route::post('/reviews', [CommerceController::class, 'createReview']);
     Route::get('/reviews/{type}/{id}', [CommerceController::class, 'getReviews']);
+    Route::post('/reviews/{id}/report', [CommerceController::class, 'reportReview']);
 
     // ─── ORDERS & ESCROW LIFECYCLE ───
     Route::get('/orders', [OrderController::class, 'index']);

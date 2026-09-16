@@ -1,9 +1,9 @@
 # Wunabuy — Backend Technical Specification & API Contracts
 
-**Document Version:** 3.9 (Live Financial Transactions Engine — Payment Gateway Architecture, MTN MoMo & Orange Money Integration, Escrow Security Hardening)  
+**Document Version:** 4.1 (Google Play Store 2026 Compliance, Real-Time Inventory Engine, Live Financial Transactions Engine, Modular Gateways)  
 **Date:** September 16, 2026  
 **Status:** Approved / In Production Use  
-**Companion Documents:** Wunabuy SRS v3.9, Wunabuy PRD v3.9, Wunabuy Frontend Tech Spec v3.9, Wunabuy API Contract v3.9  
+**Companion Documents:** Wunabuy SRS v4.1, Wunabuy PRD v4.1, Wunabuy Frontend Tech Spec v4.1, Wunabuy API Contract v4.1  
 **Framework:** Laravel 13 (PHP 8.3+)  
 **Frontend Monorepo Targets:** `wunabuy-mobile` (Expo SDK 51+), `staff-portal` (Vite + React TS), `@wunabuy/api-client`, `@wunabuy/types`, `@wunabuy/utils`
 
@@ -30,6 +30,9 @@
 17. [Media Storage, Avatar Upload & Dynamic Image Normalization Architecture](#17-media-storage-avatar-upload--dynamic-image-normalization-architecture)
 18. [High-Performance Database Indexing for 1 Million Users Scale](#18-high-performance-database-indexing-for-1-million-users-scale)
 19. [Marketing Adverts & Commercial Partnerships Engine](#19-marketing-adverts--commercial-partnerships-engine)
+20. [Payment Gateway Architecture & Live Financial Transactions (v3.9)](#20-payment-gateway-architecture--live-financial-transactions-v39)
+21. [Real-Time Inventory Engine & Transporter Auto-Resolution (v4.0)](#21-real-time-inventory-engine--transporter-auto-resolution-v40)
+22. [Google Play Store 2026 Compliance Architecture: Account Deletion, UGC Moderation, & Permissions (v4.1)](#22-google-play-store-2026-compliance-architecture-v41)
 
 ---
 
@@ -1635,4 +1638,54 @@ No business logic changes required — gateway interface contract guarantees com
 - All audit entries written to `audit_logs` with actor, IP, and financial details
 
 ---
-**[End of Backend Technical Specification & API Contracts v3.9]**
+
+## 21. Real-Time Inventory Engine & Transporter Auto-Resolution (v4.0)
+
+### 21.1 Pre-Flight Inventory Locking & Decrement
+- **Atomic Pre-Order Check**: `OrderController::store` performs upfront stock queries against `products.quantity`. If `order_item.quantity > product.quantity`, the transaction halts immediately with `422 INSUFFICIENT_STOCK`.
+- **Atomic Stock Deduction**: Automatically decrements product inventory upon order confirmation.
+- **Restock on Decline / Cancellation**: `EscrowService::refundEscrow` and cancellation triggers automatically increment `products.quantity` by the corresponding order item quantity and reverse locked escrow funds to buyer wallet balance.
+- **Catalog Quantity Modifications**: `CommerceController::updateProduct` and `SellerController::updateStock` update live inventory without permission errors.
+
+### 21.2 Transporter Active Trip Auto-Resolution
+- **Dynamic Active Trip Lookup**: `TransporterController::updateTripStage` and `submitProofOfDelivery` automatically resolve active trips (`Order::where('transporter_id', $user->id)->whereIn('status', ['ready_for_pickup', 'in_transit'])`) if a client device reboots or React Navigation state is reset.
+- **Zero Dummy Data**: Eradication of test PIN autofills and fake order count badges across mobile screens.
+
+---
+
+## 22. Google Play Store 2026 Compliance Architecture: Account Deletion, UGC Moderation, & Permissions (v4.1)
+
+### 22.1 Account Deletion & Data Eradication Endpoint (`DELETE /api/v1/user/account`)
+- **Controller Action**: `AuthController::deleteAccount(Request $request)`
+- **Execution Lifecycle**:
+  1. Revokes all active personal access tokens via Sanctum (`$user->tokens()->delete()`).
+  2. Anonymizes customer PII:
+     - `full_name`: `"Former Member"`
+     - `email`: `deleted_<hash>@anonymized.wunabuy.internal`
+     - `phone`: Randomized unroutable placeholder (`+237000...`)
+     - `avatar_url`: `null`
+     - `is_active`: `false`
+     - `preferences`: Sets `account_status: deleted`, `deleted_at`, and optional reason.
+  3. Purges all linked records in `delivery_addresses`.
+  4. Deactivates any linked `Store` and `Transporter` records.
+  5. Inserts an immutable entry into `audit_logs` (`action: ACCOUNT_DELETED`, `status: SUCCESS`).
+  6. Preserves non-identifiable financial ledger records and VAT invoices per CEMAC commercial tax regulations.
+
+### 22.2 User-Generated Content (UGC) Review Reporting Endpoint (`POST /api/v1/reviews/{id}/report`)
+- **Controller Action**: `CommerceController::reportReview(Request $request, string $id)`
+- **Supported Reasons**: `inappropriate`, `spam`, `harassment`, `misleading`.
+- **Execution Lifecycle**:
+  1. Validates review UUID.
+  2. Resolves reporter user ID.
+  3. Inserts moderation event into `audit_logs` (`action: REVIEW_REPORTED`, `department: MODERATION`).
+  4. Returns standard success envelope acknowledging moderation submission.
+
+### 22.3 Android Scoped Permissions Configuration
+- Pruned broad permissions: `READ_EXTERNAL_STORAGE`, `WRITE_EXTERNAL_STORAGE`, and `ACCESS_BACKGROUND_LOCATION`.
+- Modernized to Android 14/15 standards:
+  - `READ_MEDIA_IMAGES` (Photo Picker)
+  - `FOREGROUND_SERVICE` and `FOREGROUND_SERVICE_LOCATION` (Live Carrier Tracking)
+  - `POST_NOTIFICATIONS` (Foreground Service Alerts)
+
+---
+**[End of Backend Technical Specification & API Contracts v4.1]**

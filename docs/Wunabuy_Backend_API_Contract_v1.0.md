@@ -1,12 +1,12 @@
 # Wunabuy Backend API Specification & Integration Contract v1.0
 
-**Document Version:** 3.9 (Live Financial Transactions Engine — Payment Gateway Architecture, New Wallet Routes, Escrow Security Hardening, MTN MoMo & Orange Money Integration)  
+**Document Version:** 4.1 (Google Play Store 2026 Compliance Endpoints, Real-Time Inventory Harmonization, Live Financial Transactions Engine)  
 **Date:** September 16, 2026  
 **Target Audience:** Backend Engineering Team (Laravel 13 / PostgreSQL / Redis / Sanctum)  
 **Standard:** RESTful JSON API + WebSocket Real-Time Telemetry  
 **Currency Standard:** Central African CFA Franc (`XAF` / `FCFA`)  
 **Locale Default:** French / English Cameroon (`+237` E.164 phone numbers)  
-**Document Status:** 🟢 **APPROVED & SYNCHRONIZED WITH MOBILE APP & STAFF PORTAL v3.9**
+**Document Status:** 🟢 **APPROVED & SYNCHRONIZED WITH MOBILE APP & STAFF PORTAL v4.1**
 
 ---
 
@@ -1962,5 +1962,98 @@ Callback URL: https://api.wunabuy.com/api/v1/wallet/webhook/mtn
 
 ---
 
-*Document Version bumped to **3.9** — Payment Gateway Architecture & Live Financial Transactions Engine*
+## 21. Real-Time Inventory Harmonization & Transporter Auto-Resolution (v4.0)
+
+### 21.1 Pre-Flight Stock Verification & Deductions
+- **Order Placement**: `POST /api/v1/orders` checks item availability against `products.quantity`.
+- **Error Response (`422 Unprocessable Entity`)**:
+```json
+{
+  "success": false,
+  "error": {
+    "code": "INSUFFICIENT_STOCK",
+    "message": "Product \"Premium Leather Oxford Shoes\" is out of stock. Available: 2, requested: 5.",
+    "details": {
+      "product_id": "0191eb70-8b43-7f1a-b328-984f1a2384a1",
+      "available_quantity": 2,
+      "requested_quantity": 5
+    }
+  }
+}
+```
+- **Automatic Stock Restoration**: Cancelled orders (`POST /api/v1/orders/{id}/cancel`) or merchant rejections (`POST /api/v1/seller/orders/{id}/decline`) restore inventory automatically:
+```php
+Product::where('id', $item->product_id)->increment('quantity', $item->quantity);
+```
+
+---
+
+## 22. Google Play Store 2026 Compliance Endpoints (v4.1)
+
+### 22.1 Account Deletion & Personal Data Eradication
+`DELETE /api/v1/user/account` (Alias: `DELETE /api/v1/users/me`)
+
+- **Description**: Revokes all active user tokens, anonymizes customer PII (full name, phone, email, saved delivery addresses), deactivates linked seller store and driver transporter records, and logs a security audit entry. Financial transaction receipts are preserved for tax compliance under CEMAC law.
+- **Headers**:
+```http
+Authorization: Bearer <sanctum_token>
+Content-Type: application/json
+```
+- **Request Body (Optional)**:
+```json
+{
+  "reason": "User requested account deletion via app settings"
+}
+```
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": {
+    "deleted": true,
+    "message": "Your Wunabuy account and associated personal data have been successfully deleted."
+  }
+}
+```
+
+---
+
+### 22.2 User-Generated Content (UGC) Review Reporting
+`POST /api/v1/reviews/{id}/report`
+
+- **Description**: Allows buyers and store visitors to flag inappropriate, fraudulent, or harassing reviews in compliance with Google Play UGC Developer Policies.
+- **Headers**:
+```http
+Authorization: Bearer <sanctum_token>
+Content-Type: application/json
+```
+- **Path Parameter**:
+  - `id`: UUID of the review being reported.
+- **Request Body**:
+```json
+{
+  "reason": "inappropriate",
+  "details": "Review contains abusive language or unsolicited advertising"
+}
+```
+- **Allowed `reason` values**:
+  - `inappropriate` (Offensive or Inappropriate Content)
+  - `spam` (Spam, Advertising, or Fake Review)
+  - `harassment` (Harassment or Personal Attack)
+  - `misleading` (Misleading or False Information)
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": {
+    "reported": true,
+    "review_id": "0191eb72-1b15-7a0e-9721-cb03f276bc92",
+    "message": "Thank you for reporting. Our moderation team has been notified and will review this content."
+  }
+}
+```
+
+---
+
+*Document Version bumped to **4.1** — Google Play Store 2026 Compliance Endpoints & Real-Time Inventory Harmonization*  
 *Updated: September 16, 2026*

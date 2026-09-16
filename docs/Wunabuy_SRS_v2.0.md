@@ -1,10 +1,47 @@
 # Software Requirements Specification (SRS)
 # Wunabuy — Multi-Sided E-Commerce & Web Staff Operations Platform
 
-**Document Version:** 3.9 (Live Financial Transactions Engine, Escrow Safety, Modular Payment Gateways MTN MoMo & Orange Money, Real-Time Ledger Arithmetic)  
+**Document Version:** 4.1 (Google Play Store 2026 Compliance, Real-Time Inventory Engine, Live Financial Transactions Engine, Modular Payment Gateways)  
 **Date:** September 16, 2026  
 **Status:** Approved / In Production Use  
-**Companion Documents:** Wunabuy PRD v3.9, Wunabuy Frontend Tech Spec v3.9, Wunabuy Backend Tech Spec v3.9, Wunabuy Backend API Contract v3.9  
+**Companion Documents:** Wunabuy PRD v4.1, Wunabuy Frontend Tech Spec v4.1, Wunabuy Backend Tech Spec v4.1, Wunabuy Backend API Contract v4.1  
+
+---
+
+## 🛡️ Google Play Store 2026 Developer Policy Compliance (September 16, 2026 - v4.1)
+
+- **Android Scoped Permissions & Hardware Justifications**:
+  - **Pruned Legacy Storage**: Completely eliminated `READ_EXTERNAL_STORAGE` and `WRITE_EXTERNAL_STORAGE` from `mobile/app.json`. Substituted with modern Android Photo Picker (`READ_MEDIA_IMAGES`) on Android 13+ (API 33+).
+  - **Pruned Background Location**: Eradicated `ACCESS_BACKGROUND_LOCATION` declaration. Upgraded active delivery carrier tracking to foreground location service via `FOREGROUND_SERVICE` and `FOREGROUND_SERVICE_LOCATION` with prominent runtime notification disclosure (`POST_NOTIFICATIONS`).
+  - **Version Code**: Explicitly added release integer `android.versionCode: 1`.
+
+- **Mandatory In-App & Web Account Deletion Pathway**:
+  - **API Contract (`DELETE /api/v1/user/account`)**:
+    - Serialized database transaction revokes active Sanctum API tokens (`$user->tokens()->delete()`).
+    - Anonymizes PII: replaces full name with generic marker, hashes telephone to an unroutable placeholder, anonymizes email, and scrubs saved delivery addresses (`delivery_addresses`).
+    - Deactivates linked merchant store (`stores.is_active = false`) and transporter profile (`transporters.is_active = false`).
+    - Creates immutable security audit record in `audit_logs` table while archiving statutory financial tax receipts per CEMAC commercial legal standards.
+  - **Mobile UI**: Destructive "Delete Account & Data" action in `SettingsScreen.tsx` with high-contrast warning modal, explanation of consequences, and automatic session logout.
+  - **Web URL**: Official online deletion portal registered at `https://wunabuy.com/account/delete`.
+
+- **User-Generated Content (UGC) Moderation & Reporting**:
+  - **In-App Review Reporting**: Product (`ProductDetailScreen.tsx`) and store (`StoreDetailScreen.tsx`) customer review cards provide discrete "Report Review" action triggers.
+  - **Categorized Reporting Modal**: Users select from violation categories: *Offensive or Inappropriate Content*, *Spam, Advertising, or Fake Review*, *Harassment or Personal Attack*, *Misleading or False Information*.
+  - **API Contract (`POST /api/v1/reviews/{id}/report`)**: Records reports in moderation queue with reporter ID, timestamp, and review metadata.
+
+---
+
+## 📦 Real-Time Inventory Engine, Dynamic Seller Orders & Analytics (September 16, 2026 - v4.0)
+
+- **Real-Time Stock Locking & Harmonization**:
+  - **Pre-Flight Stock Verification**: Atomic stock checks during order placement (`OrderController::store`). Insufficient inventory triggers immediate `422 INSUFFICIENT_STOCK`.
+  - **Atomic Stock Decrement**: Automatic decrement of `products.quantity` upon order creation.
+  - **Automated Restock Recovery**: Immediate inventory restoration (`products.quantity += item.quantity`) when an order is declined by merchant or cancelled by buyer, paired with automatic escrow refund (`EscrowService::refundEscrow`).
+  - **Immediate Catalog Sync**: Seller catalog edits (`PUT /api/v1/products/{id}` and stock updates) synchronize in real time.
+
+- **Transporter Active Trip Auto-Resolution**:
+  - **State Loss Recovery**: Backend `TransporterController` auto-resolves active order and current trip stage for drivers upon app restart or screen remount, eliminating 404 stage update errors.
+  - **Purge of Fake Stubs**: Eradicated all dummy PIN autofills and static counter badges.
 
 ---
 

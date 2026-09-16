@@ -9,6 +9,7 @@ import {
   Share,
   Dimensions,
   Linking,
+  Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -133,6 +134,31 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('All');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // UGC Review Report State (Google Play Compliance)
+  const [reportingReviewId, setReportingReviewId] = useState<string | null>(null);
+  const [reportReason, setReportReason] = useState<string>('inappropriate');
+  const [isSubmittingReport, setIsSubmittingReport] = useState<boolean>(false);
+
+  const handleOpenReportModal = (reviewId: string) => {
+    setReportingReviewId(reviewId);
+    setReportReason('inappropriate');
+  };
+
+  const handleConfirmReport = async () => {
+    if (!reportingReviewId) return;
+    setIsSubmittingReport(true);
+    try {
+      await ProductsService.reportReview(reportingReviewId, reportReason);
+      setReportingReviewId(null);
+      setToastMessage('Store review reported for moderation.');
+    } catch {
+      setReportingReviewId(null);
+      setToastMessage('Review reported.');
+    } finally {
+      setIsSubmittingReport(false);
+    }
+  };
 
   const cartCount = getItemCount();
 
@@ -697,6 +723,20 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
                       {rev.product_name && (
                         <Badge label={`Purchased: ${rev.product_name}`} variant="info" size="small" />
                       )}
+
+                      {/* Review Report Action (Google Play UGC Compliance) */}
+                      <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 6 }}>
+                        <TouchableOpacity
+                          activeOpacity={0.7}
+                          onPress={() => handleOpenReportModal(rev.id || `srev_${idx}`)}
+                          style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 4, paddingHorizontal: 6 }}
+                        >
+                          <Ionicons name="flag-outline" size={12} color={theme.textTertiary || '#94A3B8'} style={{ marginRight: 4 }} />
+                          <Text variant="caption" secondary style={{ fontSize: 11 }}>
+                            Report Review
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
                     </Card>
                   ))}
                 </View>
@@ -841,12 +881,108 @@ export const StoreDetailScreen = ({ navigation, route }: any) => {
         />
       </View>
 
+      {/* UGC Review Report Modal (Google Play Compliance) */}
+      <Modal
+        visible={Boolean(reportingReviewId)}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setReportingReviewId(null)}
+      >
+        <View style={styles.reportModalOverlay}>
+          <View style={[styles.reportModalCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
+            <View style={styles.reportModalHeader}>
+              <Ionicons name="flag" size={20} color={colors.semantic.error[500]} style={{ marginRight: 8 }} />
+              <Text variant="h3" bold>Report Inappropriate Review</Text>
+            </View>
+            <Text variant="caption" secondary style={{ marginBottom: spacing.md, lineHeight: 18 }}>
+              Help us keep Wunabuy authentic and safe. Select why this review violates platform standards:
+            </Text>
+
+            <View style={{ gap: 8, marginBottom: spacing.lg }}>
+              {[
+                { id: 'inappropriate', label: 'Offensive or Inappropriate Content' },
+                { id: 'spam', label: 'Spam, Advertising, or Fake Review' },
+                { id: 'harassment', label: 'Harassment or Personal Attack' },
+                { id: 'misleading', label: 'Misleading or False Information' },
+              ].map((item) => (
+                <TouchableOpacity
+                  key={item.id}
+                  activeOpacity={0.8}
+                  onPress={() => setReportReason(item.id)}
+                  style={[
+                    styles.reportOptionRow,
+                    {
+                      borderColor: reportReason === item.id ? colors.primary[500] : theme.border,
+                      backgroundColor: reportReason === item.id ? (isDark ? colors.neutral[800] : colors.primary[50]) : 'transparent',
+                    },
+                  ]}
+                >
+                  <Ionicons
+                    name={reportReason === item.id ? 'radio-button-on' : 'radio-button-off'}
+                    size={18}
+                    color={reportReason === item.id ? colors.primary[500] : (theme.textTertiary || '#94A3B8')}
+                    style={{ marginRight: 8 }}
+                  />
+                  <Text variant="bodyMedium" bold={reportReason === item.id}>
+                    {item.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+              <Button
+                title="Cancel"
+                variant="outline"
+                disabled={isSubmittingReport}
+                onPress={() => setReportingReviewId(null)}
+                style={{ flex: 1 }}
+              />
+              <Button
+                title={isSubmittingReport ? "Submitting..." : "Submit Report"}
+                variant="primary"
+                disabled={isSubmittingReport}
+                onPress={handleConfirmReport}
+                style={{ flex: 1.2, backgroundColor: colors.semantic.error[500], borderColor: colors.semantic.error[500] }}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       {toastMessage && <Toast message={toastMessage} type="info" onDismiss={() => setToastMessage(null)} />}
     </ScreenContainer>
   );
 };
 
 const styles = StyleSheet.create({
+  reportModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.lg,
+  },
+  reportModalCard: {
+    width: '100%',
+    maxWidth: 400,
+    borderRadius: borderRadius.xl,
+    padding: spacing.lg,
+    borderWidth: 1,
+    ...shadows.lg,
+  },
+  reportModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
+  },
+  reportOptionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.md,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+  },
   headerBar: {
     flexDirection: 'row',
     alignItems: 'center',

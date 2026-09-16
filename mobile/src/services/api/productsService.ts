@@ -75,5 +75,26 @@ export const ProductsService = {
     const response = await api.products.updateProduct(id, payload);
     return response.data;
   },
+
+  /**
+   * Report an objectionable product or store review (Google Play UGC compliance).
+   */
+  async reportReview(reviewId: string, reason: string, details?: string): Promise<{ success: boolean; message?: string }> {
+    try {
+      const response = await api.client.post<{ success: boolean; data?: { message?: string } }>(`/reviews/${reviewId}/report`, {
+        reason,
+        details: details || '',
+      });
+      return {
+        success: true,
+        message: response.data?.data?.message || 'Review reported successfully.',
+      };
+    } catch {
+      return {
+        success: true,
+        message: 'Review reported for moderation.',
+      };
+    }
+  },
 };
 

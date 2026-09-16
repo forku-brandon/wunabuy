@@ -702,4 +702,73 @@ class AuthController extends Controller
             'user' => $user->toAuthProfileArray(),
         ]);
     }
+
+    /**
+     * Delete user account and anonymize personal data (Google Play Store Compliance).
+     */
+    public function deleteAccount(Request $request): JsonResponse
+    {
+        $user = $this->resolveUser($request);
+        if (!$user) {
+            return $this->respondError('UNAUTHENTICATED', 'Authentication required to delete account', null, 401);
+        }
+
+        return DB::transaction(function () use ($user, $request) {
+            $userId = $user->id;
+            $reason = $request->input('reason', 'User requested deletion');
+
+            // Revoke all active API tokens
+            $user->tokens()->delete();
+
+            // Anonymize personal profile data
+            $anonymizedTag = 'deleted_' . substr(md5($userId), 0, 10);
+            $user->full_name = 'Former Member';
+            $user->email = $anonymizedTag . '@anonymized.wunabuy.internal';
+            $user->phone = '+237000' . rand(100000, 999999);
+            $user->avatar_url = null;
+            $user->is_active = false;
+            $user->preferences = [
+                'account_status' => 'deleted',
+                'deleted_at' => now()->toIso8601String(),
+                'reason' => $reason,
+            ];
+            $user->save();
+
+            // Clear saved delivery addresses
+            DB::table('delivery_addresses')->where('user_id', $userId)->delete();
+
+            // If user has a store, mark inactive
+            if ($user->store) {
+                $user->store->is_active = false;
+                $user->store->save();
+            }
+
+            // If user is a transporter, set inactive
+            if ($user->transporter) {
+                $user->transporter->status = 'inactive';
+                $user->transporter->is_active = false;
+                $user->transporter->save();
+            }
+
+            \App\Models\AuditLog::create([
+                'action' => 'ACCOUNT_DELETED',
+                'staff_name' => 'Self-Service User',
+                'staff_role' => 'USER',
+                'department' => 'SECURITY',
+                'ip_address' => $request->ip() ?? '127.0.0.1',
+                'target_resource' => 'USER:' . $userId,
+                'status' => 'SUCCESS',
+                'details' => [
+                    'user_id' => $userId,
+                    'reason' => $reason,
+                    'deleted_at' => now()->toIso8601String(),
+                ],
+            ]);
+
+            return $this->respondSuccess([
+                'deleted' => true,
+                'message' => 'Your Wunabuy account and associated personal data have been successfully deleted.',
+            ]);
+        });
+    }
 }

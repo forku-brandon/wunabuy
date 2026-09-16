@@ -231,5 +231,26 @@ export const AuthService = {
       };
     }
   },
+
+  /**
+   * Delete user account and personal data (Google Play Store Compliance).
+   */
+  async deleteAccount(reason?: string): Promise<{ success: boolean; message?: string; error?: string }> {
+    try {
+      const response = await api.client.delete<{ success: boolean; data?: { message?: string } }>('/user/account', {
+        data: { reason: reason || 'User requested deletion via app settings' },
+      });
+      return {
+        success: true,
+        message: response.data?.data?.message || 'Account successfully deleted.',
+      };
+    } catch (err: any) {
+      const msg = err?.response?.data?.error?.message || err?.message || 'Failed to delete account. Please try again.';
+      return {
+        success: false,
+        error: msg,
+      };
+    }
+  },
 };
 

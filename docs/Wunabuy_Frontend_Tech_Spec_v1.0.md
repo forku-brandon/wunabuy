@@ -1,5 +1,20 @@
 # Wunabuy — Frontend Technical Specification
-### Version 3.9 | September 16, 2026
+### Version 4.1 | September 16, 2026
+
+> **Resolved Decisions (September 16, 2026 - v4.1):**
+> - **Google Play Store 2026 Compliance Architecture**:
+>   - **Android Scoped Permissions & Removal of Legacy Storage**: Purged deprecated `READ_EXTERNAL_STORAGE` and `WRITE_EXTERNAL_STORAGE` from `app.json`. Adopted system Photo Picker (`READ_MEDIA_IMAGES`) and pruned broad `ACCESS_BACKGROUND_LOCATION` in favor of foreground delivery tracking (`FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_LOCATION`, `POST_NOTIFICATIONS`).
+>   - **Mandatory In-App Account Deletion Pathway**: Built high-security account deletion modal in `SettingsScreen.tsx` wired to `AuthService.deleteAccount()`. Revokes Sanctum tokens, clears Zustand stores (`useAuthStore`, `useSellerStore`), anonymizes user PII, and returns the user to the unauthenticated Buyer welcome flow.
+>   - **UGC Review Moderation & Reporting Dialogs**: Implemented discreet "Report Review" action buttons on customer review cards across `ProductDetailScreen.tsx` and `StoreDetailScreen.tsx`. Features modal selection of violation categories (*Inappropriate*, *Spam*, *Harassment*, *Misleading*) backed by `ProductsService.reportReview()`.
+>   - **Data Safety Disclosures & Web Deletion Portal**: Updated `LegalTermsModal.tsx` with Google Play Data Safety disclosure, TLS 1.3 encryption documentation, third-party payment rail transparency, and external web deletion link (`https://wunabuy.com/account/delete`).
+>   - **Android Version Code**: Added release integer `android.versionCode: 1` to `mobile/app.json`.
+
+> **Resolved Decisions (September 16, 2026 - v4.0):**
+> - **Real-Time Inventory Engine & Stock Harmonization**: Orders verify available stock upfront in database; checkout decrements product quantity atomically. Cancelled or declined orders automatically restock inventory via `refundEscrow()` in `EscrowService.php`.
+> - **Dynamic Seller Order Badges & Counters**: Replaced static header badge with dynamic tab counters (`4 Ready for Pickup`, `1 In Transit`, `23 Total Orders`).
+> - **Zero Dummy Data & Test Stubs**: Permanently removed `"Auto-fill Rider's Code for Testing: #3264"` and dummy fallback PINs (`84920`) across merchant order handover modals.
+> - **Staff Portal Marketing Visual Uploader**: Upgraded `MarketingPage.tsx` with direct image file upload (`POST /upload/image` under folder `adverts`), instant 0ms `FileReader` preview, and campaign modal controls.
+> - **Transporter Active Trip Auto-Resolution**: Ensured driver active trips recover seamlessly across phone reboots and screen remounts via dynamic backend fallback resolution in `TransporterController.php`.
 
 > **Resolved Decisions (September 16, 2026 - v3.9):**
 > - **Live Financial Transactions Engine**: `walletService.ts` fully rebuilt — `getBalance()` lightweight poll endpoint, `pollTransactionStatus()` async gateway poller, `calculateOrderBreakdown()` / `calculateWithdrawalFee()` / `calculateSellerNet()` fee helpers that mirror backend `config/payment.php` exactly. No hardcoded rates.

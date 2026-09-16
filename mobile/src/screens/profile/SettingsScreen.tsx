@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, StyleSheet, TouchableOpacity, Switch, ScrollView, RefreshControl } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Switch, ScrollView, RefreshControl, Modal, Alert, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScreenContainer, Text, Card, Button, Toast } from '../../components/ui';
@@ -12,6 +12,7 @@ import { useThemeStore } from '../../stores/theme.store';
 import { UserRole } from '@wunabuy/types';
 import { spacing, colors, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useTranslation } from 'react-i18next';
+import { AuthService } from '../../services/api/authService';
 
 export const SettingsScreen = ({ navigation }: any) => {
   const { t, i18n } = useTranslation();
@@ -22,9 +23,32 @@ export const SettingsScreen = ({ navigation }: any) => {
   const [isLangModalOpen, setIsLangModalOpen] = useState(false);
   const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState(false);
   const [isLegalModalOpen, setIsLegalModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [legalModalTab, setLegalModalTab] = useState<LegalDocType>('terms');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+
+  const handleDeleteAccount = async () => {
+    setIsDeletingAccount(true);
+    try {
+      const res = await AuthService.deleteAccount('User requested deletion in Settings');
+      if (res.success) {
+        setIsDeleteModalOpen(false);
+        logout();
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'BuyerApp' }],
+        });
+      } else {
+        Alert.alert('Account Deletion', res.error || 'Failed to delete account. Please try again.');
+      }
+    } catch {
+      Alert.alert('Account Deletion', 'An unexpected error occurred. Please try again.');
+    } finally {
+      setIsDeletingAccount(false);
+    }
+  };
 
   const openLegalModal = (tab: LegalDocType) => {
     setLegalModalTab(tab);
@@ -243,6 +267,21 @@ export const SettingsScreen = ({ navigation }: any) => {
             </View>
             <Ionicons name="chevron-forward" size={18} color={theme.placeholder} />
           </TouchableOpacity>
+
+          <View style={[styles.divider, { backgroundColor: theme.border }]} />
+
+          {/* Delete Account & Personal Data (Google Play Compliance) */}
+          <TouchableOpacity
+            activeOpacity={0.8}
+            style={styles.menuRow}
+            onPress={() => setIsDeleteModalOpen(true)}
+          >
+            <View style={styles.menuLeft}>
+              <Ionicons name="trash-outline" size={20} color={colors.semantic.error[500]} style={styles.menuIcon} />
+              <Text variant="bodyLarge" color={colors.semantic.error[500]}>Delete Account &amp; Data</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={theme.placeholder} />
+          </TouchableOpacity>
         </Card>
 
         {/* Section 4: Legal, Terms & Policies (Google Play Store Compliance) */}
@@ -272,6 +311,20 @@ export const SettingsScreen = ({ navigation }: any) => {
             <View style={styles.menuLeft}>
               <Ionicons name="lock-closed-outline" size={20} color={colors.primary[500]} style={styles.menuIcon} />
               <Text variant="bodyLarge">Privacy Policy</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={theme.placeholder} />
+          </TouchableOpacity>
+
+          <View style={[styles.divider, { backgroundColor: theme.border }]} />
+
+          <TouchableOpacity
+            activeOpacity={0.8}
+            style={styles.menuRow}
+            onPress={() => openLegalModal('privacy')}
+          >
+            <View style={styles.menuLeft}>
+              <Ionicons name="shield-outline" size={20} color={colors.primary[500]} style={styles.menuIcon} />
+              <Text variant="bodyLarge">Data Safety &amp; Eradication Protocol</Text>
             </View>
             <Ionicons name="chevron-forward" size={18} color={theme.placeholder} />
           </TouchableOpacity>
@@ -305,6 +358,68 @@ export const SettingsScreen = ({ navigation }: any) => {
         initialTab={legalModalTab}
         onClose={() => setIsLegalModalOpen(false)}
       />
+
+      {/* Account Deletion Confirmation Modal (Google Play Compliance) */}
+      <Modal
+        visible={isDeleteModalOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => !isDeletingAccount && setIsDeleteModalOpen(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.deleteModalCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
+            <View style={styles.deleteModalHeader}>
+              <View style={[styles.deleteIconCircle, { backgroundColor: '#FEE2E2' }]}>
+                <Ionicons name="warning" size={28} color={colors.semantic.error[500]} />
+              </View>
+              <Text variant="h2" bold color={colors.semantic.error[500]} style={{ marginTop: spacing.sm }}>
+                Delete Account &amp; Data
+              </Text>
+              <Text variant="caption" secondary align="center" style={{ marginTop: spacing.xs, lineHeight: 18 }}>
+                This action is permanent and irreversible. Please review the consequences below:
+              </Text>
+            </View>
+
+            <View style={[styles.deleteInfoBox, { backgroundColor: isDark ? colors.neutral[800] : colors.neutral[50] }]}>
+              <View style={styles.deleteBulletRow}>
+                <Ionicons name="close-circle" size={16} color={colors.semantic.error[500]} style={{ marginRight: 8, marginTop: 2 }} />
+                <Text variant="caption" style={{ flex: 1, lineHeight: 18 }}>
+                  Your login credentials, active sessions, and access tokens will be permanently revoked.
+                </Text>
+              </View>
+              <View style={styles.deleteBulletRow}>
+                <Ionicons name="close-circle" size={16} color={colors.semantic.error[500]} style={{ marginRight: 8, marginTop: 2 }} />
+                <Text variant="caption" style={{ flex: 1, lineHeight: 18 }}>
+                  Your personal identifiers, phone number, email, and saved delivery addresses will be scrubbed and anonymized.
+                </Text>
+              </View>
+              <View style={styles.deleteBulletRow}>
+                <Ionicons name="information-circle" size={16} color={colors.primary[500]} style={{ marginRight: 8, marginTop: 2 }} />
+                <Text variant="caption" style={{ flex: 1, lineHeight: 18 }}>
+                  Completed transaction receipts are archived strictly for statutory tax compliance under CEMAC commercial law.
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.deleteModalActions}>
+              <Button
+                title="Cancel, Keep Account"
+                variant="outline"
+                disabled={isDeletingAccount}
+                onPress={() => setIsDeleteModalOpen(false)}
+                style={{ flex: 1 }}
+              />
+              <Button
+                title={isDeletingAccount ? "Deleting..." : "Permanently Delete"}
+                variant="primary"
+                disabled={isDeletingAccount}
+                onPress={handleDeleteAccount}
+                style={{ flex: 1.2, backgroundColor: colors.semantic.error[500], borderColor: colors.semantic.error[500] }}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {toastMessage && <Toast message={toastMessage} type="info" />}
     </ScreenContainer>
@@ -372,6 +487,46 @@ const styles = StyleSheet.create({
     borderColor: colors.semantic.error[500],
     marginTop: spacing.md,
     marginBottom: spacing.xl,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.lg,
+  },
+  deleteModalCard: {
+    width: '100%',
+    maxWidth: 400,
+    borderRadius: borderRadius.xl,
+    padding: spacing.lg,
+    borderWidth: 1,
+    ...shadows.lg,
+  },
+  deleteModalHeader: {
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  deleteIconCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deleteInfoBox: {
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
+    gap: spacing.sm,
+  },
+  deleteBulletRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  deleteModalActions: {
+    flexDirection: 'row',
+    gap: spacing.sm,
   },
 });
 

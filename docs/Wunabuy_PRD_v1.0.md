@@ -1,7 +1,7 @@
 # Product Requirements Document (PRD)
 # Wunabuy — Multi-Sided Mobile E-Commerce & Logistics Platform
 
-**Document Version:** 3.9  
+**Document Version:** 4.1  
 **Status:** Revised / Launch-Ready Production Baseline  
 **Date:** September 16, 2026  
 **Author:** Product Management & Engineering Architecture Team  
@@ -45,6 +45,10 @@ This PRD defines the product vision, market outcome, launch scope, UI/UX archite
 | 3.0 | September 5, 2026 | Architecture & Engineering Team | Major Mobile Security, QR Waybill & Interactive Hardware Scanner Release (v3.0): (1) Interactive Numeric Quantity Input System (`QuantityInputModal.tsx`) enabling custom numeric quantity entry across Buyer & Seller apps with glitch-free text rendering. (2) 2D Scrollable Tabular Store Pickup Location Component (`StorePickupTable.tsx`) featuring 2-column specifications, bidirectional scrolling (up/down + left/right with 140px/340px fixed column bounds), and tap-to-call store contact links. (3) Live Hardware Camera Seller Store QR & PIN Scanner Modal (`SellerQRScannerModal.tsx`) powered by `expo-camera` with live sensor scanning, torch flashlight toggle, laser viewfinder animation, and instant escrow handover release. (4) Printable Encrypted Parcel QR Shipping Tag Generator (`PrintableParcelQRModal.tsx`) with Wunabuy brand emblem, encrypted barcode payload (`ENCRYPTED QR • RIDER SCANNER ONLY 🔒`), and plaintext PIN removal for security. (5) Transporter Camera Barcode Comparison & Wrong Item Matching Logic (`TransporterActiveTripScreen.tsx`) verifying scanned package QR tags against assigned dispatch trips with match confirmation and mismatch warning alerts. |
 | 3.1 | September 7, 2026 | Architecture & Engineering Team | Staff Operations Portal OWASP Top 10:2025 Enterprise Security Hardening Release (v3.1): (1) Route & Action Access Control Guards (`PermissionGuard.tsx`) enforcing clearance permissions before rendering administrative views with 403 Forbidden screen & audit logging. (2) Security Misconfiguration Baseline (`index.html`) with strict Content Security Policy (CSP), `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, and `Permissions-Policy`. (3) Supply Chain & Asset Origin Integrity Module (`securitySupplyChain.ts`). (4) Cryptographic Failures & Encrypted LocalStorage (`securityCrypto.ts`) with HMAC checksums & 15-Minute Session Idle Timeout (`useSessionTimeout.ts`). (5) Input Sanitization & DOM XSS Stripping (`securitySanitizer.ts`). (6) Insecure Design & Dual-Control Confirmation Modal (`DualControlConfirmModal.tsx`) requiring verification words & mandatory justification reasons for high-risk actions. (7) Brute-Force Lockout Protection (15-minute lock after 5 failed login/OTP attempts). (8) Centralized Security Audit Logger (`securityLogger.ts`). (9) Enterprise React Error Boundary (`ErrorBoundary.tsx`) masking stack traces & handling runtime exceptions. |
 | 3.9 | September 16, 2026 | Architecture & Engineering Team | Live Financial Transactions Engine, Dual-Entry Escrow Safety & Modular Gateways Release (v3.9): (1) Real-time dual-entry escrow settlement engine (`EscrowService.php`) locking buyer funds at checkout and releasing upon transporter delivery verification with automated 3.5% marketplace commission split, transporter delivery fee payout, and seller net earnings credit. (2) Pluggable modular gateway architecture (`PaymentGatewayInterface`, `PaymentGatewayFactory`, `MtnMomoGateway`, `OrangeMoneyGateway`, `DirectEscrowGateway`) with production credentials slots in `.env.example` and `config/payment.php`. (3) Real-time balance arithmetic with row-level database locking (`lockForUpdate()`) and telecom operator fee calculations (1.5% capped at 5,000 XAF with 25 XAF minimum). (4) Comprehensive frontend wallet service (`walletService.ts`) and mobile checkout payment integration (`CheckoutPaymentScreen.tsx`). |
+| 4.0 | September 16, 2026 | Architecture & Engineering Team | Real-Time Inventory Harmonization, Dynamic Seller Orders & Analytics, Staff Marketing Image Uploader & Transporter Stage Fix (v4.0): (1) Real-time product inventory locking with upfront availability checks on checkout, atomic stock decrements, and automatic restock restoration on order cancellation or merchant decline. (2) Dynamic store order counters tracking active tabs (`4 Ready for Pickup`, `1 In Transit`, `23 Total Orders`). (3) Removal of dummy fallback PINs and test autofills across seller handover flows. (4) Direct marketing file uploader in Staff Portal with instant local preview and folder-scoped backend storage. (5) Transporter active trip auto-resolution recovering driver state seamlessly across app restarts. (6) Real-time seller product analytics computed from PostgreSQL with zero mock data. |
+| 4.1 | September 16, 2026 | Architecture & Engineering Team | Google Play Store 2026 Policy Compliance & Modern Android Standards Release (v4.1): (1) Android Manifest scoped permissions pruning — removal of legacy `READ_EXTERNAL_STORAGE`, `WRITE_EXTERNAL_STORAGE`, and `ACCESS_BACKGROUND_LOCATION` in favor of standard Android Photo Picker (`READ_MEDIA_IMAGES`), `POST_NOTIFICATIONS`, `FOREGROUND_SERVICE`, and `FOREGROUND_SERVICE_LOCATION`. (2) Release integer `versionCode: 1` added to `app.json`. (3) Mandatory In-App & Web Account Deletion Pathway (`DELETE /api/v1/user/account` & `/users/me`) with PII anonymization, token revocation, address scrubbing, and interactive Settings confirmation modal. (4) User-Generated Content (UGC) In-App Reporting Mechanism (`POST /api/v1/reviews/{id}/report`) with violation reporting dialogs on product and store customer reviews. (5) In-App Privacy Policy & Data Safety declarations including TLS 1.3 encryption standards, hardware permission justifications, third-party payment disclosures, and web account deletion URL (`https://wunabuy.com/account/delete`). |
+
+---
 
 ---
 
@@ -419,6 +423,38 @@ A requirement is considered **Complete and Ready for Release** when:
 
 ---
 
+## 11. Real-Time Inventory Harmonization & Transporter Auto-Resolution (v4.0)
+
+### 11.1 Real-Time Stock Locking & Harmonization
+- **Pre-Flight Inventory Checks**: Every order creation mutation (`POST /api/v1/orders`) verifies available units directly in the database (`products.quantity`). If an order item quantity exceeds available stock, it aborts atomically with `422 INSUFFICIENT_STOCK`.
+- **Atomic Stock Decrement**: Deducts stock in real time upon order placement within a database transaction.
+- **Automatic Restock Recovery**: If a buyer cancels an order, or if a merchant declines an order, all order items are immediately returned to inventory (`products.quantity += item.quantity`).
+- **Immediate Seller Edits**: Merchant inventory adjustments via `PUT /api/v1/products/{id}` or `PUT /api/v1/seller/products/{id}/stock` update catalog stock across all buyer sessions in real time.
+
+### 11.2 Transporter Stage State Recovery
+- **Seamless Re-Mount & Device Reboot Recovery**: When a transporter's device restarts or loses state during a delivery, the transporter app queries `GET /api/v1/transporter/active-trip` to recover the active order UUID, current trip stage, and client tracking status. Eliminates 404 stage update crashes.
+- **Zero Dummy Data**: Complete removal of test PIN autofills and fake counters platform-wide.
+
+---
+
+## 12. Google Play Store 2026 Developer Policy Compliance (v4.1)
+
+### 12.1 Manifest Permissions Pruning & Scoped Storage
+- **Removal of Legacy Permissions**: Eradicated broad legacy permissions (`READ_EXTERNAL_STORAGE`, `WRITE_EXTERNAL_STORAGE`, `ACCESS_BACKGROUND_LOCATION`) in `app.json`.
+- **Modern Scoped Media**: Uses standard Android Photo Picker (`READ_MEDIA_IMAGES`) and `CAMERA` solely for parcel QR waybill scanning, product barcodes, and delivery photo proof.
+- **Foreground Location Services**: Active carrier delivery tracking uses `FOREGROUND_SERVICE` and `FOREGROUND_SERVICE_LOCATION` with prominent in-app notification disclosure (`POST_NOTIFICATIONS`).
+
+### 12.2 Mandatory Account Deletion Pathway
+- **In-App Deletion**: Self-service deletion flow in `SettingsScreen.tsx` with a multi-step destructive confirmation modal detailing token revocation, PII anonymization, and address scrubbing.
+- **Backend API**: `DELETE /api/v1/user/account` executes within a database transaction, anonymizing customer PII, revoking Sanctum tokens, deactivating associated store/transporter records, and creating an audit record while preserving tax invoices per statutory CEMAC commercial law.
+- **Online Web Pathway**: Dedicated web account deletion URL at `https://wunabuy.com/account/delete` documented in the Privacy Policy.
+
+### 12.3 User-Generated Content (UGC) In-App Reporting
+- **In-App Review Reporting**: Embedded reporting buttons on product and store customer review cards, launching a modal with standardized violation categories (*Offensive Content*, *Spam / Fake*, *Harassment*, *Misleading Information*).
+- **Moderation API**: `POST /api/v1/reviews/{id}/report` logging reports into the moderation audit log.
+
+---
+
 ### Approval Signatures
 
 **Product Manager:** _Agemo Technologies Product Lead_  
@@ -426,4 +462,4 @@ A requirement is considered **Complete and Ready for Release** when:
 **Lead QA Engineer:** _Wunabuy Quality Assurance Team_  
 
 ---
-**[End of Product Requirements Document v1.5]**
+**[End of Product Requirements Document v4.1]**

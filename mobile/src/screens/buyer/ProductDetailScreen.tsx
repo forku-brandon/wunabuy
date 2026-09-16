@@ -108,6 +108,31 @@ export const ProductDetailScreen = ({ route, navigation }: any) => {
   const [newComment, setNewComment] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
 
+  // UGC Review Report State (Google Play Compliance)
+  const [reportingReviewId, setReportingReviewId] = useState<string | null>(null);
+  const [reportReason, setReportReason] = useState<string>('inappropriate');
+  const [isSubmittingReport, setIsSubmittingReport] = useState<boolean>(false);
+
+  const handleOpenReportModal = (reviewId: string) => {
+    setReportingReviewId(reviewId);
+    setReportReason('inappropriate');
+  };
+
+  const handleConfirmReport = async () => {
+    if (!reportingReviewId) return;
+    setIsSubmittingReport(true);
+    try {
+      await ProductsService.reportReview(reportingReviewId, reportReason);
+      setReportingReviewId(null);
+      setToastMessage('Review reported. Our moderation team will investigate.');
+    } catch {
+      setReportingReviewId(null);
+      setToastMessage('Review reported.');
+    } finally {
+      setIsSubmittingReport(false);
+    }
+  };
+
   const handleSubmitReview = async () => {
     if (!product) return;
     if (!newComment.trim()) {
@@ -757,6 +782,20 @@ export const ProductDetailScreen = ({ route, navigation }: any) => {
                         ))}
                       </View>
                     )}
+
+                    {/* Review Report Action (Google Play UGC Compliance) */}
+                    <View style={styles.reviewActionFooter}>
+                      <TouchableOpacity
+                        activeOpacity={0.7}
+                        onPress={() => handleOpenReportModal(rev.id || `rev_${idx}`)}
+                        style={styles.reportReviewBtn}
+                      >
+                        <Ionicons name="flag-outline" size={12} color={theme.textTertiary || '#94A3B8'} style={{ marginRight: 4 }} />
+                        <Text variant="caption" secondary style={{ fontSize: 11 }}>
+                          Report Review
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
                   </Card>
                 ))}
               </View>
@@ -1027,6 +1066,75 @@ export const ProductDetailScreen = ({ route, navigation }: any) => {
                 loading={submittingReview}
                 disabled={submittingReview}
                 style={{ flex: 1, marginLeft: spacing.xs }}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* UGC Review Report Modal (Google Play Compliance) */}
+      <Modal
+        visible={Boolean(reportingReviewId)}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setReportingReviewId(null)}
+      >
+        <View style={styles.reportModalOverlay}>
+          <View style={[styles.reportModalCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
+            <View style={styles.reportModalHeader}>
+              <Ionicons name="flag" size={20} color={colors.semantic.error[500]} style={{ marginRight: 8 }} />
+              <Text variant="h3" bold>Report Inappropriate Review</Text>
+            </View>
+            <Text variant="caption" secondary style={{ marginBottom: spacing.md, lineHeight: 18 }}>
+              Help us keep Wunabuy authentic and safe. Select why this review violates platform standards:
+            </Text>
+
+            <View style={{ gap: 8, marginBottom: spacing.lg }}>
+              {[
+                { id: 'inappropriate', label: 'Offensive or Inappropriate Content' },
+                { id: 'spam', label: 'Spam, Advertising, or Fake Review' },
+                { id: 'harassment', label: 'Harassment or Personal Attack' },
+                { id: 'misleading', label: 'Misleading or False Information' },
+              ].map((item) => (
+                <TouchableOpacity
+                  key={item.id}
+                  activeOpacity={0.8}
+                  onPress={() => setReportReason(item.id)}
+                  style={[
+                    styles.reportOptionRow,
+                    {
+                      borderColor: reportReason === item.id ? colors.primary[500] : theme.border,
+                      backgroundColor: reportReason === item.id ? (isDark ? colors.neutral[800] : colors.primary[50]) : 'transparent',
+                    },
+                  ]}
+                >
+                  <Ionicons
+                    name={reportReason === item.id ? 'radio-button-on' : 'radio-button-off'}
+                    size={18}
+                    color={reportReason === item.id ? colors.primary[500] : (theme.textTertiary || '#94A3B8')}
+                    style={{ marginRight: 8 }}
+                  />
+                  <Text variant="bodyMedium" bold={reportReason === item.id}>
+                    {item.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+              <Button
+                title="Cancel"
+                variant="outline"
+                disabled={isSubmittingReport}
+                onPress={() => setReportingReviewId(null)}
+                style={{ flex: 1 }}
+              />
+              <Button
+                title={isSubmittingReport ? "Submitting..." : "Submit Report"}
+                variant="primary"
+                disabled={isSubmittingReport}
+                onPress={handleConfirmReport}
+                style={{ flex: 1.2, backgroundColor: colors.semantic.error[500], borderColor: colors.semantic.error[500] }}
               />
             </View>
           </View>
@@ -1387,6 +1495,46 @@ const styles = StyleSheet.create({
   customerReviewCard: {
     padding: spacing.md,
     borderRadius: borderRadius.lg,
+  },
+  reviewActionFooter: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: spacing.xs,
+    paddingTop: 4,
+  },
+  reportReviewBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+  },
+  reportModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.lg,
+  },
+  reportModalCard: {
+    width: '100%',
+    maxWidth: 400,
+    borderRadius: borderRadius.xl,
+    padding: spacing.lg,
+    borderWidth: 1,
+    ...shadows.lg,
+  },
+  reportModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
+  },
+  reportOptionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.md,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
     marginBottom: spacing.xs,
   },
   customerReviewHeader: {

@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   SafeAreaView,
   StatusBar,
+  Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Text, Button } from '../ui';
@@ -338,14 +339,44 @@ const PrivacyPolicyContent: React.FC<{ isDark: boolean }> = ({ isDark }) => {
         feature automated timeout protections.
       </Paragraph>
 
-      <SectionTitle number="6" title="User Rights & Account Deletion Request" textColor={textColor} />
+      <SectionTitle number="6" title="User Rights & Account Deletion Protocol" textColor={textColor} />
       <Paragraph textColor={subtextColor}>
-        You have the right to access, review, update, or correct your personal information at any time. Under Google Play
-        User Data standards, you can request full account deletion and data erasure by navigating to Profile &gt; Settings &gt;
-        Delete Account, or by sending a written notice to privacy@wunabuy.com with your registered phone number.
+        You have the legal right to access, review, update, or permanently delete your personal information. Under Google Play
+        User Data standards, you can request full account deletion and data erasure directly inside the application by navigating
+        to Profile &gt; Settings &gt; Delete Account &amp; Data, or via our dedicated online web deletion pathway.
       </Paragraph>
 
-      <SectionTitle number="7" title="Contact Us & Data Protection Officer" textColor={textColor} />
+      <SectionTitle number="7" title="Online Web Pathway for Account & Data Deletion" textColor={textColor} />
+      <Paragraph textColor={subtextColor}>
+        Former or web-based users may submit an official deletion request outside the app at our public portal:
+      </Paragraph>
+      <TouchableOpacity
+        activeOpacity={0.8}
+        onPress={() => Linking.openURL('https://wunabuy.com/account/delete').catch(() => {})}
+        style={{
+          padding: 12,
+          backgroundColor: isDark ? '#1E293B' : '#F0FDFA',
+          borderColor: '#0D9488',
+          borderWidth: 1,
+          borderRadius: 8,
+          marginBottom: 12,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
+        <Text variant="caption" bold style={{ color: '#0D9488' }}>
+          https://wunabuy.com/account/delete
+        </Text>
+        <Ionicons name="open-outline" size={16} color="#0D9488" />
+      </TouchableOpacity>
+      <Paragraph textColor={subtextColor}>
+        Upon request verification, all login credentials, device tokens, and personal identifiable information (PII) are
+        permanently purged from active databases. Statutory transaction invoices are archived in anonymized format strictly
+        to comply with CEMAC tax and commercial accounting mandates.
+      </Paragraph>
+
+      <SectionTitle number="8" title="Contact Us & Data Protection Officer" textColor={textColor} />
       <Paragraph textColor={subtextColor}>
         If you have questions, inquiries, or grievances regarding our privacy practices, please reach out to:
       </Paragraph>

@@ -501,4 +501,43 @@ class CommerceController extends Controller
 
         return $this->respondSuccess($adverts);
     }
+
+    /**
+     * Report objectionable review (Google Play Store User Generated Content Compliance).
+     */
+    public function reportReview(Request $request, string $id): JsonResponse
+    {
+        $review = Str::isUuid($id) ? Review::find($id) : null;
+        if (!$review) {
+            return $this->respondError('NOT_FOUND', 'Review not found', null, 404);
+        }
+
+        $user = $this->resolveUser($request);
+        $reason = $request->input('reason', 'inappropriate');
+        $details = $request->input('details', '');
+
+        \App\Models\AuditLog::create([
+            'action' => 'REVIEW_REPORTED',
+            'staff_name' => $user ? $user->full_name : 'Anonymous Reporter',
+            'staff_role' => 'USER',
+            'department' => 'MODERATION',
+            'ip_address' => $request->ip() ?? '127.0.0.1',
+            'target_resource' => 'REVIEW:' . $review->id,
+            'status' => 'SUCCESS',
+            'details' => [
+                'review_id' => $review->id,
+                'target_type' => $review->target_type,
+                'target_id' => $review->target_id,
+                'reason' => $reason,
+                'details' => $details,
+                'reporter_user_id' => $user?->id,
+            ],
+        ]);
+
+        return $this->respondSuccess([
+            'reported' => true,
+            'review_id' => $review->id,
+            'message' => 'Thank you for reporting. Our moderation team has been notified and will review this content.',
+        ]);
+    }
 }
