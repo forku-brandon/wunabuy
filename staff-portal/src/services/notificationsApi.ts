@@ -10,10 +10,14 @@ export interface BroadcastNotificationPayload {
 }
 
 export interface DirectNotificationPayload {
-  user_id: string;
+  user_id?: string;
+  phone?: string;
+  email?: string;
   title: string;
   message: string;
-  type: 'marketing' | 'system' | 'alert' | 'order_status';
+  type: 'marketing' | 'system' | 'alert' | 'order_status' | 'kyc';
+  role?: 'buyer' | 'seller' | 'transporter' | string;
+  deep_link?: string;
   data?: Record<string, any>;
 }
 

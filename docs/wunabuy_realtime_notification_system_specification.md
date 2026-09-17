@@ -124,3 +124,56 @@ To guarantee enterprise reliability and eliminate cross-role noise:
 3. **Instant Workspace Switching**:
    - Switching between Buyer, Seller, and Transporter (`setActiveRole`) dynamically reloads notifications and unread counters, preventing buyer notifications from appearing in seller mode or vice versa.
 
+---
+
+## 8. Staff Portal Direct User Notifications
+The Control Centre equips staff personnel to dispatch targeted push and in-app notifications directly to individual platform users:
+- **Recipient Identification**: Resolves recipients via user search (name, phone `+237...`, email, or UUID), with preselection from `UsersPage`, `KYCPage`, or `DisputesPage`.
+- **Operational Category Presets**:
+  - **KYC & Compliance**: Clear document instructions (e.g. "Storefront photo does not match registered trade name; please resubmit").
+  - **Escrow & Dispute Inquiry**: Solicit evidence or clarify delivery issues.
+  - **Order Milestone Follow-ups**: Unconfirmed delivery addresses, pickup delays.
+  - **Security Alerts & Directives**: Immediate identity or phone number confirmations.
+- **Workspace Role Routing**: Dispatches with explicit `role: 'buyer' | 'seller' | 'transporter'` ensuring the notification surfaces in the appropriate mobile tab/workspace.
+- **Interactive Lockscreen Simulation**: Displays real-time smartphone lockscreen preview as the staff member types.
+
+---
+
+## 9. Automated Control Centre Triggers
+Critical back-office operations automatically trigger push notifications and inbox records without requiring manual composition:
+1. **Store Merchant KYC Decisions (`KYCService.php`)**:
+   - **Approval**: Notifies merchant (`Store KYC Approved! ✅`), enables seller permissions, and routes deep link to `SellerDashboard`.
+   - **Rejection**: Notifies merchant (`Store KYC Requires Attention ⚠️`) with compliance reviewer notes, and deep links directly to `StoreKYC` for document re-upload.
+2. **Transporter Permit KYC Decisions (`KYCService.php`)**:
+   - **Approval**: Notifies driver (`Rider Permit Approved! 🛵`), routes deep link to `TransporterJobs`.
+   - **Rejection**: Notifies driver (`Transporter KYC Requires Attention ⚠️`) with reviewer notes, routes to `TransporterKYC`.
+3. **3-Way Escrow Dispute Adjudications (`EscrowService.php`)**:
+   - **Buyer Refund (`BUYER_REFUND`)**: Credits buyer wallet, dispatches alert with formatted refund amount linking to `BuyerWallet`, notifies seller with rationale linking to `SellerOrders`.
+   - **Seller Release (`SELLER_RELEASE`)**: Releases escrow to seller wallet, dispatches alert linking to `SellerWallet`, notifies buyer linking to `BuyerOrders`.
+   - **50/50 Split (`SPLIT_50_50`)**: Credits 50% escrow to buyer and 50% to seller, notifying both parties with calculated financial breakdowns.
+4. **Account Access Status Updates (`StaffPortalController.php`)**:
+   - **Suspension**: Immediate high-priority alert (`Account Access Suspended ⚠️`) stating official reason.
+   - **Reactivation**: System welcome alert (`Account Reactivated! ✅`) restoring access.
+5. **Financial Payout Authorizations (`StaffPortalController.php`)**:
+   - Instant payout disbursed alert linking to merchant wallet or driver earnings ledger.
+6. **Logistics Trip Stage Overrides (`StaffPortalController.php`)**:
+   - Automated notifications to buyer and seller on pickup, transit, and delivery completion.
+
+---
+
+## 10. Mobile Deep Linking Directory
+
+| Target Screen | Destination Experience | Applicable Roles |
+| :--- | :--- | :--- |
+| `StoreKYC` | Merchant Document Upload & Status Screen | Seller, Buyer |
+| `TransporterKYC` | Driver Permit & Vehicle Insurance Upload | Transporter |
+| `SellerDashboard` | Merchant Sales, Orders & Performance Overview | Seller |
+| `SellerOrders` | Seller Order Management & Fulfillment | Seller |
+| `SellerWallet` | Merchant Escrow Settlement & Balance Ledger | Seller |
+| `TransporterJobs` | Live Pickup & Delivery Job Opportunities | Transporter |
+| `TransporterEarnings` | Driver Daily Disbursals & Trip Fees | Transporter |
+| `BuyerOrders` | Customer Order History & Tracking | Buyer |
+| `OrderTracking` | Live GPS Map Tracking with Assigned Rider Details | Buyer, Seller |
+| `BuyerWallet` | Buyer Balance, Refund Credits & Top-Up | Buyer |
+| `Refunds` | Refund Status & Escrow Arbitration Bench | Buyer |
+| `Notifications` | Global In-App Notification Center | All Roles |

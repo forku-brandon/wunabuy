@@ -26,8 +26,10 @@ import {
   SlidersHorizontal,
   Clock,
   Radio,
+  Send,
 } from 'lucide-react';
 import { ComposeBroadcastModal } from '../components/notifications/ComposeBroadcastModal';
+import { ComposeDirectModal } from '../components/notifications/ComposeDirectModal';
 
 export const NotificationsPage: React.FC = () => {
   const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification, clearRead } = useNotifications();
@@ -37,6 +39,7 @@ export const NotificationsPage: React.FC = () => {
   const [selectedPriority, setSelectedPriority] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [isComposeOpen, setIsComposeOpen] = useState(false);
+  const [isDirectOpen, setIsDirectOpen] = useState(false);
 
   // Filtered notifications
   const filteredNotifications = useMemo(() => {
@@ -123,8 +126,12 @@ export const NotificationsPage: React.FC = () => {
       subtitle="Centralized operational stream of security alerts, escrow payout authorizations, and compliance verifications"
       action={
         <div className="flex items-center space-x-2">
-          <Button variant="primary" size="sm" onClick={() => setIsComposeOpen(true)}>
-            <Radio className="w-3.5 h-3.5 mr-1" />
+          <Button variant="primary" size="sm" onClick={() => setIsDirectOpen(true)} className="bg-teal-600 hover:bg-teal-700 text-white">
+            <Send className="w-3.5 h-3.5 mr-1" />
+            <span>Send Direct Alert</span>
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setIsComposeOpen(true)}>
+            <Radio className="w-3.5 h-3.5 mr-1 text-teal-600 dark:text-teal-400" />
             <span>Compose Broadcast</span>
           </Button>
           {unreadCount > 0 && (
@@ -386,6 +393,11 @@ export const NotificationsPage: React.FC = () => {
       <ComposeBroadcastModal
         isOpen={isComposeOpen}
         onClose={() => setIsComposeOpen(false)}
+      />
+
+      <ComposeDirectModal
+        isOpen={isDirectOpen}
+        onClose={() => setIsDirectOpen(false)}
       />
     </PageContainer>
   );

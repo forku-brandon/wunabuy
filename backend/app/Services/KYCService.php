@@ -159,6 +159,36 @@ class KYCService
                     }
                     $user->available_roles = array_values(array_unique($roles));
                     $user->save();
+
+                    // Real-Time Push & Inbox Notification to Merchant
+                    if ($isApproved) {
+                        NotificationService::sendToUser(
+                            $user->id,
+                            'Store KYC Approved! ✅',
+                            "Congratulations! Your merchant store identity verification for {$sellerSub->store_name} has been approved by Wunabuy Operations. You can now list products and start selling.",
+                            'kyc',
+                            [
+                                'role' => 'seller',
+                                'screen' => 'SellerDashboard',
+                                'kyc_status' => 'approved',
+                                'entity_id' => $store->id,
+                            ]
+                        );
+                    } else {
+                        $reasonMsg = !empty($notes) ? " Reason: {$notes}." : " Please review your documents and resubmit in your seller profile.";
+                        NotificationService::sendToUser(
+                            $user->id,
+                            'Store KYC Requires Attention ⚠️',
+                            "Your store verification submission could not be approved.{$reasonMsg}",
+                            'kyc',
+                            [
+                                'role' => 'seller',
+                                'screen' => 'StoreKYC',
+                                'kyc_status' => 'rejected',
+                                'reason' => $notes,
+                            ]
+                        );
+                    }
                 }
 
                 AuditLog::create([
@@ -211,6 +241,36 @@ class KYCService
                     }
                     $user->available_roles = array_values(array_unique($roles));
                     $user->save();
+
+                    // Real-Time Push & Inbox Notification to Transporter
+                    if ($isApproved) {
+                        NotificationService::sendToUser(
+                            $user->id,
+                            'Rider Permit Approved! 🛵',
+                            "Congratulations! Your transporter permit and vehicle documents ({$transporterSub->vehicle_plate}) have been verified by Wunabuy Operations. You can now go online and accept delivery dispatch jobs.",
+                            'kyc',
+                            [
+                                'role' => 'transporter',
+                                'screen' => 'TransporterJobs',
+                                'kyc_status' => 'approved',
+                                'transporter_id' => $transporter->id,
+                            ]
+                        );
+                    } else {
+                        $reasonMsg = !empty($notes) ? " Reason: {$notes}." : " Please review your driver license and vehicle documents and resubmit.";
+                        NotificationService::sendToUser(
+                            $user->id,
+                            'Transporter KYC Requires Attention ⚠️',
+                            "Your transporter driver verification could not be approved.{$reasonMsg}",
+                            'kyc',
+                            [
+                                'role' => 'transporter',
+                                'screen' => 'TransporterKYC',
+                                'kyc_status' => 'rejected',
+                                'reason' => $notes,
+                            ]
+                        );
+                    }
                 }
 
                 AuditLog::create([

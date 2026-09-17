@@ -226,6 +226,25 @@ class StaffPortalController extends Controller
             // Dual control confirmed
         }
 
+        $tx = WalletTransaction::find($id);
+        if ($tx) {
+            $tx->status = 'completed';
+            $tx->save();
+            $user = $tx->wallet?->user;
+            if ($user) {
+                $role = $user->store ? 'seller' : ($user->transporter ? 'transporter' : ($user->role ?? 'seller'));
+                $screen = $role === 'seller' ? 'SellerWallet' : ($role === 'transporter' ? 'TransporterEarnings' : 'BuyerWallet');
+                $amountFormatted = number_format(abs((float) $tx->amount), 0, ',', ' ');
+                NotificationService::sendToUser(
+                    $user->id,
+                    'Payout Disbursed! 💸',
+                    "Your cashout request of {$amountFormatted} XAF has been authorized by Finance Operations and transferred via Mobile Money.",
+                    'escrow',
+                    ['role' => $role, 'screen' => $screen, 'transaction_id' => $tx->id]
+                );
+            }
+        }
+
         AuditLog::create([
             'action' => 'PAYOUT_AUTHORIZED',
             'staff_name' => 'Super Administrator',
@@ -326,7 +345,7 @@ class StaffPortalController extends Controller
      */
     public function getDisputes(): JsonResponse
     {
-        $disputes = Dispute::with(['order.store', 'order.customer', 'order.transporter.user', 'order.items.product', 'raisedBy'])
+        $disputes = Dispute::with(['order.store.user', 'order.customer', 'order.transporter.user', 'order.items.product', 'raisedBy'])
             ->latest()
             ->get();
 
@@ -335,6 +354,7 @@ class StaffPortalController extends Controller
             $order = $d->order;
             $buyer = $d->raisedBy ?? $order?->customer;
             $sellerStore = $order?->store;
+            $sellerUser = $sellerStore?->user;
             $transporterUser = $order?->transporter?->user;
 
             $photos = $d->evidence_photos;
@@ -368,8 +388,14 @@ class StaffPortalController extends Controller
                 'id' => $d->id,
                 'order_code' => $order?->order_code ?? ('WB-DISP-' . substr($d->id, 0, 6)),
                 'buyer_name' => $buyer?->full_name ?? 'Buyer Account',
+                'buyer_id' => $buyer?->id,
+                'buyer_phone' => $buyer?->phone,
                 'seller_name' => $sellerStore?->store_name ?? 'Sigate Electronics Ltd',
+                'seller_id' => $sellerUser?->id,
+                'seller_phone' => $sellerUser?->phone,
                 'transporter_name' => $transporterUser?->full_name ?? 'Paul Eto\'o',
+                'transporter_id' => $transporterUser?->id,
+                'transporter_phone' => $transporterUser?->phone,
                 'dispute_reason' => $d->reason ?? 'Order Dispute',
                 'dispute_description' => $d->description ?? 'Dispute filed by customer awaiting review.',
                 'escrow_amount' => (float) ($order?->total ?? $d->refund_amount ?? 0),
@@ -500,10 +526,46 @@ class StaffPortalController extends Controller
             if ($stage === 4) {
                 $order->status = 'delivered';
                 $order->delivered_at = now();
+
+                // Real-time dispatch alerts
+                NotificationService::sendToUser(
+                    $order->customer_id,
+                    'Package Delivered! 🎁',
+                    "Logistics dispatch verified delivery for order #{$order->order_code}. Please inspect your package.",
+                    'delivery',
+                    ['order_id' => $order->id, 'order_code' => $order->order_code, 'role' => 'buyer', 'screen' => 'BuyerOrders']
+                );
+
+                $store = $order->store;
+                if ($store && $store->user_id) {
+                    NotificationService::sendToUser(
+                        $store->user_id,
+                        'Order Delivered to Customer 📦',
+                        "Dispatch operations confirmed delivery of order #{$order->order_code}.",
+                        'delivery',
+                        ['order_id' => $order->id, 'order_code' => $order->order_code, 'role' => 'seller', 'screen' => 'SellerOrders']
+                    );
+                }
             } elseif ($stage === 3) {
                 $order->status = 'in_transit';
+
+                NotificationService::sendToUser(
+                    $order->customer_id,
+                    'Order In Transit 🚚',
+                    "Your package for order #{$order->order_code} is on the way to your delivery address.",
+                    'delivery',
+                    ['order_id' => $order->id, 'order_code' => $order->order_code, 'role' => 'buyer', 'screen' => 'OrderTracking']
+                );
             } elseif ($stage === 2) {
                 $order->status = 'picked_up';
+
+                NotificationService::sendToUser(
+                    $order->customer_id,
+                    'Package Collected 🛵',
+                    "Transporter has picked up order #{$order->order_code} from the store.",
+                    'delivery',
+                    ['order_id' => $order->id, 'order_code' => $order->order_code, 'role' => 'buyer', 'screen' => 'OrderTracking']
+                );
             }
             $order->save();
         }
@@ -1203,6 +1265,25 @@ class StaffPortalController extends Controller
         $user->status = $newStatus;
         $user->save();
 
+        // Real-Time Notification to User
+        if ($newStatus === 'suspended') {
+            NotificationService::sendToUser(
+                $user->id,
+                'Account Access Suspended ⚠️',
+                "Your Wunabuy account access has been restricted by Operations. Reason: {$reason}. Please contact customer support for assistance.",
+                'alert',
+                ['role' => $user->role ?? 'buyer', 'screen' => 'Notifications']
+            );
+        } else {
+            NotificationService::sendToUser(
+                $user->id,
+                'Account Reactivated! ✅',
+                "Your Wunabuy account access has been restored by Operations. You can now resume using all platform services.",
+                'system',
+                ['role' => $user->role ?? 'buyer', 'screen' => 'HomeScreen']
+            );
+        }
+
         AuditLog::create([
             'id' => (string) Str::uuid(),
             'action' => $newStatus === 'suspended' ? 'USER_ACCOUNT_SUSPEND' : 'USER_ACCOUNT_REACTIVATE',
@@ -1387,34 +1468,48 @@ class StaffPortalController extends Controller
         $validated = $request->validate([
             'user_id' => 'nullable|string',
             'phone' => 'nullable|string',
+            'email' => 'nullable|string',
             'title' => 'required|string|max:255',
             'message' => 'required|string|max:1000',
             'type' => 'nullable|string',
             'deep_link' => 'nullable|string|max:255',
+            'role' => 'nullable|string',
+            'data' => 'nullable|array',
         ]);
 
         $user = null;
         if (!empty($validated['user_id'])) {
             $user = User::find($validated['user_id']);
-        } elseif (!empty($validated['phone'])) {
+        }
+        if (!$user && !empty($validated['phone'])) {
             $user = User::where('phone', $validated['phone'])->first();
+        }
+        if (!$user && !empty($validated['email'])) {
+            $user = User::where('email', $validated['email'])->first();
         }
 
         if (!$user) {
-            return $this->respondError('NOT_FOUND', 'Target user not found by ID or phone number', null, 404);
+            return $this->respondError('NOT_FOUND', 'Target user not found by ID, phone number, or email', null, 404);
         }
 
-        $targetRole = $request->input('role') ?? $user->role ?? 'buyer';
+        $targetRole = strtolower($request->input('role') ?? $user->role ?? 'buyer');
+        $deepLink = $validated['deep_link'] ?? ($request->input('data.screen') ?? null);
+        $extraData = array_merge(
+            $request->input('data') ?? [],
+            [
+                'deep_link' => $deepLink,
+                'screen' => $deepLink,
+                'role' => $targetRole,
+                'direct_from' => 'Staff Operations',
+            ]
+        );
+
         $notification = NotificationService::sendToUser(
             $user->id,
             $validated['title'],
             $validated['message'],
             $validated['type'] ?? 'info',
-            [
-                'deep_link' => $validated['deep_link'] ?? null,
-                'role' => $targetRole,
-                'direct_from' => 'Staff Operations',
-            ]
+            $extraData
         );
 
         AuditLog::create([
@@ -1430,13 +1525,20 @@ class StaffPortalController extends Controller
                 'user_id' => $user->id,
                 'user_name' => $user->full_name,
                 'title' => $validated['title'],
+                'role' => $targetRole,
             ],
         ]);
 
         return $this->respondSuccess([
             'sent' => true,
             'notification' => $notification,
-            'message' => "Notification successfully sent to {$user->full_name}.",
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->full_name,
+                'phone' => $user->phone,
+                'role' => $targetRole,
+            ],
+            'message' => "Push notification successfully dispatched to {$user->full_name}.",
         ]);
     }
 }

@@ -92,6 +92,41 @@ export const NotificationsScreen = ({ navigation, route }: any) => {
       return;
     }
 
+    if (screen === 'StoreKYC') {
+      navigation.navigate('StoreKYC');
+      return;
+    }
+
+    if (screen === 'TransporterKYC') {
+      navigation.navigate('TransporterKYC');
+      return;
+    }
+
+    if (screen === 'SellerDashboard') {
+      navigation.navigate('SellerApp', { screen: 'SellerDashboard' });
+      return;
+    }
+
+    if (screen === 'SellerWallet') {
+      navigation.navigate('SellerApp', { screen: 'SellerWallet' });
+      return;
+    }
+
+    if (screen === 'TransporterJobs') {
+      navigation.navigate('TransporterApp', { screen: 'TransporterJobs' });
+      return;
+    }
+
+    if (screen === 'TransporterEarnings') {
+      navigation.navigate('TransporterApp', { screen: 'TransporterEarnings' });
+      return;
+    }
+
+    if (screen === 'Refunds') {
+      navigation.navigate('Refunds');
+      return;
+    }
+
     if (data.order_id) {
       navigation.navigate('OrderTracking', { orderId: String(data.order_id) });
       return;

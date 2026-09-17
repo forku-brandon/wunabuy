@@ -23,7 +23,9 @@ import {
   ShoppingBag,
   ExternalLink,
   Scale,
+  Send,
 } from 'lucide-react';
+import { ComposeDirectModal, SelectedUserSummary } from '../components/notifications/ComposeDirectModal';
 
 export const DisputesPage: React.FC = () => {
   const { addAuditLog, hasPermission } = useStaffAuth();
@@ -32,6 +34,7 @@ export const DisputesPage: React.FC = () => {
   
   // Interactive Modals & Lightbox
   const [adjudicateTarget, setAdjudicateTarget] = useState<EscrowDisputeItem | null>(null);
+  const [notifyUser, setNotifyUser] = useState<SelectedUserSummary | null>(null);
   const [rulingType, setRulingType] = useState<'BUYER_REFUND' | 'SELLER_RELEASE' | 'SPLIT_50_50'>('BUYER_REFUND');
   const [rulingRationale, setRulingRationale] = useState('');
   const [lightboxDoc, setLightboxDoc] = useState<{ isOpen: boolean; url: string; title: string }>({
@@ -178,6 +181,23 @@ export const DisputesPage: React.FC = () => {
         const s = (item.status || '').toUpperCase();
         return (
           <div className="flex items-center justify-end space-x-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() =>
+                setNotifyUser({
+                  id: item.buyer_id || item.id,
+                  name: item.buyer_name,
+                  phone: item.buyer_phone,
+                  role: 'buyer',
+                })
+              }
+              className="text-teal-600 dark:text-teal-400 border-teal-200 dark:border-teal-800 hover:bg-teal-50 dark:hover:bg-teal-950/30"
+              title="Send Direct Push Notification to Dispute Parties"
+            >
+              <Send className="w-3.5 h-3.5 mr-1" />
+              Notify
+            </Button>
             {!s.startsWith('RESOLVED') && s !== 'REFUNDED' && canAdjudicate ? (
               <Button
                 size="sm"
@@ -316,6 +336,55 @@ export const DisputesPage: React.FC = () => {
                       <span> • Rider: <strong className="text-slate-900 dark:text-slate-100">{adjudicateTarget.transporter_name}</strong></span>
                     )}
                   </p>
+                  <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setNotifyUser({
+                          id: adjudicateTarget.buyer_id || adjudicateTarget.id,
+                          name: adjudicateTarget.buyer_name,
+                          phone: adjudicateTarget.buyer_phone,
+                          role: 'buyer',
+                        })
+                      }
+                      className="inline-flex items-center px-2 py-1 rounded text-[11px] font-semibold bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800 hover:bg-teal-100 dark:hover:bg-teal-900/50 transition-colors"
+                    >
+                      <Send className="w-3 h-3 mr-1" />
+                      Notify Buyer
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setNotifyUser({
+                          id: adjudicateTarget.seller_id || adjudicateTarget.id,
+                          name: adjudicateTarget.seller_name,
+                          phone: adjudicateTarget.seller_phone,
+                          role: 'seller',
+                        })
+                      }
+                      className="inline-flex items-center px-2 py-1 rounded text-[11px] font-semibold bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+                    >
+                      <Send className="w-3 h-3 mr-1" />
+                      Notify Store
+                    </button>
+                    {adjudicateTarget.transporter_name && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setNotifyUser({
+                            id: adjudicateTarget.transporter_id || adjudicateTarget.id,
+                            name: adjudicateTarget.transporter_name,
+                            phone: adjudicateTarget.transporter_phone,
+                            role: 'transporter',
+                          })
+                        }
+                        className="inline-flex items-center px-2 py-1 rounded text-[11px] font-semibold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors"
+                      >
+                        <Send className="w-3 h-3 mr-1" />
+                        Notify Rider
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 <div className="text-right">
@@ -509,6 +578,13 @@ export const DisputesPage: React.FC = () => {
           </div>
         </Modal>
       )}
+
+      {/* Direct User / Party Notification Modal */}
+      <ComposeDirectModal
+        isOpen={Boolean(notifyUser)}
+        onClose={() => setNotifyUser(null)}
+        preselectedUser={notifyUser}
+      />
 
       {/* Global Image Lightbox with Zoom & 90-degree Rotation */}
       <ImageLightbox

@@ -361,11 +361,51 @@ class EscrowService
 
                 $order->status = 'cancelled';
                 $order->payment_status = 'refunded';
+
+                // Real-Time Push & Inbox Alerts
+                NotificationService::sendToUser(
+                    $order->customer_id,
+                    'Dispute Resolved: Refund Credited ⚖️',
+                    "Wunabuy Control Centre ruled in your favor for order #{$order->order_code}. " . number_format($totalAmount, 0, ',', ' ') . " XAF has been refunded to your wallet. Rationale: {$rationale}",
+                    'escrow',
+                    ['order_id' => $order->id, 'order_code' => $order->order_code, 'role' => 'buyer', 'screen' => 'BuyerWallet']
+                );
+
+                $store = $order->store;
+                if ($store && $store->user_id) {
+                    NotificationService::sendToUser(
+                        $store->user_id,
+                        'Dispute Ruling Notice ⚖️',
+                        "Dispute for order #{$order->order_code} was resolved with a customer refund by Wunabuy Control Centre. Rationale: {$rationale}",
+                        'escrow',
+                        ['order_id' => $order->id, 'order_code' => $order->order_code, 'role' => 'seller', 'screen' => 'SellerOrders']
+                    );
+                }
             } elseif ($rulingType === 'SELLER_RELEASE') {
                 // Release funds to seller minus commission
                 $this->releaseEscrow($order, $staffName);
                 $order->status = 'delivered';
                 $order->payment_status = 'released';
+
+                // Real-Time Push & Inbox Alerts
+                NotificationService::sendToUser(
+                    $order->customer_id,
+                    'Dispute Adjudication Notice ⚖️',
+                    "Dispute review for order #{$order->order_code} was completed by Wunabuy Control Centre. Merchant fulfillment was verified. Rationale: {$rationale}",
+                    'escrow',
+                    ['order_id' => $order->id, 'order_code' => $order->order_code, 'role' => 'buyer', 'screen' => 'BuyerOrders']
+                );
+
+                $store = $order->store;
+                if ($store && $store->user_id) {
+                    NotificationService::sendToUser(
+                        $store->user_id,
+                        'Dispute Resolved in Your Favor! ⚖️',
+                        "Dispute for order #{$order->order_code} was resolved in your favor by Wunabuy Control Centre. Escrow funds have been credited to your store wallet. Rationale: {$rationale}",
+                        'escrow',
+                        ['order_id' => $order->id, 'order_code' => $order->order_code, 'role' => 'seller', 'screen' => 'SellerWallet']
+                    );
+                }
             } elseif ($rulingType === 'SPLIT_50_50') {
                 $half = round($totalAmount / 2, 2);
                 if ($buyerWallet) {
@@ -395,6 +435,25 @@ class EscrowService
 
                 $order->status = 'completed';
                 $order->payment_status = 'split_settled';
+
+                // Real-Time Push & Inbox Alerts
+                NotificationService::sendToUser(
+                    $order->customer_id,
+                    'Dispute Settled: 50% Refund Credited ⚖️',
+                    "Dispute for order #{$order->order_code} was settled with a 50/50 split. " . number_format($half, 0, ',', ' ') . " XAF has been refunded to your wallet. Rationale: {$rationale}",
+                    'escrow',
+                    ['order_id' => $order->id, 'order_code' => $order->order_code, 'role' => 'buyer', 'screen' => 'BuyerWallet']
+                );
+
+                if ($store && $store->user_id) {
+                    NotificationService::sendToUser(
+                        $store->user_id,
+                        'Dispute Settled: 50% Payout Credited ⚖️',
+                        "Dispute for order #{$order->order_code} was settled with a 50/50 split. " . number_format($half, 0, ',', ' ') . " XAF has been credited to your store wallet. Rationale: {$rationale}",
+                        'escrow',
+                        ['order_id' => $order->id, 'order_code' => $order->order_code, 'role' => 'seller', 'screen' => 'SellerWallet']
+                    );
+                }
             }
 
             $order->save();

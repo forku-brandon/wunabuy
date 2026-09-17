@@ -4,8 +4,14 @@ export interface EscrowDisputeItem {
   id: string;
   order_code: string;
   buyer_name: string;
+  buyer_id?: string;
+  buyer_phone?: string;
   seller_name: string;
+  seller_id?: string;
+  seller_phone?: string;
   transporter_name: string;
+  transporter_id?: string;
+  transporter_phone?: string;
   dispute_reason: string;
   dispute_description: string;
   escrow_amount: number;

@@ -89,6 +89,18 @@ const AppContent: React.FC = () => {
             navigationRef.navigate('TransporterApp', { screen: 'TransporterJobs' } as any);
           } else if (screen === 'BuyerWallet') {
             navigationRef.navigate('BuyerWallet');
+          } else if (screen === 'StoreKYC') {
+            navigationRef.navigate('StoreKYC');
+          } else if (screen === 'TransporterKYC') {
+            navigationRef.navigate('TransporterKYC');
+          } else if (screen === 'SellerDashboard') {
+            navigationRef.navigate('SellerApp', { screen: 'SellerDashboard' } as any);
+          } else if (screen === 'SellerWallet') {
+            navigationRef.navigate('SellerApp', { screen: 'SellerWallet' } as any);
+          } else if (screen === 'TransporterEarnings') {
+            navigationRef.navigate('TransporterApp', { screen: 'TransporterEarnings' } as any);
+          } else if (screen === 'Refunds') {
+            navigationRef.navigate('Refunds');
           } else {
             navigationRef.navigate('Notifications');
           }

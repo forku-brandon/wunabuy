@@ -16,7 +16,9 @@ import {
   Building2,
   Bike,
   RefreshCw,
+  Send,
 } from 'lucide-react';
+import { ComposeDirectModal } from '../components/notifications/ComposeDirectModal';
 
 export const UsersPage: React.FC = () => {
   const { addAuditLog, hasPermission } = useStaffAuth();
@@ -25,6 +27,7 @@ export const UsersPage: React.FC = () => {
   
   // Interactive Modals
   const [restrictTarget, setRestrictTarget] = useState<DirectoryUserItem | null>(null);
+  const [notifyTarget, setNotifyTarget] = useState<DirectoryUserItem | null>(null);
 
   const canManageUsers = hasPermission('manage_users');
 
@@ -147,7 +150,17 @@ export const UsersPage: React.FC = () => {
       key: 'id',
       header: 'Actions',
       render: (item) => (
-        <div>
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setNotifyTarget(item)}
+            className="text-teal-600 dark:text-teal-400 border-teal-200 dark:border-teal-800 hover:bg-teal-50 dark:hover:bg-teal-950/30"
+            title="Send Direct Push Notification"
+          >
+            <Send className="w-3.5 h-3.5 mr-1" />
+            <span>Notify</span>
+          </Button>
           <Button
             variant={item.status === UserStatus.ACTIVE ? 'outline' : 'primary'}
             size="sm"
@@ -246,6 +259,23 @@ export const UsersPage: React.FC = () => {
           requireReason={true}
         />
       )}
+
+      {/* Direct User Notification Modal */}
+      <ComposeDirectModal
+        isOpen={Boolean(notifyTarget)}
+        onClose={() => setNotifyTarget(null)}
+        preselectedUser={
+          notifyTarget
+            ? {
+                id: notifyTarget.id,
+                name: notifyTarget.full_name,
+                phone: notifyTarget.phone,
+                role: notifyTarget.role,
+                email: notifyTarget.email,
+              }
+            : null
+        }
+      />
     </PageContainer>
   );
 };

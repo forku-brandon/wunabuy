@@ -22,7 +22,9 @@ import {
   FileText,
   ShieldCheck,
   AlertTriangle,
+  Send,
 } from 'lucide-react';
+import { ComposeDirectModal } from '../components/notifications/ComposeDirectModal';
 
 export const KYCPage: React.FC = () => {
   const { addAuditLog, hasPermission } = useStaffAuth();
@@ -31,6 +33,7 @@ export const KYCPage: React.FC = () => {
   
   // Interactive Inspection Modal & Lightbox
   const [inspectTarget, setInspectTarget] = useState<KYCQueueItem | null>(null);
+  const [notifyApplicant, setNotifyApplicant] = useState<KYCQueueItem | null>(null);
   const [rejectionNotes, setRejectionNotes] = useState('');
   const [lightboxDoc, setLightboxDoc] = useState<{ isOpen: boolean; url: string; title: string }>({
     isOpen: false,
@@ -167,6 +170,16 @@ export const KYCPage: React.FC = () => {
       align: 'right',
       render: (item) => (
         <div className="flex items-center justify-end space-x-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setNotifyApplicant(item)}
+            className="text-teal-600 dark:text-teal-400 border-teal-200 dark:border-teal-800 hover:bg-teal-50 dark:hover:bg-teal-950/30"
+            title="Send Direct Push Notification to Applicant"
+          >
+            <Send className="w-3.5 h-3.5 mr-1" />
+            <span>Notify</span>
+          </Button>
           <Button
             size="sm"
             variant="outline"
@@ -407,9 +420,15 @@ export const KYCPage: React.FC = () => {
             {/* Action Bar */}
             {canApprove ? (
               <div className="flex justify-between items-center pt-3 border-t border-slate-100 dark:border-slate-800">
-                <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                  Approving activates merchant shop or delivery routes immediately.
-                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setNotifyApplicant(inspectTarget)}
+                  className="text-teal-600 dark:text-teal-400 border-teal-200 dark:border-teal-800 hover:bg-teal-50 dark:hover:bg-teal-950/30"
+                >
+                  <Send className="w-3.5 h-3.5 mr-1.5" />
+                  Message Applicant
+                </Button>
                 <div className="flex space-x-3">
                   <Button variant="secondary" onClick={() => handleDecision('REJECTED')}>
                     <XCircle className="w-4 h-4 mr-1.5 text-rose-500" />
@@ -430,6 +449,22 @@ export const KYCPage: React.FC = () => {
           </div>
         </Modal>
       )}
+
+      {/* Direct User / Applicant Notification Modal */}
+      <ComposeDirectModal
+        isOpen={Boolean(notifyApplicant)}
+        onClose={() => setNotifyApplicant(null)}
+        preselectedUser={
+          notifyApplicant
+            ? {
+                id: notifyApplicant.id,
+                name: notifyApplicant.applicant_name,
+                phone: notifyApplicant.phone,
+                role: notifyApplicant.applicant_type === 'STORE_SELLER' ? 'seller' : 'transporter',
+              }
+            : null
+        }
+      />
 
       {/* Global Image Lightbox with Zoom & 90-degree Rotation */}
       <ImageLightbox
