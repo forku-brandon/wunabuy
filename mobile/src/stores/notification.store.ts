@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { ApiNotification, NotificationApiService } from '../services/api/notificationService';
 import { NotificationManager } from '../services/notifications/notificationManager';
 
+import { useAuthStore } from './auth.store';
+
 export type NotificationFilter = 'all' | 'orders' | 'marketing' | 'updates';
 
 interface NotificationState {
@@ -33,9 +35,10 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
 
   fetchNotifications: async (filter?: NotificationFilter, showAlert = false) => {
     const targetFilter = filter ?? get().activeFilter;
+    const activeRole = useAuthStore.getState().activeRole;
     set({ isLoading: true });
     try {
-      const data = await NotificationApiService.getNotifications(targetFilter, 1);
+      const data = await NotificationApiService.getNotifications(targetFilter, 1, activeRole);
       set({
         notifications: data.notifications,
         unreadCount: data.unread_count,
@@ -53,7 +56,8 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
   pollNewNotifications: async () => {
     try {
       const previousCount = get().unreadCount;
-      const data = await NotificationApiService.getNotifications('all', 1);
+      const activeRole = useAuthStore.getState().activeRole;
+      const data = await NotificationApiService.getNotifications('all', 1, activeRole);
 
       set({
         notifications: data.notifications,
@@ -71,7 +75,8 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
 
   fetchUnreadCount: async () => {
     try {
-      const count = await NotificationApiService.getUnreadCount();
+      const activeRole = useAuthStore.getState().activeRole;
+      const count = await NotificationApiService.getUnreadCount(activeRole);
       set({ unreadCount: count });
     } catch {
       // keep current

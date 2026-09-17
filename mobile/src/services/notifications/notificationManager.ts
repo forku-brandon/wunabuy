@@ -60,7 +60,19 @@ export const NotificationManager = {
   },
 
   /**
-   * Check if user has already been asked for notification permission.
+   * Check if native OS device notification permission is currently granted.
+   */
+  async isPermissionGranted(): Promise<boolean> {
+    try {
+      const status: any = await getPermissionsAsync();
+      return Boolean(status?.granted || status?.status === 'granted');
+    } catch {
+      return false;
+    }
+  },
+
+  /**
+   * Check if user has already been asked for notification permission in this session.
    */
   async hasPromptedPermission(): Promise<boolean> {
     try {
@@ -83,7 +95,19 @@ export const NotificationManager = {
   },
 
   /**
+   * Reset permission prompt state (e.g. after logout or fresh check).
+   */
+  async resetPromptedPermission(): Promise<void> {
+    try {
+      await AsyncStorage.removeItem(PERMISSION_PROMPTED_KEY);
+    } catch {
+      // ignore
+    }
+  },
+
+  /**
    * Request native OS notification permissions on the physical device.
+   * Invokes native Android POST_NOTIFICATIONS dialog or iOS permission sheet.
    */
   async requestPermissions(): Promise<boolean> {
     try {
@@ -94,7 +118,13 @@ export const NotificationManager = {
       let isGranted = Boolean(existingStatus?.granted || existingStatus?.status === 'granted');
 
       if (!isGranted) {
-        const requested: any = await requestPermissionsAsync();
+        const requested: any = await requestPermissionsAsync({
+          ios: {
+            allowAlert: true,
+            allowBadge: true,
+            allowSound: true,
+          },
+        });
         isGranted = Boolean(requested?.granted || requested?.status === 'granted');
       }
 

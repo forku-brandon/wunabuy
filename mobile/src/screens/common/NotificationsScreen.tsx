@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScreenContainer, Text, Card, Badge, Toast } from '../../components/ui';
 import { colors, spacing, borderRadius } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
+import { useAuthStore } from '../../stores/auth.store';
 import { useNotificationStore, NotificationFilter } from '../../stores/notification.store';
 import { ApiNotification } from '../../services/api/notificationService';
 
@@ -32,6 +33,7 @@ const TABS: TabItem[] = [
 export const NotificationsScreen = ({ navigation, route }: any) => {
   const insets = useSafeAreaInsets();
   const { theme, isDark } = useThemeStore();
+  const { activeRole } = useAuthStore();
   const {
     notifications,
     unreadCount,
@@ -54,7 +56,7 @@ export const NotificationsScreen = ({ navigation, route }: any) => {
     } else {
       fetchNotifications();
     }
-  }, [route?.params?.filter]);
+  }, [route?.params?.filter, activeRole]);
 
   const handleNotificationPress = async (item: ApiNotification) => {
     if (!item.is_read) {
@@ -271,16 +273,21 @@ export const NotificationsScreen = ({ navigation, route }: any) => {
         </TouchableOpacity>
 
         <View style={styles.headerTitleContainer}>
-          <Text variant="h2" bold style={{ color: theme.text }}>
-            Notifications
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text variant="h2" bold style={{ color: theme.text }}>
+              Notifications
+            </Text>
+            {unreadCount > 0 && (
+              <View style={styles.badgePill}>
+                <Text variant="caption" bold style={styles.badgeText}>
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </Text>
+              </View>
+            )}
+          </View>
+          <Text variant="caption" style={{ color: colors.primary[500], fontWeight: '600', textTransform: 'capitalize' }}>
+            {activeRole ? `${activeRole} Workspace` : 'All Updates'}
           </Text>
-          {unreadCount > 0 && (
-            <View style={styles.badgePill}>
-              <Text variant="caption" bold style={styles.badgeText}>
-                {unreadCount > 99 ? '99+' : unreadCount}
-              </Text>
-            </View>
-          )}
         </View>
 
         <View style={styles.headerActions}>

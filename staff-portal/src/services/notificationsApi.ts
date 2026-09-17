@@ -27,9 +27,15 @@ export const notificationsApi = {
    * Broadcast real-time push and inbox notifications to an audience segment.
    */
   async broadcastNotification(payload: BroadcastNotificationPayload): Promise<ApiResponse<BroadcastResult>> {
+    const audience = payload.audience || 'all';
     return apiRequest<BroadcastResult>('/staff/notifications/broadcast', {
       method: 'POST',
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        ...payload,
+        audience,
+        target_audience: audience,
+        deep_link: payload.data?.screen,
+      }),
     });
   },
 

@@ -269,7 +269,7 @@ class SellerController extends Controller
             'Order Confirmed & Preparing 📦',
             "The store has accepted your order #{$order->order_code} and is preparing items.",
             'order_status',
-            ['order_id' => $order->id, 'order_code' => $order->order_code, 'screen' => 'OrderTracking']
+            ['order_id' => $order->id, 'order_code' => $order->order_code, 'role' => 'buyer', 'screen' => 'OrderTracking']
         );
 
         return $this->respondSuccess(['accepted' => true, 'order_id' => $id, 'status' => 'preparing']);
@@ -318,7 +318,7 @@ class SellerController extends Controller
             'Order Declined & Refunded ⚠️',
             "Order #{$order->order_code} could not be fulfilled by the merchant. Funds have been returned to your wallet.",
             'order_status',
-            ['order_id' => $order->id, 'order_code' => $order->order_code, 'screen' => 'BuyerOrders']
+            ['order_id' => $order->id, 'order_code' => $order->order_code, 'role' => 'buyer', 'screen' => 'BuyerOrders']
         );
 
         return $this->respondSuccess(['declined' => true, 'order_id' => $id, 'status' => 'cancelled']);
@@ -356,7 +356,7 @@ class SellerController extends Controller
             'Package Ready for Pickup 🚚',
             "Your package for order #{$order->order_code} is ready. A delivery transporter is being matched.",
             'order_status',
-            ['order_id' => $order->id, 'order_code' => $order->order_code, 'screen' => 'OrderTracking']
+            ['order_id' => $order->id, 'order_code' => $order->order_code, 'role' => 'buyer', 'screen' => 'OrderTracking']
         );
 
         // Real-Time Notification: Broadcast to active Transporters
@@ -365,7 +365,7 @@ class SellerController extends Controller
             'New Delivery Dispatch! 🛵',
             "Pickup job at {$store->name} (" . number_format($order->delivery_fee, 0, ',', ' ') . " XAF). Tap to accept.",
             'delivery',
-            ['order_id' => $order->id, 'order_code' => $order->order_code, 'screen' => 'TransporterJobs']
+            ['order_id' => $order->id, 'order_code' => $order->order_code, 'role' => 'transporter', 'screen' => 'TransporterJobs']
         );
 
         return $this->respondSuccess([
@@ -419,7 +419,7 @@ class SellerController extends Controller
             'Order In Transit 🚚',
             "Your package for order #{$order->order_code} was picked up and is on the way to your delivery address.",
             'delivery',
-            ['order_id' => $order->id, 'order_code' => $order->order_code, 'screen' => 'OrderTracking']
+            ['order_id' => $order->id, 'order_code' => $order->order_code, 'role' => 'buyer', 'screen' => 'OrderTracking']
         );
 
         return $this->respondSuccess([

@@ -48,6 +48,17 @@ export const useAuthStore = create<AuthState>()(
 
       setActiveRole: (role) => {
         set({ activeRole: role });
+        // Asynchronously refresh notifications scoped to the newly active role
+        setTimeout(() => {
+          try {
+            // eslint-disable-next-line @typescript-eslint/no-var-requires
+            const { useNotificationStore } = require('./notification.store');
+            useNotificationStore.getState().fetchNotifications('all');
+            useNotificationStore.getState().fetchUnreadCount();
+          } catch {
+            // ignore
+          }
+        }, 50);
       },
 
       hasPermission: (permission: string) => {

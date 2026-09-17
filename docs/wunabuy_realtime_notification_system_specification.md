@@ -95,11 +95,11 @@ CREATE INDEX idx_notifications_user_type ON notifications (user_id, type);
 
 ### 5.2 Staff Operations Portal Endpoints
 - `POST /api/v1/staff/notifications/broadcast`:
-  - Request body: `{ audience: 'all'|'buyers'|'sellers'|'transporters', title, message, type, data }`.
-  - Response: `{ success: true, data: { message: "...", queued_count: 1420 } }`.
+  - Request body: `{ audience: 'all'|'buyers'|'sellers'|'transporters', target_audience, title, message, type, data, deep_link }`.
+  - Response: `{ success: true, data: { broadcast: true, queued_count: 1420, recipients_count: 1420, message: "..." } }`.
 - `POST /api/v1/staff/notifications/send-direct`:
-  - Request body: `{ user_id, title, message, type, data }`.
-  - Response: `{ success: true, data: { message: "Direct notification dispatched." } }`.
+  - Request body: `{ user_id, phone, title, message, type, deep_link, role }`.
+  - Response: `{ success: true, data: { sent: true, notification: {...} } }`.
 
 ---
 
@@ -108,3 +108,19 @@ CREATE INDEX idx_notifications_user_type ON notifications (user_id, type);
 - **Category Badging**: Marketing & Promotions, System Announcements, Security & Platform Alerts.
 - **Deep Link Customization**: Link directly to Buyer Orders, Buyer Wallet, Seller Fulfillment, or Transporter Dispatch boards.
 - **Live Device Lockscreen Preview**: Instant visual preview rendering how the notification appears on a mobile lock screen with Wunabuy branding, title, body, and timestamp.
+
+---
+
+## 7. Workspace Scoping & Role Isolation
+To guarantee enterprise reliability and eliminate cross-role noise:
+1. **Lifecycle Event Tagging**:
+   - Order creation tags buyer (`role: 'buyer'`) and seller (`role: 'seller'`).
+   - Preparation, packing, and dispatch tag buyer (`role: 'buyer'`) and transporter (`role: 'transporter'`).
+   - Handover, pickup, and transit tag buyer (`role: 'buyer'`) and seller (`role: 'seller'`).
+   - Escrow settlement and payout tag buyer (`role: 'buyer'`), seller (`role: 'seller'`), and transporter (`role: 'transporter'`).
+2. **Role-Scoped Queries**:
+   - Mobile client queries `/notifications?role={activeRole}` and `/notifications/unread-count?role={activeRole}`.
+   - The query returns items where `data->role == activeRole` OR `data->role == 'all'` OR `data->role IS NULL`.
+3. **Instant Workspace Switching**:
+   - Switching between Buyer, Seller, and Transporter (`setActiveRole`) dynamically reloads notifications and unread counters, preventing buyer notifications from appearing in seller mode or vice versa.
+

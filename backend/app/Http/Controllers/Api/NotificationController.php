@@ -22,6 +22,16 @@ class NotificationController extends Controller
         $query = Notification::where('user_id', $user->id)
             ->orderBy('created_at', 'desc');
 
+        $role = $request->query('role');
+        if ($role && in_array(strtolower($role), ['buyer', 'seller', 'transporter'])) {
+            $normalizedRole = strtolower($role);
+            $query->where(function ($q) use ($normalizedRole) {
+                $q->where('data->role', $normalizedRole)
+                  ->orWhere('data->role', 'all')
+                  ->orWhereNull('data->role');
+            });
+        }
+
         $type = $request->query('type');
         if ($type && $type !== 'all') {
             if ($type === 'orders') {
@@ -38,9 +48,19 @@ class NotificationController extends Controller
         $perPage = min((int) $request->query('per_page', 20), 50);
         $notifications = $query->paginate($perPage);
 
-        $unreadCount = Notification::where('user_id', $user->id)
-            ->where('is_read', false)
-            ->count();
+        $unreadQuery = Notification::where('user_id', $user->id)
+            ->where('is_read', false);
+
+        if ($role && in_array(strtolower($role), ['buyer', 'seller', 'transporter'])) {
+            $normalizedRole = strtolower($role);
+            $unreadQuery->where(function ($q) use ($normalizedRole) {
+                $q->where('data->role', $normalizedRole)
+                  ->orWhere('data->role', 'all')
+                  ->orWhereNull('data->role');
+            });
+        }
+
+        $unreadCount = $unreadQuery->count();
 
         return $this->respondSuccess([
             'notifications' => $notifications->items(),
@@ -64,9 +84,20 @@ class NotificationController extends Controller
             return $this->respondSuccess(['unread_count' => 0]);
         }
 
-        $count = Notification::where('user_id', $user->id)
-            ->where('is_read', false)
-            ->count();
+        $query = Notification::where('user_id', $user->id)
+            ->where('is_read', false);
+
+        $role = $request->query('role');
+        if ($role && in_array(strtolower($role), ['buyer', 'seller', 'transporter'])) {
+            $normalizedRole = strtolower($role);
+            $query->where(function ($q) use ($normalizedRole) {
+                $q->where('data->role', $normalizedRole)
+                  ->orWhere('data->role', 'all')
+                  ->orWhereNull('data->role');
+            });
+        }
+
+        $count = $query->count();
 
         return $this->respondSuccess([
             'unread_count' => $count,

@@ -25,13 +25,16 @@ export interface NotificationListResponse {
 
 export const NotificationApiService = {
   /**
-   * Get paginated notifications with optional filter.
+   * Get paginated notifications with optional filter and role scoping.
    */
-  async getNotifications(type?: string, page = 1): Promise<NotificationListResponse> {
+  async getNotifications(type?: string, page = 1, role?: string): Promise<NotificationListResponse> {
     try {
       const params: Record<string, any> = { page };
       if (type && type !== 'all') {
         params.type = type;
+      }
+      if (role) {
+        params.role = role.toLowerCase();
       }
       const response = await api.client.get<{ success: boolean; data: NotificationListResponse }>('/notifications', { params });
       return response.data.data;
@@ -45,11 +48,15 @@ export const NotificationApiService = {
   },
 
   /**
-   * Get unread notification count.
+   * Get unread notification count scoped by role.
    */
-  async getUnreadCount(): Promise<number> {
+  async getUnreadCount(role?: string): Promise<number> {
     try {
-      const response = await api.client.get<{ success: boolean; data: { unread_count: number } }>('/notifications/unread-count');
+      const params: Record<string, any> = {};
+      if (role) {
+        params.role = role.toLowerCase();
+      }
+      const response = await api.client.get<{ success: boolean; data: { unread_count: number } }>('/notifications/unread-count', { params });
       return response.data.data?.unread_count ?? 0;
     } catch {
       return 0;

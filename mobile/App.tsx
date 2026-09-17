@@ -33,14 +33,17 @@ const AppContent: React.FC = () => {
   const [showPermissionModal, setShowPermissionModal] = React.useState(false);
 
   useEffect(() => {
-    // Check if notification permission prompt has been displayed to user
+    // Check if device notification permission is granted on the OS
     const checkNotificationPrompt = async () => {
-      const prompted = await NotificationManager.hasPromptedPermission();
-      if (!prompted) {
+      const isGranted = await NotificationManager.isPermissionGranted();
+      if (!isGranted) {
         // Small delay for smooth transition after initial render
         setTimeout(() => {
           setShowPermissionModal(true);
-        }, 1200);
+        }, 1000);
+      } else {
+        // Already granted, ensure token is registered
+        NotificationManager.registerDeviceToken().catch(() => {});
       }
     };
     checkNotificationPrompt();

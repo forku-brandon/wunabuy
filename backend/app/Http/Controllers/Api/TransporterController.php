@@ -151,7 +151,7 @@ class TransporterController extends Controller
             'Transporter Assigned! 🛵',
             "Rider {$user->full_name} has claimed your delivery for order #{$order->order_code} and is heading to the store.",
             'delivery',
-            ['order_id' => $order->id, 'order_code' => $order->order_code, 'screen' => 'OrderTracking']
+            ['order_id' => $order->id, 'order_code' => $order->order_code, 'role' => 'buyer', 'screen' => 'OrderTracking']
         );
 
         // Real-Time Notification: Notify Seller
@@ -162,7 +162,7 @@ class TransporterController extends Controller
                 'Rider En Route for Pickup 🛵',
                 "Transporter {$user->full_name} is heading to your store to pick up order #{$order->order_code}.",
                 'delivery',
-                ['order_id' => $order->id, 'order_code' => $order->order_code, 'screen' => 'SellerOrders']
+                ['order_id' => $order->id, 'order_code' => $order->order_code, 'role' => 'seller', 'screen' => 'SellerOrders']
             );
         }
 
@@ -414,7 +414,7 @@ class TransporterController extends Controller
             'Package Delivered! 🎁',
             "Your package for order #{$order->order_code} has arrived. Please confirm receipt in the app to complete the transaction.",
             'delivery',
-            ['order_id' => $order->id, 'order_code' => $order->order_code, 'screen' => 'BuyerOrders']
+            ['order_id' => $order->id, 'order_code' => $order->order_code, 'role' => 'buyer', 'screen' => 'BuyerOrders']
         );
 
         // Real-Time Notification: Notify Seller
@@ -425,7 +425,7 @@ class TransporterController extends Controller
                 'Order Delivered to Customer 📦',
                 "Order #{$order->order_code} has been delivered by transporter {$user->full_name}.",
                 'delivery',
-                ['order_id' => $order->id, 'order_code' => $order->order_code, 'screen' => 'SellerOrders']
+                ['order_id' => $order->id, 'order_code' => $order->order_code, 'role' => 'seller', 'screen' => 'SellerOrders']
             );
         }
 

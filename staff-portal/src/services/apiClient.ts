@@ -62,10 +62,18 @@ export async function apiRequest<T>(
 
     if (!response.ok) {
       const apiErr = data as ApiError;
+      let errMsg = apiErr.error?.message || (data as any)?.message;
+      if (!errMsg && (data as any)?.errors) {
+        const errorValues = Object.values((data as any).errors);
+        errMsg = errorValues.flat().join('; ');
+      }
+      if (!errMsg) {
+        errMsg = 'API request failed with status ' + response.status;
+      }
       throw new ApiClientError(
-        apiErr.error?.message || 'API request failed with status ' + response.status,
+        errMsg,
         apiErr.error?.code || `HTTP_${response.status}`,
-        apiErr.error?.details
+        apiErr.error?.details || (data as any)?.errors
       );
     }
 

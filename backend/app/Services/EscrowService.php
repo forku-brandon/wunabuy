@@ -248,7 +248,7 @@ class EscrowService
                 'Order Completed! 🎉',
                 "Your order #{$order->order_code} has been completed and verified. Thank you for using Wunabuy Escrow!",
                 'order_status',
-                ['order_id' => $order->id, 'order_code' => $order->order_code, 'screen' => 'BuyerOrders']
+                ['order_id' => $order->id, 'order_code' => $order->order_code, 'role' => 'buyer', 'screen' => 'BuyerOrders']
             );
 
             // Real-Time Notification: Notify Seller
@@ -258,7 +258,7 @@ class EscrowService
                     'Escrow Funds Released! 💰',
                     number_format($sellerNet, 0, ',', ' ') . " XAF has been credited to your store wallet for order #{$order->order_code}.",
                     'escrow',
-                    ['order_id' => $order->id, 'order_code' => $order->order_code, 'screen' => 'SellerWallet']
+                    ['order_id' => $order->id, 'order_code' => $order->order_code, 'role' => 'seller', 'screen' => 'SellerWallet']
                 );
             }
 
@@ -269,7 +269,7 @@ class EscrowService
                     'Delivery Fee Credited! 💵',
                     number_format($deliveryFee, 0, ',', ' ') . " XAF delivery fee for order #{$order->order_code} has been credited to your driver wallet.",
                     'escrow',
-                    ['order_id' => $order->id, 'order_code' => $order->order_code, 'screen' => 'TransporterEarnings']
+                    ['order_id' => $order->id, 'order_code' => $order->order_code, 'role' => 'transporter', 'screen' => 'TransporterEarnings']
                 );
             }
 
@@ -483,7 +483,7 @@ class EscrowService
                 'Escrow Refund Processed 🔄',
                 number_format($refundAmount, 0, ',', ' ') . " XAF for order #{$order->order_code} has been refunded to your wallet.",
                 'escrow',
-                ['order_id' => $order->id, 'order_code' => $order->order_code, 'screen' => 'BuyerWallet']
+                ['order_id' => $order->id, 'order_code' => $order->order_code, 'role' => 'buyer', 'screen' => 'BuyerWallet']
             );
 
             return [

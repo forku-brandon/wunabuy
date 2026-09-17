@@ -76,13 +76,31 @@ class NotificationService
 
             $userQuery = User::where('status', 'active');
             if (!$isAll) {
-                $userQuery->whereIn('role', $rolesList);
+                $userQuery->where(function ($q) use ($rolesList) {
+                    $q->whereIn('role', $rolesList);
+                    foreach ($rolesList as $r) {
+                        $q->orWhereJsonContains('available_roles', $r);
+                    }
+                    if (in_array('seller', $rolesList)) {
+                        $q->orWhereHas('store');
+                    }
+                    if (in_array('transporter', $rolesList)) {
+                        $q->orWhereHas('transporter');
+                    }
+                });
             }
 
             $userIds = $userQuery->pluck('id')->all();
             if (empty($userIds)) {
                 return 0;
             }
+
+            $targetRole = $isAll ? 'all' : (is_array($roles) ? ($roles[0] ?? 'all') : $roles);
+            $enrichedData = array_merge($data, [
+                'role' => $targetRole,
+                'broadcast' => true,
+            ]);
+            $jsonPayload = json_encode($enrichedData);
 
             $now = now();
             $batchRecords = [];
@@ -94,7 +112,7 @@ class NotificationService
                     'message' => $message,
                     'type' => $type,
                     'is_read' => false,
-                    'data' => json_encode($data),
+                    'data' => $jsonPayload,
                     'created_at' => $now,
                     'updated_at' => $now,
                 ];
@@ -114,9 +132,8 @@ class NotificationService
                 ->all();
 
             if (!empty($tokens)) {
-                self::dispatchExpoPush($tokens, $title, $message, array_merge($data, [
+                self::dispatchExpoPush($tokens, $title, $message, array_merge($enrichedData, [
                     'type' => $type,
-                    'broadcast' => true,
                 ]));
             }
 

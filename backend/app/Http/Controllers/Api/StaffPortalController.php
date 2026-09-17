@@ -1306,31 +1306,52 @@ class StaffPortalController extends Controller
      */
     public function broadcastNotification(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'message' => 'required|string|max:1000',
-            'target_audience' => 'required|string|in:all,buyer,seller,transporter,buyers,sellers,transporters',
-            'type' => 'nullable|string|in:marketing,promo,system,alert,general',
-            'deep_link' => 'nullable|string|max:255',
-        ]);
+        $rawAudience = $request->input('target_audience') ?? $request->input('audience') ?? 'all';
+        $normalizedAudience = strtolower(trim((string) $rawAudience));
 
-        $audience = $validated['target_audience'];
+        // Sanitize audience to accepted values
         $roleMap = [
             'buyers' => 'buyer',
             'sellers' => 'seller',
             'transporters' => 'transporter',
+            'buyer' => 'buyer',
+            'seller' => 'seller',
+            'transporter' => 'transporter',
+            'all' => 'all',
         ];
-        $role = $roleMap[$audience] ?? $audience;
+        $role = $roleMap[$normalizedAudience] ?? 'all';
+        $audience = $role;
+
+        $request->merge([
+            'target_audience' => $role,
+            'audience' => $role,
+        ]);
+
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'message' => 'required|string|max:1000',
+            'target_audience' => 'nullable|string',
+            'audience' => 'nullable|string',
+            'type' => 'nullable|string',
+            'deep_link' => 'nullable|string|max:255',
+            'data' => 'nullable|array',
+        ]);
+
+        $extraData = array_merge(
+            $request->input('data') ?? [],
+            [
+                'deep_link' => $validated['deep_link'] ?? null,
+                'role' => $role === 'all' ? 'all' : $role,
+                'broadcast_by' => 'Staff Operations',
+            ]
+        );
 
         $count = NotificationService::broadcast(
             $role,
             $validated['title'],
             $validated['message'],
             $validated['type'] ?? 'marketing',
-            [
-                'deep_link' => $validated['deep_link'] ?? null,
-                'broadcast_by' => 'Staff Operations',
-            ]
+            $extraData
         );
 
         AuditLog::create([
@@ -1352,6 +1373,7 @@ class StaffPortalController extends Controller
 
         return $this->respondSuccess([
             'broadcast' => true,
+            'queued_count' => $count,
             'recipients_count' => $count,
             'message' => "Push notification successfully broadcast to {$count} users.",
         ]);
@@ -1382,6 +1404,7 @@ class StaffPortalController extends Controller
             return $this->respondError('NOT_FOUND', 'Target user not found by ID or phone number', null, 404);
         }
 
+        $targetRole = $request->input('role') ?? $user->role ?? 'buyer';
         $notification = NotificationService::sendToUser(
             $user->id,
             $validated['title'],
@@ -1389,6 +1412,7 @@ class StaffPortalController extends Controller
             $validated['type'] ?? 'info',
             [
                 'deep_link' => $validated['deep_link'] ?? null,
+                'role' => $targetRole,
                 'direct_from' => 'Staff Operations',
             ]
         );

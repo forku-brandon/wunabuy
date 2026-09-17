@@ -213,7 +213,7 @@ class OrderController extends Controller
                 'Order Placed! 🛍️',
                 "Your order #{$order->order_code} for " . number_format($order->total, 0, ',', ' ') . " XAF is secured in escrow and awaiting store confirmation.",
                 'order_status',
-                ['order_id' => $order->id, 'order_code' => $order->order_code, 'screen' => 'OrderTracking']
+                ['order_id' => $order->id, 'order_code' => $order->order_code, 'role' => 'buyer', 'screen' => 'OrderTracking']
             );
 
             // Real-Time Notification: Notify Seller
@@ -224,7 +224,7 @@ class OrderController extends Controller
                     'New Customer Order! 🔔',
                     "New order #{$order->order_code} received (" . count($validatedItems) . " items, " . number_format($order->total, 0, ',', ' ') . " XAF). Please prepare the parcel.",
                     'order_status',
-                    ['order_id' => $order->id, 'order_code' => $order->order_code, 'screen' => 'SellerOrders']
+                    ['order_id' => $order->id, 'order_code' => $order->order_code, 'role' => 'seller', 'screen' => 'SellerOrders']
                 );
             }
 
