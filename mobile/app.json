@@ -26,7 +26,6 @@
     },
     "android": {
       "versionCode": 1,
-      "usesCleartextTraffic": true,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0D9488"
@@ -47,6 +46,13 @@
         "expo-location",
         {
           "locationWhenInUsePermission": "Allow Wunabuy to access your location to calculate delivery distance, display nearby stores, and track active orders."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#0D9488"
         }
       ]
     ],

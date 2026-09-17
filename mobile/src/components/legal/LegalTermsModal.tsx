@@ -5,10 +5,10 @@ import {
   Modal,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
   StatusBar,
   Linking,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Text, Button } from '../ui';
 import { colors, spacing, shadows } from '@wunabuy/design-tokens';

@@ -14,15 +14,14 @@ import {
   getPermissionsAsync,
   requestPermissionsAsync,
 } from 'expo-notifications/build/NotificationPermissions';
-import { setNotificationChannelAsync } from 'expo-notifications/build/setNotificationChannelAsync';
-import { scheduleNotificationAsync } from 'expo-notifications/build/scheduleNotificationAsync';
+import setNotificationChannelAsync from 'expo-notifications/build/setNotificationChannelAsync';
+import scheduleNotificationAsync from 'expo-notifications/build/scheduleNotificationAsync';
 import { AndroidImportance } from 'expo-notifications/build/NotificationChannelManager.types';
 
 // Configure foreground presentation behavior so notifications always present with sound and banner
 try {
   setNotificationHandler({
     handleNotification: async () => ({
-      shouldShowAlert: true,
       shouldPlaySound: true,
       shouldSetBadge: true,
       shouldShowBanner: true,
