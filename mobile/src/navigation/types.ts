@@ -48,8 +48,8 @@ export type RootStackParamList = {
   TransporterWelcome: undefined;
   TransporterKYC: { role?: string } | undefined;
   AddEditProduct: { product?: any } | undefined;
-  CheckoutPayment: { subtotal: number; addressId?: string; deliveryFee?: number; deliveryMethod?: 'wunabuy_transporter' | 'self_pickup'; pickupPin?: string };
-  OrderSuccess: { orderCode: string; totalAmount: number; provider: string; phone?: string; paymentMethod?: string; deliveryMethod?: 'wunabuy_transporter' | 'self_pickup'; pickupPin?: string };
+  CheckoutPayment: { subtotal: number; addressId?: string; deliveryFee?: number; deliveryMethod?: 'wunabuy_transporter' | 'self_pickup'; pickupPin?: string; storeData?: any };
+  OrderSuccess: { orderCode: string; totalAmount: number; provider: string; phone?: string; paymentMethod?: string; deliveryMethod?: 'wunabuy_transporter' | 'self_pickup'; pickupPin?: string; storeName?: string; storeAddress?: string; storePhone?: string };
   FollowedStores: undefined;
   Favorites: undefined;
   Footprint: undefined;

@@ -14,7 +14,7 @@ export const OrderSuccessScreen = ({ route, navigation }: any) => {
     provider = 'MTN',
     phone = '+237670000000',
     deliveryMethod = 'wunabuy_transporter',
-    pickupPin = '84920',
+    pickupPin = '7842',
     storeName = 'Official Verified Store',
     storeAddress = 'Merchant Counter Hub',
     storePhone = '+237682656287',
@@ -68,7 +68,7 @@ export const OrderSuccessScreen = ({ route, navigation }: any) => {
         {isSelfPickup && (
           <View style={styles.cardRow}>
             <Text variant="caption" secondary>
-              RIDER PIN CODE
+              4-DIGIT RIDER PIN CODE
             </Text>
             <Text variant="bodyLarge" bold color={colors.primary[600]} style={{ letterSpacing: 1 }}>
               #{pickupPin}

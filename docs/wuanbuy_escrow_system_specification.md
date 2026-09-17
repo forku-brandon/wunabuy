@@ -1,6 +1,7 @@
 # SYSTEM ARCHITECTURE & COMPLIANCE SPECIFICATION
 ## Project Name: wuanbuy (Cameroon)
-### Document Version: 1.0.0
+### Document Version: 1.1.0
+### Last Updated: 2026-09-17
 ### Target Region: CEMAC Zone (Cameroon, Gabon, Chad, Congo, CAR, Equatorial Guinea)
 ### Classification: Confidential - Internal Engineering & Regulatory Standards
 
@@ -336,3 +337,139 @@ To guarantee absolute ledger precision before deploying code to staging environm
 ### 8.2 Mathematical Split Invariant Tests
 * **Rule:** `total_charged_buyer` must always match the absolute sum of (`seller_net_cut` + `transporter_net_cut` + `wuanbuy_net_commission` + `total_allocated_fees`).
 * **Implementation Requirement:** Run strict transactional unit tests inside the backend stack using floating-point safety libraries (e.g., using explicit arbitrary-precision `Decimal` objects instead of standard floats) to prevent fractional cent leakage over thousands of transactions.
+
+---
+
+## 9. Implementation Updates — v1.1.0 (2026-09-17)
+
+This section documents the concrete changes shipped in release **v1.1.0**, covering the buyer-side PIN standardization, digital signature audit trail, and real-time data flow improvements.
+
+### 9.1 4-Digit Pickup PIN Standardization
+
+**Background:** Earlier system versions contained a hardcoded 5-digit test PIN (`84920`) in multiple frontend components. The backend has always generated 4-digit PINs via `rand(1000, 9999)`. This mismatch caused visual inconsistency in the buyer app and the transporter handover flow.
+
+**Changes Applied:**
+
+| Layer | Change |
+|---|---|
+| `OrderController.php` | `confirmReceipt()` now accepts `pickup_pin` from request body; fallback generation uses `str_pad(rand(1000,9999), 4)` |
+| `StorePickupTable.tsx` | Default PIN changed to `'7842'`; label updated to `PERSONAL RIDER 4-DIGIT VERIFICATION PIN` |
+| `BuyerCartScreen.tsx` | PIN state initialized with `Math.floor(1000 + Math.random() * 9000).toString()` |
+| `CheckoutPaymentScreen.tsx` | Default param PIN `'84920'` → `'7842'` |
+| `OrderSuccessScreen.tsx` | Label changed to `4-DIGIT RIDER PIN CODE`; default `'7842'` |
+| `seller.store.ts` | Fixed: `Math.floor(10000 + rand * 90000)` → `Math.floor(1000 + rand * 9000)` |
+| `SellerQRScannerModal.tsx` | Sample test code `#84920` → `#7842`; copy updated to 4-digit |
+| `EditStoreProfileScreen.tsx` | Placeholder updated from "5-digit PIN" to "4-digit PIN" |
+
+**PIN Data Flow:**
+```
+Backend (rand 1000-9999) → OrderController → Order.pickup_pin
+     ↓
+BuyerCartScreen (fetch storeData) → StorePickupTable (display 4-digit)
+     ↓
+CheckoutPaymentScreen → OrderSuccessScreen → OrderTrackingScreen
+```
+
+### 9.2 Buyer Digital Signature Audit Trail
+
+**Background:** The `DigitalSignatureModal` previously displayed a hardcoded static name ("Jean Dupont") with a mock `data:image/svg+xml;base64,mock_buyer_digital_signature_blob` blob. There was no server-side persistence of the sign-off event.
+
+**Changes Applied:**
+
+#### 9.2.1 Frontend — `DigitalSignatureModal.tsx`
+
+- On modal open: reads `user.full_name` from `useAuthStore` immediately (cache hit, no flicker), then silently refreshes via `AuthService.getCurrentUser()` in the background.
+- Displays a **"Signing as ► [Real Name]"** chip above the canvas.
+- `onConfirmSignature` now emits a typed `DigitalSignaturePayload` object:
+
+```typescript
+interface DigitalSignaturePayload {
+  signature_data: string;   // base64( userId:fullName:isoTimestamp )
+  buyer_name: string;        // Real full_name from server profile
+  buyer_id: string;          // Authenticated user UUID
+  signed_at: string;         // ISO-8601 timestamp of signature tap
+}
+```
+
+- Confirm button shows `"Releasing Escrow…"` while the parent API call is in flight (`submitting` prop).
+
+#### 9.2.2 Service Layer — `ordersService.ts`
+
+`confirmDelivery(orderId, signaturePayload?)` now posts:
+```json
+{
+  "buyer_signature": "data:application/vnd.wunabuy.signature;base64,...",
+  "buyer_name": "Forku Brandon",
+  "buyer_id": "01a0811d-27f9-7298-9b64-7cff01362fbe",
+  "signed_at": "2026-09-17T04:35:00.000Z"
+}
+```
+to `POST /api/v1/orders/{id}/confirm-receipt`.
+
+#### 9.2.3 Backend — `OrderController.php → confirmReceipt()`
+
+Persists the full signature audit entry to `orders.metadata`:
+```json
+{
+  "buyer_signature_audit": {
+    "buyer_signature": "data:application/vnd.wunabuy.signature;base64,...",
+    "buyer_name": "Forku Brandon",
+    "buyer_id": "01a0811d-...",
+    "signed_at": "2026-09-17T04:35:00.000Z",
+    "ip_address": "41.202.x.x",
+    "user_agent": "Expo/Go Android/14",
+    "confirmed_at": "2026-09-17T04:35:01.000Z"
+  }
+}
+```
+Escrow is then released with reason string `"Buyer Confirmation — Digital Signature"` (previously plain `"Buyer Confirmation"`).
+
+**Affected Screens:** `BuyerOrdersScreen`, `OrderTrackingScreen`, `TransporterActiveTripScreen`.
+
+### 9.3 Real-Time Live Order Polling
+
+| Screen | Interval | Behavior |
+|---|---|---|
+| `BuyerOrdersScreen` | 6 seconds | Silent re-fetch of all orders; escrow locked total updated; self-pickup PIN badges refreshed |
+| `OrderTrackingScreen` | 5 seconds | Silent re-fetch of single order; status stepper advances; no loading spinner on background polls |
+
+Intervals are created in `useEffect` cleanup functions to prevent memory leaks on navigation.
+
+### 9.4 Live Store Pickup Data Flow
+
+**Previous state:** `StorePickupTable` received hardcoded dummy data for store name, address, phone, and counter hours.
+
+**Current state:** Full live data fetched from `GET /api/v1/stores/{id}/pickup-location` and propagated through the navigation stack:
+
+```
+BuyerCartScreen.useEffect()
+  → BuyerService.getStorePickupLocation(storeId)
+  → CommerceController.getStorePickupLocation()
+      returns: store_id, store_name, address_text, landmark, city,
+               latitude, longitude, phone, counter_hours,
+               rider_instructions, is_verified, pickup_specs[]
+  → StorePickupTable (props: storeName, addressText, landmarkDirections,
+                              primaryPhone, operatingHours, riderInstructions,
+                              latitude, longitude)
+  → CheckoutPaymentScreen (storeData via route.params)
+  → OrderSuccessScreen (storeAddress, storePhone via route.params)
+  → OrderTrackingScreen (conditional: StorePickupTable vs LiveTrackingMap)
+```
+
+**Self-pickup detection logic (`OrderTrackingScreen`):**
+```typescript
+const isSelfPickup =
+  order.delivery_method === 'self_pickup' ||
+  order.delivery_address?.type === 'self_pickup' ||
+  (order.delivery_fee === 0 && Boolean(order.pickup_pin)) ||
+  Boolean(order.pickup_pin);
+```
+
+---
+
+## 10. Changelog
+
+| Version | Date | Author | Summary |
+|---|---|---|---|
+| 1.0.0 | 2026-09-16 | Engineering Team | Initial escrow architecture specification |
+| 1.1.0 | 2026-09-17 | Engineering Team | 4-digit PIN standardization, digital signature audit trail, real-time polling, live store pickup data |

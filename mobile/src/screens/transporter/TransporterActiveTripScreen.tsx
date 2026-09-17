@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { ScreenContainer, Text, Card, Button, Badge, Toast } from '../../components/ui';
 import { LiveTrackingMap } from '../../components/order/LiveTrackingMap';
-import { DigitalSignatureModal } from '../../components/order/DigitalSignatureModal';
+import { DigitalSignatureModal, DigitalSignaturePayload } from '../../components/order/DigitalSignatureModal';
 import { formatXAF } from '@wunabuy/utils';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
 import { useThemeStore } from '../../stores/theme.store';
@@ -128,10 +128,10 @@ export const TransporterActiveTripScreen = ({ route, navigation }: any) => {
     }
   };
 
-  const handleCompleteDelivery = async (signatureData: string) => {
+  const handleCompleteDelivery = async (payload: DigitalSignaturePayload) => {
     setIsSignModalOpen(false);
-    setToastMessage(`Delivery completed! Signature verified & ${formatXAF(deliveryFee)} credited to wallet. 💰`);
-    await TransporterService.submitProofOfDelivery(effectiveJobId, signatureData);
+    setToastMessage(`Delivery completed! Signed by ${payload.buyer_name} • ${formatXAF(deliveryFee)} credited to wallet. 💰`);
+    await TransporterService.submitProofOfDelivery(effectiveJobId, payload.signature_data);
     setTimeout(() => {
       navigation.navigate('TransporterJobs');
     }, 1200);

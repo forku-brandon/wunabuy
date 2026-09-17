@@ -118,7 +118,7 @@ export const SellerQRScannerModal: React.FC<SellerQRScannerModalProps> = ({
         setIsVerifying(false);
         setVerificationResult({
           success: false,
-          errorMsg: 'Invalid or expired QR verification code. Please request the buyer to check their 5-digit PIN.',
+          errorMsg: 'Invalid or expired QR verification code. Please request the buyer to check their 4-digit PIN.',
         });
         return;
       }
@@ -132,20 +132,20 @@ export const SellerQRScannerModal: React.FC<SellerQRScannerModalProps> = ({
           customerPhone: '+237 699 876 543',
           itemsSummary: '1x Samsung Galaxy S24 Ultra (512GB)',
           amountXAF: 450000,
-          pickupPin: '90820',
+          pickupPin: '9082',
           fulfillmentType: 'transporter',
           transporterName: 'Wunabuy Express Rider #402',
           escrowStatus: 'Locked in Escrow (Release on Handover)',
         };
       } else {
-        // Default / PIN 84920 match
+        // Default / PIN 7842 match
         order = {
-          orderCode: `ORD-${clean || '84920'}-DLA`,
+          orderCode: `ORD-${clean || '7842'}-DLA`,
           customerName: 'Jean-Pierre Manga',
           customerPhone: '+237 670 123 456',
           itemsSummary: '2x Sony WH-1000XM5 Headphones (Black)',
           amountXAF: 185000,
-          pickupPin: clean || '84920',
+          pickupPin: clean || '7842',
           fulfillmentType: 'self_pickup',
           escrowStatus: 'Locked in Escrow (Release on Handover)',
         };
@@ -453,11 +453,11 @@ export const SellerQRScannerModal: React.FC<SellerQRScannerModalProps> = ({
 
                   <TouchableOpacity
                     activeOpacity={0.7}
-                    onPress={() => processCodeVerification('84920')}
+                    onPress={() => processCodeVerification('7842')}
                     style={[styles.samplePill, { backgroundColor: isDark ? colors.neutral[800] : '#E0F2FE' }]}
                   >
                     <Text variant="caption" bold color={colors.primary[600]}>
-                      🎟️ Buyer PIN (#84920)
+                      🎟️ Buyer PIN (#7842)
                     </Text>
                   </TouchableOpacity>
 
@@ -492,7 +492,7 @@ export const SellerQRScannerModal: React.FC<SellerQRScannerModalProps> = ({
                   Enter Pickup PIN / Order Code
                 </Text>
                 <Text variant="caption" secondary style={{ textAlign: 'center', marginTop: 4, marginBottom: spacing.md }}>
-                  Type the buyer's 5-digit verification PIN (e.g. #84920) or order number to verify fulfillment.
+                  Type the buyer's 4-digit verification PIN (e.g. #7842) or order number to verify fulfillment.
                 </Text>
 
                 <View style={[styles.inputBox, { backgroundColor: isDark ? colors.neutral[800] : colors.neutral[100], borderColor: theme.border }]}>
@@ -501,7 +501,7 @@ export const SellerQRScannerModal: React.FC<SellerQRScannerModalProps> = ({
                   </Text>
                   <TextInput
                     style={[styles.textInput, { color: theme.text }]}
-                    placeholder="Enter code (e.g. 84920)"
+                    placeholder="Enter code (e.g. 7842)"
                     placeholderTextColor={theme.textSecondary}
                     value={manualCode}
                     onChangeText={setManualCode}

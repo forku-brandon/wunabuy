@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
 import { View, ActivityIndicator, StyleSheet, Platform } from 'react-native';
@@ -12,15 +11,6 @@ import './src/i18n'; // Initialize i18next
 import { NotificationManager } from './src/services/notifications/notificationManager';
 import { PermissionPromptModal } from './src/components/notifications/PermissionPromptModal';
 import { useNotificationStore } from './src/stores/notification.store';
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5,
-      retry: 2,
-    },
-  },
-});
 
 /**
  * Inner component that has access to the theme store and can sync
@@ -165,9 +155,7 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <QueryClientProvider client={queryClient}>
-        <AppContent />
-      </QueryClientProvider>
+      <AppContent />
     </SafeAreaProvider>
   );
 }

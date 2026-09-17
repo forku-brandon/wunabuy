@@ -106,26 +106,36 @@ class OrderController extends Controller
 
             $orderId = (string) Str::uuid();
             $orderCode = 'WB-' . date('Y') . '-' . rand(1000, 9999);
-            $pickupPin = (string) rand(1000, 9999);
+            
+            $reqPin = trim((string) $request->input('pickup_pin', ''));
+            $pickupPin = (strlen($reqPin) === 4 && ctype_digit($reqPin))
+                ? $reqPin
+                : str_pad((string) rand(1000, 9999), 4, '0', STR_PAD_LEFT);
 
+            $deliveryMethod = (string) $request->input('delivery_method', 'wunabuy_transporter');
             $rawAddress = $request->input('delivery_address');
+
             if (is_string($rawAddress)) {
                 $delivAddress = [
-                    'label' => 'Delivery Location',
+                    'label' => $deliveryMethod === 'self_pickup' ? 'Store Pickup Counter' : 'Delivery Location',
                     'address_text' => $rawAddress,
-                    'city' => 'Douala',
-                    'latitude' => 4.0611,
-                    'longitude' => 9.7863,
+                    'city' => $store->city ?? 'Douala',
+                    'latitude' => $store->latitude ?? 4.0611,
+                    'longitude' => $store->longitude ?? 9.7863,
+                    'type' => $deliveryMethod,
                 ];
             } elseif (is_array($rawAddress)) {
-                $delivAddress = $rawAddress;
+                $delivAddress = array_merge($rawAddress, [
+                    'type' => $deliveryMethod,
+                ]);
             } else {
                 $delivAddress = [
-                    'label' => 'Home',
-                    'address_text' => 'Douala',
-                    'city' => 'Douala',
-                    'latitude' => 4.0611,
-                    'longitude' => 9.7863,
+                    'label' => $deliveryMethod === 'self_pickup' ? 'Store Pickup Counter' : 'Home',
+                    'address_text' => $deliveryMethod === 'self_pickup' ? ($store->address_text ?? 'Merchant Store Counter') : 'Douala',
+                    'city' => $store->city ?? 'Douala',
+                    'latitude' => $store->latitude ?? 4.0611,
+                    'longitude' => $store->longitude ?? 9.7863,
+                    'type' => $deliveryMethod,
                 ];
             }
 
@@ -278,6 +288,8 @@ class OrderController extends Controller
 
     /**
      * Confirm delivery receipt by Buyer -> Releases Escrow.
+     * Accepts an optional digital signature payload so the full buyer sign-off
+     * event can be stored on the order record as a tamper-evident audit trail.
      */
     public function confirmReceipt(Request $request, string $id): JsonResponse
     {
@@ -296,7 +308,28 @@ class OrderController extends Controller
             return $this->respondError('FORBIDDEN', 'Only the buyer who placed the order can confirm receipt and release escrow', null, 403);
         }
 
-        $result = $this->escrowService->releaseEscrow($order, 'Buyer Confirmation');
+        // Persist the buyer's digital signature to the order metadata for audit trail
+        $buyerSignature = $request->input('buyer_signature');
+        $buyerName      = $request->input('buyer_name', $user->full_name ?? $user->name ?? '');
+        $buyerId        = $request->input('buyer_id', $user->id);
+        $signedAt       = $request->input('signed_at', now()->toIso8601String());
+
+        if ($buyerSignature) {
+            $existingMeta = is_array($order->metadata) ? $order->metadata : (json_decode($order->metadata ?? '{}', true) ?? []);
+            $existingMeta['buyer_signature_audit'] = [
+                'buyer_signature' => $buyerSignature,
+                'buyer_name'      => $buyerName,
+                'buyer_id'        => $buyerId,
+                'signed_at'       => $signedAt,
+                'ip_address'      => $request->ip(),
+                'user_agent'      => $request->userAgent(),
+                'confirmed_at'    => now()->toIso8601String(),
+            ];
+            $order->metadata = $existingMeta;
+            $order->save();
+        }
+
+        $result = $this->escrowService->releaseEscrow($order, 'Buyer Confirmation — Digital Signature');
 
         return $this->respondSuccess($order->fresh()->load(['items', 'store']));
     }

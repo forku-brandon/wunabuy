@@ -454,7 +454,7 @@ export const EditStoreProfileScreen = ({ navigation }: any) => {
               <TextInput
                 value={riderPickupInstructions}
                 onChangeText={setRiderPickupInstructions}
-                placeholder="e.g. Tell courier to present 5-digit PIN at counter #2. Dedicated motorcycle parking available in rear alley."
+                placeholder="e.g. Tell courier to present 4-digit PIN at counter #2. Dedicated motorcycle parking available in rear alley."
                 placeholderTextColor={theme.textTertiary}
                 multiline
                 numberOfLines={2}

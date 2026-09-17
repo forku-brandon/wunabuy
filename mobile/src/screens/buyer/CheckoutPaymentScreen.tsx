@@ -17,7 +17,8 @@ export const CheckoutPaymentScreen = ({ route, navigation }: any) => {
     subtotal = 185000,
     deliveryFee = 1500,
     deliveryMethod = 'wunabuy_transporter',
-    pickupPin = '84920',
+    pickupPin = '7842',
+    storeData = null,
   } = route.params || {};
 
   const { theme, isDark } = useThemeStore();
@@ -86,8 +87,16 @@ export const CheckoutPaymentScreen = ({ route, navigation }: any) => {
           product_id: it.product_id,
           quantity: it.quantity,
         })),
-        delivery_address: user?.default_address?.address_text || 'Bonanjo, Douala',
+        delivery_address: deliveryMethod === 'self_pickup'
+          ? {
+              label: 'Store Pickup Counter',
+              address_text: storeData?.address_text || 'Merchant Counter Hub',
+              type: 'self_pickup',
+            }
+          : user?.default_address?.address_text || 'Bonanjo, Douala',
         delivery_fee: deliveryFee,
+        delivery_method: deliveryMethod,
+        pickup_pin: pickupPin,
         payment_method: selectedMethod === PaymentMethod.MOMO ? PaymentMethod.MOMO : PaymentMethod.WALLET,
         notes: `Delivery via ${deliveryMethod}`,
       });
@@ -98,6 +107,10 @@ export const CheckoutPaymentScreen = ({ route, navigation }: any) => {
           orderCode = orderRes.order_code;
         }
       }
+
+      const effectiveStoreName = storeData?.store_name || cartItems[0]?.store_name || 'Official Verified Store';
+      const effectiveStoreAddress = storeData?.address_text || 'Merchant Counter Hub';
+      const effectiveStorePhone = storeData?.phone || '+237 670 123 456';
 
       if (selectedMethod === PaymentMethod.MOMO) {
         if (!accountPhone.trim()) {
@@ -130,7 +143,9 @@ export const CheckoutPaymentScreen = ({ route, navigation }: any) => {
             paymentMethod: 'Mobile Money',
             deliveryMethod,
             pickupPin,
-            storeName: cartItems[0]?.store_name,
+            storeName: effectiveStoreName,
+            storeAddress: effectiveStoreAddress,
+            storePhone: effectiveStorePhone,
           });
         }, 3000);
       } else if (selectedMethod === PaymentMethod.WALLET) {
@@ -154,7 +169,9 @@ export const CheckoutPaymentScreen = ({ route, navigation }: any) => {
             paymentMethod: 'Wallet Balance',
             deliveryMethod,
             pickupPin,
-            storeName: cartItems[0]?.store_name,
+            storeName: effectiveStoreName,
+            storeAddress: effectiveStoreAddress,
+            storePhone: effectiveStorePhone,
           });
         }, 1200);
       }
@@ -234,7 +251,18 @@ export const CheckoutPaymentScreen = ({ route, navigation }: any) => {
 
       {/* If Self-Pickup Selected: Tabular Seller Store Address & Rider PIN Table */}
       {deliveryMethod === 'self_pickup' && (
-        <StorePickupTable pickupPin={pickupPin} style={{ marginTop: spacing.sm }} />
+        <StorePickupTable
+          pickupPin={pickupPin}
+          storeName={storeData?.store_name || cartItems[0]?.store_name || 'Official Verified Store'}
+          addressText={storeData?.address_text || 'Merchant Counter Hub, Cameroon'}
+          landmarkDirections={storeData?.landmark || storeData?.landmarkDirections || 'Designated Wunabuy Merchant Counter'}
+          primaryPhone={storeData?.phone || storeData?.primaryPhone || '+237 670 123 456'}
+          operatingHours={storeData?.counter_hours || storeData?.operatingHours || 'Mon - Sat: 8:00 AM - 6:30 PM'}
+          riderInstructions={storeData?.rider_instructions || storeData?.riderInstructions || 'Present 4-digit PIN at merchant counter for parcel handover.'}
+          latitude={storeData?.latitude ?? 4.0510}
+          longitude={storeData?.longitude ?? 9.7679}
+          style={{ marginTop: spacing.sm }}
+        />
       )}
 
       {/* Payment Method Selector Tabs */}

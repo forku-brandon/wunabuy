@@ -141,5 +141,20 @@ export const BuyerService = {
       return true;
     }
   },
+
+  /**
+   * Fetch live store pickup specifications and counter directions
+   */
+  async getStorePickupLocation(storeId: string): Promise<any> {
+    try {
+      const response = await apiClient.get<{ success: boolean; data: any }>(`/stores/${storeId}/pickup-location`);
+      if (response.data?.success && response.data.data) {
+        return response.data.data;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  },
 };
 

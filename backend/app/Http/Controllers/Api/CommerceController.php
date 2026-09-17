@@ -385,6 +385,15 @@ class CommerceController extends Controller
         return $this->respondSuccess([
             'store_id' => $store->id,
             'store_name' => $store->store_name,
+            'address_text' => $store->address_text,
+            'landmark' => $store->landmark,
+            'city' => $store->city,
+            'latitude' => $store->latitude,
+            'longitude' => $store->longitude,
+            'phone' => $store->phone,
+            'counter_hours' => $store->counter_hours,
+            'rider_instructions' => $store->rider_instructions,
+            'is_verified' => (bool) $store->is_verified,
             'pickup_specs' => [
                 ['spec' => 'STORE LOCATION', 'details' => $store->address_text],
                 ['spec' => 'COUNTER HOURS', 'details' => $store->counter_hours ?? 'Mon - Sat: 08:00 AM - 07:30 PM'],

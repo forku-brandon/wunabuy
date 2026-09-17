@@ -44,7 +44,7 @@ export interface SellerOrder {
   delivery_method?: 'wunabuy_transporter' | 'in_house_rider' | 'self_pickup';
   transporter_name?: string;
   transporter_phone?: string;
-  pickup_pin?: string; // 5-digit security PIN sent to rider for handover verification
+  pickup_pin?: string; // 4-digit security PIN sent to rider for handover verification
   decline_reason?: string;
   dispute_reason?: string;
 }
@@ -245,7 +245,7 @@ export const useSellerStore = create<SellerState>()(
         set((state) => ({
           orders: state.orders.map((o) => {
             if (o.id !== orderId) return o;
-            const generatedPin = o.pickup_pin || Math.floor(10000 + Math.random() * 90000).toString();
+            const generatedPin = o.pickup_pin || Math.floor(1000 + Math.random() * 9000).toString();
             return {
               ...o,
               status: 'ready_for_pickup',

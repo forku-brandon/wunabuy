@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useStaffAuth } from './stores/staffAuthStore';
 import { ThemeProvider } from './context/ThemeContext';
 import { LanguageProvider } from './context/LanguageContext';
@@ -21,15 +20,6 @@ import { CommunicationsPage } from './pages/CommunicationsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { StaffProfilePage } from './pages/StaffProfilePage';
 import { NotificationsPage } from './pages/NotificationsPage';
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      retry: 1,
-    },
-  },
-});
 
 const ProtectedLayout: React.FC = () => {
   const { isAuthenticated } = useStaffAuth();
@@ -122,14 +112,12 @@ export const App: React.FC = () => {
     <ErrorBoundary>
       <ThemeProvider>
         <LanguageProvider>
-          <QueryClientProvider client={queryClient}>
-            <BrowserRouter>
-              <Routes>
-                <Route path="/login" element={<AuthPage />} />
-                <Route path="/*" element={<ProtectedLayout />} />
-              </Routes>
-            </BrowserRouter>
-          </QueryClientProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/login" element={<AuthPage />} />
+              <Route path="/*" element={<ProtectedLayout />} />
+            </Routes>
+          </BrowserRouter>
         </LanguageProvider>
       </ThemeProvider>
     </ErrorBoundary>

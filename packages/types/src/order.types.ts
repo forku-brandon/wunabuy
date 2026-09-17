@@ -104,6 +104,12 @@ export interface Order {
   delivered_at: string | null;
   /** Timestamp when the order was fully completed */
   completed_at: string | null;
+  /** Handover verification PIN (4-digit) */
+  pickup_pin?: string;
+  /** Delivery method ('wunabuy_transporter' | 'self_pickup') */
+  delivery_method?: string;
+  /** Merchant store details */
+  store?: any;
   /** ISO 8601 date string for order creation */
   created_at: string;
   /** ISO 8601 date string for order update */
@@ -126,6 +132,10 @@ export interface CreateOrderPayload {
   delivery_fee?: number;
   /** Delivery notes */
   notes?: string;
+  /** Delivery method ('wunabuy_transporter' | 'self_pickup') */
+  delivery_method?: string;
+  /** 4-digit handover verification PIN for self pickup */
+  pickup_pin?: string;
   /** Selected method of payment */
   payment_method: PaymentMethod;
 }

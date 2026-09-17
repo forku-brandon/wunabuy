@@ -5,7 +5,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScreenContainer, Text, Card, Button, Badge, Toast } from '../../components/ui';
 import { OrderStatusStepper } from '../../components/order/OrderStatusStepper';
 import { LiveTrackingMap } from '../../components/order/LiveTrackingMap';
-import { DigitalSignatureModal } from '../../components/order/DigitalSignatureModal';
+import { StorePickupTable } from '../../components/order/StorePickupTable';
+import { DigitalSignatureModal, DigitalSignaturePayload } from '../../components/order/DigitalSignatureModal';
 import { DisputeModal } from '../../components/order/DisputeModal';
 import { Order, OrderStatus, DisputeReason } from '@wunabuy/types';
 import { colors, spacing, borderRadius, shadows } from '@wunabuy/design-tokens';
@@ -22,13 +23,15 @@ export const OrderTrackingScreen = ({ route, navigation }: any) => {
   const [status, setStatus] = useState<OrderStatus>(OrderStatus.EN_ROUTE);
   const [loading, setLoading] = useState(true);
   const [isSignModalOpen, setIsSignModalOpen] = useState(false);
+  const [isSignSubmitting, setIsSignSubmitting] = useState(false);
   const [isDisputeModalOpen, setIsDisputeModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  // Real-time live polling every 5 seconds so status, courier, and escrow updates appear automatically
   useEffect(() => {
     let isMounted = true;
-    const fetchOrder = async () => {
-      setLoading(true);
+    const fetchOrder = async (isInitial = false) => {
+      if (isInitial) setLoading(true);
       try {
         const data = await OrdersService.getOrderById(orderId);
         if (data && isMounted) {
@@ -38,23 +41,34 @@ export const OrderTrackingScreen = ({ route, navigation }: any) => {
       } catch (err) {
         console.warn('Failed to fetch order details:', err);
       } finally {
-        if (isMounted) setLoading(false);
+        if (isMounted && isInitial) setLoading(false);
       }
     };
+
     if (orderId) {
-      fetchOrder();
+      fetchOrder(true);
+      const pollTimer = setInterval(() => {
+        fetchOrder(false);
+      }, 5000);
+      return () => {
+        isMounted = false;
+        clearInterval(pollTimer);
+      };
     }
     return () => { isMounted = false; };
   }, [orderId]);
 
-  const handleConfirmSignature = async (signatureData: string) => {
+  const handleConfirmSignature = async (payload: DigitalSignaturePayload) => {
+    setIsSignSubmitting(true);
     try {
-      await OrdersService.confirmDelivery(orderId);
+      await OrdersService.confirmDelivery(orderId, payload);
     } catch {
-      // Safe fallback
+      // Safe fallback — local state update still proceeds
+    } finally {
+      setIsSignSubmitting(false);
     }
     setStatus(OrderStatus.COMPLETED);
-    setToastMessage('Delivery receipt confirmed! 100% Escrow funds released to merchant.');
+    setToastMessage(`Delivery confirmed by ${payload.buyer_name}! 100% Escrow funds released to merchant.`);
     setIsSignModalOpen(false);
   };
 
@@ -76,6 +90,12 @@ export const OrderTrackingScreen = ({ route, navigation }: any) => {
   const handleMessageDriver = () => {
     navigation.navigate('ChatConversation', { conversationId: 'conv_driver_1' });
   };
+
+  const isSelfPickup =
+    (order as any)?.delivery_method === 'self_pickup' ||
+    (order as any)?.delivery_address?.type === 'self_pickup' ||
+    (order?.delivery_fee === 0 && Boolean((order as any)?.pickup_pin)) ||
+    Boolean((order as any)?.pickup_pin);
 
   return (
     <ScreenContainer scrollable={false} padded={false}>
@@ -99,7 +119,7 @@ export const OrderTrackingScreen = ({ route, navigation }: any) => {
             Order #{orderId}
           </Text>
           <Text variant="caption" secondary>
-            Real-time GPS Tracking &amp; Escrow Control
+            {isSelfPickup ? 'Self-Pickup Counter & Handover PIN' : 'Real-time GPS Tracking & Escrow Control'}
           </Text>
         </View>
 
@@ -116,16 +136,31 @@ export const OrderTrackingScreen = ({ route, navigation }: any) => {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        {/* Interactive Live GPS Tracking Map Canvas */}
-        <LiveTrackingMap
-          driverName={(order as any)?.transporter?.full_name || (order as any)?.transporter?.name || "Jean-Paul Mbida"}
-          driverPhone={(order as any)?.transporter?.phone || "+237 675 112 233"}
-          driverRating="4.9 ★"
-          estimatedArrivalMin={8}
-          distanceKm={1.8}
-          onCallDriver={handleCallDriver}
-          onMessageDriver={handleMessageDriver}
-        />
+        {/* Interactive Live GPS Tracking Map Canvas OR Store Pickup Counter Specifications */}
+        {isSelfPickup ? (
+          <StorePickupTable
+            pickupPin={(order as any)?.pickup_pin || '7842'}
+            storeName={(order as any)?.store?.store_name || 'Official Verified Store'}
+            addressText={(order as any)?.store?.address_text || (order as any)?.delivery_address?.address_text || 'Merchant Counter Hub, Cameroon'}
+            landmarkDirections={(order as any)?.store?.landmark || 'Designated Wunabuy Merchant Counter'}
+            primaryPhone={(order as any)?.store?.phone || '+237 670 123 456'}
+            operatingHours={(order as any)?.store?.counter_hours || 'Mon - Sat: 8:00 AM - 6:30 PM'}
+            riderInstructions={(order as any)?.store?.rider_instructions || 'Present 4-digit PIN at merchant counter for parcel handover.'}
+            latitude={(order as any)?.store?.latitude ?? 4.0510}
+            longitude={(order as any)?.store?.longitude ?? 9.7679}
+            style={{ marginBottom: spacing.md }}
+          />
+        ) : (
+          <LiveTrackingMap
+            driverName={(order as any)?.transporter?.full_name || (order as any)?.transporter?.name || "Jean-Paul Mbida"}
+            driverPhone={(order as any)?.transporter?.phone || "+237 675 112 233"}
+            driverRating="4.9 ★"
+            estimatedArrivalMin={8}
+            distanceKm={1.8}
+            onCallDriver={handleCallDriver}
+            onMessageDriver={handleMessageDriver}
+          />
+        )}
 
         {/* 48-Hour Auto-Release Protection Guarantee Banner */}
         <Card style={styles.autoReleaseCard}>
@@ -229,6 +264,7 @@ export const OrderTrackingScreen = ({ route, navigation }: any) => {
         visible={isSignModalOpen}
         onClose={() => setIsSignModalOpen(false)}
         onConfirmSignature={handleConfirmSignature}
+        submitting={isSignSubmitting}
       />
 
       {/* Open Dispute Modal */}

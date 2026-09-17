@@ -33,14 +33,14 @@ const COL2_WIDTH = 340;
 const TABLE_TOTAL_WIDTH = COL1_WIDTH + COL2_WIDTH;
 
 export const StorePickupTable: React.FC<StorePickupTableProps> = ({
-  pickupPin = '84920',
+  pickupPin = '7842',
   storeName = 'Official Verified Store',
   addressText = 'Merchant Counter Hub, Cameroon',
   landmarkDirections = 'Designated Wunabuy Merchant Counter',
   primaryPhone = '+237 670 123 456',
   secondaryPhone = '+237 699 876 543',
   operatingHours = 'Mon - Sat: 8:00 AM - 6:30 PM',
-  riderInstructions = 'Present 5-digit PIN at counter #2 for parcel release.',
+  riderInstructions = 'Present 4-digit PIN at merchant counter for parcel handover.',
   latitude = 4.0510,
   longitude = 9.7679,
   maxHeight = 220,
@@ -69,7 +69,7 @@ export const StorePickupTable: React.FC<StorePickupTableProps> = ({
         <View style={styles.pinHeaderRow}>
           <Ionicons name="key" size={18} color={colors.primary[600]} />
           <Text variant="caption" bold color={colors.primary[700]} style={styles.pinHeaderText}>
-            PERSONAL RIDER VERIFICATION PIN
+            PERSONAL RIDER 4-DIGIT VERIFICATION PIN
           </Text>
         </View>
 
@@ -80,7 +80,7 @@ export const StorePickupTable: React.FC<StorePickupTableProps> = ({
         </View>
 
         <Text variant="caption" secondary style={styles.pinInstruction}>
-          Give code <Text bold color={theme.text}>#{pickupPin}</Text> to your courier to present at the store counter upon arrival.
+          Give 4-digit code <Text bold color={theme.text}>#{pickupPin}</Text> to your courier to present at the store counter upon arrival.
         </Text>
       </View>
 

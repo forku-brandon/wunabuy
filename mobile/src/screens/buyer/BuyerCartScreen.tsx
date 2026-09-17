@@ -15,7 +15,7 @@ import { PromotionsService, BuyerService } from '../../services/api';
 export const BuyerCartScreen = ({ navigation }: any) => {
   const { theme, isDark } = useThemeStore();
   const insets = useSafeAreaInsets();
-  const { items, updateQuantity, removeItem, clearCart, getSubtotal, getItemCount } = useCartStore();
+  const { items, storeId, updateQuantity, removeItem, clearCart, getSubtotal, getItemCount } = useCartStore();
 
   const [deliveryAddress, setDeliveryAddress] = useState<Address | null>(null);
   const [promoCode, setPromoCode] = useState('');
@@ -25,7 +25,46 @@ export const BuyerCartScreen = ({ navigation }: any) => {
   // Delivery & Pickup Choice State (User Request #10)
   const [deliveryMethod, setDeliveryMethod] = useState<'wunabuy_transporter' | 'self_pickup'>('wunabuy_transporter');
   const [isDeliveryModalOpen, setIsDeliveryModalOpen] = useState(false);
-  const [pickupPin] = useState('84920'); // 5-digit verification code for personal rider
+  const [pickupPin] = useState(() => Math.floor(1000 + Math.random() * 9000).toString()); // 4-digit verification code for personal rider
+
+  // Real-Time Live Store Pickup Specifications State
+  const [storePickupData, setStorePickupData] = useState<{
+    store_id?: string;
+    store_name?: string;
+    address_text?: string;
+    landmark?: string;
+    city?: string;
+    latitude?: number;
+    longitude?: number;
+    phone?: string;
+    counter_hours?: string;
+    rider_instructions?: string;
+    is_verified?: boolean;
+  } | null>(null);
+  const [loadingStoreData, setLoadingStoreData] = useState(false);
+
+  const currentStoreId = storeId || (items.length > 0 ? items[0].store_id : null);
+
+  const fetchStoreData = useCallback(async () => {
+    if (!currentStoreId) return;
+    setLoadingStoreData(true);
+    try {
+      const data = await BuyerService.getStorePickupLocation(currentStoreId);
+      if (data) {
+        setStorePickupData(data);
+      }
+    } catch {
+      // Graceful fallback
+    } finally {
+      setLoadingStoreData(false);
+    }
+  }, [currentStoreId]);
+
+  React.useEffect(() => {
+    if (currentStoreId) {
+      fetchStoreData();
+    }
+  }, [currentStoreId, fetchStoreData]);
 
   // Dynamic Backend Promotion / Free Delivery notification (Hidden by default)
   const [backendPromo, setBackendPromo] = useState<{
@@ -74,8 +113,11 @@ export const BuyerCartScreen = ({ navigation }: any) => {
 
   const handleRefresh = useCallback(() => {
     setRefreshing(true);
-    fetchPromotionsAndAddress().finally(() => setRefreshing(false));
-  }, [fetchPromotionsAndAddress]);
+    Promise.all([
+      fetchPromotionsAndAddress(),
+      fetchStoreData(),
+    ]).finally(() => setRefreshing(false));
+  }, [fetchPromotionsAndAddress, fetchStoreData]);
 
   const subtotal = getSubtotal();
   const itemCount = getItemCount();
@@ -88,6 +130,10 @@ export const BuyerCartScreen = ({ navigation }: any) => {
       deliveryFee: shippingFee,
       deliveryMethod,
       pickupPin,
+      storeData: storePickupData || {
+        store_name: items[0]?.store_name || 'Verified Merchant Store',
+        store_id: currentStoreId,
+      },
       addressId: deliveryAddress?.id || 'addr_1',
     });
   };
@@ -381,7 +427,7 @@ export const BuyerCartScreen = ({ navigation }: any) => {
                   🚶 Personal Courier / Self-Pickup
                 </Text>
                 <Text variant="caption" secondary style={{ marginTop: 2 }}>
-                  Send your rider or pick up at store using 5-digit PIN
+                  Send your rider or pick up at store using 4-digit PIN
                 </Text>
               </View>
               {/* Grid-Safe Amount Badge */}
@@ -394,7 +440,18 @@ export const BuyerCartScreen = ({ navigation }: any) => {
 
             {/* If Self-Pickup Selected: Tabular Seller Store Address & Rider PIN Table */}
             {deliveryMethod === 'self_pickup' && (
-              <StorePickupTable pickupPin={pickupPin} style={{ marginTop: spacing.sm }} />
+              <StorePickupTable
+                pickupPin={pickupPin}
+                storeName={storePickupData?.store_name || items[0]?.store_name || 'Official Verified Store'}
+                addressText={storePickupData?.address_text || 'Merchant Counter Hub, Cameroon'}
+                landmarkDirections={storePickupData?.landmark || 'Designated Wunabuy Merchant Counter'}
+                primaryPhone={storePickupData?.phone || '+237 670 123 456'}
+                operatingHours={storePickupData?.counter_hours || 'Mon - Sat: 8:00 AM - 6:30 PM'}
+                riderInstructions={storePickupData?.rider_instructions || 'Present 4-digit PIN at merchant counter for parcel handover.'}
+                latitude={storePickupData?.latitude ?? 4.0510}
+                longitude={storePickupData?.longitude ?? 9.7679}
+                style={{ marginTop: spacing.sm }}
+              />
             )}
 
             <Button

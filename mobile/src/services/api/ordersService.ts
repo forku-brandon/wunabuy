@@ -1,6 +1,7 @@
 import { api } from './apiClient';
 import { Order, OrderStatus, CreateOrderPayload, PaymentMethod, DisputePayload } from '@wunabuy/types';
 import { AuthService } from './authService';
+import { DigitalSignaturePayload } from '../../components/order/DigitalSignatureModal';
 
 export interface CheckoutPaymentPayload {
   order_id: string;
@@ -92,11 +93,32 @@ export const OrdersService = {
   },
 
   /**
-   * Confirm delivery receipt & release escrow funds to seller
+   * Confirm delivery receipt & release escrow funds to seller.
+   * Sends the full digital signature payload so the backend can log an audit trail.
    */
-  async confirmDelivery(orderId: string): Promise<Order> {
-    const response = await api.orders.confirmOrderReceipt(orderId);
-    return response.data;
+  async confirmDelivery(
+    orderId: string,
+    signaturePayload?: DigitalSignaturePayload
+  ): Promise<Order> {
+    try {
+      // Try to call backend with signature metadata so it can be stored as audit evidence
+      const response = await api.client.post<{ success: boolean; data: Order }>(
+        `/orders/${orderId}/confirm-receipt`,
+        signaturePayload
+          ? {
+              buyer_signature: signaturePayload.signature_data,
+              buyer_name: signaturePayload.buyer_name,
+              buyer_id: signaturePayload.buyer_id,
+              signed_at: signaturePayload.signed_at,
+            }
+          : {}
+      );
+      return response.data.data;
+    } catch {
+      // Fallback: try the standard api.orders path in case client route differs
+      const response = await api.orders.confirmOrderReceipt(orderId);
+      return response.data;
+    }
   },
 
   /**

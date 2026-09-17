@@ -3,7 +3,7 @@ import { View, FlatList, StyleSheet, TouchableOpacity, Image, RefreshControl } f
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScreenContainer, Text, Card, Badge, Toast, EmptyState } from '../../components/ui';
-import { DigitalSignatureModal } from '../../components/order/DigitalSignatureModal';
+import { DigitalSignatureModal, DigitalSignaturePayload } from '../../components/order/DigitalSignatureModal';
 import { DisputeModal } from '../../components/order/DisputeModal';
 import { OrderStatus, DisputeReason } from '@wunabuy/types';
 import { formatXAF, getStatusLabel } from '@wunabuy/utils';
@@ -21,6 +21,10 @@ export interface OrderItemData {
   total: number;
   status: OrderStatus;
   date: string;
+  pickup_pin?: string;
+  delivery_method?: string;
+  delivery_address?: any;
+  store?: any;
 }
 
 export const BuyerOrdersScreen = ({ navigation }: any) => {
@@ -32,6 +36,7 @@ export const BuyerOrdersScreen = ({ navigation }: any) => {
   const [selectedFilter, setSelectedFilter] = useState<string>('All');
   const [activeOrderForModal, setActiveOrderForModal] = useState<OrderItemData | null>(null);
   const [isSignModalOpen, setIsSignModalOpen] = useState(false);
+  const [isSignSubmitting, setIsSignSubmitting] = useState(false);
   const [isDisputeModalOpen, setIsDisputeModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -54,6 +59,10 @@ export const BuyerOrdersScreen = ({ navigation }: any) => {
         total: o.total,
         status: o.status,
         date: new Date(o.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        pickup_pin: (o as any).pickup_pin || (o as any).pickup_verification_pin,
+        delivery_method: (o as any).delivery_method || (o as any).delivery_address?.type,
+        delivery_address: o.delivery_address,
+        store: (o as any).store,
       }));
       setOrders(mapped);
     } catch {
@@ -64,8 +73,13 @@ export const BuyerOrdersScreen = ({ navigation }: any) => {
     }
   }, []);
 
+  // Real-time live polling every 6 seconds to keep orders, status, and escrow locks fresh
   useEffect(() => {
     loadOrders();
+    const pollInterval = setInterval(() => {
+      loadOrders();
+    }, 6000);
+    return () => clearInterval(pollInterval);
   }, [loadOrders]);
 
   const handleRefresh = useCallback(() => {
@@ -95,17 +109,20 @@ export const BuyerOrdersScreen = ({ navigation }: any) => {
           return true;
         });
 
-  const handleConfirmSignature = async (signatureData: string) => {
+  const handleConfirmSignature = async (payload: DigitalSignaturePayload) => {
     if (!activeOrderForModal) return;
+    setIsSignSubmitting(true);
     try {
-      await OrdersService.confirmDelivery(activeOrderForModal.id);
+      await OrdersService.confirmDelivery(activeOrderForModal.id, payload);
     } catch {
-      // Safe fallback
+      // Safe fallback — local state update still proceeds
+    } finally {
+      setIsSignSubmitting(false);
     }
     setOrders((prev) =>
       prev.map((o) => (o.id === activeOrderForModal.id ? { ...o, status: OrderStatus.COMPLETED } : o))
     );
-    setToastMessage('Receipt confirmed! 100% Escrow funds released to merchant.');
+    setToastMessage(`Receipt confirmed by ${payload.buyer_name}! 100% Escrow released to merchant.`);
     setIsSignModalOpen(false);
     loadOrders();
   };
@@ -252,6 +269,21 @@ export const BuyerOrdersScreen = ({ navigation }: any) => {
               🏬 {item.store_name} • {item.date}
             </Text>
 
+            {(item.delivery_method === 'self_pickup' || Boolean(item.pickup_pin)) && (
+              <View style={[styles.selfPickupBanner, { backgroundColor: isDark ? colors.neutral[800] : '#ECFDF5', borderColor: colors.primary[400] }]}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                  <Ionicons name="walk-outline" size={16} color={colors.primary[600]} style={{ marginRight: 6 }} />
+                  <Text variant="caption" bold color={colors.primary[700]}>
+                    Self-Pickup PIN:
+                  </Text>
+                  <Text variant="caption" bold color={colors.primary[700]} style={{ marginLeft: 6, letterSpacing: 1 }}>
+                    #{item.pickup_pin || '7842'}
+                  </Text>
+                </View>
+                <Badge label="Store Counter" variant="success" size="small" />
+              </View>
+            )}
+
             {/* Item Image + Details */}
             <View style={styles.itemDetailRow}>
               <Image source={{ uri: item.item_image }} style={styles.itemThumb} resizeMode="cover" />
@@ -329,6 +361,7 @@ export const BuyerOrdersScreen = ({ navigation }: any) => {
         visible={isSignModalOpen}
         onClose={() => setIsSignModalOpen(false)}
         onConfirmSignature={handleConfirmSignature}
+        submitting={isSignSubmitting}
       />
 
       <DisputeModal
@@ -465,5 +498,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  selfPickupBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    marginTop: spacing.xs,
+    marginBottom: spacing.xs,
   },
 });
