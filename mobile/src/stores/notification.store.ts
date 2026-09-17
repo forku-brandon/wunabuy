@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { ApiNotification, NotificationApiService } from '../services/api/notificationService';
+import { NotificationManager } from '../services/notifications/notificationManager';
 
 export type NotificationFilter = 'all' | 'orders' | 'marketing' | 'updates';
 
@@ -9,8 +10,9 @@ interface NotificationState {
   isLoading: boolean;
   activeFilter: NotificationFilter;
   setFilter: (filter: NotificationFilter) => void;
-  fetchNotifications: (filter?: NotificationFilter) => Promise<void>;
+  fetchNotifications: (filter?: NotificationFilter, showAlert?: boolean) => Promise<void>;
   fetchUnreadCount: () => Promise<void>;
+  pollNewNotifications: () => Promise<void>;
   markAsRead: (id: string) => Promise<void>;
   markAllAsRead: () => Promise<void>;
   deleteNotification: (id: string) => Promise<void>;
@@ -29,7 +31,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     get().fetchNotifications(activeFilter);
   },
 
-  fetchNotifications: async (filter?: NotificationFilter) => {
+  fetchNotifications: async (filter?: NotificationFilter, showAlert = false) => {
     const targetFilter = filter ?? get().activeFilter;
     set({ isLoading: true });
     try {
@@ -39,8 +41,31 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
         unreadCount: data.unread_count,
         isLoading: false,
       });
+
+      if (showAlert && data.notifications.length > 0) {
+        NotificationManager.syncAndAlertNewNotifications(data.notifications);
+      }
     } catch {
       set({ isLoading: false });
+    }
+  },
+
+  pollNewNotifications: async () => {
+    try {
+      const previousCount = get().unreadCount;
+      const data = await NotificationApiService.getNotifications('all', 1);
+
+      set({
+        notifications: data.notifications,
+        unreadCount: data.unread_count,
+      });
+
+      // If new unread notification arrived, trigger native Android sound and vibration!
+      if (data.unread_count > previousCount && data.notifications.length > 0) {
+        NotificationManager.syncAndAlertNewNotifications(data.notifications);
+      }
+    } catch {
+      // background poll silently ignores transient connection hiccups
     }
   },
 

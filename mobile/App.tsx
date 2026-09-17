@@ -4,7 +4,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
 import { View, ActivityIndicator, StyleSheet, Platform } from 'react-native';
 import * as NavigationBar from 'expo-navigation-bar';
-import { RootNavigator } from './src/navigation/RootNavigator';
+import { RootNavigator, navigationRef } from './src/navigation/RootNavigator';
 import { useThemeStore } from './src/stores/theme.store';
 import { useAuthStore } from './src/stores/auth.store';
 import { AuthService } from './src/services/api/authService';
@@ -49,21 +49,61 @@ const AppContent: React.FC = () => {
   useEffect(() => {
     if (isAuthenticated) {
       AuthService.getCurrentUser().catch(() => {});
-      // Sync push token with backend and fetch initial unread count
+      // Sync push token with backend and perform initial unread fetch
       NotificationManager.registerDeviceToken().catch(() => {});
-      useNotificationStore.getState().fetchUnreadCount().catch(() => {});
+      useNotificationStore.getState().pollNewNotifications().catch(() => {});
+
+      // Real-time synchronization interval (like WhatsApp / Alibaba)
+      // Checks backend for incoming order milestones, dispatch updates, and staff broadcasts
+      const pollTimer = setInterval(() => {
+        useNotificationStore.getState().pollNewNotifications().catch(() => {});
+      }, 8000);
+
+      return () => clearInterval(pollTimer);
     }
   }, [isAuthenticated]);
 
   useEffect(() => {
-    // Listen for incoming notifications in foreground
-    const sub = NotificationManager.addNotificationReceivedListener(() => {
+    // 1. Listen for user tapping the notification banner in Android status bar / lockscreen
+    const responseSub = NotificationManager.addNotificationResponseListener((response) => {
+      try {
+        const notifData = response?.notification?.request?.content?.data || {};
+        const notificationId = notifData.notification_id;
+
+        if (notificationId) {
+          useNotificationStore.getState().markAsRead(notificationId).catch(() => {});
+        }
+
+        if (navigationRef.isReady()) {
+          const screen = notifData.screen;
+          if (screen === 'OrderTracking' && notifData.order_id) {
+            navigationRef.navigate('OrderTracking', { orderId: String(notifData.order_id) });
+          } else if (screen === 'BuyerOrders') {
+            navigationRef.navigate('BuyerApp', { screen: 'BuyerOrders' } as any);
+          } else if (screen === 'SellerOrders') {
+            navigationRef.navigate('SellerApp', { screen: 'SellerOrders' } as any);
+          } else if (screen === 'TransporterJobs') {
+            navigationRef.navigate('TransporterApp', { screen: 'TransporterJobs' } as any);
+          } else if (screen === 'BuyerWallet') {
+            navigationRef.navigate('BuyerWallet');
+          } else {
+            navigationRef.navigate('Notifications');
+          }
+        }
+      } catch (err) {
+        console.warn('[App] Notification tap navigation error:', err);
+      }
+    });
+
+    // 2. Listen for incoming notifications while app is in foreground
+    const receivedSub = NotificationManager.addNotificationReceivedListener(() => {
       useNotificationStore.getState().incrementUnread();
       useNotificationStore.getState().fetchNotifications();
     });
 
     return () => {
-      sub.remove();
+      responseSub.remove();
+      receivedSub.remove();
     };
   }, []);
 

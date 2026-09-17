@@ -1,7 +1,9 @@
 import React, { useEffect } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { RootStackParamList } from './types';
+
+export const navigationRef = createNavigationContainerRef<RootStackParamList>();
 import { linkingConfig } from './linking';
 import { AuthNavigator } from './AuthNavigator';
 import { BuyerTabNavigator } from './BuyerTabNavigator';
@@ -63,6 +65,7 @@ export const RootNavigator = () => {
 
   return (
     <NavigationContainer
+      ref={navigationRef}
       linking={linkingConfig}
       theme={{
         dark: theme.background === '#0F172A',
