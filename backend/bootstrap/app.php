@@ -13,6 +13,10 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->statefulApi();
+        $middleware->alias([
+            'detect.app.version' => \App\Http\Middleware\DetectAppVersion::class,
+            'block.blacklisted'  => \App\Http\Middleware\BlockBlacklistedVersion::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

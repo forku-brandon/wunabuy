@@ -467,9 +467,45 @@ const isSelfPickup =
 
 ---
 
-## 10. Changelog
+## 11. Client Integrity & Two-Layer Version Enforcement
+
+To safeguard financial escrow releases, PIN authentication, and payment APIs, Wunabuy deploys a two-layer defense against outdated or decompiled client applications:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    LAYER 1: GOOGLE PLAY                     │
+│    sp-react-native-in-app-updates checks versionCode        │
+│    FLEXIBLE  → background download, non-intrusive prompt    │
+│    IMMEDIATE → full-screen blocker, non-dismissable overlay │
+└───────────────────────┬─────────────────────────────────────┘
+                        │
+                        ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    LAYER 2: LARAVEL                         │
+│    detect.app.version reads X-App-Version-Code              │
+│    block.blacklisted rejects deprecated versions with 426   │
+│    AppVersionController serves signed policy payloads       │
+└─────────────────────────────────────────────────────────────┘
+```
+
+1. **Layer 1 (Client / Google Play):** 
+   - `sp-react-native-in-app-updates` checks Google Play Core API on Android.
+   - Flexible flow handles UI enhancements and non-breaking features in the background.
+   - Immediate flow locks the app with Google Play's native overlay when priority $\ge 4$ or when flagged by the server.
+2. **Layer 2 (Server / Laravel & PostgreSQL):** 
+   - `DetectAppVersion` middleware intercepts all incoming requests, records request metrics in the `app_versions` table, and decorates the request with version context.
+   - `BlockBlacklistedVersion` middleware hard-blocks all mutating financial and escrow routes (`/orders`, `/checkout/pay`, `/wallet/withdraw`, `/seller/orders/{id}/handover`, `/transporter/verify-code`, etc.) with HTTP 426 Upgrade Required if `versionCode` is blacklisted or below minimum threshold.
+   - `GET /api/v1/app/version-check` provides a tamper-proof HMAC-signed payload for client-side policy evaluation.
+
+> Full technical blueprint and EAS Build guidelines: see [`docs/inapp_updates_security_guide.md`](file:///c:/Users/HP/Desktop/wunabuy%20mobile%20project/wunabuy/docs/inapp_updates_security_guide.md).
+
+---
+
+## 12. Changelog
 
 | Version | Date | Author | Summary |
 |---|---|---|---|
 | 1.0.0 | 2026-09-16 | Engineering Team | Initial escrow architecture specification |
 | 1.1.0 | 2026-09-17 | Engineering Team | 4-digit PIN standardization, digital signature audit trail, real-time polling, live store pickup data |
+| 1.2.0 | 2026-09-17 | Engineering Team | Added Section 11: Two-layer In-App Updates and server-authoritative version blacklisting |
+

@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
-import { View, ActivityIndicator, StyleSheet, Platform } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, Platform, Text } from 'react-native';
 import * as NavigationBar from 'expo-navigation-bar';
 import { RootNavigator, navigationRef } from './src/navigation/RootNavigator';
 import { useThemeStore } from './src/stores/theme.store';
@@ -11,6 +11,25 @@ import './src/i18n'; // Initialize i18next
 import { NotificationManager } from './src/services/notifications/notificationManager';
 import { PermissionPromptModal } from './src/components/notifications/PermissionPromptModal';
 import { useNotificationStore } from './src/stores/notification.store';
+import { useInAppUpdate } from './src/hooks/useInAppUpdate';
+
+/**
+ * Full-screen blocker rendered when the server hard-blocks this app version.
+ * Shown alongside the Play Store IMMEDIATE overlay for double enforcement.
+ * Matches Wunabuy's teal branding (#0D9488).
+ */
+const ForceUpdateBlocker: React.FC<{ message: string | null }> = ({ message }) => (
+  <View style={styles.blockerContainer}>
+    <Text style={styles.blockerIcon}>🔒</Text>
+    <Text style={styles.blockerTitle}>Security Update Required</Text>
+    <Text style={styles.blockerMessage}>
+      {message ??
+        'This version of Wunabuy has been decommissioned for security reasons. ' +
+        'Please update from the Google Play Store to continue.'}
+    </Text>
+    <Text style={styles.blockerSub}>Opening Play Store…</Text>
+  </View>
+);
 
 /**
  * Inner component that has access to the theme store and can sync
@@ -21,6 +40,11 @@ const AppContent: React.FC = () => {
   const { isDark } = useThemeStore();
   const { isAuthenticated } = useAuthStore();
   const [showPermissionModal, setShowPermissionModal] = React.useState(false);
+
+  // ── In-App Update check (runs automatically 2s after mount) ────────────────
+  // Checks our Laravel server first (blacklist), then Google Play Store.
+  // On 426 response: isForceBlocked = true → renders ForceUpdateBlocker.
+  const { isForceBlocked, serverMessage } = useInAppUpdate();
 
   useEffect(() => {
     // Check if device notification permission is granted on the OS
@@ -122,6 +146,10 @@ const AppContent: React.FC = () => {
     }
   }, [isDark]);
 
+  if (isForceBlocked) {
+    return <ForceUpdateBlocker message={serverMessage} />;
+  }
+
   return (
     <>
       <RootNavigator />
@@ -167,4 +195,38 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#0D9488',
   },
+  blockerContainer: {
+    flex: 1,
+    backgroundColor: '#0D9488',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+  },
+  blockerIcon: {
+    fontSize: 64,
+    marginBottom: 24,
+  },
+  blockerTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#ffffff',
+    textAlign: 'center',
+    marginBottom: 16,
+    fontFamily: 'PlusJakartaSans-Bold',
+  },
+  blockerMessage: {
+    fontSize: 15,
+    color: 'rgba(255, 255, 255, 0.9)',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 24,
+    fontFamily: 'Inter-Medium',
+  },
+  blockerSub: {
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.7)',
+    textAlign: 'center',
+    fontFamily: 'Inter-Regular',
+  },
 });
+

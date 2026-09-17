@@ -1,6 +1,9 @@
+import { Platform } from 'react-native';
 import { createWunabuyApiSDK } from '@wunabuy/api-client';
 import { SecureTokenService } from '../SecureTokenService';
 import { useAuthStore } from '../../stores/auth.store';
+import { APP_VERSION, APP_VERSION_CODE } from '../../config/appVersion';
+
 
 import { API_BASE_URL } from '../../config/env';
 export { API_BASE_URL };
@@ -70,14 +73,20 @@ export const api = createWunabuyApiSDK({
   timeout: 15000,
 });
 
-// Attach X-User-Id header for reliable local identity verification
+// Attach X-User-Id header and App Version headers for server-side policy enforcement
 api.client.interceptors.request.use((reqConfig) => {
   const user = useAuthStore.getState().user;
-  if (user?.id && reqConfig.headers) {
-    reqConfig.headers['X-User-Id'] = user.id;
+  if (reqConfig.headers) {
+    if (user?.id) {
+      reqConfig.headers['X-User-Id'] = user.id;
+    }
+    reqConfig.headers['X-App-Version'] = APP_VERSION;
+    reqConfig.headers['X-App-Version-Code'] = String(APP_VERSION_CODE);
+    reqConfig.headers['X-Platform'] = Platform.OS;
   }
   return reqConfig;
 });
 
 export const apiClient = api.client;
+
 

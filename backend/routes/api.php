@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AppVersionController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CommerceController;
 use App\Http\Controllers\Api\NotificationController;
@@ -36,7 +37,13 @@ Route::get('/health', function () {
     ]);
 });
 
-Route::prefix('v1')->group(function () {
+// App Version Management & In-App Update Policy (Public)
+Route::get('/app/version-check', [AppVersionController::class, 'check']);
+
+Route::prefix('v1')->middleware(['detect.app.version'])->group(function () {
+    // Also available with /v1 prefix for client flexibility
+    Route::get('/app/version-check', [AppVersionController::class, 'check']);
+
 
     // ─── AUTHENTICATION & USER PROFILE ───
     Route::post('/auth/otp/send', [AuthController::class, 'sendOtp']);
@@ -79,11 +86,11 @@ Route::prefix('v1')->group(function () {
 
     // ─── ORDERS & ESCROW LIFECYCLE ───
     Route::get('/orders', [OrderController::class, 'index']);
-    Route::post('/orders', [OrderController::class, 'store']);
+    Route::post('/orders', [OrderController::class, 'store'])->middleware(['block.blacklisted']);
     Route::get('/orders/{id}', [OrderController::class, 'show']);
-    Route::put('/orders/{id}/status', [OrderController::class, 'updateStatus']);
-    Route::post('/orders/{id}/confirm', [OrderController::class, 'confirmReceipt']);
-    Route::post('/orders/{id}/cancel', [OrderController::class, 'cancel']);
+    Route::put('/orders/{id}/status', [OrderController::class, 'updateStatus'])->middleware(['block.blacklisted']);
+    Route::post('/orders/{id}/confirm', [OrderController::class, 'confirmReceipt'])->middleware(['block.blacklisted']);
+    Route::post('/orders/{id}/cancel', [OrderController::class, 'cancel'])->middleware(['block.blacklisted']);
     Route::post('/orders/{id}/dispute', [OrderController::class, 'dispute']);
     Route::get('/orders/{id}/dispute', [OrderController::class, 'getDisputeDetails']);
     Route::get('/user/refunds', [OrderController::class, 'getRefunds']);
@@ -94,13 +101,13 @@ Route::prefix('v1')->group(function () {
     Route::post('/seller/orders/{id}/accept', [SellerController::class, 'acceptOrder']);
     Route::post('/seller/orders/{id}/decline', [SellerController::class, 'declineOrder']);
     Route::post('/seller/orders/{id}/ready', [SellerController::class, 'markReady']);
-    Route::post('/seller/orders/{id}/handover', [SellerController::class, 'handoverOrder']);
-    Route::post('/seller/orders/{id}/complete', [SellerController::class, 'completeOrder']);
+    Route::post('/seller/orders/{id}/handover', [SellerController::class, 'handoverOrder'])->middleware(['block.blacklisted']);
+    Route::post('/seller/orders/{id}/complete', [SellerController::class, 'completeOrder'])->middleware(['block.blacklisted']);
     Route::get('/seller/products', [SellerController::class, 'products']);
     Route::patch('/seller/products/{id}/status', [SellerController::class, 'toggleProductStatus']);
     Route::patch('/seller/products/{id}/stock', [SellerController::class, 'updateStock']);
     Route::delete('/seller/products/{id}', [SellerController::class, 'deleteProduct']);
-    Route::post('/seller/wallet/payout', [SellerController::class, 'requestPayout']);
+    Route::post('/seller/wallet/payout', [SellerController::class, 'requestPayout'])->middleware(['block.blacklisted']);
     Route::get('/seller/analytics', [SellerController::class, 'analytics']);
     Route::post('/seller/store/profile', [SellerController::class, 'updateProfile']);
     Route::get('/seller/products/barcode/{barcode}', [SellerController::class, 'barcodeLookup']);
@@ -116,26 +123,26 @@ Route::prefix('v1')->group(function () {
     Route::post('/transporter/duty-status', [TransporterController::class, 'updateDutyStatus']);
     Route::get('/transporter/active-trip', [TransporterController::class, 'getActiveTrip']);
     Route::post('/transporter/trips/{id}/stage', [TransporterController::class, 'updateTripStage']);
-    Route::post('/transporter/trips/{id}/proof-of-delivery', [TransporterController::class, 'submitProofOfDelivery']);
-    Route::post('/delivery/{id}/photo', [TransporterController::class, 'submitProofOfDelivery']);
+    Route::post('/transporter/trips/{id}/proof-of-delivery', [TransporterController::class, 'submitProofOfDelivery'])->middleware(['block.blacklisted']);
+    Route::post('/delivery/{id}/photo', [TransporterController::class, 'submitProofOfDelivery'])->middleware(['block.blacklisted']);
     Route::put('/delivery/{id}/location', [TransporterController::class, 'pushGPSBreadcrumb']);
     Route::get('/transporter/profile', [TransporterController::class, 'getProfile']);
     Route::post('/transporter/profile', [TransporterController::class, 'updateProfile']);
     Route::get('/transporter/earnings', [TransporterController::class, 'getEarnings']);
-    Route::post('/transporter/wallet/withdraw', [TransporterController::class, 'withdraw']);
-    Route::post('/transporter/verify-code', [TransporterController::class, 'verifyCode']);
+    Route::post('/transporter/wallet/withdraw', [TransporterController::class, 'withdraw'])->middleware(['block.blacklisted']);
+    Route::post('/transporter/verify-code', [TransporterController::class, 'verifyCode'])->middleware(['block.blacklisted']);
     Route::post('/transporter/kyc/submit', [TransporterController::class, 'submitKYC']);
     Route::get('/transporter/kyc/status', [TransporterController::class, 'getKYCStatus']);
 
     // ─── WALLET & PAYMENTS GATEWAY ───
     Route::get('/wallet', [WalletController::class, 'getWallet']);
     Route::get('/wallet/balance', [WalletController::class, 'getBalance']);          // lightweight poll
-    Route::post('/wallet/fund', [WalletController::class, 'fund']);
-    Route::post('/wallet/withdraw', [WalletController::class, 'withdraw']);
+    Route::post('/wallet/fund', [WalletController::class, 'fund'])->middleware(['block.blacklisted']);
+    Route::post('/wallet/withdraw', [WalletController::class, 'withdraw'])->middleware(['block.blacklisted']);
     Route::get('/wallet/transactions', [WalletController::class, 'getTransactions']);
     Route::get('/wallet/transactions/{id}/status', [WalletController::class, 'checkTransactionStatus']);
-    Route::post('/payments/charge', [WalletController::class, 'fund']);              // alias
-    Route::post('/checkout/pay', [WalletController::class, 'fund']);                 // alias
+    Route::post('/payments/charge', [WalletController::class, 'fund'])->middleware(['block.blacklisted']);              // alias
+    Route::post('/checkout/pay', [WalletController::class, 'fund'])->middleware(['block.blacklisted']);                 // alias
     Route::get('/payments/verify/{ref}', [WalletController::class, 'checkTransactionStatus']);
 
     // ─── PAYMENT GATEWAY WEBHOOKS ───
